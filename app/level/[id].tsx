@@ -7,6 +7,7 @@ import { usePlayback } from '../../components/board/usePlayback';
 import { WinCard } from '../../components/board/WinCard';
 import { AimControls } from '../../components/controls/AimControls';
 import { Tray } from '../../components/controls/Tray';
+import { useFeedback } from '../../components/feedback/useFeedback';
 import { useProgress } from '../../components/progress/ProgressProvider';
 import { aimAt } from '../../game/aim';
 import {
@@ -64,20 +65,25 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   const [solved, setSolved] = useState(false);
   const [winShot, setWinShot] = useState({ angle: 0, power: 0 });
   const { flight, flying, play } = usePlayback();
+  const feedback = useFeedback();
   const drag = useRef<Drag | null>(null);
 
   // The trail and the win only land once playback reaches the end of the path, as in the prototype.
+  // Bounces tap and tink as the ball reaches them; the end of the shot chimes or thumps.
   const fire = (placed: PlacedPiece[], a: number, p: number) => {
     const res = simulate(buildWorld(level, placed), a, p);
     setTries((n) => n + 1);
-    play(res.path, () => {
+    const finished = () => {
       setTrails((ts) => [...ts, { path: res.path, ok: res.success }].slice(-MAX_TRAILS));
+      if (res.end === 'dead') feedback.died();
       if (res.success) {
+        feedback.landed();
         setWinShot({ angle: a, power: p });
         setDone(true);
         won(index);
       }
-    });
+    };
+    play(res.path, finished, res.hits.map((h) => h.i), (k) => feedback.hit(res.hits[k]));
   };
 
   const goTo = (i: number) => {

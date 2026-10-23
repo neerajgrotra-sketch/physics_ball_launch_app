@@ -14,6 +14,36 @@ describe('determinism', () => {
   });
 });
 
+describe('bounce events', () => {
+  it('every solution bounces off a piece, each event points at a real path point, in order', () => {
+    for (const level of LEVELS) {
+      const s = level.solution!;
+      const r = simulate(buildWorld(level, solutionPieces(level)), s.angle, s.power);
+      expect(r.hits.some(h => h.kind === 'piece')).toBe(true);
+      for (const h of r.hits) {
+        expect(h.i).toBeGreaterThan(0);
+        expect(h.i).toBeLessThan(r.path.length);
+        expect(h.speed).toBeGreaterThan(0);
+      }
+      expect(r.hits.map(h => h.i)).toEqual([...r.hits.map(h => h.i)].sort((a, b) => a - b));
+    }
+  });
+
+  it('recording them changes nothing about the shot, and the solver skips them', () => {
+    const level = LEVELS[0], s = level.solution!;
+    const w = buildWorld(level, solutionPieces(level));
+    const full = simulate(w, s.angle, s.power);
+    const fast = simulate(w, s.angle, s.power, Infinity);
+    expect([fast.success, fast.end, fast.t]).toEqual([full.success, full.end, full.t]);
+    expect(fast.path[fast.path.length - 1]).toEqual(full.path[full.path.length - 1]);
+    expect(fast.hits).toEqual([]);
+  });
+
+  it('a shot with no pieces has no bounce events', () => {
+    expect(simulate(buildWorld(LEVELS[0], []), 45, 60).hits).toEqual([]);
+  });
+});
+
 describe('dead surfaces', () => {
   it('the ball never leaves the world and every shot ends', () => {
     const w = buildWorld(LEVELS[0], []);

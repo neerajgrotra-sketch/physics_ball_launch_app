@@ -49,7 +49,9 @@ export interface World {
   glass: { l: number; r: number; rim: number; base: number };
 }
 export type EndReason = 'glass' | 'dead' | 'rest' | 'timeout';
-export interface SimResult { path: Vec[]; success: boolean; t: number; end: EndReason }
+/** A real bounce (not resting contact) off a piece or the glass. `i` is the index of the next path point. */
+export interface Hit { i: number; kind: 'piece' | 'glass'; speed: number }
+export interface SimResult { path: Vec[]; success: boolean; t: number; end: EndReason; hits: Hit[] }
 
 export function speedFor(power: number): number {
   return 280 + power * 8.4; // power 0..100 → 280..1120 px/s
@@ -108,7 +110,7 @@ export function inGlass(world: World, x: number, y: number): boolean {
 /**
  * Simulate one launch.
  * @param recordEvery record a path point every N steps (2 → 120 points/s, matches playback).
- *                    Pass Infinity in the solver to skip path building.
+ *                    Pass Infinity in the solver to skip path building (and bounce events).
  */
 export function simulate(world: World, angleDeg: number, power: number, recordEvery = 2): SimResult {
   const R = BALL_RADIUS;
@@ -116,9 +118,11 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
   let x: number = LAUNCHER.x, y: number = LAUNCHER.y;
   let vx = Math.cos(a) * sp, vy = -Math.sin(a) * sp;
   const path: Vec[] = [[x, y]];
+  const hits: Hit[] = [];
+  const recordHits = recordEvery !== Infinity;
   let slow = 0, inside = 0, t = 0, step = 0;
   const segs = world.segs;
-  const finish = (success: boolean, end: EndReason): SimResult => { path.push([x, y]); return { path, success, t, end }; };
+  const finish = (success: boolean, end: EndReason): SimResult => { path.push([x, y]); return { path, success, t, end, hits }; };
 
   while (t < MAX_SIM_SECONDS) {
     vy += GRAVITY * DT;
@@ -149,6 +153,7 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
       const vn = vx * nx + vy * ny;
       if (vn < 0) {
         const e = -vn < RESTING_CONTACT_SPEED ? 0 : s.e;
+        if (e && recordHits) hits.push({ i: path.length, kind: s.kind as Hit['kind'], speed: -vn });
         vx -= (1 + e) * vn * nx;
         vy -= (1 + e) * vn * ny;
         const vt = vx * -ny + vy * nx;

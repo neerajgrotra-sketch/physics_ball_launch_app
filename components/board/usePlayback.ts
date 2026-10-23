@@ -18,6 +18,7 @@ export interface Flight {
 /**
  * Plays a precomputed path back with a frame callback. Physics never steps per frame: the caller runs
  * simulate() once, hands the whole path to play(), and gets onDone when the ball reaches the last point.
+ * Optional events (path indices, e.g. bounces) call onEvent(k) as the ball passes the k-th one.
  */
 export function usePlayback() {
   const x = useSharedValue<number>(LAUNCHER.x);
@@ -27,14 +28,20 @@ export function usePlayback() {
   const cum = useSharedValue<number[]>([]); // cumulative length to each point, as a fraction of the total
   const start = useSharedValue(-1);
   const running = useSharedValue(false);
+  const events = useSharedValue<number[]>([]); // path index of each event, ascending
+  const nextEvent = useSharedValue(0);
   const [path, setPath] = useState<Vec[] | null>(null);
   const onDone = useRef<(() => void) | null>(null);
+  const onEvent = useRef<((k: number) => void) | null>(null);
 
-  // Both callbacks are stable: useFrameCallback re-registers whenever its callback changes identity.
+  // All callbacks are stable: useFrameCallback re-registers whenever its callback changes identity.
+  const fireEvent = useCallback((k: number) => onEvent.current?.(k), []);
+
   const finish = useCallback(() => {
     frame.setActive(false);
     const done = onDone.current;
     onDone.current = null;
+    onEvent.current = null;
     setPath(null);
     done?.();
   }, []);
@@ -45,6 +52,11 @@ export function usePlayback() {
     if (start.value < 0) start.value = f.timestamp;
     const n = pts.value.length / 2;
     const i = Math.max(0, Math.floor(((f.timestamp - start.value) / 1000) * POINTS_PER_SECOND));
+    // Every event the ball has reached by now (including any at the very end), each exactly once.
+    while (nextEvent.value < events.value.length && events.value[nextEvent.value] <= i) {
+      scheduleOnRN(fireEvent, nextEvent.value);
+      nextEvent.value += 1;
+    }
     if (i >= n - 1) {
       running.value = false;
       x.value = pts.value[2 * (n - 1)];
@@ -59,7 +71,7 @@ export function usePlayback() {
   }, []);
   const frame = useFrameCallback(step, false);
 
-  const play = (p: Vec[], done: () => void) => {
+  const play = (p: Vec[], done: () => void, eventAt: number[] = [], onEventAt?: (k: number) => void) => {
     const flat: number[] = [];
     const lengths: number[] = [0];
     for (let i = 0; i < p.length; i++) {
@@ -73,8 +85,11 @@ export function usePlayback() {
     y.value = p[0][1];
     end.value = 0;
     start.value = -1;
+    events.value = eventAt;
+    nextEvent.value = 0;
     running.value = true;
     onDone.current = done;
+    onEvent.current = onEventAt ?? null;
     setPath(p);
     frame.setActive(true);
   };
