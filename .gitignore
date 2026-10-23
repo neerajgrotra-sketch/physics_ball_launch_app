@@ -5,3 +5,9 @@ web-build/
 *.log
 .DS_Store
 .env*.local
+
+# Expo generated
+expo-env.d.ts
+.expo-shared/
+ios/
+android/

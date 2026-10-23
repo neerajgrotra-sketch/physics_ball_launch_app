@@ -1,1 +1,38 @@
-{"name":"bank-shot-core-check","private":true,"type":"module","devDependencies":{"@types/node":"^22.9.0","esbuild":"^0.24.0","tsx":"^4.19.2","typescript":"^5.6.3","vitest":"^2.1.8"}}
+{
+  "name": "bank-shot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo start --ios",
+    "android": "expo start --android",
+    "web": "expo start --web",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "report": "tsx tools/report.ts",
+    "design-levels": "tsx tools/design-levels.ts"
+  },
+  "dependencies": {
+    "expo": "^58.0.17",
+    "expo-constants": "~58.0.13",
+    "expo-linking": "~58.0.14",
+    "expo-router": "~58.0.25",
+    "expo-status-bar": "~58.0.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.88.0",
+    "react-native-safe-area-context": "~5.10.1",
+    "react-native-screens": "~4.30.0",
+    "react-native-web": "^0.21.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^19.3.0",
+    "esbuild": "^0.24.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

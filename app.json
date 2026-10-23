@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Bank Shot",
+    "slug": "bank-shot",
+    "version": "0.1.0",
+    "scheme": "bankshot",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
