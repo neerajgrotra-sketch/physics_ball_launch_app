@@ -1,50 +1,102 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Board, type Trail } from '../../components/board/Board';
 import { LEVELS } from '../../levels';
-import { buildWorld, simulate, solutionPieces } from '../../physics';
-import { useColors } from '../../theme/colors';
+import { buildWorld, simulate, solutionPieces, type PlacedPiece } from '../../physics';
+import { FONTS, useColors } from '../../theme/colors';
 
-// Placeholder level screen. The Skia board replaces this in build step 2.
-// For now it runs the stored solution once, which proves the shared physics runs on this engine.
+const MAX_TRAILS = 4;
+
+// Level screen. Launch and Solve finish instantly for now: animated playback comes in build step 3,
+// aiming in step 4 and piece placement in step 5.
 export default function LevelScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useColors();
+  const insets = useSafeAreaInsets();
   const level = LEVELS.find((l) => l.id === id);
 
-  const check = useMemo(() => {
-    if (!level?.solution) return null;
-    const { angle, power } = level.solution;
-    return simulate(buildWorld(level, solutionPieces(level)), angle, power);
-  }, [level]);
+  const [pieces, setPieces] = useState<PlacedPiece[]>([]);
+  const [trails, setTrails] = useState<Trail[]>([]);
+  const [angle, setAngle] = useState(52);
+  const [power, setPower] = useState(45);
+  const [tries, setTries] = useState(0);
+  const [done, setDone] = useState(false);
 
   if (!level) {
-    return <Text style={[styles.body, { color: c.ink }]}>Level not found.</Text>;
+    return <Text style={[styles.hint, { color: c.ink }]}>Level not found.</Text>;
   }
 
+  const launch = (placed: PlacedPiece[], a: number, p: number) => {
+    const res = simulate(buildWorld(level, placed), a, p);
+    setTrails((ts) => [...ts, { path: res.path, ok: res.success }].slice(-MAX_TRAILS));
+    setTries((n) => n + 1);
+    setDone(res.success);
+  };
+
+  const solve = () => {
+    const s = level.solution;
+    if (!s) return;
+    const placed = solutionPieces(level);
+    setPieces(placed);
+    setAngle(s.angle);
+    setPower(s.power);
+    if (done) setTrails([]);
+    launch(placed, s.angle, s.power);
+  };
+
+  const reset = () => {
+    setPieces([]);
+    setTrails([]);
+    setTries(0);
+    setDone(false);
+  };
+
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, { paddingBottom: insets.bottom + 12 }]}>
       <Stack.Screen options={{ title: level.name }} />
-      <Text style={[styles.body, { color: c.muted }]}>{level.hint}</Text>
-      <View style={[styles.card, { backgroundColor: c.paper, borderColor: c.line }]}>
-        <Text style={[styles.label, { color: c.muted }]}>Stored solution on this device</Text>
-        <Text style={[styles.result, { color: check?.success ? c.pencil : c.red }]}>
-          {check ? (check.success ? 'Lands in the glass' : `Missed (${check.end})`) : 'No stored solution'}
-        </Text>
-        {check && (
-          <Text style={[styles.label, { color: c.muted }]}>
-            {check.path.length} path points, {check.t.toFixed(2)} s
-          </Text>
-        )}
+      <Text style={[styles.hint, { color: c.muted }]}>{level.hint}</Text>
+      <View style={styles.stage}>
+        <Board
+          level={level}
+          pieces={pieces}
+          trails={trails}
+          angle={angle}
+          power={power}
+          tries={tries}
+          done={done}
+        />
+      </View>
+      <View style={styles.actions}>
+        <Button label="Reset" onPress={reset} color={c.muted} border={c.line} />
+        <Button label="Solve" onPress={solve} color={c.muted} border={c.line} />
+        <Pressable
+          onPress={() => !done && launch(pieces, angle, power)}
+          style={[styles.launch, { backgroundColor: c.red, opacity: done ? 0.5 : 1 }]}
+        >
+          <Text style={styles.launchText}>Launch</Text>
+        </Pressable>
       </View>
     </View>
   );
 }
 
+function Button({ label, onPress, color, border }: { label: string; onPress: () => void; color: string; border: string }) {
+  return (
+    <Pressable onPress={onPress} style={[styles.ghost, { borderColor: border }]}>
+      <Text style={[styles.ghostText, { color }]}>{label}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
-  wrap: { padding: 16, gap: 16 },
-  body: { fontSize: 15, lineHeight: 21 },
-  card: { padding: 16, borderRadius: 10, borderWidth: 1.5, gap: 6 },
-  label: { fontSize: 13 },
-  result: { fontSize: 20, fontWeight: '700' },
+  wrap: { flex: 1, gap: 8 },
+  hint: { marginHorizontal: 14, marginTop: 6, fontSize: 13, minHeight: 18, fontFamily: FONTS.body },
+  stage: { flex: 1, paddingHorizontal: 10 },
+  actions: { flexDirection: 'row', gap: 10, paddingHorizontal: 14 },
+  ghost: { height: 46, paddingHorizontal: 20, borderRadius: 23, borderWidth: 1.5, justifyContent: 'center' },
+  ghostText: { fontSize: 15, fontFamily: FONTS.bodyMedium },
+  launch: { flex: 1, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
+  launchText: { color: '#fff', fontSize: 20, letterSpacing: 0.3, fontFamily: FONTS.condensedBold },
 });

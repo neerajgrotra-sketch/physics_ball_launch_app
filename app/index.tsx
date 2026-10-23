@@ -1,7 +1,7 @@
 import { Link } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LEVELS } from '../levels';
-import { useColors } from '../theme/colors';
+import { FONTS, useColors } from '../theme/colors';
 
 // Level select. Progress and locking come in build step 6.
 export default function LevelSelect() {
@@ -29,8 +29,8 @@ export default function LevelSelect() {
 const styles = StyleSheet.create({
   list: { padding: 16, gap: 10 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: 10, borderWidth: 1.5 },
-  num: { fontSize: 22, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  num: { fontSize: 22, fontFamily: FONTS.condensedBold, fontVariant: ['tabular-nums'] },
   text: { flex: 1, gap: 2 },
-  name: { fontSize: 18, fontWeight: '600' },
-  hint: { fontSize: 13 },
+  name: { fontSize: 18, fontFamily: FONTS.bodySemi },
+  hint: { fontSize: 13, fontFamily: FONTS.body },
 });

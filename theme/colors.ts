@@ -13,6 +13,15 @@ export const DARK: Palette = {
 
 export type Palette = typeof LIGHT;
 
+/** Font family names, as registered by useFonts in app/_layout.tsx. */
+export const FONTS = {
+  body: 'Barlow_400Regular',
+  bodyMedium: 'Barlow_500Medium',
+  bodySemi: 'Barlow_600SemiBold',
+  condensed: 'BarlowCondensed_600SemiBold',
+  condensedBold: 'BarlowCondensed_700Bold',
+} as const;
+
 /** Follows the system appearance setting. */
 export function useColors(): Palette {
   return useColorScheme() === 'dark' ? DARK : LIGHT;

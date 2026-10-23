@@ -4,5 +4,5 @@
     "strict": true,
     "types": ["node"]
   },
-  "include": ["app", "theme", "physics", "levels", "tools", "*.ts", ".expo/types/**/*.ts", "expo-env.d.ts"]
+  "include": ["app", "components", "theme", "physics", "levels", "tools", "*.ts", ".expo/types/**/*.ts", "expo-env.d.ts"]
 }

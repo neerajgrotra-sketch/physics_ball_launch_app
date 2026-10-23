@@ -1,9 +1,21 @@
+import { Barlow_400Regular } from '@expo-google-fonts/barlow/400Regular';
+import { Barlow_500Medium } from '@expo-google-fonts/barlow/500Medium';
+import { Barlow_600SemiBold } from '@expo-google-fonts/barlow/600SemiBold';
+import { BarlowCondensed_600SemiBold } from '@expo-google-fonts/barlow-condensed/600SemiBold';
+import { BarlowCondensed_700Bold } from '@expo-google-fonts/barlow-condensed/700Bold';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useColors } from '../theme/colors';
+import { FONTS, useColors } from '../theme/colors';
 
 export default function RootLayout() {
   const c = useColors();
+  const [fontsLoaded] = useFonts({
+    Barlow_400Regular, Barlow_500Medium, Barlow_600SemiBold,
+    BarlowCondensed_600SemiBold, BarlowCondensed_700Bold,
+  });
+  if (!fontsLoaded) return null;
+
   return (
     <>
       <StatusBar style="auto" />
@@ -11,6 +23,7 @@ export default function RootLayout() {
         screenOptions={{
           headerStyle: { backgroundColor: c.panel },
           headerTintColor: c.ink,
+          headerTitleStyle: { fontFamily: FONTS.condensedBold, fontSize: 22 },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: c.panel },
         }}

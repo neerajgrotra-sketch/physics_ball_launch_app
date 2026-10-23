@@ -18,7 +18,8 @@ levels/       one JSON file per level, plus index.ts listing them in play order
 tools/        design-levels.ts (level geometry source), verify-direct.ts (proof of no direct shot),
               find-solution.ts (finds the Solve answer), geometry.ts (legal piece placement), report.ts
 app/          Expo Router screens and components
-theme/        colour tokens from the prototype, light and dark
+components/   shared UI (board/ is the Skia game board)
+theme/        colour tokens and font names from the prototype, light and dark
 reference/    prototype.html, the behaviour and look to match
 ```
 
