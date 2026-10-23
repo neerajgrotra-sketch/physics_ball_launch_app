@@ -1,0 +1,40 @@
+{
+  "id": "01-first-bounce",
+  "name": "First bounce",
+  "glass": {
+    "x": 200,
+    "w": 40,
+    "h": 50
+  },
+  "fixed": [
+    [
+      180,
+      578,
+      224,
+      578
+    ],
+    [
+      180,
+      578,
+      180,
+      650
+    ]
+  ],
+  "pieces": [
+    {
+      "len": 90
+    }
+  ],
+  "hint": "Only your bars bounce. The glass opens to the right, so send the ball past it and bounce it back.",
+  "solution": {
+    "pieces": [
+      {
+        "x": 292,
+        "y": 502,
+        "deg": 50
+      }
+    ],
+    "angle": 45.5,
+    "power": 68.8
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "id": "04-crossfire",
+  "name": "Crossfire",
+  "glass": {
+    "x": 125,
+    "w": 30,
+    "h": 54
+  },
+  "fixed": [
+    [
+      110,
+      576,
+      144,
+      576
+    ],
+    [
+      110,
+      576,
+      110,
+      646
+    ],
+    [
+      200,
+      260,
+      200,
+      700
+    ],
+    [
+      250,
+      150,
+      400,
+      150
+    ]
+  ],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 70
+    }
+  ],
+  "hint": "Two bars to work with. The ceiling on the right is dead too.",
+  "solution": {
+    "pieces": [
+      {
+        "x": 174,
+        "y": 529,
+        "deg": 82
+      }
+    ],
+    "angle": 69.8,
+    "power": 29
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "id": "05-four-millimetres",
+  "name": "Four millimetres",
+  "glass": {
+    "x": 255,
+    "w": 21,
+    "h": 58,
+    "base": 440
+  },
+  "fixed": [
+    [
+      244.5,
+      318,
+      269.5,
+      318
+    ],
+    [
+      244.5,
+      318,
+      244.5,
+      382
+    ],
+    [
+      220,
+      442,
+      400,
+      442
+    ],
+    [
+      220,
+      442,
+      220,
+      700
+    ],
+    [
+      300,
+      110,
+      400,
+      110
+    ]
+  ],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 70
+    }
+  ],
+  "hint": "Barely wider than the ball. Small changes matter here.",
+  "solution": {
+    "pieces": [
+      {
+        "x": 294,
+        "y": 338,
+        "deg": 97
+      }
+    ],
+    "angle": 78.3,
+    "power": 72.2
+  }
+}

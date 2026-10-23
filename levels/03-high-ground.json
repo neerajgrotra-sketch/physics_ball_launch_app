@@ -1,0 +1,53 @@
+{
+  "id": "03-high-ground",
+  "name": "High ground",
+  "glass": {
+    "x": 285,
+    "w": 34,
+    "h": 50,
+    "base": 420
+  },
+  "fixed": [
+    [
+      268,
+      304,
+      306,
+      304
+    ],
+    [
+      268,
+      304,
+      268,
+      370
+    ],
+    [
+      245,
+      422,
+      400,
+      422
+    ],
+    [
+      245,
+      422,
+      245,
+      700
+    ]
+  ],
+  "pieces": [
+    {
+      "len": 90
+    }
+  ],
+  "hint": "The glass sits on a ledge. Anything grey stops the ball dead.",
+  "solution": {
+    "pieces": [
+      {
+        "x": 342,
+        "y": 299,
+        "deg": 86
+      }
+    ],
+    "angle": 72.3,
+    "power": 71
+  }
+}

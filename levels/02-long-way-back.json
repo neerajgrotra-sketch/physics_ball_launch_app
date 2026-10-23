@@ -1,0 +1,46 @@
+{
+  "id": "02-long-way-back",
+  "name": "Long way back",
+  "glass": {
+    "x": 110,
+    "w": 36,
+    "h": 52
+  },
+  "fixed": [
+    [
+      92,
+      578,
+      132,
+      578
+    ],
+    [
+      92,
+      578,
+      92,
+      648
+    ],
+    [
+      240,
+      430,
+      240,
+      700
+    ]
+  ],
+  "pieces": [
+    {
+      "len": 90
+    }
+  ],
+  "hint": "The post is dead. Find a way to bring the ball back from the right.",
+  "solution": {
+    "pieces": [
+      {
+        "x": 194,
+        "y": 512,
+        "deg": 105
+      }
+    ],
+    "angle": 83.4,
+    "power": 60.9
+  }
+}

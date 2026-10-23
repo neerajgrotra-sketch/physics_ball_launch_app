@@ -1,0 +1,111 @@
+# Bank Shot
+
+A bounce-puzzle game. The player launches a steel ball, choosing angle and power, and places a few bars
+on the board so the ball ricochets into a glass barely wider than itself. **Only the player's bars (and the
+glass itself) bounce.** The ground, the board edges and every grey hatched obstacle are dead: touching one
+ends the shot. Every level must be impossible without the bars. The last few launch paths stay
+on screen as fading ghost trails, so each try teaches the next.
+
+Target platform: iOS first, built with Expo (React Native) and @shopify/react-native-skia for the board.
+`reference/prototype.html` is the working browser prototype. It is the source of truth for feel,
+visuals and controls. Open it in a browser before building any screen.
+
+## Repo layout
+
+```
+physics/      pure TypeScript simulation. No UI imports, ever.
+levels/       one JSON file per level, plus index.ts listing them in play order
+tools/        design-levels.ts (level geometry source), verify-direct.ts (proof of no direct shot),
+              find-solution.ts (finds the Solve answer), geometry.ts (legal piece placement), report.ts
+app/          Expo Router screens and components (to build)
+reference/    prototype.html, the behaviour and look to match
+```
+
+## Rules that must not break
+
+1. **Physics stays pure.** `physics/` must not import React, Expo, Skia, or anything platform-specific.
+   No `Math.random`, `Date`, or `performance` inside it. The game, tests and solver all call the same code.
+2. **Fixed timestep.** The simulation steps at `DT = 1/240` s, independent of frame rate. The UI never
+   steps physics per frame. It calls `simulate()` once per launch, gets the full path, then plays the path
+   back at 120 points per second (`recordEvery = 2`).
+3. **Determinism is a feature.** The same level, pieces, angle and power must always give the same path.
+   Ghost trails and "so close" moments only mean something because of this. The determinism test guards it.
+4. **Every level needs the bars, and every level has a stored answer.**
+   - No direct shot: `findDirectShot()` tries every angle and power the UI can produce (0.1 steps,
+     about 900,000 launches) with no pieces placed. It must return null. The usual way to guarantee this
+     is a dead `hood()` over the glass so it only opens to the right. An unbounced ball always moves
+     right, so it can only get in after bouncing off a bar.
+   - Stored answer: each level JSON has a `solution` (piece positions in whole units, rotation in whole
+     degrees, angle and power on the 0.1 grid). The Solve button places those pieces, sets the values
+     and launches. Tests check that it is a legal placement and that it lands.
+   - Never hand-edit level JSON. Change geometry in `tools/design-levels.ts` and run it. It refuses to
+     write a level that has a direct shot, and it picks the most forgiving solution it can find.
+5. **Tunnelling.** At 240 Hz and max speed 1120 px/s the ball moves about 4.7 px per step, under its 8 px
+   radius. If max speed goes up or the radius goes down, add substeps so the per-step distance stays
+   under the radius. The "stays inside the world" test catches regressions.
+
+6. **Cross-engine determinism.** iOS runs Hermes, while the tools run on Node (V8). `Math.sin`/`Math.cos`
+   can differ in the last bit between engines. Stored solutions are chosen to be forgiving (neighbouring
+   0.1 inputs land too), which absorbs this. Still, add an on-device check that runs every level's solution
+   in a dev build.
+
+## Coordinates and units
+
+- The world is 400 × 720 logical units, y pointing down, ground at y = 700, launcher at (44, 672).
+  Scale the board uniformly to fit the screen. Never change world units to fit a device.
+- Angle is in degrees (0–90), adjustable in 0.1 steps. Power runs 0–100 and maps to 280–1120 px/s
+  through `speedFor()`.
+- A placed piece has a centre (x, y), rotation `deg` in whole degrees, and length `len`.
+
+## Gameplay behaviour to match the prototype
+
+- **Aim:** drag out from the launcher. Direction sets the angle and distance sets the power. The −/+
+  buttons beside each slider nudge by 0.1.
+- **Aim preview:** only the first 0.3 s of free flight is shown, with no bounce prediction. Bounces are
+  the puzzle, so never preview them.
+- **Pieces:** tap a tray chip to place a piece, drag it to move, drag the end handle to rotate, and tap
+  the chip again while it's selected to remove it. Pieces can't be edited mid-flight.
+- **Trails:** keep the last 4 launches, oldest faintest. A successful trail is drawn in red.
+- **Dead hits:** when a shot hits a dead surface, mark the spot with a small red ×.
+- **Win:** the ball has to settle inside the glass for 0.35 s. Show "In the glass in N tries", then
+  unlock the next level and save progress locally.
+- **Solve:** places the stored solution's pieces (unused pieces go back to the tray), sets angle and power,
+  and launches. The win card then reads "Here's one way in", with "Try it yourself" (resets the level) and
+  "Next level". The card sits at the top of the board so the solution path stays visible.
+
+## Visual identity
+
+The look is engineering graph paper in light mode and a blueprint in dark mode, with
+Barlow and Barlow Condensed type. Use the colour tokens from `reference/prototype.html` (`--paper`,
+`--grid`, `--ink`, `--pencil`, `--red`, `--muted`, `--steel`) and follow the system appearance setting.
+
+## Commands
+
+- `npx vitest run`: physics and level tests. Run them before every commit.
+- `npx tsx tools/report.ts`: full no-direct-shot proof plus how forgiving each solution is (about 1 min per level).
+- `npx tsx tools/design-levels.ts [id-prefix]`: regenerate level JSON after changing geometry.
+- `npx tsc --noEmit`: typecheck.
+
+Use Vitest for `physics/` and `tools/`. These modules are pure TypeScript, so they don't need jest-expo.
+The unit tests run a coarse 0.5-step version of the no-direct-shot proof. Run `report.ts` before merging any
+level or physics change.
+
+## Build order
+
+1. Scaffold the Expo app (TypeScript, Expo Router) around the existing `physics/`, `levels/` and `tools/`.
+   Get `vitest` and `tsc` passing before any UI work.
+2. Board rendering in Skia: grid, ground, fixed segments, glass, launcher, ball, trails.
+3. Launch and path playback with Reanimated, driven by `useFrameCallback`.
+4. Aim gesture, sliders, nudge buttons.
+5. Piece tray and placement gestures (move and rotate) with react-native-gesture-handler.
+6. Win flow, level select, progress saved with AsyncStorage.
+7. Haptics on bounce and on landing (expo-haptics), plus sound.
+
+## Ideas parked for later
+
+- Star rating per level, with par set from solver data.
+- Make Solve cost something, such as only the first piece's position, then the full answer.
+- Levels that need both bars. Extend `findSolution` to reject answers that use fewer pieces than required.
+- New piece types: bouncy pad (restitution > 1), short wedge, moving bar.
+- Daily puzzle with a shareable result.
+- A level editor that runs the solver live while you design.
