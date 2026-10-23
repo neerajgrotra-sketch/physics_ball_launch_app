@@ -5,10 +5,12 @@ import {
   BALL_RADIUS, LAUNCHER, WORLD, glassBox, pieceEnds, speedFor,
   type Level, type PlacedPiece, type Vec,
 } from '../../physics';
-import { useColors } from '../../theme/colors';
+import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
+import { useColors, type Palette } from '../../theme/colors';
 import {
   crossPath, deadPaths, gridPaths, handleArcPath, launcherPath, linePath, polyPath,
 } from './paths';
+import type { Flight } from './usePlayback';
 
 const { width: W, height: H, ground: GROUND } = WORLD;
 const R = BALL_RADIUS;
@@ -28,8 +30,8 @@ export interface BoardProps {
   angle: number;
   power: number;
   tries: number;
-  /** The launch being played back, and how far through its path it is. */
-  flight?: { path: Vec[]; idx: number } | null;
+  /** The launch being played back (see usePlayback). */
+  flight?: Flight | null;
   /** The level is won: the ball rests where the last trail ended. */
   done?: boolean;
 }
@@ -53,6 +55,7 @@ export function Board(props: BoardProps) {
   const dead = useMemo(() => deadPaths(level.fixed), [level]);
   const trailPaths = useMemo(() => trails.map((t) => polyPath(t.path)), [trails]);
   const launcher = useMemo(() => launcherPath(L.x, L.y), []);
+  const flightPath = useMemo(() => (flight ? polyPath(flight.path) : null), [flight?.path]);
 
   const scale = box.w && box.h ? Math.min(box.w / W, box.h / H) : 0;
   const onLayout = (e: LayoutChangeEvent) => {
@@ -75,9 +78,9 @@ export function Board(props: BoardProps) {
     }
   }
 
+  // At rest the ball sits on the launcher, or where it settled after a win. In flight it moves on the UI thread.
   let ball: Vec = [L.x, L.y];
-  if (flight) ball = flight.path[flight.idx];
-  else if (done && last) ball = last.path[last.path.length - 1];
+  if (done && last) ball = last.path[last.path.length - 1];
 
   const sel = selected != null ? pieces[selected] : null;
   const selEnds = sel ? pieceEnds(sel) : null;
@@ -158,17 +161,16 @@ export function Board(props: BoardProps) {
             ))}
 
             {/* current flight */}
-            {flight && (
+            {flight && flightPath && (
               <Path
-                path={polyPath(flight.path, flight.idx + 1)}
+                path={flightPath}
+                end={flight.end}
                 color={c.pencil} style="stroke" strokeWidth={2} strokeCap="round" strokeJoin="round" opacity={0.95}
               />
             )}
 
             {/* ball */}
-            <Circle cx={ball[0]} cy={ball[1]} r={R} color={c.steel} />
-            <Circle cx={ball[0]} cy={ball[1]} r={R} color={c.ink} style="stroke" strokeWidth={1.2} />
-            <Circle cx={ball[0] - 2.6} cy={ball[1] - 2.6} r={2.4} color="rgba(255,255,255,0.75)" />
+            {flight ? <FlyingBall x={flight.x} y={flight.y} c={c} /> : <Ball x={ball[0]} y={ball[1]} c={c} />}
 
             {/* HUD */}
             {hudFont && (
@@ -181,6 +183,29 @@ export function Board(props: BoardProps) {
         </Canvas>
       )}
     </View>
+  );
+}
+
+function Ball({ x, y, c }: { x: number; y: number; c: Palette }) {
+  return (
+    <Group>
+      <Circle cx={x} cy={y} r={R} color={c.steel} />
+      <Circle cx={x} cy={y} r={R} color={c.ink} style="stroke" strokeWidth={1.2} />
+      <Circle cx={x - 2.6} cy={y - 2.6} r={2.4} color="rgba(255,255,255,0.75)" />
+    </Group>
+  );
+}
+
+/** The ball during playback: its position comes from shared values, so moving it never re-renders React. */
+function FlyingBall({ x, y, c }: { x: SharedValue<number>; y: SharedValue<number>; c: Palette }) {
+  const hx = useDerivedValue(() => x.value - 2.6);
+  const hy = useDerivedValue(() => y.value - 2.6);
+  return (
+    <Group>
+      <Circle cx={x} cy={y} r={R} color={c.steel} />
+      <Circle cx={x} cy={y} r={R} color={c.ink} style="stroke" strokeWidth={1.2} />
+      <Circle cx={hx} cy={hy} r={2.4} color="rgba(255,255,255,0.75)" />
+    </Group>
   );
 }
 

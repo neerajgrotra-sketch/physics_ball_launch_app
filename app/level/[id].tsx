@@ -3,14 +3,15 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type Trail } from '../../components/board/Board';
+import { usePlayback } from '../../components/board/usePlayback';
 import { LEVELS } from '../../levels';
 import { buildWorld, simulate, solutionPieces, type PlacedPiece } from '../../physics';
 import { FONTS, useColors } from '../../theme/colors';
 
 const MAX_TRAILS = 4;
 
-// Level screen. Launch and Solve finish instantly for now: animated playback comes in build step 3,
-// aiming in step 4 and piece placement in step 5.
+// Level screen. Each launch runs simulate() once and plays the path back.
+// Aiming comes in build step 4 and piece placement in step 5.
 export default function LevelScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useColors();
@@ -23,30 +24,43 @@ export default function LevelScreen() {
   const [power, setPower] = useState(45);
   const [tries, setTries] = useState(0);
   const [done, setDone] = useState(false);
+  const { flight, flying, play } = usePlayback();
 
   if (!level) {
     return <Text style={[styles.hint, { color: c.ink }]}>Level not found.</Text>;
   }
 
-  const launch = (placed: PlacedPiece[], a: number, p: number) => {
+  // The trail and the win only land once playback reaches the end of the path, as in the prototype.
+  const fire = (placed: PlacedPiece[], a: number, p: number) => {
     const res = simulate(buildWorld(level, placed), a, p);
-    setTrails((ts) => [...ts, { path: res.path, ok: res.success }].slice(-MAX_TRAILS));
     setTries((n) => n + 1);
-    setDone(res.success);
+    play(res.path, () => {
+      setTrails((ts) => [...ts, { path: res.path, ok: res.success }].slice(-MAX_TRAILS));
+      if (res.success) setDone(true);
+    });
+  };
+
+  const launch = () => {
+    if (flying || done) return;
+    fire(pieces, angle, power);
   };
 
   const solve = () => {
     const s = level.solution;
-    if (!s) return;
+    if (flying || !s) return;
     const placed = solutionPieces(level);
     setPieces(placed);
     setAngle(s.angle);
     setPower(s.power);
-    if (done) setTrails([]);
-    launch(placed, s.angle, s.power);
+    if (done) {
+      setTrails([]);
+      setDone(false);
+    }
+    fire(placed, s.angle, s.power);
   };
 
   const reset = () => {
+    if (flying) return;
     setPieces([]);
     setTrails([]);
     setTries(0);
@@ -65,14 +79,16 @@ export default function LevelScreen() {
           angle={angle}
           power={power}
           tries={tries}
+          flight={flight}
           done={done}
         />
       </View>
-      <View style={styles.actions}>
+      <View style={[styles.actions, flying && styles.busy]}>
         <Button label="Reset" onPress={reset} color={c.muted} border={c.line} />
         <Button label="Solve" onPress={solve} color={c.muted} border={c.line} />
         <Pressable
-          onPress={() => !done && launch(pieces, angle, power)}
+          onPress={launch}
+          disabled={flying || done}
           style={[styles.launch, { backgroundColor: c.red, opacity: done ? 0.5 : 1 }]}
         >
           <Text style={styles.launchText}>Launch</Text>
@@ -95,6 +111,7 @@ const styles = StyleSheet.create({
   hint: { marginHorizontal: 14, marginTop: 6, fontSize: 13, minHeight: 18, fontFamily: FONTS.body },
   stage: { flex: 1, paddingHorizontal: 10 },
   actions: { flexDirection: 'row', gap: 10, paddingHorizontal: 14 },
+  busy: { opacity: 0.5 },
   ghost: { height: 46, paddingHorizontal: 20, borderRadius: 23, borderWidth: 1.5, justifyContent: 'center' },
   ghostText: { fontSize: 15, fontFamily: FONTS.bodyMedium },
   launch: { flex: 1, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
