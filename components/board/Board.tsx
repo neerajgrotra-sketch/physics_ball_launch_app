@@ -1,6 +1,6 @@
 import { Canvas, Circle, Group, Path, Rect, Text, useFont } from '@shopify/react-native-skia';
-import { useMemo, useRef, useState } from 'react';
-import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import {
   BALL_RADIUS, LAUNCHER, WORLD, glassBox, pieceEnds, speedFor,
@@ -63,6 +63,17 @@ export function Board(props: BoardProps) {
   const flightPath = useMemo(() => (flight ? polyPath(flight.path) : null), [flight?.path]);
 
   const scale = box.w && box.h ? Math.min(box.w / W, box.h / H) : 0;
+
+  // On web, Safari can draw Skia's first frame before its WebGL surface is ready, and Skia only draws
+  // again on the next update, so the board stayed blank until the first touch. Re-render a couple of
+  // times just after the board appears so a frame lands once the surface exists.
+  const [, setRedraw] = useState(0);
+  const shown = scale > 0;
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !shown) return;
+    const timers = [50, 250, 750].map((ms) => setTimeout(() => setRedraw((n) => n + 1), ms));
+    return () => timers.forEach(clearTimeout);
+  }, [shown]);
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
     setBox({ w: width, h: height });

@@ -5,4 +5,7 @@ import '@expo/metro-runtime';
 import { LoadSkiaWeb } from '@shopify/react-native-skia/lib/module/web';
 
 // A plain require (not import()) keeps the app in the same bundle while still deferring its evaluation.
-LoadSkiaWeb({ locateFile: (file) => `/${file}` }).then(() => require('expo-router/entry'));
+// Failures go to the on-screen error box in public/index.html, since phones have no console to read.
+LoadSkiaWeb({ locateFile: (file) => `/${file}` })
+  .then(() => require('expo-router/entry'))
+  .catch((e) => globalThis.__bankShotError?.(e));

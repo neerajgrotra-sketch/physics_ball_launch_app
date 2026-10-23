@@ -6,18 +6,21 @@ import { BarlowCondensed_700Bold } from '@expo-google-fonts/barlow-condensed/700
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ProgressProvider } from '../components/progress/ProgressProvider';
 import { FONTS, useColors } from '../theme/colors';
 
 export default function RootLayout() {
   const c = useColors();
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Barlow_400Regular, Barlow_500Medium, Barlow_600SemiBold,
     BarlowCondensed_600SemiBold, BarlowCondensed_700Bold,
   });
-  if (!fontsLoaded) return null;
+  // On web the faces are registered by now and swap in when they arrive, so don't wait: Safari's font
+  // check can hang and time out even after the fonts load, which left the page blank. Elsewhere wait,
+  // but never get stuck on a font error.
+  if (!fontsLoaded && !fontError && Platform.OS !== 'web') return null;
 
   return (
     <GestureHandlerRootView style={[styles.root, { backgroundColor: c.panel }]}>

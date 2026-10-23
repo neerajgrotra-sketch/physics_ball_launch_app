@@ -43,11 +43,33 @@
       #root { display: flex; height: 100%; flex: 1; }
       /* The board handles every touch itself (aim, move, rotate). */
       canvas { touch-action: none; }
+
+      /* Shown until the app replaces it (the game engine is ~10 MB, so this can take a few seconds). */
+      #boot { margin: auto; text-align: center; font: 600 17px -apple-system, system-ui, sans-serif; color: #78837d; }
+      #boot b { display: block; font-size: 26px; color: #2c3133; margin-bottom: 6px; }
+      @media (prefers-color-scheme: dark) { #boot { color: #8fa6c4; } #boot b { color: #e6edf6; } }
+      /* Any startup error is printed on screen, so a phone without dev tools can still say what broke. */
+      #boot-error { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom));
+        padding: 12px; border-radius: 10px; background: #b5352a; color: #fff; font: 13px/1.4 ui-monospace, Menlo, monospace;
+        white-space: pre-wrap; word-break: break-word; max-height: 50vh; overflow: auto; z-index: 9999;
+        -webkit-user-select: text; user-select: text; }
     </style>
+    <script>
+      (function () {
+        function show(msg) {
+          var box = document.getElementById('boot-error');
+          if (!box) { box = document.createElement('div'); box.id = 'boot-error'; document.body.appendChild(box); }
+          box.textContent = 'Bank Shot hit an error:\n' + msg + '\n\n' + navigator.userAgent;
+        }
+        window.__bankShotError = function (e) { show((e && (e.stack || e.message)) || String(e)); };
+        window.addEventListener('error', function (e) { show((e.error && e.error.stack) || e.message || 'Script failed to load: ' + (e.target && e.target.src)); }, true);
+        window.addEventListener('unhandledrejection', function (e) { window.__bankShotError(e.reason); });
+      })();
+    </script>
   </head>
 
   <body>
     <noscript>You need to enable JavaScript to play Bank Shot.</noscript>
-    <div id="root"></div>
+    <div id="root"><div id="boot"><b>Bank Shot</b>Loading…</div></div>
   </body>
 </html>
