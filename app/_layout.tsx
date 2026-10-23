@@ -6,6 +6,7 @@ import { BarlowCondensed_700Bold } from '@expo-google-fonts/barlow-condensed/700
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { FONTS, useColors } from '../theme/colors';
 
 export default function RootLayout() {
@@ -17,7 +18,7 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="auto" />
       <Stack
         screenOptions={{
@@ -31,6 +32,6 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ title: 'Bank Shot' }} />
         <Stack.Screen name="level/[id]" options={{ title: '' }} />
       </Stack>
-    </>
+    </GestureHandlerRootView>
   );
 }

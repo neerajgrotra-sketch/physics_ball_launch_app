@@ -1,6 +1,7 @@
 import { Canvas, Circle, Group, Path, Rect, Text, useFont } from '@shopify/react-native-skia';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import {
   BALL_RADIUS, LAUNCHER, WORLD, glassBox, pieceEnds, speedFor,
   type Level, type PlacedPiece, type Vec,
@@ -34,7 +35,11 @@ export interface BoardProps {
   flight?: Flight | null;
   /** The level is won: the ball rests where the last trail ended. */
   done?: boolean;
+  /** Touches on the board, in world units. One drag is a 'down', any number of 'move's, then an 'up'. */
+  onTouch?: (phase: TouchPhase, p: { x: number; y: number }) => void;
 }
+
+export type TouchPhase = 'down' | 'move' | 'up';
 
 const condensed600 = require('@expo-google-fonts/barlow-condensed/600SemiBold/BarlowCondensed_600SemiBold.ttf');
 const condensed500 = require('@expo-google-fonts/barlow-condensed/500Medium/BarlowCondensed_500Medium.ttf');
@@ -44,7 +49,7 @@ const condensed500 = require('@expo-google-fonts/barlow-condensed/500Medium/Barl
  * Pure rendering: everything it shows comes from props. Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, selected = null, trails, angle, power, tries, flight = null, done = false } = props;
+  const { level, pieces, selected = null, trails, angle, power, tries, flight = null, done = false, onTouch } = props;
   const c = useColors();
   const [box, setBox] = useState({ w: 0, h: 0 });
   const hudFont = useFont(condensed600, 15);
@@ -62,6 +67,17 @@ export function Board(props: BoardProps) {
     const { width, height } = e.nativeEvent.layout;
     setBox({ w: width, h: height });
   };
+
+  // Touches are tracked from the moment a finger lands (minDistance 0), like the prototype's pointer events.
+  const lastTouch = useRef({ x: 0, y: 0 });
+  const toWorld = (x: number, y: number) => (lastTouch.current = { x: x / scale, y: y / scale });
+  const pan = usePanGesture({
+    minDistance: 0,
+    runOnJS: true,
+    onBegin: (e) => onTouch?.('down', toWorld(e.x, e.y)),
+    onUpdate: (e) => onTouch?.('move', toWorld(e.x, e.y)),
+    onFinalize: () => onTouch?.('up', lastTouch.current),
+  });
 
   const g = glassBox(level.glass);
   const last = trails[trails.length - 1];
@@ -90,97 +106,101 @@ export function Board(props: BoardProps) {
   return (
     <View style={styles.fill} onLayout={onLayout}>
       {scale > 0 && (
-        <Canvas style={{ width: W * scale, height: H * scale }}>
-          <Group transform={[{ scale }]}>
-            {/* paper and grid */}
-            <Rect x={0} y={0} width={W} height={H} color={c.paper} />
-            <Path path={grid.fine} color={c.grid} style="stroke" strokeWidth={0.6} />
-            <Path path={grid.major} color={c.grid} style="stroke" strokeWidth={1.1} />
+        <GestureDetector gesture={pan}>
+          <View style={[styles.board, { width: W * scale, height: H * scale, outlineColor: c.line }]}>
+            <Canvas style={{ width: W * scale, height: H * scale }}>
+              <Group transform={[{ scale }]}>
+                {/* paper and grid */}
+                <Rect x={0} y={0} width={W} height={H} color={c.paper} />
+                <Path path={grid.fine} color={c.grid} style="stroke" strokeWidth={0.6} />
+                <Path path={grid.major} color={c.grid} style="stroke" strokeWidth={1.1} />
 
-            {/* ghost trails, oldest faintest */}
-            {trails.map((t, i) => (
-              <Path
-                key={i}
-                path={trailPaths[i]}
-                color={t.ok ? c.red : c.pencil}
-                style="stroke"
-                strokeWidth={1.4}
-                strokeCap="round"
-                strokeJoin="round"
-                opacity={0.16 + 0.14 * (i + 4 - trails.length)}
-              />
-            ))}
+                {/* ghost trails, oldest faintest */}
+                {trails.map((t, i) => (
+                  <Path
+                    key={i}
+                    path={trailPaths[i]}
+                    color={t.ok ? c.red : c.pencil}
+                    style="stroke"
+                    strokeWidth={1.4}
+                    strokeCap="round"
+                    strokeJoin="round"
+                    opacity={0.16 + 0.14 * (i + 4 - trails.length)}
+                  />
+                ))}
 
-            {/* dead surfaces: board edge, ground, fixed obstacles */}
-            <Rect x={1.5} y={1.5} width={W - 3} height={GROUND - 1.5} color={c.muted} style="stroke" strokeWidth={3} />
-            <Path path={linePath(0, GROUND, W, GROUND)} color={c.muted} style="stroke" strokeWidth={4} strokeCap="round" />
-            <Path path={dead.bars} color={c.muted} style="stroke" strokeWidth={6} strokeCap="round" />
-            <Path path={dead.hatch} color={c.paper} style="stroke" strokeWidth={1.4} strokeCap="round" />
+                {/* dead surfaces: board edge, ground, fixed obstacles */}
+                <Rect x={1.5} y={1.5} width={W - 3} height={GROUND - 1.5} color={c.muted} style="stroke" strokeWidth={3} />
+                <Path path={linePath(0, GROUND, W, GROUND)} color={c.muted} style="stroke" strokeWidth={4} strokeCap="round" />
+                <Path path={dead.bars} color={c.muted} style="stroke" strokeWidth={6} strokeCap="round" />
+                <Path path={dead.hatch} color={c.paper} style="stroke" strokeWidth={1.4} strokeCap="round" />
 
-            {/* where the last shot died */}
-            {deadEnd && (
-              <Path path={crossPath(deadEnd[0], deadEnd[1])} color={c.red} style="stroke" strokeWidth={2} strokeCap="round" />
-            )}
+                {/* where the last shot died */}
+                {deadEnd && (
+                  <Path path={crossPath(deadEnd[0], deadEnd[1])} color={c.red} style="stroke" strokeWidth={2} strokeCap="round" />
+                )}
 
-            {/* glass */}
-            <Rect x={g.l} y={g.rim} width={g.r - g.l} height={g.base - g.rim} color={c.red} opacity={0.1} />
-            <Path path={linePath(g.l, g.rim, g.l, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
-            <Path path={linePath(g.r, g.rim, g.r, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
-            <Path path={linePath(g.l - 8, g.base, g.r + 8, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
+                {/* glass */}
+                <Rect x={g.l} y={g.rim} width={g.r - g.l} height={g.base - g.rim} color={c.red} opacity={0.1} />
+                <Path path={linePath(g.l, g.rim, g.l, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
+                <Path path={linePath(g.r, g.rim, g.r, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
+                <Path path={linePath(g.l - 8, g.base, g.r + 8, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
 
-            {/* player's pieces */}
-            {pieces.map((p, i) => {
-              const [x1, y1, x2, y2] = pieceEnds(p);
-              return (
-                <Path key={i} path={linePath(x1, y1, x2, y2)} color={c.pencil} style="stroke" strokeWidth={6} strokeCap="round" />
-              );
-            })}
-            {sel && selEnds && (
-              <Group>
+                {/* player's pieces */}
+                {pieces.map((p, i) => {
+                  const [x1, y1, x2, y2] = pieceEnds(p);
+                  return (
+                    <Path key={i} path={linePath(x1, y1, x2, y2)} color={c.pencil} style="stroke" strokeWidth={6} strokeCap="round" />
+                  );
+                })}
+                {sel && selEnds && (
+                  <Group>
+                    <Path
+                      path={linePath(selEnds[0], selEnds[1], selEnds[2], selEnds[3])}
+                      color={c.pencil} style="stroke" strokeWidth={22} strokeCap="round" opacity={0.25}
+                    />
+                    <Circle cx={selEnds[2]} cy={selEnds[3]} r={11} color={c.paper} />
+                    <Circle cx={selEnds[2]} cy={selEnds[3]} r={11} color={c.pencil} style="stroke" strokeWidth={2.5} />
+                    <Path path={handleArcPath(selEnds[2], selEnds[3])} color={c.pencil} style="stroke" strokeWidth={2.5} strokeCap="round" />
+                    {labelFont && (
+                      <Text x={sel.x - selLabelW / 2} y={sel.y - 16} text={selLabel} font={labelFont} color={c.pencil} />
+                    )}
+                  </Group>
+                )}
+
+                {/* launcher */}
+                <Path path={launcher} color={c.muted} />
                 <Path
-                  path={linePath(selEnds[0], selEnds[1], selEnds[2], selEnds[3])}
-                  color={c.pencil} style="stroke" strokeWidth={22} strokeCap="round" opacity={0.25}
+                  path={linePath(L.x, L.y, L.x + Math.cos(ang) * 26, L.y - Math.sin(ang) * 26)}
+                  color={c.ink} style="stroke" strokeWidth={6} strokeCap="round"
                 />
-                <Circle cx={selEnds[2]} cy={selEnds[3]} r={11} color={c.paper} />
-                <Circle cx={selEnds[2]} cy={selEnds[3]} r={11} color={c.pencil} style="stroke" strokeWidth={2.5} />
-                <Path path={handleArcPath(selEnds[2], selEnds[3])} color={c.pencil} style="stroke" strokeWidth={2.5} strokeCap="round" />
-                {labelFont && (
-                  <Text x={sel.x - selLabelW / 2} y={sel.y - 16} text={selLabel} font={labelFont} color={c.pencil} />
+                {aimDots.map((d, i) => (
+                  <Circle key={i} cx={d.x} cy={d.y} r={2} color={c.ink} opacity={d.a} />
+                ))}
+
+                {/* current flight */}
+                {flight && flightPath && (
+                  <Path
+                    path={flightPath}
+                    end={flight.end}
+                    color={c.pencil} style="stroke" strokeWidth={2} strokeCap="round" strokeJoin="round" opacity={0.95}
+                  />
+                )}
+
+                {/* ball */}
+                {flight ? <FlyingBall x={flight.x} y={flight.y} c={c} /> : <Ball x={ball[0]} y={ball[1]} c={c} />}
+
+                {/* HUD */}
+                {hudFont && (
+                  <Text x={12} y={24} text={`Try ${String(tries).padStart(2, '0')}`} font={hudFont} color={c.ink} />
+                )}
+                {subFont && (
+                  <Text x={12} y={42} text={`${angle.toFixed(1)}°   power ${power.toFixed(1)}`} font={subFont} color={c.muted} />
                 )}
               </Group>
-            )}
-
-            {/* launcher */}
-            <Path path={launcher} color={c.muted} />
-            <Path
-              path={linePath(L.x, L.y, L.x + Math.cos(ang) * 26, L.y - Math.sin(ang) * 26)}
-              color={c.ink} style="stroke" strokeWidth={6} strokeCap="round"
-            />
-            {aimDots.map((d, i) => (
-              <Circle key={i} cx={d.x} cy={d.y} r={2} color={c.ink} opacity={d.a} />
-            ))}
-
-            {/* current flight */}
-            {flight && flightPath && (
-              <Path
-                path={flightPath}
-                end={flight.end}
-                color={c.pencil} style="stroke" strokeWidth={2} strokeCap="round" strokeJoin="round" opacity={0.95}
-              />
-            )}
-
-            {/* ball */}
-            {flight ? <FlyingBall x={flight.x} y={flight.y} c={c} /> : <Ball x={ball[0]} y={ball[1]} c={c} />}
-
-            {/* HUD */}
-            {hudFont && (
-              <Text x={12} y={24} text={`Try ${String(tries).padStart(2, '0')}`} font={hudFont} color={c.ink} />
-            )}
-            {subFont && (
-              <Text x={12} y={42} text={`${angle.toFixed(1)}°   power ${power.toFixed(1)}`} font={subFont} color={c.muted} />
-            )}
-          </Group>
-        </Canvas>
+            </Canvas>
+          </View>
+        </GestureDetector>
       )}
     </View>
   );
@@ -211,4 +231,6 @@ function FlyingBall({ x, y, c }: { x: SharedValue<number>; y: SharedValue<number
 
 const styles = StyleSheet.create({
   fill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  // The prototype's canvas: rounded corners and a 1.5px ring in the line colour.
+  board: { borderRadius: 6, overflow: 'hidden', outlineWidth: 1.5, outlineStyle: 'solid' },
 });
