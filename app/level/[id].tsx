@@ -11,8 +11,8 @@ import { useFeedback } from '../../components/feedback/useFeedback';
 import { useProgress } from '../../components/progress/ProgressProvider';
 import { aimAt } from '../../game/aim';
 import {
-  boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle, solutionSlots,
-  tapChip, type Drag, type Slot,
+  boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
+  shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type Slot,
 } from '../../game/pieces';
 import { skipNotice, winText } from '../../game/progress';
 import { LEVELS } from '../../levels';
@@ -70,6 +70,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   const { flight, flying, play } = usePlayback();
   const feedback = useFeedback();
   const drag = useRef<Drag | null>(null);
+  const lastLegal = useRef<Slot[]>([]);
 
   // The trail and the win only land once playback reaches the end of the path, as in the prototype.
   // Bounces tap and tink as the ball reaches them; the end of the shot chimes or thumps.
@@ -97,6 +98,11 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
 
   const launch = () => {
     if (flying || done) return;
+    // Backstop: drags snap back and rotation skips clipping angles, so this shouldn't trigger.
+    if (!slotsLegal(level, slots)) {
+      setNotice('A bar is touching the glass, the launcher or another bar. Move it first.');
+      return;
+    }
     feedback.prime();
     setSelected(null);
     fire(boardPieces(slots), boardNumbers(slots), angle, power);
@@ -132,21 +138,35 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
 
   // One finger on the board: rotate the selected piece by its end handle, move a piece, or aim from the
   // launcher. Pieces can't be edited mid-flight, and there's no aiming once the level is won.
+  // A bar dragged somewhere it isn't allowed (game/placement) shows red, and snaps back to the last
+  // allowed spot when the finger lifts.
   const onTouch = (phase: TouchPhase, p: { x: number; y: number }) => {
     if (phase === 'down') {
       drag.current = null;
       if (flying) return;
       const r = pressAt(slots, selected, p, !done);
       drag.current = r.drag;
+      lastLegal.current = slots;
       setSelected(r.selected);
       if (r.drag?.mode === 'aim') aimTo(p);
     } else if (phase === 'move') {
       const d = drag.current;
       if (!d) return;
       if (d.mode === 'aim') aimTo(p);
-      else setSlots((s) => dragTo(s, d, p));
+      else setSlots((s) => {
+        const next = dragTo(s, d, p);
+        if (slotsLegal(level, next)) lastLegal.current = next;
+        return next;
+      });
     } else {
+      const d = drag.current;
       drag.current = null;
+      if (d && d.mode !== 'aim') {
+        setSlots((s) => (slotsLegal(level, s) ? s : lastLegal.current));
+        // Safari can drop the board's next frame, leaving the bar drawn where it was let go. A second,
+        // content-identical update on the next frame makes Skia draw the snapped-back position.
+        requestAnimationFrame(() => setSlots((s) => s.slice()));
+      }
     }
   };
 
@@ -158,7 +178,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
 
   const onChip = (k: number) => {
     if (flying) return;
-    const r = tapChip(slots, selected, k);
+    const r = tapChip(slots, selected, k, level);
     setSlots(r.slots);
     setSelected(r.selected);
   };
@@ -186,6 +206,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
           level={level}
           pieces={boardPieces(slots)}
           numbers={boardNumbers(slots)}
+          illegal={illegalBars(level, slots)}
           selected={boardIndex(slots, selected)}
           trails={trails}
           angle={angle}
@@ -209,8 +230,8 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
           <RotateControls
             bar={selectedBar + 1}
             angle={shownAngle(slots[selectedBar].deg)}
-            onAngle={(a) => rotate((s) => rotateTo(s, selectedBar, a))}
-            onNudge={(by) => rotate((s) => rotateBy(s, selectedBar, by))}
+            onAngle={(a) => rotate((s) => rotateToLegal(level, s, selectedBar, a))}
+            onNudge={(by) => rotate((s) => rotateLegal(level, s, selectedBar, by))}
             onDone={() => setSelected(null)}
             onRemove={() => { if (!flying) { const r = removeBar(slots, selectedBar); setSlots(r.slots); setSelected(r.selected); } }}
             disabled={flying}

@@ -1,4 +1,4 @@
-import { Canvas, Circle, Group, Path, Rect, Text, useFont } from '@shopify/react-native-skia';
+import { Canvas, Circle, Group, Path, Rect, Text, useCanvasRef, useFont } from '@shopify/react-native-skia';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
@@ -28,6 +28,8 @@ export interface BoardProps {
   selected?: number | null;
   /** Each on-board piece's bar number (as on its tray chip), drawn beside it. */
   numbers?: number[];
+  /** Per on-board piece, whether it's somewhere it isn't allowed (game/placement): drawn red. */
+  illegal?: boolean[];
   /** Last few launches, oldest first. */
   trails: Trail[];
   angle: number;
@@ -51,7 +53,7 @@ const condensed500 = require('@expo-google-fonts/barlow-condensed/500Medium/Barl
  * Pure rendering: everything it shows comes from props. Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], selected = null, trails, angle, power, tries, flight = null, done = false, onTouch } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, trails, angle, power, tries, flight = null, done = false, onTouch } = props;
   const c = useColors();
   const [box, setBox] = useState({ w: 0, h: 0 });
   const hudFont = useFont(condensed600, 15);
@@ -67,15 +69,15 @@ export function Board(props: BoardProps) {
   const scale = box.w && box.h ? Math.min(box.w / W, box.h / H) : 0;
 
   // On web, Safari can draw Skia's first frame before its WebGL surface is ready, and Skia only draws
-  // again on the next update, so the board stayed blank until the first touch. Re-render a couple of
-  // times just after the board appears so a frame lands once the surface exists.
-  const [, setRedraw] = useState(0);
+  // again on its next update, so the board stayed blank until the first touch. Ask for a few more frames
+  // just after the board appears.
+  const canvasRef = useCanvasRef();
   const shown = scale > 0;
   useEffect(() => {
     if (Platform.OS !== 'web' || !shown) return;
-    const timers = [50, 250, 750].map((ms) => setTimeout(() => setRedraw((n) => n + 1), ms));
+    const timers = [50, 250, 750].map((ms) => setTimeout(() => canvasRef.current?.redraw(), ms));
     return () => timers.forEach(clearTimeout);
-  }, [shown]);
+  }, [shown, canvasRef]);
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
     setBox({ w: width, h: height });
@@ -120,6 +122,7 @@ export function Board(props: BoardProps) {
   if (done && last) ball = last.path[last.path.length - 1];
 
   const sel = selected != null ? pieces[selected] : null;
+  const selColor = selected != null && illegal[selected] ? c.red : c.pencil;
   const selEnds = sel ? pieceEnds(sel) : null;
   // Each bar gets its number beside it (above it), and the selected one its rotation too: "2 · 137°".
   const labels = labelFont ? pieces.map((p, i) => {
@@ -137,7 +140,7 @@ export function Board(props: BoardProps) {
       {scale > 0 && (
         <GestureDetector gesture={pan}>
           <View style={[styles.board, { width: W * scale, height: H * scale, outlineColor: c.line }]}>
-            <Canvas style={{ width: W * scale, height: H * scale }}>
+            <Canvas ref={canvasRef} style={{ width: W * scale, height: H * scale }}>
               <Group transform={[{ scale }]}>
                 {/* paper and grid */}
                 <Rect x={0} y={0} width={W} height={H} color={c.paper} />
@@ -179,22 +182,22 @@ export function Board(props: BoardProps) {
                 {pieces.map((p, i) => {
                   const [x1, y1, x2, y2] = pieceEnds(p);
                   return (
-                    <Path key={i} path={linePath(x1, y1, x2, y2)} color={c.pencil} style="stroke" strokeWidth={6} strokeCap="round" />
+                    <Path key={i} path={linePath(x1, y1, x2, y2)} color={illegal[i] ? c.red : c.pencil} style="stroke" strokeWidth={6} strokeCap="round" />
                   );
                 })}
                 {sel && selEnds && (
                   <Group>
                     <Path
                       path={linePath(selEnds[0], selEnds[1], selEnds[2], selEnds[3])}
-                      color={c.pencil} style="stroke" strokeWidth={22} strokeCap="round" opacity={0.25}
+                      color={selColor} style="stroke" strokeWidth={22} strokeCap="round" opacity={0.25}
                     />
                     <Circle cx={selEnds[2]} cy={selEnds[3]} r={11} color={c.paper} />
-                    <Circle cx={selEnds[2]} cy={selEnds[3]} r={11} color={c.pencil} style="stroke" strokeWidth={2.5} />
-                    <Path path={handleArcPath(selEnds[2], selEnds[3])} color={c.pencil} style="stroke" strokeWidth={2.5} strokeCap="round" />
+                    <Circle cx={selEnds[2]} cy={selEnds[3]} r={11} color={selColor} style="stroke" strokeWidth={2.5} />
+                    <Path path={handleArcPath(selEnds[2], selEnds[3])} color={selColor} style="stroke" strokeWidth={2.5} strokeCap="round" />
                   </Group>
                 )}
                 {labelFont && labels.map((l, i) => (
-                  <Text key={`n${i}`} x={l.x} y={l.y} text={l.text} font={labelFont} color={c.pencil} />
+                  <Text key={`n${i}`} x={l.x} y={l.y} text={l.text} font={labelFont} color={illegal[i] ? c.red : c.pencil} />
                 ))}
 
                 {/* launcher */}

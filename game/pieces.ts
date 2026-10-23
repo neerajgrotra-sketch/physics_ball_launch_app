@@ -1,5 +1,6 @@
 import { WORLD, pieceEnds, type Level, type PlacedPiece } from '../physics';
 import { nearLauncher } from './aim';
+import { illegalPieces, legalPlacement } from './placement';
 
 // Piece tray and placement, as in reference/prototype.html. Pure: no UI imports, so Vitest covers it.
 // Every function returns new values and never mutates its inputs.
@@ -49,10 +50,14 @@ export function boardIndex(slots: Slot[], k: number | null): number | null {
  * Tapping tray chip k: place it (and select it), select it, or deselect it if it's already selected.
  * Removing a bar is the Remove button in the rotation controls (removeBar).
  */
-export function tapChip(slots: Slot[], selected: number | null, k: number): { slots: Slot[]; selected: number | null } {
+export function tapChip(
+  slots: Slot[], selected: number | null, k: number, level?: Level,
+): { slots: Slot[]; selected: number | null } {
   const slot = slots[k];
   if (!slot.onBoard) {
-    return { slots: replace(slots, k, { ...slot, onBoard: true, ...trayDrop(k) }), selected: k };
+    // With a level, the bar lands at the nearest spot where it's allowed (see game/placement).
+    const spot = level ? dropSpot(level, slots, k) : trayDrop(k);
+    return { slots: replace(slots, k, { ...slot, onBoard: true, ...spot }), selected: k };
   }
   if (selected === k) return { slots, selected: null };
   return { slots, selected: k };
@@ -141,4 +146,49 @@ export function rotateBy(slots: Slot[], k: number, by: number): Slot[] {
 /** Bar numbers (1-based, as on the tray chips) of the pieces on the board, in board order. */
 export function boardNumbers(slots: Slot[]): number[] {
   return slots.flatMap((s, k) => (s.onBoard ? [k + 1] : []));
+}
+
+/** Whether every bar on the board is somewhere it's allowed (game/placement). */
+export function slotsLegal(level: Level, slots: Slot[]): boolean {
+  return legalPlacement(level, boardPieces(slots));
+}
+
+/** Per on-board bar (board order), whether it's somewhere it isn't allowed: drawn red. */
+export function illegalBars(level: Level, slots: Slot[]): boolean[] {
+  return illegalPieces(level, boardPieces(slots));
+}
+
+/**
+ * Where bar k lands when placed from the tray: its usual drop spot if that's allowed, otherwise the
+ * nearest allowed spot to it (flat, then upright), searching a 10-unit grid.
+ */
+export function dropSpot(level: Level, slots: Slot[], k: number): { x: number; y: number; deg: number } {
+  const home = trayDrop(k);
+  const fits = (x: number, y: number, deg: number) =>
+    slotsLegal(level, replace(slots, k, { ...slots[k], onBoard: true, x, y, deg }));
+  if (fits(home.x, home.y, home.deg)) return home;
+  for (const deg of [0, 90]) {
+    let best: { x: number; y: number; d: number } | null = null;
+    for (let x = 20; x <= WORLD.width - 20; x += 10) for (let y = 20; y <= WORLD.ground - 20; y += 10) {
+      const d = Math.hypot(x - home.x, y - home.y);
+      if ((!best || d < best.d) && fits(x, y, deg)) best = { x, y, d };
+    }
+    if (best) return { x: best.x, y: best.y, deg };
+  }
+  return home; // nowhere fits: show it (red) at home rather than not at all
+}
+
+/** rotateBy, skipping any angle where bar k would break the rule. Unchanged if none fits. */
+export function rotateLegal(level: Level, slots: Slot[], k: number, by: 1 | -1): Slot[] {
+  for (let step = 1; step < 180; step++) {
+    const next = rotateBy(slots, k, by * step);
+    if (slotsLegal(level, next)) return next;
+  }
+  return slots;
+}
+
+/** rotateTo, but only if bar k is allowed there; otherwise it stays where it was. */
+export function rotateToLegal(level: Level, slots: Slot[], k: number, shown: number): Slot[] {
+  const next = rotateTo(slots, k, shown);
+  return slotsLegal(level, next) ? next : slots;
 }

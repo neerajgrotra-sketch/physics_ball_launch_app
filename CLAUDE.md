@@ -20,7 +20,7 @@ and the "win uses every bar" rule. The look reference for long multi-bounce chai
 physics/      pure TypeScript simulation. No UI imports, ever.
 levels/       one JSON file per level, plus index.ts listing them in play order
 tools/        design-levels.ts (level geometry source), verify-direct.ts (proof of no direct shot),
-              find-solution.ts (finds the Solve answer), geometry.ts (legal piece placement), report.ts
+              find-solution.ts (finds the Solve answer), report.ts (placement rule: game/placement.ts)
 app/          Expo Router screens and components
 components/   shared UI (board/ is the Skia board and win card, controls/ the aim sliders and piece tray,
               feedback/ haptics and sound, progress/ the saved level unlocks)
@@ -77,7 +77,10 @@ reference/    prototype.html, the behaviour and look to match
 - **Pieces:** bars are named Bar 1, 2, 3 (tray chips and board labels). Tap a tray chip to place a bar, drag
   it to move, drag the end handle to rotate. While a bar is selected the aim rows become its rotation
   controls: a 0–179° slider, −/+ 1° nudges (hold to repeat), Remove and Done. Tapping the selected chip
-  deselects it. Pieces can't be edited mid-flight. (The prototype removed a bar by re-tapping its chip.)
+  deselects it. Bars must keep a ball's width (18) from the glass, walls, launcher and each other
+  (`game/placement.ts`, the same rule the level generator uses): a bar dragged somewhere it isn't allowed
+  turns red and snaps back to its last allowed spot on release; rotation skips clipping angles; a new bar
+  lands on the nearest allowed spot. Pieces can't be edited mid-flight. (The prototype removed a bar by re-tapping its chip.)
 - **Trails:** keep the last 4 launches, oldest faintest. A successful trail is drawn in red.
 - **Bounces:** bars (restitution 0.85), the glass and its plate, and the floor and four edges
   (`WALL_RESTITUTION` 0.7, with a little friction so a rolling ball stops). A shot ends when the ball
