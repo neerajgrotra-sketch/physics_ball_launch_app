@@ -58,11 +58,21 @@
       (function () {
         function show(msg) {
           var box = document.getElementById('boot-error');
-          if (!box) { box = document.createElement('div'); box.id = 'boot-error'; document.body.appendChild(box); }
-          box.textContent = 'Bank Shot hit an error:\n' + msg + '\n\n' + navigator.userAgent;
+          if (!box) {
+            box = document.createElement('div'); box.id = 'boot-error'; document.body.appendChild(box);
+            box.addEventListener('click', function () { box.remove(); }); // tap to dismiss
+          }
+          box.textContent = 'Bank Shot hit an error (tap to close):\n' + msg + '\n\n' + navigator.userAgent;
         }
         window.__bankShotError = function (e) { show((e && (e.stack || e.message)) || String(e)); };
-        window.addEventListener('error', function (e) { show((e.error && e.error.stack) || e.message || 'Script failed to load: ' + (e.target && e.target.src)); }, true);
+        window.addEventListener('error', function (e) {
+          // A script that failed to load (only ours are on this page).
+          if (e.target && e.target !== window && e.target.src) { show('Script failed to load: ' + e.target.src); return; }
+          // Only errors thrown by the game's own scripts. In-app browsers inject their own scripts, whose
+          // errors arrive as a bare "Script error." with no file; those aren't ours, so stay quiet.
+          if (!e.filename || e.filename.indexOf(location.origin) !== 0) return;
+          show((e.error && e.error.stack) || e.message);
+        }, true);
         window.addEventListener('unhandledrejection', function (e) { window.__bankShotError(e.reason); });
 
         // A drag on the board is a game move (aim, move or rotate a bar). Without this, iOS also treats
