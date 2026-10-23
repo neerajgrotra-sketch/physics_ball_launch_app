@@ -4,16 +4,16 @@ import { WORLD, type FixedSegment, type Vec } from '../../physics';
 // Path builders for the board, in world units. They mirror the drawing code in reference/prototype.html.
 // Skia paths are immutable: each is built with a PathBuilder, then detached.
 
-const { width: W, ground: GROUND } = WORLD;
+const { width: W, height: H, ground: GROUND } = WORLD;
 
-/** Graph paper: fine lines every 20 units, heavier every 100 (separate paths, drawn at different widths). */
+/** Graph paper over the whole board: fine lines every 20 units, heavier every 100. */
 export function gridPaths(): { fine: SkPath; major: SkPath } {
   const fine = Skia.PathBuilder.Make();
-  for (let x = 20; x < W; x += 20) { fine.moveTo(x, 0); fine.lineTo(x, GROUND); }
-  for (let y = 20; y < GROUND; y += 20) { fine.moveTo(0, y); fine.lineTo(W, y); }
+  for (let x = 20; x < W; x += 20) { fine.moveTo(x, 0); fine.lineTo(x, H); }
+  for (let y = 20; y < H; y += 20) { fine.moveTo(0, y); fine.lineTo(W, y); }
   const major = Skia.PathBuilder.Make();
-  for (let x = 100; x < W; x += 100) { major.moveTo(x, 0); major.lineTo(x, GROUND); }
-  for (let y = 100; y < GROUND; y += 100) { major.moveTo(0, y); major.lineTo(W, y); }
+  for (let x = 100; x < W; x += 100) { major.moveTo(x, 0); major.lineTo(x, H); }
+  for (let y = 100; y < H; y += 100) { major.moveTo(0, y); major.lineTo(W, y); }
   return { fine: fine.detach(), major: major.detach() };
 }
 

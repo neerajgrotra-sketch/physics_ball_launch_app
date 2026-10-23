@@ -3,10 +3,15 @@
  * Rules: no imports from React/Expo/Skia, no Math.random, no Date/performance.
  * Same (level, pieces, angle, power) must always produce the identical path.
  *
- * Core rule of the game: ONLY the player's pieces and the glass bounce.
- * The ground, the world edges and every fixed obstacle are "dead": touching one ends the shot.
- * A launched ball always moves rightward until it hits a piece, so a glass whose mouth can only be
- * entered from the right (see `hood` levels) is impossible to reach without pieces.
+ * Rules of the game:
+ * - True bounces: a collision reflects the ball's velocity about the surface normal, scaled by the
+ *   surface's restitution, with a little friction along it, under constant gravity.
+ * - The bars, the glass, the floor and all four board edges are solid and bounce. The floor and edges
+ *   are a little softer than a bar, so a stray ball loses energy and comes to rest. Fixed (grey)
+ *   obstacles, if a level has any, are dead: touching one ends the shot.
+ * - A win needs a bar: the ball must touch at least one of the player's bars before it settles in the
+ *   glass. A plain lob into the glass doesn't count, so no level can be won without bars, by rule.
+ *   Each level's stored solution goes further and uses every bar it gives.
  */
 
 export const WORLD = { width: 400, height: 720, ground: 700 } as const;
@@ -19,6 +24,12 @@ export const SETTLE_IN_GLASS_S = 0.35;
 export const REST_SPEED = 10;        // px/s
 export const REST_TIME_S = 0.6;
 export const RESTING_CONTACT_SPEED = 40; // below this, bounces are killed to stop jitter
+/** Bounciness of the floor and board edges: a bit softer than a bar (0.85). */
+export const WALL_RESTITUTION = 0.7;
+/** Friction along the floor and edges, so a ball rolling on the floor slows to rest. */
+export const WALL_FRICTION = 0.03;
+/** The glass stands on a plate this much wider than the glass on each side. */
+export const PLATE_OVERHANG = 8;
 export const ANGLE_STEP = 0.1;       // the only angle values a player can enter
 export const POWER_STEP = 0.1;       // the only power values a player can enter
 
@@ -26,6 +37,7 @@ export type Vec = [number, number];
 /** Fixed (dead) obstacle: [x1, y1, x2, y2] */
 export type FixedSegment = [number, number, number, number];
 
+/** `base` is the y of the glass floor; it defaults to WORLD.ground. */
 export interface Glass { x: number; w: number; h: number; base?: number }
 export interface PieceSpec { len: number; restitution?: number }
 /** A piece the player has placed. `deg` is rotation in whole degrees. */
@@ -42,15 +54,23 @@ export interface Level {
   solution?: Solution;
 }
 
-export type SegmentKind = 'dead' | 'glass' | 'piece';
-export interface Segment { x1: number; y1: number; x2: number; y2: number; e: number; f: number; kind: SegmentKind }
+export type SegmentKind = 'dead' | 'glass' | 'piece' | 'wall';
+/** `piece` is the index of the placed piece a 'piece' segment belongs to. */
+export interface Segment { x1: number; y1: number; x2: number; y2: number; e: number; f: number; kind: SegmentKind; piece?: number }
 export interface World {
   segs: Segment[];
   glass: { l: number; r: number; rim: number; base: number };
+  /** How many pieces are placed. */
+  placedCount: number;
 }
-export type EndReason = 'glass' | 'dead' | 'rest' | 'timeout';
-/** A real bounce (not resting contact) off a piece or the glass. `i` is the index of the next path point. */
-export interface Hit { i: number; kind: 'piece' | 'glass'; speed: number }
+/**
+ * How a shot ended. 'glass': settled in the glass after touching a bar (a win). 'skipped': settled in
+ * the glass without touching any bar. 'dead': hit a grey obstacle. 'rest': stopped somewhere else.
+ * 'out': left the board, which the edges should make impossible (kept as a safety net).
+ */
+export type EndReason = 'glass' | 'skipped' | 'out' | 'dead' | 'rest' | 'timeout';
+/** A real bounce (not resting contact) off a piece, the glass or a wall. `i` is the index of the next path point. */
+export interface Hit { i: number; kind: 'piece' | 'glass' | 'wall'; speed: number; piece?: number }
 export interface SimResult { path: Vec[]; success: boolean; t: number; end: EndReason; hits: Hit[] }
 
 export function speedFor(power: number): number {
@@ -76,35 +96,41 @@ export function solutionPieces(level: Level): PlacedPiece[] {
 }
 
 export function buildWorld(level: Level, placed: PlacedPiece[]): World {
-  const { width: W, ground: GROUND } = WORLD;
   const segs: Segment[] = [];
-  const add = (x1: number, y1: number, x2: number, y2: number, e: number, f: number, kind: SegmentKind) =>
-    segs.push({ x1, y1, x2, y2, e, f, kind });
-  const dead = (x1: number, y1: number, x2: number, y2: number) => add(x1, y1, x2, y2, 0, 0, 'dead');
+  const add = (x1: number, y1: number, x2: number, y2: number, e: number, f: number, kind: SegmentKind, piece?: number) =>
+    segs.push({ x1, y1, x2, y2, e, f, kind, piece });
 
+  // Floor and the four board edges.
+  const { width: W, ground: GROUND } = WORLD;
+  const wall = (x1: number, y1: number, x2: number, y2: number) => add(x1, y1, x2, y2, WALL_RESTITUTION, WALL_FRICTION, 'wall');
+  wall(0, GROUND, W, GROUND);
+  wall(0, 0, 0, GROUND);
+  wall(W, 0, W, GROUND);
+  wall(0, 0, W, 0);
+
+  // The glass: two walls and a plate that it stands on, a little wider than the glass.
   const { l, r, rim, base } = glassBox(level.glass);
-  // Ground is dead, except under a glass that stands on it (the glass has its own floor).
-  if (base === GROUND) { dead(0, GROUND, l, GROUND); dead(r, GROUND, W, GROUND); }
-  else dead(0, GROUND, W, GROUND);
-  dead(0, 0, 0, GROUND);
-  dead(W, 0, W, GROUND);
-  dead(0, 0, W, 0);
-
   add(l, rim, l, base, 0.35, 0.02, 'glass');
   add(r, rim, r, base, 0.35, 0.02, 'glass');
-  add(l, base, r, base, 0.3, 0.05, 'glass');
+  add(l - PLATE_OVERHANG, base, r + PLATE_OVERHANG, base, 0.3, 0.05, 'glass');
 
-  for (const s of level.fixed) dead(s[0], s[1], s[2], s[3]);
-  for (const p of placed) {
+  for (const s of level.fixed) add(s[0], s[1], s[2], s[3], 0, 0, 'dead');
+  placed.forEach((p, k) => {
     const [x1, y1, x2, y2] = pieceEnds(p);
-    add(x1, y1, x2, y2, p.restitution ?? 0.85, 0.01, 'piece');
-  }
-  return { segs, glass: { l, r, rim, base } };
+    add(x1, y1, x2, y2, p.restitution ?? 0.85, 0.01, 'piece', k);
+  });
+  return { segs, glass: { l, r, rim, base }, placedCount: placed.length };
 }
 
 export function inGlass(world: World, x: number, y: number): boolean {
   const g = world.glass;
   return x > g.l && x < g.r && y > g.rim + BALL_RADIUS * 0.5 && y < g.base;
+}
+
+/** Outside the board. The floor and edges keep the ball in; this is a safety net. */
+function offBoard(x: number, y: number): boolean {
+  const m = BALL_RADIUS * 2;
+  return x < -m || x > WORLD.width + m || y < -m || y > WORLD.height + m;
 }
 
 /**
@@ -120,9 +146,13 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
   const path: Vec[] = [[x, y]];
   const hits: Hit[] = [];
   const recordHits = recordEvery !== Infinity;
+  // Which pieces the ball has touched. A win needs at least one.
+  const touched = new Array<boolean>(world.placedCount).fill(false);
+  let touchedCount = 0;
   let slow = 0, inside = 0, t = 0, step = 0;
   const segs = world.segs;
   const finish = (success: boolean, end: EndReason): SimResult => { path.push([x, y]); return { path, success, t, end, hits }; };
+  const settled = () => touchedCount > 0 ? finish(true, 'glass') : finish(false, 'skipped');
 
   while (t < MAX_SIM_SECONDS) {
     vy += GRAVITY * DT;
@@ -142,8 +172,9 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
 
       if (s.kind === 'dead') {
         t += DT;
-        return inGlass(world, x, y) ? finish(true, 'glass') : finish(false, 'dead');
+        return inGlass(world, x, y) ? settled() : finish(false, 'dead');
       }
+      if (s.piece !== undefined && !touched[s.piece]) { touched[s.piece] = true; touchedCount++; }
 
       let d = Math.sqrt(d2);
       if (d < 1e-6) { dx = -ey; dy = ex; d = Math.hypot(dx, dy) || 1; }
@@ -153,7 +184,7 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
       const vn = vx * nx + vy * ny;
       if (vn < 0) {
         const e = -vn < RESTING_CONTACT_SPEED ? 0 : s.e;
-        if (e && recordHits) hits.push({ i: path.length, kind: s.kind as Hit['kind'], speed: -vn });
+        if (e && recordHits) hits.push({ i: path.length, kind: s.kind as Hit['kind'], speed: -vn, piece: s.piece });
         vx -= (1 + e) * vn * nx;
         vy -= (1 + e) * vn * ny;
         const vt = vx * -ny + vy * nx;
@@ -166,9 +197,11 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
     step++;
     if (step % recordEvery === 0) path.push([x, y]);
 
+    if (offBoard(x, y)) return finish(false, 'out');
+
     if (inGlass(world, x, y)) {
       inside += DT;
-      if (inside > SETTLE_IN_GLASS_S) return finish(true, 'glass');
+      if (inside > SETTLE_IN_GLASS_S) return settled();
     } else inside = 0;
 
     if (Math.hypot(vx, vy) < REST_SPEED) { slow += DT; if (slow > REST_TIME_S) return finish(false, 'rest'); }

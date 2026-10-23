@@ -4,7 +4,7 @@ import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import {
   BALL_RADIUS, LAUNCHER, WORLD, glassBox, pieceEnds, speedFor,
-  type Level, type PlacedPiece, type Vec,
+  type EndReason, type Level, type PlacedPiece, type Vec,
 } from '../../physics';
 import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
 import { useColors, type Palette } from '../../theme/colors';
@@ -18,7 +18,7 @@ const R = BALL_RADIUS;
 const L = LAUNCHER;
 
 /** A finished launch, kept on screen as a fading ghost trail. */
-export interface Trail { path: Vec[]; ok: boolean }
+export interface Trail { path: Vec[]; ok: boolean; end?: EndReason }
 
 export interface BoardProps {
   level: Level;
@@ -88,7 +88,8 @@ export function Board(props: BoardProps) {
 
   const g = glassBox(level.glass);
   const last = trails[trails.length - 1];
-  const deadEnd = last && !last.ok && !flight ? last.path[last.path.length - 1] : null;
+  // Only a dead (grey) hit gets the ×.
+  const deadEnd = last && last.end === 'dead' && !flight ? last.path[last.path.length - 1] : null;
 
   const ang = (angle * Math.PI) / 180;
   const sp = speedFor(power);
@@ -136,9 +137,9 @@ export function Board(props: BoardProps) {
                   />
                 ))}
 
-                {/* dead surfaces: board edge, ground, fixed obstacles */}
-                <Rect x={1.5} y={1.5} width={W - 3} height={GROUND - 1.5} color={c.muted} style="stroke" strokeWidth={3} />
-                <Path path={linePath(0, GROUND, W, GROUND)} color={c.muted} style="stroke" strokeWidth={4} strokeCap="round" />
+                {/* floor and board edges bounce: solid ink. Fixed obstacles are dead: grey and hatched. */}
+                <Rect x={1.5} y={1.5} width={W - 3} height={GROUND - 1.5} color={c.ink} style="stroke" strokeWidth={3} />
+                <Path path={linePath(0, GROUND, W, GROUND)} color={c.ink} style="stroke" strokeWidth={4} strokeCap="round" />
                 <Path path={dead.bars} color={c.muted} style="stroke" strokeWidth={6} strokeCap="round" />
                 <Path path={dead.hatch} color={c.paper} style="stroke" strokeWidth={1.4} strokeCap="round" />
 

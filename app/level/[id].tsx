@@ -64,6 +64,8 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   /** The Solve button took the winning shot, which changes the win card's wording. */
   const [solved, setSolved] = useState(false);
   const [winShot, setWinShot] = useState({ angle: 0, power: 0 });
+  /** Shown in place of the hint after a shot that needs explaining. */
+  const [notice, setNotice] = useState<string | null>(null);
   const { flight, flying, play } = usePlayback();
   const feedback = useFeedback();
   const drag = useRef<Drag | null>(null);
@@ -74,7 +76,8 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
     const res = simulate(buildWorld(level, placed), a, p);
     setTries((n) => n + 1);
     const finished = () => {
-      setTrails((ts) => [...ts, { path: res.path, ok: res.success }].slice(-MAX_TRAILS));
+      setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end }].slice(-MAX_TRAILS));
+      setNotice(res.end === 'skipped' ? 'In the glass, but it has to bounce off a bar first.' : null);
       if (res.end === 'dead') feedback.died();
       if (res.success) {
         feedback.landed();
@@ -189,7 +192,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
           />
         )}
       </View>
-      <Text style={[styles.hint, { color: c.muted }]}>{level.hint}</Text>
+      <Text style={[styles.hint, { color: notice ? c.red : c.muted }]}>{notice ?? level.hint}</Text>
       <View style={styles.controls}>
         <AimControls angle={angle} power={power} onAngle={setAngle} onPower={setPower} />
         <View style={styles.bottom}>

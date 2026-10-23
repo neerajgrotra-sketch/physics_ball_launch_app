@@ -1,6 +1,6 @@
 import type { Level } from '../physics';
 import l1 from './01-first-bounce.json';
-import l2 from './02-long-way-back.json';
+import l2 from './02-two-step.json';
 import l3 from './03-high-ground.json';
 import l4 from './04-crossfire.json';
 import l5 from './05-four-millimetres.json';

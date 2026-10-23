@@ -2,52 +2,43 @@
   "id": "03-high-ground",
   "name": "High ground",
   "glass": {
-    "x": 285,
+    "x": 320,
     "w": 34,
     "h": 50,
-    "base": 420
+    "base": 380
   },
-  "fixed": [
-    [
-      268,
-      304,
-      306,
-      304
-    ],
-    [
-      268,
-      304,
-      268,
-      370
-    ],
-    [
-      245,
-      422,
-      400,
-      422
-    ],
-    [
-      245,
-      422,
-      245,
-      700
-    ]
-  ],
+  "fixed": [],
   "pieces": [
     {
       "len": 90
+    },
+    {
+      "len": 70
+    },
+    {
+      "len": 70
     }
   ],
-  "hint": "The glass sits on a ledge. Anything grey stops the ball dead.",
+  "hint": "The glass floats on its plate. The walls bounce too, but only a bar makes it count.",
   "solution": {
     "pieces": [
       {
-        "x": 342,
-        "y": 299,
-        "deg": 86
+        "x": 313,
+        "y": 555,
+        "deg": 110
+      },
+      {
+        "x": 117,
+        "y": 344,
+        "deg": 97
+      },
+      {
+        "x": 255,
+        "y": 316,
+        "deg": 144
       }
     ],
-    "angle": 72.3,
-    "power": 71
+    "angle": 29.9,
+    "power": 86.2
   }
 }

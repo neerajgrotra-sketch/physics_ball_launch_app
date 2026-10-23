@@ -2,54 +2,43 @@
   "id": "04-crossfire",
   "name": "Crossfire",
   "glass": {
-    "x": 125,
+    "x": 190,
     "w": 30,
-    "h": 54
+    "h": 54,
+    "base": 300
   },
-  "fixed": [
-    [
-      110,
-      576,
-      144,
-      576
-    ],
-    [
-      110,
-      576,
-      110,
-      646
-    ],
-    [
-      200,
-      260,
-      200,
-      700
-    ],
-    [
-      250,
-      150,
-      400,
-      150
-    ]
-  ],
+  "fixed": [],
   "pieces": [
     {
       "len": 90
     },
     {
       "len": 70
+    },
+    {
+      "len": 70
     }
   ],
-  "hint": "Two bars to work with. The ceiling on the right is dead too.",
+  "hint": "High and in the middle. Bounce it up, bounce it back.",
   "solution": {
     "pieces": [
       {
-        "x": 174,
-        "y": 529,
-        "deg": 82
+        "x": 265,
+        "y": 261,
+        "deg": 114
+      },
+      {
+        "x": 369,
+        "y": 346,
+        "deg": 94
+      },
+      {
+        "x": 221,
+        "y": 399,
+        "deg": 22
       }
     ],
-    "angle": 69.8,
-    "power": 29
+    "angle": 52.3,
+    "power": 96.8
   }
 }

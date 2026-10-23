@@ -1,0 +1,35 @@
+{
+  "id": "02-two-step",
+  "name": "Two step",
+  "glass": {
+    "x": 130,
+    "w": 36,
+    "h": 52
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 90
+    }
+  ],
+  "hint": "The glass is close but the ball needs a bar. Two to play with.",
+  "solution": {
+    "pieces": [
+      {
+        "x": 107,
+        "y": 547,
+        "deg": 101
+      },
+      {
+        "x": 112,
+        "y": 369,
+        "deg": 12
+      }
+    ],
+    "angle": 68.3,
+    "power": 58.1
+  }
+}

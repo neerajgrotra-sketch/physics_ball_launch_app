@@ -15,8 +15,9 @@ const SOUNDS = {
 const HARD_HIT = 700;
 
 /**
- * Haptics and sound for a shot: a tap and a tink on each bounce (stronger and louder when it's faster),
- * a success buzz and chime when the ball settles in the glass, a soft thump on a dead surface.
+ * Haptics and sound for a shot: a tap and a tink on each bounce (stronger and louder when it's faster,
+ * quieter off the floor and edges), a success buzz and chime when the ball settles in the glass,
+ * and a soft thump on a dead surface.
  * Sounds follow the silent switch and mix with whatever else is playing.
  */
 export function useFeedback() {
@@ -36,7 +37,8 @@ export function useFeedback() {
         ? Haptics.ImpactFeedbackStyle.Medium
         : Haptics.ImpactFeedbackStyle.Light;
       Haptics.impactAsync(style).catch(() => {});
-      play(h.kind === 'piece' ? bounce : glass, strength);
+      if (h.kind === 'glass') play(glass, strength);
+      else play(bounce, h.kind === 'wall' ? strength * 0.5 : strength);
     },
     landed() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
