@@ -94,7 +94,9 @@ reference/    prototype.html, the behaviour and look to match
   unlock the next level and save progress locally.
   After a win, Launch becomes "Watch again ▶": it replays the winning shot exactly (bars restored to where
   they were, same angle and power) without resetting or counting a try. The card's left button is
-  "Start over" (or "Try it yourself" after Solve), which resets the level.
+  "Start over" (or "Try it yourself" after Solve), which resets the level. Any edit after a win (touching the board, a
+  bar chip, a slider or rotation) or the card's ✕ closes the card and goes back to normal play, keeping bars,
+  trails and tries; the level stays won.
 - **Solve:** places the stored solution's pieces (unused pieces go back to the tray), sets angle and power,
   and launches. The win card then reads "Here's one way in", with "Try it yourself" (resets the level) and
   "Next level". The card sits at the top of the board so the solution path stays visible.

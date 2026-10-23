@@ -2,8 +2,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { WinText } from '../../game/progress';
 import { FONTS, useColors } from '../../theme/colors';
 
-/** The prototype's #win card. It sits at the top of the board so the winning path stays visible. */
-export function WinCard({ text, onAgain, onGo }: { text: WinText; onAgain: () => void; onGo: () => void }) {
+/**
+ * The prototype's #win card. It sits at the top of the board so the winning path stays visible.
+ * ✕ (or any edit to the board) closes it and goes back to playing (onClose).
+ */
+export function WinCard({ text, onAgain, onGo, onClose }: { text: WinText; onAgain: () => void; onGo: () => void; onClose: () => void }) {
   const c = useColors();
   return (
     <View
@@ -11,6 +14,9 @@ export function WinCard({ text, onAgain, onGo }: { text: WinText; onAgain: () =>
       accessibilityLiveRegion="polite"
       style={[styles.card, { backgroundColor: c.paper, borderColor: c.red }]}
     >
+      <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Keep playing" hitSlop={10} style={styles.close}>
+        <Text style={[styles.closeText, { color: c.muted }]}>✕</Text>
+      </Pressable>
       <Text style={[styles.title, { color: c.red }]}>{text.title}</Text>
       <Text style={[styles.detail, { color: c.muted }]}>{text.detail}</Text>
       <View style={styles.btns}>
@@ -21,11 +27,15 @@ export function WinCard({ text, onAgain, onGo }: { text: WinText; onAgain: () =>
           <Text style={styles.goText}>{text.go}</Text>
         </Pressable>
       </View>
+      <Text style={[styles.more, { color: c.muted }]}>Move a bar or aim to keep playing</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  close: { position: 'absolute', top: 6, right: 10, padding: 4, zIndex: 1 },
+  closeText: { fontSize: 18, fontFamily: FONTS.bodySemi },
+  more: { marginTop: 8, fontSize: 12, fontFamily: FONTS.body },
   card: {
     position: 'absolute', top: 10, left: 22, right: 22,
     paddingVertical: 12, paddingHorizontal: 14, borderWidth: 2, borderRadius: 10, alignItems: 'center',

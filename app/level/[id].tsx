@@ -144,6 +144,14 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
     fire(next, s.angle, s.power);
   };
 
+  // After a win, any edit (board touch, bar chip, slider, rotation) or the card's ✕ goes back to normal play:
+  // the card closes and Launch launches again. Bars, trails and tries stay; the level stays won.
+  const keepPlaying = () => {
+    if (!done || flying) return;
+    setDone(false);
+    setSolved(false);
+  };
+
   const clearTrails = () => {
     if (!flying) setTrails([]);
   };
@@ -166,7 +174,8 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
         skip();
         return;
       }
-      const r = pressAt(slots, selected, p, !done);
+      keepPlaying();
+      const r = pressAt(slots, selected, p, true);
       drag.current = r.drag;
       lastLegal.current = slots;
       setSelected(r.selected);
@@ -192,11 +201,14 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   // The selected bar (if it's on the board) gets rotation controls in place of the aim rows.
   const selectedBar = selected != null && slots[selected]?.onBoard ? selected : null;
   const rotate = (next: (s: Slot[]) => Slot[]) => {
-    if (!flying) setSlots(next);
+    if (flying) return;
+    keepPlaying();
+    setSlots(next);
   };
 
   const onChip = (k: number) => {
     if (flying) return;
+    keepPlaying();
     const r = tapChip(slots, selected, k, level);
     setSlots(r.slots);
     setSelected(r.selected);
@@ -239,6 +251,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
           <WinCard
             text={winText({ solved, tries, ...winShot, last })}
             onAgain={onReplay}
+            onClose={keepPlaying}
             onGo={() => (last ? onReplay() : goTo(index + 1))}
           />
         )}
@@ -256,7 +269,11 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
             disabled={flying}
           />
         ) : (
-          <AimControls angle={angle} power={power} onAngle={setAngle} onPower={setPower} />
+          <AimControls
+            angle={angle} power={power}
+            onAngle={(v) => { keepPlaying(); setAngle(v); }}
+            onPower={(v) => { keepPlaying(); setPower(v); }}
+          />
         )}
         <View style={styles.bottom}>
           <View style={styles.tray}>
@@ -274,7 +291,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
             accessibilityRole="button"
             style={[styles.launch, { backgroundColor: c.red }]}
           >
-            <Text style={styles.launchText}>{flying ? 'Skip ›' : done ? 'Watch again ▶' : 'Launch'}</Text>
+            <Text style={styles.launchText}>{flying ? 'Skip ›' : done ? 'Watch again ▶︎' : 'Launch'}</Text>
           </Pressable>
         </View>
       </View>
