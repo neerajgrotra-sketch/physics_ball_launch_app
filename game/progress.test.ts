@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseUnlocked, unlockAfterWin, winText } from './progress';
+import { parseUnlocked, skipNotice, unlockAfterWin, winText } from './progress';
 
 describe('parseUnlocked', () => {
   it('reads a stored index and clamps it to the levels that exist', () => {
@@ -43,5 +43,18 @@ describe('winText', () => {
 
   it('offers to play the last level again', () => {
     expect(winText({ ...base, last: true }).go).toBe('Play again');
+  });
+});
+
+describe('skipNotice', () => {
+  it('asks for every bar to be placed', () => {
+    expect(skipNotice(3, [1], [true])).toBe('In the glass, but it has to bounce off all 3 bars. Place all 3 bars first.');
+    expect(skipNotice(1, [], [])).toBe('In the glass, but it has to bounce off the bar. Place the bar first.');
+  });
+
+  it('names the bars the ball missed', () => {
+    expect(skipNotice(3, [1, 2, 3], [true, false, true])).toBe('In the glass, but it missed Bar 2. It has to bounce off all 3 bars.');
+    expect(skipNotice(3, [1, 2, 3], [false, true, false])).toBe('In the glass, but it missed Bars 1 and 3. It has to bounce off all 3 bars.');
+    expect(skipNotice(2, [1, 2], [false, false])).toBe('In the glass, but it missed Bars 1 and 2. It has to bounce off both bars.');
   });
 });

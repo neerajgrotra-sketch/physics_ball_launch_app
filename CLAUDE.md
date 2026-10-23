@@ -3,15 +3,16 @@
 A bounce-puzzle game. The player launches a steel ball, choosing angle and power, and places a few bars
 wherever they like so the ball ricochets into a glass barely wider than itself. **Bounces are true
 reflections** off the bars, the glass, the floor and all four board edges (the floor and edges a little softer
-than a bar, so a stray ball settles). A win needs a bar: the ball must bounce off at least one before it settles in the glass, so a
-plain lob never counts. Every level is generated with a stored solution that bounces off every bar it gives.
+than a bar, so a stray ball settles). **A win uses every bar:** all of the level's bars must be placed and the
+ball must bounce off each one before it settles in the glass (2 bars, both; 3 bars, all three). Every level is
+generated with a stored solution that does.
 The last few launch paths stay on screen as fading ghost trails, so each try teaches the next.
 
 Target platform: iOS first, built with Expo (React Native) and @shopify/react-native-skia for the board.
 `reference/prototype.html` is the working browser prototype. It is the source of truth for feel,
 visuals and controls. Open it in a browser before building any screen. Deliberate differences: the game's
 floor and edges bounce (the prototype's are dead), glasses are open with no hood, levels give up to 3 bars,
-and the "win needs a bar" rule. The look reference for long multi-bounce chains is a SimLoop clip the owner shared.
+and the "win uses every bar" rule. The look reference for long multi-bounce chains is a SimLoop clip the owner shared.
 
 ## Repo layout
 
@@ -40,7 +41,8 @@ reference/    prototype.html, the behaviour and look to match
 3. **Determinism is a feature.** The same level, pieces, angle and power must always give the same path.
    Ghost trails and "so close" moments only mean something because of this. The determinism test guards it.
 4. **Every level needs the bars, and every level has a stored answer.**
-   - No win without bars: by rule, in `simulate()` (`skipped` when the ball lands without touching one).
+   - Every bar, every time: by rule, in `simulate()` a win needs all of the level's bars placed and touched
+     (`skipped` otherwise, with `touched` saying which were hit).
      `findDirectShot()` still sweeps every 0.1 input with no pieces as a guard on that rule.
    - Stored answer: each level JSON has a `solution` (piece positions in whole units, rotation in whole
      degrees, angle and power on the 0.1 grid) that bounces off **every** bar the level gives
@@ -80,7 +82,7 @@ reference/    prototype.html, the behaviour and look to match
 - **Bounces:** bars (restitution 0.85), the glass and its plate, and the floor and four edges
   (`WALL_RESTITUTION` 0.7, with a little friction so a rolling ball stops). A shot ends when the ball
   settles in the glass, comes to rest, hits a dead grey surface if a level has one, or runs out of time
-  (14 s). Landing without touching a bar shows "it has to bounce off a bar".
+  (14 s). Landing without every bar placed and hit says so and names any bar it missed (`skipNotice`).
 - **Dead hits:** when a shot hits a dead surface, mark the spot with a small red ×.
 - **Win:** the ball has to settle inside the glass for 0.35 s. Show "In the glass in N tries", then
   unlock the next level and save progress locally.

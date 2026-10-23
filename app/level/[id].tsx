@@ -14,7 +14,7 @@ import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle, solutionSlots,
   tapChip, type Drag, type Slot,
 } from '../../game/pieces';
-import { winText } from '../../game/progress';
+import { skipNotice, winText } from '../../game/progress';
 import { LEVELS } from '../../levels';
 import { buildWorld, simulate, type PlacedPiece } from '../../physics';
 import { FONTS, useColors } from '../../theme/colors';
@@ -73,12 +73,13 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
 
   // The trail and the win only land once playback reaches the end of the path, as in the prototype.
   // Bounces tap and tink as the ball reaches them; the end of the shot chimes or thumps.
-  const fire = (placed: PlacedPiece[], a: number, p: number) => {
+  // `numbers` are the bar numbers of `placed`, so a near miss can say which bar the ball skipped.
+  const fire = (placed: PlacedPiece[], numbers: number[], a: number, p: number) => {
     const res = simulate(buildWorld(level, placed), a, p);
     setTries((n) => n + 1);
     const finished = () => {
       setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end }].slice(-MAX_TRAILS));
-      setNotice(res.end === 'skipped' ? 'In the glass, but it has to bounce off a bar first.' : null);
+      setNotice(res.end === 'skipped' ? skipNotice(level.pieces.length, numbers, res.touched) : null);
       if (res.end === 'dead') feedback.died();
       if (res.success) {
         feedback.landed();
@@ -98,7 +99,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
     if (flying || done) return;
     feedback.prime();
     setSelected(null);
-    fire(boardPieces(slots), angle, power);
+    fire(boardPieces(slots), boardNumbers(slots), angle, power);
   };
 
   // Places the stored solution's pieces (unused ones go back to the tray), sets angle and power, launches.
@@ -116,7 +117,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
       setDone(false);
     }
     setSolved(true);
-    fire(boardPieces(next), s.angle, s.power);
+    fire(boardPieces(next), boardNumbers(next), s.angle, s.power);
   };
 
   const clearTrails = () => {

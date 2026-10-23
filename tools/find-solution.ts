@@ -5,7 +5,7 @@ function rng(seed: number) { return () => { seed = (seed * 1664525 + 1013904223)
 
 type Candidate = { placed: PlacedPiece[]; angle: number; power: number };
 
-/** Wins and bounces off every placed bar. Stored solutions must, so each level shows off all its bars. */
+/** Wins and bounces off every placed bar. The win rule already needs every bar; this checks it explicitly. */
 export function usesEveryBar(level: Level, placed: PlacedPiece[], angle: number, power: number): boolean {
   const res = simulate(buildWorld(level, placed), angle, power, 2);
   if (!res.success) return false;

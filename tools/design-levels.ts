@@ -10,15 +10,15 @@ import { findSolution } from './find-solution';
 // floor (default: the floor, WORLD.ground). A raised glass stands on its plate in mid-air.
 const designs: Omit<Level, 'solution'>[] = [
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
-    hint: 'Place the bar, then aim. The ball has to bounce off a bar on its way into the glass.' },
+    hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],
-    hint: 'The glass is close but the ball needs a bar. Two to play with.' },
+    hint: 'Two bars. The ball has to bounce off both before it lands.' },
   { id: '03-high-ground', name: 'High ground', glass: { x: 320, w: 34, h: 50, base: 380 }, fixed: [], pieces: [{ len: 90 }, { len: 70 }, { len: 70 }],
-    hint: 'The glass floats on its plate. The walls bounce too, but only a bar makes it count.' },
+    hint: 'The glass floats on its plate. Bounce off all three bars; the walls bounce too.' },
   { id: '04-crossfire', name: 'Crossfire', glass: { x: 190, w: 30, h: 54, base: 300 }, fixed: [], pieces: [{ len: 90 }, { len: 70 }, { len: 70 }],
-    hint: 'High and in the middle. Bounce it up, bounce it back.' },
+    hint: 'High and in the middle. Every bar has to be part of the shot.' },
   { id: '05-four-millimetres', name: 'Four millimetres', glass: { x: 330, w: 20, h: 58 }, fixed: [], pieces: [{ len: 90 }, { len: 70 }, { len: 70 }],
-    hint: 'Barely wider than the ball. Small changes matter here.' },
+    hint: 'Barely wider than the ball, and all three bars count. Small changes matter.' },
 ];
 
 const only = process.argv[2];

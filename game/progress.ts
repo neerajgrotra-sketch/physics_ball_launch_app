@@ -33,3 +33,18 @@ export function winText(opts: { solved: boolean; tries: number; angle: number; p
     go: last ? 'Play again' : 'Next level',
   };
 }
+
+/**
+ * Why a ball that landed in the glass didn't win (simulate() ended 'skipped'): not every bar was placed,
+ * or the ball missed some. `numbers[i]` is the bar number of placed piece i; `touched[i]` whether the
+ * ball hit it.
+ */
+export function skipNotice(total: number, numbers: number[], touched: boolean[]): string {
+  const every = total === 1 ? 'the bar' : total === 2 ? 'both bars' : `all ${total} bars`;
+  if (numbers.length < total) return `In the glass, but it has to bounce off ${every}. Place ${every} first.`;
+  const missed = numbers.filter((_, i) => !touched[i]);
+  const names = missed.length === 1
+    ? `Bar ${missed[0]}`
+    : `Bars ${missed.slice(0, -1).join(', ')} and ${missed[missed.length - 1]}`;
+  return `In the glass, but it missed ${names}. It has to bounce off ${every}.`;
+}

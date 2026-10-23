@@ -9,9 +9,9 @@
  * - The bars, the glass, the floor and all four board edges are solid and bounce. The floor and edges
  *   are a little softer than a bar, so a stray ball loses energy and comes to rest. Fixed (grey)
  *   obstacles, if a level has any, are dead: touching one ends the shot.
- * - A win needs a bar: the ball must touch at least one of the player's bars before it settles in the
- *   glass. A plain lob into the glass doesn't count, so no level can be won without bars, by rule.
- *   Each level's stored solution goes further and uses every bar it gives.
+ * - A win uses every bar: all of the level's bars must be on the board, and the ball must touch each one
+ *   before it settles in the glass. Landing any other way doesn't count, so no level can be won with
+ *   fewer bars (or none), by rule.
  */
 
 // Board shape: 400 x 560 so it fills a phone's width once the controls are on screen.
@@ -61,18 +61,20 @@ export interface Segment { x1: number; y1: number; x2: number; y2: number; e: nu
 export interface World {
   segs: Segment[];
   glass: { l: number; r: number; rim: number; base: number };
-  /** How many pieces are placed. */
+  /** How many pieces the level gives, and how many are placed. A win needs them all placed and touched. */
+  pieceCount: number;
   placedCount: number;
 }
 /**
- * How a shot ended. 'glass': settled in the glass after touching a bar (a win). 'skipped': settled in
- * the glass without touching any bar. 'dead': hit a grey obstacle. 'rest': stopped somewhere else.
+ * How a shot ended. 'glass': settled in the glass after touching every bar (a win). 'skipped': settled
+ * in the glass, but not every bar was placed and touched (`touched` says which were). 'dead': hit a grey obstacle. 'rest': stopped somewhere else.
  * 'out': left the board, which the edges should make impossible (kept as a safety net).
  */
 export type EndReason = 'glass' | 'skipped' | 'out' | 'dead' | 'rest' | 'timeout';
 /** A real bounce (not resting contact) off a piece, the glass or a wall. `i` is the index of the next path point. */
 export interface Hit { i: number; kind: 'piece' | 'glass' | 'wall'; speed: number; piece?: number }
-export interface SimResult { path: Vec[]; success: boolean; t: number; end: EndReason; hits: Hit[] }
+/** `touched[k]`: whether the ball touched placed piece k during the shot. */
+export interface SimResult { path: Vec[]; success: boolean; t: number; end: EndReason; hits: Hit[]; touched: boolean[] }
 
 export function speedFor(power: number): number {
   return 280 + power * 8.4; // power 0..100 → 280..1120 px/s
@@ -120,7 +122,7 @@ export function buildWorld(level: Level, placed: PlacedPiece[]): World {
     const [x1, y1, x2, y2] = pieceEnds(p);
     add(x1, y1, x2, y2, p.restitution ?? 0.85, 0.01, 'piece', k);
   });
-  return { segs, glass: { l, r, rim, base }, placedCount: placed.length };
+  return { segs, glass: { l, r, rim, base }, pieceCount: level.pieces.length, placedCount: placed.length };
 }
 
 export function inGlass(world: World, x: number, y: number): boolean {
@@ -147,13 +149,14 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
   const path: Vec[] = [[x, y]];
   const hits: Hit[] = [];
   const recordHits = recordEvery !== Infinity;
-  // Which pieces the ball has touched. A win needs at least one.
+  // Which pieces the ball has touched. A win needs every one of the level's pieces placed and touched.
   const touched = new Array<boolean>(world.placedCount).fill(false);
   let touchedCount = 0;
   let slow = 0, inside = 0, t = 0, step = 0;
   const segs = world.segs;
-  const finish = (success: boolean, end: EndReason): SimResult => { path.push([x, y]); return { path, success, t, end, hits }; };
-  const settled = () => touchedCount > 0 ? finish(true, 'glass') : finish(false, 'skipped');
+  const finish = (success: boolean, end: EndReason): SimResult => { path.push([x, y]); return { path, success, t, end, hits, touched }; };
+  const everyBar = () => world.placedCount === world.pieceCount && touchedCount === world.pieceCount;
+  const settled = () => everyBar() ? finish(true, 'glass') : finish(false, 'skipped');
 
   while (t < MAX_SIM_SECONDS) {
     vy += GRAVITY * DT;

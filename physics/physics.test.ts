@@ -70,6 +70,23 @@ describe('rules', () => {
     expect(lob!.success).toBe(false);
   });
 
+  it('a win needs every bar the level gives placed and hit', () => {
+    // Level 1's stored shot, which lands off its one bar.
+    const one = LEVELS[0], s = one.solution!, bar = solutionPieces(one);
+    expect(simulate(buildWorld(one, bar), s.angle, s.power).success).toBe(true);
+
+    // The same shot on a level that gives two bars: one placed is not enough...
+    const two: Level = { ...one, pieces: [{ len: 90 }, { len: 90 }] };
+    const short = simulate(buildWorld(two, bar), s.angle, s.power);
+    expect([short.success, short.end]).toEqual([false, 'skipped']);
+
+    // ...and neither is placing the second where the ball never touches it.
+    const unused = { len: 90, x: 330, y: 80, deg: 0 };
+    const missed = simulate(buildWorld(two, [...bar, unused]), s.angle, s.power);
+    expect([missed.success, missed.end]).toEqual([false, 'skipped']);
+    expect(missed.touched).toEqual([true, false]);
+  });
+
   it('the floor and edges keep the ball on the board, and every shot comes to an end', () => {
     const w = buildWorld(LEVELS[0], []);
     for (let angle = 0; angle <= 90; angle += 5) for (const power of [0, 50, 100]) {
