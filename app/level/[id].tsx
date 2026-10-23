@@ -16,7 +16,7 @@ import {
 } from '../../game/pieces';
 import { skipNotice, winText } from '../../game/progress';
 import { LEVELS } from '../../levels';
-import { buildWorld, simulate, type PlacedPiece } from '../../physics';
+import { buildWorld, simulate } from '../../physics';
 import { FONTS, useColors } from '../../theme/colors';
 
 const MAX_TRAILS = 4;
@@ -64,7 +64,8 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   const [done, setDone] = useState(false);
   /** The Solve button took the winning shot, which changes the win card's wording. */
   const [solved, setSolved] = useState(false);
-  const [winShot, setWinShot] = useState({ angle: 0, power: 0 });
+  /** The winning shot exactly as fired (bars, angle, power), so Watch again can replay it. */
+  const [winShot, setWinShot] = useState<{ angle: number; power: number; slots: Slot[] }>({ angle: 0, power: 0, slots: [] });
   /** Shown in place of the hint after a shot that needs explaining. */
   const [notice, setNotice] = useState<string | null>(null);
   const { flight, flying, play, skip } = usePlayback();
@@ -74,8 +75,10 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
 
   // The trail and the win only land once playback reaches the end of the path, as in the prototype.
   // Bounces tap and tink as the ball reaches them; the end of the shot chimes or thumps.
-  // `numbers` are the bar numbers of `placed`, so a near miss can say which bar the ball skipped.
-  const fire = (placed: PlacedPiece[], numbers: number[], a: number, p: number) => {
+  // `shot` is the bar setup fired: the win keeps it for Watch again, and a near miss uses its bar
+  // numbers to say which bar the ball skipped.
+  const fire = (shot: Slot[], a: number, p: number) => {
+    const placed = boardPieces(shot), numbers = boardNumbers(shot);
     const res = simulate(buildWorld(level, placed), a, p);
     setTries((n) => n + 1);
     const finished = () => {
@@ -84,7 +87,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
       if (res.end === 'dead') feedback.died();
       if (res.success) {
         feedback.landed();
-        setWinShot({ angle: a, power: p });
+        setWinShot({ angle: a, power: p, slots: shot });
         setDone(true);
         won(index);
       }
@@ -96,6 +99,21 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
     if (!flying) router.setParams({ id: LEVELS[i].id });
   };
 
+  // After a win: replay the winning shot exactly (same bars, angle and power; physics is deterministic, so
+  // it's the same path). Nothing resets and it isn't a try. Bars moved since the win are put back first.
+  const watchAgain = () => {
+    if (flying || !done) return;
+    feedback.prime();
+    const { slots: shot, angle: a, power: p } = winShot;
+    setSlots(shot);
+    setSelected(null);
+    setAngle(a);
+    setPower(p);
+    setNotice(null);
+    const res = simulate(buildWorld(level, boardPieces(shot)), a, p);
+    play(res.path, () => { if (res.success) feedback.landed(); }, res.hits.map((h) => h.i), (k) => feedback.hit(res.hits[k]));
+  };
+
   const launch = () => {
     if (flying || done) return;
     // Backstop: drags snap back and rotation skips clipping angles, so this shouldn't trigger.
@@ -105,7 +123,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
     }
     feedback.prime();
     setSelected(null);
-    fire(boardPieces(slots), boardNumbers(slots), angle, power);
+    fire(slots, angle, power);
   };
 
   // Places the stored solution's pieces (unused ones go back to the tray), sets angle and power, launches.
@@ -123,7 +141,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
       setDone(false);
     }
     setSolved(true);
-    fire(boardPieces(next), boardNumbers(next), s.angle, s.power);
+    fire(next, s.angle, s.power);
   };
 
   const clearTrails = () => {
@@ -250,14 +268,13 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
           <View style={flying && styles.busy} pointerEvents={flying ? 'none' : 'auto'}>
             <Ghost label="Solve" onPress={solve} big />
           </View>
-          {/* During a flight this is Skip: jump to the end of the shot. */}
+          {/* Launch; during a flight, Skip (jump to the end of the shot); after a win, Watch again. */}
           <Pressable
-            onPress={flying ? skip : launch}
-            disabled={!flying && done}
+            onPress={flying ? skip : done ? watchAgain : launch}
             accessibilityRole="button"
-            style={[styles.launch, { backgroundColor: c.red, opacity: !flying && done ? 0.5 : 1 }]}
+            style={[styles.launch, { backgroundColor: c.red }]}
           >
-            <Text style={styles.launchText}>{flying ? 'Skip ›' : 'Launch'}</Text>
+            <Text style={styles.launchText}>{flying ? 'Skip ›' : done ? 'Watch again ▶' : 'Launch'}</Text>
           </Pressable>
         </View>
       </View>

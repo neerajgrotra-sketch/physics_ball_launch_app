@@ -34,7 +34,7 @@ describe('winText', () => {
     expect(winText(base).title).toBe('In the glass in 3 tries');
     expect(winText({ ...base, tries: 1 }).title).toBe('In the glass on the first try');
     expect(winText(base).detail).toBe('Angle 45.5°, power 68.8');
-    expect(winText(base)).toMatchObject({ again: 'Replay level', go: 'Next level' });
+    expect(winText(base)).toMatchObject({ again: 'Start over', go: 'Next level' });
   });
 
   it('reads differently after Solve', () => {

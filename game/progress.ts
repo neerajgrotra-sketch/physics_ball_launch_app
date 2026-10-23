@@ -17,7 +17,7 @@ export function unlockAfterWin(unlocked: number, i: number, count: number): numb
 export interface WinText {
   title: string;
   detail: string;
-  /** Left button: replays the level from scratch. */
+  /** Left button: starts the level over from scratch (Watch again replays the winning shot). */
   again: string;
   /** Right button: the next level, or this one again after the last. */
   go: string;
@@ -29,7 +29,7 @@ export function winText(opts: { solved: boolean; tries: number; angle: number; p
   return {
     title: solved ? 'Here’s one way in' : tries === 1 ? 'In the glass on the first try' : `In the glass in ${tries} tries`,
     detail: `Angle ${angle.toFixed(1)}°, power ${power.toFixed(1)}`,
-    again: solved ? 'Try it yourself' : 'Replay level',
+    again: solved ? 'Try it yourself' : 'Start over',
     go: last ? 'Play again' : 'Next level',
   };
 }
