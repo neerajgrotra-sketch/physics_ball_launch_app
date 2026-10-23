@@ -19,6 +19,8 @@ export interface Flight {
  * Plays a precomputed path back with a frame callback. Physics never steps per frame: the caller runs
  * simulate() once, hands the whole path to play(), and gets onDone when the ball reaches the last point.
  * Optional events (path indices, e.g. bounces) call onEvent(k) as the ball passes the k-th one.
+ * skip() jumps to the end: the shot finishes exactly as if it had played out (onDone runs, so the whole
+ * path becomes a trail and the outcome counts); only the remaining events are dropped.
  */
 export function usePlayback() {
   const x = useSharedValue<number>(LAUNCHER.x);
@@ -37,9 +39,11 @@ export function usePlayback() {
   // All callbacks are stable: useFrameCallback re-registers whenever its callback changes identity.
   const fireEvent = useCallback((k: number) => onEvent.current?.(k), []);
 
+  // Runs once per shot, whether playback reached the end or was skipped (whichever comes first).
   const finish = useCallback(() => {
     frame.setActive(false);
     const done = onDone.current;
+    if (!done) return;
     onDone.current = null;
     onEvent.current = null;
     setPath(null);
@@ -94,6 +98,14 @@ export function usePlayback() {
     frame.setActive(true);
   };
 
+  /** Fast-forward the current shot to its end. No-op when nothing is playing. */
+  const skip = () => {
+    if (!onDone.current) return;
+    onEvent.current = null; // bounce sounds still queued for the skipped stretch stay silent
+    running.value = false;
+    finish();
+  };
+
   const flight: Flight | null = path ? { path, x, y, end } : null;
-  return { flight, flying: path !== null, play };
+  return { flight, flying: path !== null, play, skip };
 }

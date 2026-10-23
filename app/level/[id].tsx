@@ -67,7 +67,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   const [winShot, setWinShot] = useState({ angle: 0, power: 0 });
   /** Shown in place of the hint after a shot that needs explaining. */
   const [notice, setNotice] = useState<string | null>(null);
-  const { flight, flying, play } = usePlayback();
+  const { flight, flying, play, skip } = usePlayback();
   const feedback = useFeedback();
   const drag = useRef<Drag | null>(null);
   const lastLegal = useRef<Slot[]>([]);
@@ -137,13 +137,17 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   };
 
   // One finger on the board: rotate the selected piece by its end handle, move a piece, or aim from the
-  // launcher. Pieces can't be edited mid-flight, and there's no aiming once the level is won.
+  // launcher. A tap during a flight skips to the end of the shot (the whole path is drawn and the
+  // result counts), and does nothing else. There's no aiming once the level is won.
   // A bar dragged somewhere it isn't allowed (game/placement) shows red, and snaps back to the last
   // allowed spot when the finger lifts.
   const onTouch = (phase: TouchPhase, p: { x: number; y: number }) => {
     if (phase === 'down') {
       drag.current = null;
-      if (flying) return;
+      if (flying) {
+        skip();
+        return;
+      }
       const r = pressAt(slots, selected, p, !done);
       drag.current = r.drag;
       lastLegal.current = slots;
@@ -163,9 +167,6 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
       drag.current = null;
       if (d && d.mode !== 'aim') {
         setSlots((s) => (slotsLegal(level, s) ? s : lastLegal.current));
-        // Safari can drop the board's next frame, leaving the bar drawn where it was let go. A second,
-        // content-identical update on the next frame makes Skia draw the snapped-back position.
-        requestAnimationFrame(() => setSlots((s) => s.slice()));
       }
     }
   };
@@ -245,15 +246,18 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
           </View>
           <Ghost label="Clear" onPress={clearTrails} />
         </View>
-        <View style={[styles.actions, flying && styles.busy]}>
-          <Ghost label="Solve" onPress={solve} big />
+        <View style={styles.actions}>
+          <View style={flying && styles.busy} pointerEvents={flying ? 'none' : 'auto'}>
+            <Ghost label="Solve" onPress={solve} big />
+          </View>
+          {/* During a flight this is Skip: jump to the end of the shot. */}
           <Pressable
-            onPress={launch}
-            disabled={flying || done}
+            onPress={flying ? skip : launch}
+            disabled={!flying && done}
             accessibilityRole="button"
-            style={[styles.launch, { backgroundColor: c.red, opacity: done ? 0.5 : 1 }]}
+            style={[styles.launch, { backgroundColor: c.red, opacity: !flying && done ? 0.5 : 1 }]}
           >
-            <Text style={styles.launchText}>Launch</Text>
+            <Text style={styles.launchText}>{flying ? 'Skip ›' : 'Launch'}</Text>
           </Pressable>
         </View>
       </View>

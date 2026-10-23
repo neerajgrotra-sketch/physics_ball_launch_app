@@ -73,6 +73,24 @@ export function Board(props: BoardProps) {
   // just after the board appears.
   const canvasRef = useCanvasRef();
   const shown = scale > 0;
+
+  // Safari can also drop the frame right after a change (a skipped shot kept showing the ball mid-air;
+  // a snapped-back bar stayed where it was dropped). Skia's redraw() didn't help, but a second React
+  // update did, so whenever what the board shows changes, re-render once more on the next frame.
+  const drawKey = [
+    trails.length, trails.at(-1)?.path.length ?? 0, flight ? 1 : 0, done ? 1 : 0, selected ?? -1,
+    pieces.map((p) => `${p.x},${p.y},${p.deg}`).join(';'), illegal.join(','), angle, power, tries,
+  ].join('|');
+  const [, setFollowUp] = useState(0);
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const id = requestAnimationFrame(() => {
+      setFollowUp((n) => n + 1);
+      canvasRef.current?.redraw();
+    });
+    const later = setTimeout(() => canvasRef.current?.redraw(), 100);
+    return () => { cancelAnimationFrame(id); clearTimeout(later); };
+  }, [drawKey, canvasRef]);
   useEffect(() => {
     if (Platform.OS !== 'web' || !shown) return;
     const timers = [50, 250, 750].map((ms) => setTimeout(() => canvasRef.current?.redraw(), ms));
