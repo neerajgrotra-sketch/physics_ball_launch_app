@@ -11,3 +11,6 @@ expo-env.d.ts
 .expo-shared/
 ios/
 android/
+
+# Copied from canvaskit-wasm by `npm run web:setup`
+public/canvaskit.wasm

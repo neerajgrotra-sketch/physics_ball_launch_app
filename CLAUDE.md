@@ -90,6 +90,9 @@ Barlow and Barlow Condensed type. Use the colour tokens from `reference/prototyp
 - `npx tsx tools/report.ts`: full no-direct-shot proof plus how forgiving each solution is (about 1 min per level).
 - `npx tsx tools/design-levels.ts [id-prefix]`: regenerate level JSON after changing geometry.
 - `npx tsc --noEmit`: typecheck.
+- `npm run web`: play in a browser (Expo dev server). `npm run build:web` exports a static site to `dist/`.
+  Both first copy `canvaskit.wasm` into `public/`. On web, `index.web.js` loads CanvasKit before the app,
+  because Skia binds to it when first imported. Pass style objects, not arrays, to `<Link asChild>` children.
 
 Use Vitest for `physics/` and `tools/`. These modules are pure TypeScript, so they don't need jest-expo.
 The unit tests run a coarse 0.5-step version of the no-direct-shot proof. Run `report.ts` before merging any

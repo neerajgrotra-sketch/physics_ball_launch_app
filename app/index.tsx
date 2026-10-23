@@ -22,11 +22,12 @@ export default function LevelSelect() {
             accessibilityRole="button"
             accessibilityState={{ disabled: locked }}
             accessibilityLabel={`Level ${index + 1}, ${item.name}${locked ? ', locked' : ''}`}
-            style={[
+            // Flattened: Link asChild passes this through a Slot, which rejects style arrays on web.
+            style={StyleSheet.flatten([
               styles.row,
               { backgroundColor: c.paper, borderColor: next ? c.pencil : c.line },
               locked && styles.locked,
-            ]}
+            ])}
           >
             <Text style={[styles.num, { color: locked ? c.muted : c.pencil }]}>{String(index + 1).padStart(2, '0')}</Text>
             <View style={styles.text}>

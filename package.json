@@ -3,16 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "expo-router/entry",
+  "main": "index",
   "scripts": {
     "start": "expo start",
     "ios": "expo start --ios",
     "android": "expo start --android",
-    "web": "expo start --web",
+    "web": "npm run web:setup && expo start --web",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "report": "tsx tools/report.ts",
-    "design-levels": "tsx tools/design-levels.ts"
+    "design-levels": "tsx tools/design-levels.ts",
+    "web:setup": "setup-skia-web public",
+    "build:web": "npm run web:setup && expo export --platform web",
+    "serve:web": "expo serve"
   },
   "dependencies": {
     "@expo-google-fonts/barlow": "^0.4.1",
