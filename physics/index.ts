@@ -14,8 +14,9 @@
  *   Each level's stored solution goes further and uses every bar it gives.
  */
 
-export const WORLD = { width: 400, height: 720, ground: 700 } as const;
-export const LAUNCHER = { x: 44, y: 672 } as const;
+// Board shape: 400 x 560 so it fills a phone's width once the controls are on screen.
+export const WORLD = { width: 400, height: 560, ground: 540 } as const;
+export const LAUNCHER = { x: 44, y: 512 } as const; // 28 above the floor
 export const BALL_RADIUS = 8;
 export const GRAVITY = 900;          // px/s²
 export const DT = 1 / 240;           // fixed timestep; never tie this to frame rate

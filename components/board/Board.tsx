@@ -26,6 +26,8 @@ export interface BoardProps {
   pieces: PlacedPiece[];
   /** Index into `pieces` of the selected piece, if any. */
   selected?: number | null;
+  /** Each on-board piece's bar number (as on its tray chip), drawn beside it. */
+  numbers?: number[];
   /** Last few launches, oldest first. */
   trails: Trail[];
   angle: number;
@@ -45,11 +47,11 @@ const condensed600 = require('@expo-google-fonts/barlow-condensed/600SemiBold/Ba
 const condensed500 = require('@expo-google-fonts/barlow-condensed/500Medium/BarlowCondensed_500Medium.ttf');
 
 /**
- * The game board, drawn in Skia in world units (400 × 720) and scaled uniformly to fit its container.
+ * The game board, drawn in Skia in world units (WORLD, 400 × 560) and scaled uniformly to fit its container.
  * Pure rendering: everything it shows comes from props. Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, selected = null, trails, angle, power, tries, flight = null, done = false, onTouch } = props;
+  const { level, pieces, numbers = [], selected = null, trails, angle, power, tries, flight = null, done = false, onTouch } = props;
   const c = useColors();
   const [box, setBox] = useState({ w: 0, h: 0 });
   const hudFont = useFont(condensed600, 15);
@@ -119,8 +121,16 @@ export function Board(props: BoardProps) {
 
   const sel = selected != null ? pieces[selected] : null;
   const selEnds = sel ? pieceEnds(sel) : null;
-  const selLabel = sel ? `${((-sel.deg % 180) + 180) % 180}°` : '';
-  const selLabelW = labelFont && sel ? labelFont.measureText(selLabel).width : 0;
+  // Each bar gets its number beside it (above it), and the selected one its rotation too: "2 · 137°".
+  const labels = labelFont ? pieces.map((p, i) => {
+    const text = i === selected ? `${numbers[i] ?? i + 1} · ${((-p.deg % 180) + 180) % 180}°` : String(numbers[i] ?? i + 1);
+    const a = (p.deg * Math.PI) / 180;
+    let nx = Math.sin(a), ny = -Math.cos(a); // a normal to the bar
+    if (ny > 0) { nx = -nx; ny = -ny; }        // the one pointing up
+    const gap = i === selected ? 20 : 14;
+    const w = labelFont.measureText(text).width;
+    return { text, x: p.x + nx * gap - w / 2, y: p.y + ny * gap + 4 };
+  }) : [];
 
   return (
     <View style={styles.fill} onLayout={onLayout}>
@@ -181,11 +191,11 @@ export function Board(props: BoardProps) {
                     <Circle cx={selEnds[2]} cy={selEnds[3]} r={11} color={c.paper} />
                     <Circle cx={selEnds[2]} cy={selEnds[3]} r={11} color={c.pencil} style="stroke" strokeWidth={2.5} />
                     <Path path={handleArcPath(selEnds[2], selEnds[3])} color={c.pencil} style="stroke" strokeWidth={2.5} strokeCap="round" />
-                    {labelFont && (
-                      <Text x={sel.x - selLabelW / 2} y={sel.y - 16} text={selLabel} font={labelFont} color={c.pencil} />
-                    )}
                   </Group>
                 )}
+                {labelFont && labels.map((l, i) => (
+                  <Text key={`n${i}`} x={l.x} y={l.y} text={l.text} font={labelFont} color={c.pencil} />
+                ))}
 
                 {/* launcher */}
                 <Path path={launcher} color={c.muted} />

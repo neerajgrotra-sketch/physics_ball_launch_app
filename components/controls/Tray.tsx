@@ -9,7 +9,10 @@ interface Props {
   disabled?: boolean;
 }
 
-/** One chip per piece, as in the prototype: "Bar 90" in the tray, "Placed" on the board, "Remove" when selected. */
+/**
+ * One chip per bar, named Bar 1, Bar 2, Bar 3 (the board shows the same numbers). Outlined in the tray,
+ * faded and dashed on the board, filled when selected. The line icon shows the bar's length.
+ */
 export function Tray({ slots, selected, onTap, disabled }: Props) {
   const c = useColors();
   if (!slots.length) {
@@ -19,7 +22,7 @@ export function Tray({ slots, selected, onTap, disabled }: Props) {
     <View style={styles.tray}>
       {slots.map((s, k) => {
         const sel = selected === k && s.onBoard;
-        const label = s.onBoard ? (sel ? 'Remove' : 'Placed') : `Bar ${s.len}`;
+        const label = `Bar ${k + 1}`;
         const fg = sel ? c.panel : c.pencil;
         return (
           <Pressable
@@ -27,7 +30,7 @@ export function Tray({ slots, selected, onTap, disabled }: Props) {
             onPress={() => onTap(k)}
             disabled={disabled}
             accessibilityRole="button"
-            accessibilityLabel={s.onBoard ? (sel ? `Remove bar ${s.len}` : `Select bar ${s.len}`) : `Place bar ${s.len}`}
+            accessibilityLabel={s.onBoard ? (sel ? `Deselect bar ${k + 1}` : `Select bar ${k + 1}`) : `Place bar ${k + 1}`}
             style={[
               styles.chip,
               { borderColor: c.pencil },
@@ -53,8 +56,8 @@ const styles = StyleSheet.create({
   tray: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   none: { fontSize: 13, fontFamily: FONTS.body, alignSelf: 'center' },
   chip: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, paddingHorizontal: 12,
-    borderRadius: 19, borderWidth: 1.5,
+    flexDirection: 'row', alignItems: 'center', gap: 6, height: 34, paddingHorizontal: 10,
+    borderRadius: 17, borderWidth: 1.5,
   },
   on: { opacity: 0.55, borderStyle: 'dashed' },
   iconBox: { width: 34, height: 10, justifyContent: 'center', paddingLeft: 3 * ICON_SCALE },

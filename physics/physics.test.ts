@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildWorld, simulate, solutionPieces, inputGrid, glassBox, BALL_RADIUS, WALL_RESTITUTION, WORLD, type Level } from './index';
+import { buildWorld, simulate, solutionPieces, inputGrid, glassBox, BALL_RADIUS, LAUNCHER, WALL_RESTITUTION, WORLD, type Level } from './index';
 import { LEVELS } from '../levels';
 import { legalPlacement } from '../tools/geometry';
 import { usesEveryBar } from '../tools/find-solution';
@@ -19,7 +19,7 @@ describe('true bounces', () => {
   it('a flat bar reflects the ball: speed along it kept, speed into it reversed and scaled by 0.85', () => {
     // Fire straight up at the lowest power; the ball falls back onto a flat bar just under the launcher.
     const level: Level = { id: 't', name: 't', hint: '', glass: { x: 350, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }] };
-    const bar = { len: 90, x: 44, y: 690, deg: 0 };
+    const bar = { len: 90, x: LAUNCHER.x, y: LAUNCHER.y + 18, deg: 0 };
     const r = simulate(buildWorld(level, [bar]), 90, 0, 1);
     const k = r.hits[0].i;
     const before = r.path[k - 2][1] - r.path[k - 3][1], after = r.path[k + 1][1] - r.path[k][1];
@@ -27,7 +27,7 @@ describe('true bounces', () => {
     expect(Math.sign(after)).toBe(-1);             // bounced back up
     expect(Math.abs(after / before)).toBeGreaterThan(0.7);
     expect(Math.abs(after / before)).toBeLessThan(0.95);
-    for (const [x] of r.path.slice(0, k + 20)) expect(x).toBeCloseTo(44, 6); // a straight drop stays straight
+    for (const [x] of r.path.slice(0, k + 20)) expect(x).toBeCloseTo(LAUNCHER.x, 6); // a straight drop stays straight
   });
 });
 

@@ -2,14 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { LEVELS } from '../levels';
 import { LAUNCHER, WORLD, pieceEnds, solutionPieces, type Level } from '../physics';
 import {
-  boardIndex, boardPieces, dragTo, emptySlots, pressAt, solutionSlots, tapChip, type Slot,
+  boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle,
+  solutionSlots, tapChip, type Slot,
 } from './pieces';
 
 const level = LEVELS[0];
 const twoPieces: Level = { ...level, pieces: [{ len: 90 }, { len: 60 }] };
 
 describe('tray chips', () => {
-  it('place, select, then remove', () => {
+  it('place, select, deselect, then remove', () => {
     let state = { slots: emptySlots(twoPieces), selected: null as number | null };
     state = tapChip(state.slots, state.selected, 1);
     expect(state.slots[1]).toMatchObject({ onBoard: true, x: 120, y: 290, deg: 0 });
@@ -21,7 +22,11 @@ describe('tray chips', () => {
     expect(state.selected).toBe(1);
     expect(state.slots[1].onBoard).toBe(true);
 
-    state = tapChip(state.slots, state.selected, 1); // selected: remove it
+    state = tapChip(state.slots, state.selected, 1); // selected: deselect it, it stays on the board
+    expect(state.slots[1].onBoard).toBe(true);
+    expect(state.selected).toBeNull();
+
+    state = removeBar(state.slots, 1); // the Remove button
     expect(state.slots[1].onBoard).toBe(false);
     expect(state.selected).toBeNull();
   });
@@ -30,7 +35,7 @@ describe('tray chips', () => {
     let slots = emptySlots(level);
     slots = tapChip(slots, null, 0).slots;
     slots = dragTo(slots, { mode: 'rotate', k: 0 }, { x: 200, y: 400 });
-    slots = tapChip(slots, 0, 0).slots;
+    slots = removeBar(slots, 0).slots;
     slots = tapChip(slots, null, 0).slots;
     expect(slots[0]).toMatchObject({ x: 120, y: 220, deg: 0 });
   });
@@ -94,5 +99,39 @@ describe('solution and board mapping', () => {
     expect(boardIndex(slots, 1)).toBe(0);
     expect(boardIndex(slots, 0)).toBeNull();
     expect(boardIndex(slots, null)).toBeNull();
+  });
+});
+
+describe('rotation controls', () => {
+  const slots: Slot[] = [{ len: 90, onBoard: true, x: 200, y: 300, deg: 0 }];
+
+  it('shows 0–179° counter-clockwise, like the board label', () => {
+    expect(shownAngle(0)).toBe(0);
+    expect(shownAngle(-30)).toBe(30);
+    expect(shownAngle(30)).toBe(150);
+    expect(shownAngle(-180)).toBe(0);
+  });
+
+  it('sets and nudges whole degrees, wrapping around', () => {
+    expect(shownAngle(rotateTo(slots, 0, 137)[0].deg)).toBe(137);
+    expect(shownAngle(rotateBy(slots, 0, -1)[0].deg)).toBe(179);
+    expect(shownAngle(rotateBy(rotateTo(slots, 0, 179), 0, 1)[0].deg)).toBe(0);
+    expect(Number.isInteger(rotateTo(slots, 0, 12.6)[0].deg)).toBe(true);
+    expect(slots[0].deg).toBe(0); // inputs untouched
+  });
+
+  it('a nudge turns the bar the way its label says', () => {
+    const turned = rotateBy(slots, 0, 10)[0];
+    const [, y1, , y2] = pieceEnds(turned);
+    expect(y2).toBeLessThan(y1); // counter-clockwise: the right end rises (y points down)
+  });
+
+  it('numbers on-board bars as on the tray chips', () => {
+    const three: Slot[] = [
+      { len: 90, onBoard: false, x: 0, y: 0, deg: 0 },
+      { len: 70, onBoard: true, x: 0, y: 0, deg: 0 },
+      { len: 70, onBoard: true, x: 0, y: 0, deg: 0 },
+    ];
+    expect(boardNumbers(three)).toEqual([2, 3]);
   });
 });

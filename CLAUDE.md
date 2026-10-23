@@ -59,7 +59,8 @@ reference/    prototype.html, the behaviour and look to match
 
 ## Coordinates and units
 
-- The world is 400 × 720 logical units, y pointing down, ground at y = 700, launcher at (44, 672).
+- The world is 400 × 560 logical units (`WORLD`), y pointing down, floor at y = 540, launcher at (44, 512).
+  (The prototype is 400 × 720; the game is shorter so the board fills a phone's width under the controls.)
   Scale the board uniformly to fit the screen. Never change world units to fit a device.
 - Angle is in degrees (0–90), adjustable in 0.1 steps. Power runs 0–100 and maps to 280–1120 px/s
   through `speedFor()`.
@@ -71,8 +72,10 @@ reference/    prototype.html, the behaviour and look to match
   buttons beside each slider nudge by 0.1.
 - **Aim preview:** only the first 0.3 s of free flight is shown, with no bounce prediction. Bounces are
   the puzzle, so never preview them.
-- **Pieces:** tap a tray chip to place a piece, drag it to move, drag the end handle to rotate, and tap
-  the chip again while it's selected to remove it. Pieces can't be edited mid-flight.
+- **Pieces:** bars are named Bar 1, 2, 3 (tray chips and board labels). Tap a tray chip to place a bar, drag
+  it to move, drag the end handle to rotate. While a bar is selected the aim rows become its rotation
+  controls: a 0–179° slider, −/+ 1° nudges (hold to repeat), Remove and Done. Tapping the selected chip
+  deselects it. Pieces can't be edited mid-flight. (The prototype removed a bar by re-tapping its chip.)
 - **Trails:** keep the last 4 launches, oldest faintest. A successful trail is drawn in red.
 - **Bounces:** bars (restitution 0.85), the glass and its plate, and the floor and four edges
   (`WALL_RESTITUTION` 0.7, with a little friction so a rolling ball stops). A shot ends when the ball

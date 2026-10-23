@@ -5,13 +5,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
 import { usePlayback } from '../../components/board/usePlayback';
 import { WinCard } from '../../components/board/WinCard';
-import { AimControls } from '../../components/controls/AimControls';
+import { AimControls, RotateControls } from '../../components/controls/AimControls';
 import { Tray } from '../../components/controls/Tray';
 import { useFeedback } from '../../components/feedback/useFeedback';
 import { useProgress } from '../../components/progress/ProgressProvider';
 import { aimAt } from '../../game/aim';
 import {
-  boardIndex, boardPieces, dragTo, emptySlots, pressAt, solutionSlots, tapChip, type Drag, type Slot,
+  boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle, solutionSlots,
+  tapChip, type Drag, type Slot,
 } from '../../game/pieces';
 import { winText } from '../../game/progress';
 import { LEVELS } from '../../levels';
@@ -95,6 +96,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
 
   const launch = () => {
     if (flying || done) return;
+    feedback.prime();
     setSelected(null);
     fire(boardPieces(slots), angle, power);
   };
@@ -103,6 +105,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   const solve = () => {
     const s = level.solution;
     if (flying || !s) return;
+    feedback.prime();
     const next = solutionSlots(level);
     setSlots(next);
     setSelected(null);
@@ -146,6 +149,12 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
     }
   };
 
+  // The selected bar (if it's on the board) gets rotation controls in place of the aim rows.
+  const selectedBar = selected != null && slots[selected]?.onBoard ? selected : null;
+  const rotate = (next: (s: Slot[]) => Slot[]) => {
+    if (!flying) setSlots(next);
+  };
+
   const onChip = (k: number) => {
     if (flying) return;
     const r = tapChip(slots, selected, k);
@@ -154,7 +163,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   };
 
   return (
-    <View style={[styles.wrap, { paddingBottom: insets.bottom + 12 }]}>
+    <View style={[styles.wrap, { paddingBottom: insets.bottom + 8 }]}>
       <Stack.Screen
         options={{
           headerTitle: () => (
@@ -175,6 +184,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
         <Board
           level={level}
           pieces={boardPieces(slots)}
+          numbers={boardNumbers(slots)}
           selected={boardIndex(slots, selected)}
           trails={trails}
           angle={angle}
@@ -192,14 +202,26 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
           />
         )}
       </View>
-      <Text style={[styles.hint, { color: notice ? c.red : c.muted }]}>{notice ?? level.hint}</Text>
+      <Text style={[styles.hint, { color: notice ? c.red : c.muted }]} numberOfLines={2}>{notice ?? level.hint}</Text>
       <View style={styles.controls}>
-        <AimControls angle={angle} power={power} onAngle={setAngle} onPower={setPower} />
+        {selectedBar != null ? (
+          <RotateControls
+            bar={selectedBar + 1}
+            angle={shownAngle(slots[selectedBar].deg)}
+            onAngle={(a) => rotate((s) => rotateTo(s, selectedBar, a))}
+            onNudge={(by) => rotate((s) => rotateBy(s, selectedBar, by))}
+            onDone={() => setSelected(null)}
+            onRemove={() => { if (!flying) { const r = removeBar(slots, selectedBar); setSlots(r.slots); setSelected(r.selected); } }}
+            disabled={flying}
+          />
+        ) : (
+          <AimControls angle={angle} power={power} onAngle={setAngle} onPower={setPower} />
+        )}
         <View style={styles.bottom}>
           <View style={styles.tray}>
             <Tray slots={slots} selected={selected} onTap={onChip} disabled={flying} />
           </View>
-          <Ghost label="Clear trails" onPress={clearTrails} />
+          <Ghost label="Clear" onPress={clearTrails} />
         </View>
         <View style={[styles.actions, flying && styles.busy]}>
           <Ghost label="Solve" onPress={solve} big />
@@ -253,17 +275,18 @@ const styles = StyleSheet.create({
   nav: { flexDirection: 'row', gap: 10 },
   icon: { width: 38, height: 38, borderRadius: 19, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   iconText: { fontSize: 20, lineHeight: 22, fontFamily: FONTS.bodySemi },
-  stage: { flex: 1, paddingHorizontal: 10, paddingTop: 4 },
-  hint: { marginHorizontal: 14, marginTop: 6, fontSize: 13, minHeight: 18, fontFamily: FONTS.body },
-  controls: { paddingHorizontal: 14, paddingTop: 6, gap: 8 },
+  // Compact controls so the board gets as much of a phone screen as possible.
+  stage: { flex: 1, paddingHorizontal: 6, paddingTop: 2 },
+  hint: { marginHorizontal: 12, marginTop: 4, fontSize: 12, lineHeight: 16, fontFamily: FONTS.body },
+  controls: { paddingHorizontal: 12, paddingTop: 4, gap: 6 },
   bottom: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tray: { flex: 1 },
   actions: { flexDirection: 'row', gap: 8 },
   busy: { opacity: 0.5 },
-  ghost: { height: 38, paddingHorizontal: 12, borderRadius: 19, borderWidth: 1.5, justifyContent: 'center' },
-  ghostBig: { height: 46, paddingHorizontal: 20, borderRadius: 23 },
+  ghost: { height: 34, paddingHorizontal: 12, borderRadius: 17, borderWidth: 1.5, justifyContent: 'center' },
+  ghostBig: { height: 44, paddingHorizontal: 20, borderRadius: 22 },
   ghostText: { fontSize: 14, fontFamily: FONTS.bodyMedium },
   ghostTextBig: { fontSize: 15 },
-  launch: { flex: 1, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
+  launch: { flex: 1, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   launchText: { color: '#fff', fontSize: 20, letterSpacing: 0.3, fontFamily: FONTS.condensedBold },
 });

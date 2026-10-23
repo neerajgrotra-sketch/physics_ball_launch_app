@@ -46,15 +46,21 @@ export function boardIndex(slots: Slot[], k: number | null): number | null {
 }
 
 /**
- * Tapping tray chip k: place it (and select it), select it, or remove it if it's already selected.
+ * Tapping tray chip k: place it (and select it), select it, or deselect it if it's already selected.
+ * Removing a bar is the Remove button in the rotation controls (removeBar).
  */
 export function tapChip(slots: Slot[], selected: number | null, k: number): { slots: Slot[]; selected: number | null } {
   const slot = slots[k];
   if (!slot.onBoard) {
     return { slots: replace(slots, k, { ...slot, onBoard: true, ...trayDrop(k) }), selected: k };
   }
-  if (selected === k) return { slots: replace(slots, k, { ...slot, onBoard: false }), selected: null };
+  if (selected === k) return { slots, selected: null };
   return { slots, selected: k };
+}
+
+/** Takes bar k off the board, back into the tray. */
+export function removeBar(slots: Slot[], k: number): { slots: Slot[]; selected: null } {
+  return { slots: replace(slots, k, { ...slots[k], onBoard: false }), selected: null };
 }
 
 export type Drag =
@@ -111,4 +117,28 @@ function replace<T>(xs: T[], i: number, v: T): T[] {
   const out = xs.slice();
   out[i] = v;
   return out;
+}
+
+/**
+ * A bar's rotation as shown to the player: 0–179°, counter-clockwise from flat (a bar looks the same
+ * turned 180°). Matches the label on the board. `deg` itself is the physics rotation, clockwise.
+ */
+export function shownAngle(deg: number): number {
+  return ((-deg % 180) + 180) % 180;
+}
+
+/** Set slot k to a shown angle (whole degrees, wrapped into 0–179). */
+export function rotateTo(slots: Slot[], k: number, shown: number): Slot[] {
+  const a = ((Math.round(shown) % 180) + 180) % 180;
+  return replace(slots, k, { ...slots[k], deg: a === 0 ? 0 : -a });
+}
+
+/** Turn slot k by whole degrees (positive = counter-clockwise), wrapping past 179 and below 0. */
+export function rotateBy(slots: Slot[], k: number, by: number): Slot[] {
+  return rotateTo(slots, k, shownAngle(slots[k].deg) + by);
+}
+
+/** Bar numbers (1-based, as on the tray chips) of the pieces on the board, in board order. */
+export function boardNumbers(slots: Slot[]): number[] {
+  return slots.flatMap((s, k) => (s.onBoard ? [k + 1] : []));
 }

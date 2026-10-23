@@ -64,6 +64,13 @@
         window.__bankShotError = function (e) { show((e && (e.stack || e.message)) || String(e)); };
         window.addEventListener('error', function (e) { show((e.error && e.error.stack) || e.message || 'Script failed to load: ' + (e.target && e.target.src)); }, true);
         window.addEventListener('unhandledrejection', function (e) { window.__bankShotError(e.reason); });
+
+        // A drag on the board is a game move (aim, move or rotate a bar). Without this, iOS also treats
+        // it as a page drag, which in an in-app browser sheet pulls the whole sheet down to close it.
+        // Non-passive so preventDefault is allowed; sliders and the level list scroll as normal.
+        document.addEventListener('touchmove', function (e) {
+          if (e.target && e.target.closest && e.target.closest('canvas, [data-board]')) e.preventDefault();
+        }, { passive: false });
       })();
     </script>
   </head>

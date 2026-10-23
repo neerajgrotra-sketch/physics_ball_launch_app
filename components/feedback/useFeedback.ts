@@ -31,6 +31,8 @@ export function useFeedback() {
   }, []);
 
   return {
+    /** Web needs a user gesture to start audio (see useFeedback.web.ts); nothing to do here. */
+    prime() {},
     hit(h: Hit) {
       const strength = Math.max(0.2, Math.min(1, h.speed / HARD_HIT));
       const style = h.kind === 'piece' && strength > 0.6
