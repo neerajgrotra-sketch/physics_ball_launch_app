@@ -18,8 +18,8 @@ levels/       one JSON file per level, plus index.ts listing them in play order
 tools/        design-levels.ts (level geometry source), verify-direct.ts (proof of no direct shot),
               find-solution.ts (finds the Solve answer), geometry.ts (legal piece placement), report.ts
 app/          Expo Router screens and components
-components/   shared UI (board/ is the Skia game board, controls/ the aim sliders)
-game/         pure game-input logic (aim mapping, nudges). No UI imports, tested with Vitest
+components/   shared UI (board/ is the Skia game board, controls/ the aim sliders and piece tray)
+game/         pure game-input logic (aim mapping, nudges, piece tray and drags). No UI imports, tested with Vitest
 theme/        colour tokens and font names from the prototype, light and dark
 reference/    prototype.html, the behaviour and look to match
 ```

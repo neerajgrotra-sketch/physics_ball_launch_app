@@ -69,14 +69,21 @@ export function Board(props: BoardProps) {
   };
 
   // Touches are tracked from the moment a finger lands (minDistance 0), like the prototype's pointer events.
+  // The handler and scale go through a ref so a gesture always sees the latest render's state.
   const lastTouch = useRef({ x: 0, y: 0 });
-  const toWorld = (x: number, y: number) => (lastTouch.current = { x: x / scale, y: y / scale });
+  const touch = useRef({ onTouch, scale });
+  touch.current = { onTouch, scale };
+  const send = (phase: TouchPhase, x?: number, y?: number) => {
+    const { onTouch: handler, scale: s } = touch.current;
+    if (x != null && y != null) lastTouch.current = { x: x / s, y: y / s };
+    handler?.(phase, lastTouch.current);
+  };
   const pan = usePanGesture({
     minDistance: 0,
     runOnJS: true,
-    onBegin: (e) => onTouch?.('down', toWorld(e.x, e.y)),
-    onUpdate: (e) => onTouch?.('move', toWorld(e.x, e.y)),
-    onFinalize: () => onTouch?.('up', lastTouch.current),
+    onBegin: (e) => send('down', e.x, e.y),
+    onUpdate: (e) => send('move', e.x, e.y),
+    onFinalize: () => send('up'),
   });
 
   const g = glassBox(level.glass);

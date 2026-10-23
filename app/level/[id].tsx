@@ -5,29 +5,34 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
 import { usePlayback } from '../../components/board/usePlayback';
 import { AimControls } from '../../components/controls/AimControls';
-import { aimAt, nearLauncher } from '../../game/aim';
+import { Tray } from '../../components/controls/Tray';
+import { aimAt } from '../../game/aim';
+import {
+  boardIndex, boardPieces, dragTo, emptySlots, pressAt, solutionSlots, tapChip, type Drag, type Slot,
+} from '../../game/pieces';
 import { LEVELS } from '../../levels';
-import { buildWorld, simulate, solutionPieces, type PlacedPiece } from '../../physics';
+import { buildWorld, simulate, type PlacedPiece } from '../../physics';
 import { FONTS, useColors } from '../../theme/colors';
 
 const MAX_TRAILS = 4;
 
 // Level screen, laid out like the prototype: board, hint, aim controls, then Solve and Launch.
-// Each launch runs simulate() once and plays the path back. Piece placement comes in build step 5.
+// Each launch runs simulate() once and plays the path back.
 export default function LevelScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useColors();
   const insets = useSafeAreaInsets();
   const level = LEVELS.find((l) => l.id === id);
 
-  const [pieces, setPieces] = useState<PlacedPiece[]>([]);
+  const [slots, setSlots] = useState<Slot[]>(() => (level ? emptySlots(level) : []));
+  const [selected, setSelected] = useState<number | null>(null);
   const [trails, setTrails] = useState<Trail[]>([]);
   const [angle, setAngle] = useState(52);
   const [power, setPower] = useState(45);
   const [tries, setTries] = useState(0);
   const [done, setDone] = useState(false);
   const { flight, flying, play } = usePlayback();
-  const aiming = useRef(false);
+  const drag = useRef<Drag | null>(null);
 
   if (!level) {
     return <Text style={[styles.hint, { color: c.ink }]}>Level not found.</Text>;
@@ -45,27 +50,31 @@ export default function LevelScreen() {
 
   const launch = () => {
     if (flying || done) return;
-    fire(pieces, angle, power);
+    setSelected(null);
+    fire(boardPieces(slots), angle, power);
   };
 
+  // Places the stored solution's pieces (unused ones go back to the tray), sets angle and power, launches.
   const solve = () => {
     const s = level.solution;
     if (flying || !s) return;
-    const placed = solutionPieces(level);
-    setPieces(placed);
+    const next = solutionSlots(level);
+    setSlots(next);
+    setSelected(null);
     setAngle(s.angle);
     setPower(s.power);
     if (done) {
       setTrails([]);
       setDone(false);
     }
-    fire(placed, s.angle, s.power);
+    fire(boardPieces(next), s.angle, s.power);
   };
 
   // Until the win card lands in step 6, Reset is the way back into a level after winning.
   const reset = () => {
     if (flying) return;
-    setPieces([]);
+    setSlots(emptySlots(level));
+    setSelected(null);
     setTrails([]);
     setTries(0);
     setDone(false);
@@ -81,17 +90,31 @@ export default function LevelScreen() {
     setPower(a.power);
   };
 
-  // Drag out from the launcher to aim. Piece moves and rotations join this in step 5.
+  // One finger on the board: rotate the selected piece by its end handle, move a piece, or aim from the
+  // launcher. Pieces can't be edited mid-flight, and there's no aiming once the level is won.
   const onTouch = (phase: TouchPhase, p: { x: number; y: number }) => {
     if (phase === 'down') {
-      if (flying || done || !nearLauncher(p)) return;
-      aiming.current = true;
-      aimTo(p);
+      drag.current = null;
+      if (flying) return;
+      const r = pressAt(slots, selected, p, !done);
+      drag.current = r.drag;
+      setSelected(r.selected);
+      if (r.drag?.mode === 'aim') aimTo(p);
     } else if (phase === 'move') {
-      if (aiming.current) aimTo(p);
+      const d = drag.current;
+      if (!d) return;
+      if (d.mode === 'aim') aimTo(p);
+      else setSlots((s) => dragTo(s, d, p));
     } else {
-      aiming.current = false;
+      drag.current = null;
     }
+  };
+
+  const onChip = (k: number) => {
+    if (flying) return;
+    const r = tapChip(slots, selected, k);
+    setSlots(r.slots);
+    setSelected(r.selected);
   };
 
   return (
@@ -100,7 +123,8 @@ export default function LevelScreen() {
       <View style={styles.stage}>
         <Board
           level={level}
-          pieces={pieces}
+          pieces={boardPieces(slots)}
+          selected={boardIndex(slots, selected)}
           trails={trails}
           angle={angle}
           power={power}
@@ -115,9 +139,7 @@ export default function LevelScreen() {
         <AimControls angle={angle} power={power} onAngle={setAngle} onPower={setPower} />
         <View style={styles.bottom}>
           <View style={styles.tray}>
-            {level.pieces.length === 0 && (
-              <Text style={[styles.none, { color: c.muted }]}>No pieces on this level</Text>
-            )}
+            <Tray slots={slots} selected={selected} onTap={onChip} disabled={flying} />
           </View>
           <Ghost label="Reset" onPress={reset} />
           <Ghost label="Clear trails" onPress={clearTrails} />
@@ -157,8 +179,7 @@ const styles = StyleSheet.create({
   hint: { marginHorizontal: 14, marginTop: 6, fontSize: 13, minHeight: 18, fontFamily: FONTS.body },
   controls: { paddingHorizontal: 14, paddingTop: 6, gap: 8 },
   bottom: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  tray: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  none: { fontSize: 13, fontFamily: FONTS.body },
+  tray: { flex: 1 },
   actions: { flexDirection: 'row', gap: 8 },
   busy: { opacity: 0.5 },
   ghost: { height: 38, paddingHorizontal: 12, borderRadius: 19, borderWidth: 1.5, justifyContent: 'center' },
