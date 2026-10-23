@@ -7,6 +7,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { ProgressProvider } from '../components/progress/ProgressProvider';
 import { FONTS, useColors } from '../theme/colors';
 
 export default function RootLayout() {
@@ -19,19 +20,21 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style="auto" />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: c.panel },
-          headerTintColor: c.ink,
-          headerTitleStyle: { fontFamily: FONTS.condensedBold, fontSize: 22 },
-          headerShadowVisible: false,
-          contentStyle: { backgroundColor: c.panel },
-        }}
-      >
-        <Stack.Screen name="index" options={{ title: 'Bank Shot' }} />
-        <Stack.Screen name="level/[id]" options={{ title: '' }} />
-      </Stack>
+      <ProgressProvider>
+        <StatusBar style="auto" />
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: c.panel },
+            headerTintColor: c.ink,
+            headerTitleStyle: { fontFamily: FONTS.condensedBold, fontSize: 22 },
+            headerShadowVisible: false,
+            contentStyle: { backgroundColor: c.panel },
+          }}
+        >
+          <Stack.Screen name="index" options={{ title: 'Bank Shot' }} />
+          <Stack.Screen name="level/[id]" options={{ title: '' }} />
+        </Stack>
+      </ProgressProvider>
     </GestureHandlerRootView>
   );
 }
