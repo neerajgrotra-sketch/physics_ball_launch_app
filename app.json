@@ -23,6 +23,8 @@
       "output": "single",
       "name": "Bank Shot",
       "backgroundColor": "#dfe5d8"
-    }
+    },
+    "icon": "./assets/icon.png",
+    "backgroundColor": "#dfe5d8"
   }
 }

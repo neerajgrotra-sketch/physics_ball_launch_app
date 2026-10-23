@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Phone-app behaviour: fill the screen edge to edge (the app pads for the notch and home bar
+         itself), and no pinch or double-tap zoom, so drags on the board aim and move bars instead. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>Bank Shot</title>
+    <meta name="description" content="Place the bars, launch the ball, bounce it into the glass." />
+
+    <!-- "Add to Home Screen" opens it full screen like an installed app. -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Bank Shot" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <meta name="theme-color" content="#dfe5d8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f2b52" media="(prefers-color-scheme: dark)" />
+
+    <style id="expo-reset">
+      html, body {
+        height: 100%;
+        margin: 0;
+        background: #dfe5d8;
+        /* No rubber-band scroll or pull-to-refresh: the page never moves, only the game does. */
+        overflow: hidden;
+        overscroll-behavior: none;
+        /* Taps are taps: no 300 ms delay, grey flash, text selection or long-press callout. */
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-text-size-adjust: 100%;
+      }
+      @media (prefers-color-scheme: dark) {
+        html, body { background: #0f2b52; }
+      }
+      /* The real visible height on phones (100% can include the area under Safari's toolbar). */
+      body { height: 100dvh; }
+      #root { display: flex; height: 100%; flex: 1; }
+      /* The board handles every touch itself (aim, move, rotate). */
+      canvas { touch-action: none; }
+    </style>
+  </head>
+
+  <body>
+    <noscript>You need to enable JavaScript to play Bank Shot.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
