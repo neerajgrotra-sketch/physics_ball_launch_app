@@ -15,7 +15,8 @@
     "design-levels": "tsx tools/design-levels.ts",
     "web:setup": "setup-skia-web public",
     "build:web": "npm run web:setup && expo export --platform web",
-    "serve:web": "expo serve"
+    "serve:web": "expo serve",
+    "play": "npm run build:web && node scripts/serve-web.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/barlow": "^0.4.1",
