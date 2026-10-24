@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.5.0
+
+- Level header: ⚙ settings (music on/off, version) and ••• to go back to the levels from any level.
+- Levels screen redesigned: cards with each level's name, best stars and bounces, and a drawing of your
+  last winning shot (bars and path). The next level to play is highlighted.
+- All levels are open while they're being tested (locks come back later).
+- BACKLOG.md lists the agreed future work.
+
 ## 0.4.3
 
 - The win card says what earns more stars, e.g. "Get it in with 5 bounces or fewer for ★★, or 3 for ★★★".

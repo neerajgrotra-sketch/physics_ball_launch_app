@@ -49,7 +49,7 @@ export default function RootLayout() {
                 contentStyle: { backgroundColor: c.panel },
               }}
             >
-              <Stack.Screen name="index" options={{ title: 'Bank Shot' }} />
+              <Stack.Screen name="index" options={{ title: 'Bank Shot', headerShown: false }} />
               <Stack.Screen name="level/[id]" options={{ title: '' }} />
             </Stack>
             </RewardedAdsProvider>

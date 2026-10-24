@@ -117,6 +117,16 @@ reference/    prototype.html, the behaviour and look to match
   and launches. The win card then reads "Here's one way in", with "Try it yourself" (resets the level) and
   "Next level". The card sits at the top of the board so the solution path stays visible.
 
+## Screens and navigation
+
+- **Levels screen** (`app/index.tsx`): two-column cards, each with a drawing of the level and the player's
+  last unassisted winning shot (`components/levels/ShotThumbnail.tsx`, SVG, re-simulated from the stored
+  inputs in `game/shots.ts`), the level's number and name, best stars and bounces. The first level
+  without a result is highlighted. Header total score.
+- **Level header:** ⚙ (settings sheet: music, version) and ••• (back to the levels, also from a deep link)
+  on the left, level name in the middle, ‹ › on the right. No back arrow.
+- Level locks exist but are off while levels are tested (`LOCK_LEVELS`). Planned work is in `BACKLOG.md`.
+
 ## Visual identity
 
 The look is engineering graph paper in light mode and a blueprint in dark mode, with

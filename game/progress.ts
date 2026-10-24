@@ -1,6 +1,12 @@
 // Level unlocking and the win card's wording, as in reference/prototype.html. Pure: no UI imports.
 import { golfName, nextStarsText, scoreFor, starsFor } from './score';
 
+/**
+ * Level locks: off while the levels are being tested, so every level can be opened. Wins still record
+ * unlocks, so turning this on later picks up each player's real progress.
+ */
+export const LOCK_LEVELS = false;
+
 /** Storage key for the index of the furthest unlocked level. */
 export const UNLOCKED_KEY = 'bank-shot/unlocked';
 

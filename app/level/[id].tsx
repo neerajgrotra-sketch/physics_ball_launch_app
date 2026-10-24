@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
@@ -7,6 +7,7 @@ import { usePlayback } from '../../components/board/usePlayback';
 import { HelpCard } from '../../components/board/HelpCard';
 import { NoticeCard } from '../../components/board/NoticeCard';
 import { useRewardedAd } from '../../components/ads/RewardedAds';
+import { SettingsSheet } from '../../components/settings/SettingsSheet';
 import { WinCard } from '../../components/board/WinCard';
 import { AimControls, RotateControls } from '../../components/controls/AimControls';
 import { Tray } from '../../components/controls/Tray';
@@ -84,7 +85,8 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   const [notice, setNotice] = useState<string | null>(null);
   const { flight, flying, play, skip } = usePlayback();
   const feedback = useFeedback();
-  const { musicOn, toggleMusic } = useSoundSettings();
+  const { musicOn } = useSoundSettings();
+  const [settings, setSettings] = useState(false);
   const music = useLevelMusic(level.id, musicOn, flying); // music dips while the ball flies
   // Browsers only start audio from a tap, so every tap on the level unlocks it (no-op on phones).
   const primeAudio = () => { feedback.prime(); music.prime(); };
@@ -111,7 +113,10 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
         feedback.landed();
         setWinShot({ angle: a, power: p, slots: shot, bounces: res.bounces });
         setDone(true);
-        won(index, assisted ? undefined : bestOf({ bounces: res.bounces, par, tries: tryNo }));
+        if (assisted) won(index);
+        else won(index, bestOf({ bounces: res.bounces, par, tries: tryNo }), {
+          pieces: placed.map(({ x, y, deg, len }) => ({ x, y, deg, len })), angle: a, power: p,
+        });
       }
     };
     feedback.launched();
@@ -278,24 +283,35 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
     <View style={[styles.wrap, { paddingBottom: insets.bottom + 8 }]}>
       <Stack.Screen
         options={{
+          // ⚙ settings and ••• the level menu on the left (no back arrow: ••• is the way back to the levels,
+          // which also works when a level was opened straight from a link), level name in the middle,
+          // previous/next level on the right.
+          headerBackVisible: false,
+          headerTitleAlign: 'center',
+          headerLeft: () => (
+            <View style={styles.nav}>
+              <IconButton label={<Gear />} a11y="Settings" disabled={false} onPress={() => setSettings(true)} />
+              <IconButton
+                label="•••" a11y="Levels" disabled={false}
+                onPress={() => { if (!flying) router.dismissTo('/'); }}
+              />
+            </View>
+          ),
           headerTitle: () => (
-            <View>
-              <Text style={[styles.title, { color: c.ink }]}>{level.name}</Text>
+            <View style={styles.titleBox}>
+              <Text style={[styles.title, { color: c.ink }]} numberOfLines={1} adjustsFontSizeToFit>{level.name}</Text>
               <Text style={[styles.sub, { color: c.muted }]}>Level {index + 1} of {LEVELS.length}</Text>
             </View>
           ),
           headerRight: () => (
             <View style={styles.nav}>
-              <IconButton
-                label="♪" a11y={musicOn ? 'Turn music off' : 'Turn music on'}
-                dim={!musicOn} disabled={false} onPress={() => { primeAudio(); toggleMusic(); }}
-              />
               <IconButton label="‹" a11y="Previous level" disabled={index === 0} onPress={() => goTo(index - 1)} />
               <IconButton label="›" a11y="Next level" disabled={index >= unlocked} onPress={() => goTo(index + 1)} />
             </View>
           ),
         }}
       />
+      <SettingsSheet visible={settings} onClose={() => setSettings(false)} onMusicTap={primeAudio} />
       <View style={styles.stage}>
         <Board
           level={level}
@@ -379,7 +395,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
 }
 
 /** Round header button. `dim` shows a setting that's off (still pressable), `disabled` one that isn't available. */
-function IconButton({ label, a11y, disabled, dim, onPress }: { label: string; a11y: string; disabled: boolean; dim?: boolean; onPress: () => void }) {
+function IconButton({ label, a11y, disabled, dim, onPress }: { label: string | ReactElement; a11y: string; disabled: boolean; dim?: boolean; onPress: () => void }) {
   const c = useColors();
   return (
     <Pressable
@@ -390,8 +406,22 @@ function IconButton({ label, a11y, disabled, dim, onPress }: { label: string; a1
       accessibilityState={{ disabled }}
       style={[styles.icon, { borderColor: c.line, opacity: disabled ? 0.3 : dim ? 0.45 : 1 }]}
     >
-      <Text style={[styles.iconText, { color: c.ink }]}>{label}</Text>
+      {typeof label === 'string' ? <Text style={[styles.iconText, { color: c.ink }]}>{label}</Text> : label}
     </Pressable>
+  );
+}
+
+/** A settings gear drawn from views (the ⚙ character shows as a colour emoji on phones). */
+function Gear() {
+  const c = useColors();
+  return (
+    <View style={styles.gear}>
+      {[0, 45, 90, 135].map((deg) => (
+        <View key={deg} style={[styles.tooth, { backgroundColor: c.ink, transform: [{ rotate: `${deg}deg` }] }]} />
+      ))}
+      <View style={[styles.gearBody, { backgroundColor: c.ink }]} />
+      <View style={[styles.gearHole, { backgroundColor: c.panel }]} />
+    </View>
   );
 }
 
@@ -410,10 +440,15 @@ function Ghost({ label, onPress, big }: { label: string; onPress: () => void; bi
 
 const styles = StyleSheet.create({
   wrap: { flex: 1 },
-  title: { fontSize: 26, lineHeight: 28, letterSpacing: 0.2, fontFamily: FONTS.condensedBold },
+  titleBox: { alignItems: 'center', maxWidth: 190 },
+  title: { fontSize: 24, lineHeight: 26, letterSpacing: 0.2, fontFamily: FONTS.condensedBold },
   sub: { fontSize: 13, fontFamily: FONTS.body },
-  nav: { flexDirection: 'row', gap: 10 },
+  nav: { flexDirection: 'row', gap: 8 },
   icon: { width: 38, height: 38, borderRadius: 19, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  gear: { width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
+  tooth: { position: 'absolute', width: 5, height: 20, borderRadius: 1.5 },
+  gearBody: { position: 'absolute', width: 15, height: 15, borderRadius: 7.5 },
+  gearHole: { position: 'absolute', width: 6, height: 6, borderRadius: 3 },
   iconText: { fontSize: 20, lineHeight: 22, fontFamily: FONTS.bodySemi },
   // Compact controls so the board gets as much of a phone screen as possible.
   stage: { flex: 1, paddingHorizontal: 6, paddingTop: 2 },
