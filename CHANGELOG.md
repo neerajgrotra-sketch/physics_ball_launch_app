@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.8.1
+
+- New level 8, "Slalom": one block rises from the floor and another hangs from the ceiling, so the ball has to be
+  threaded between them, still touching both bars. Par 4.
+
 ## 0.8.0
 
 - New: fixed bouncy blocks, solid shapes on the board that the ball bounces off (softly, like the walls).

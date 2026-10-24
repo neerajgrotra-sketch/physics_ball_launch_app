@@ -1,0 +1,50 @@
+{
+  "id": "07-slalom",
+  "name": "Slalom",
+  "glass": {
+    "x": 345,
+    "w": 40,
+    "h": 52
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 90
+    }
+  ],
+  "blocks": [
+    {
+      "x": 150,
+      "y": 420,
+      "w": 30,
+      "h": 240
+    },
+    {
+      "x": 270,
+      "y": 130,
+      "w": 30,
+      "h": 260
+    }
+  ],
+  "hint": "A wall from the floor and one from the ceiling: thread the ball between them, using both bars.",
+  "par": 4,
+  "solution": {
+    "pieces": [
+      {
+        "x": 90,
+        "y": 462,
+        "deg": 108
+      },
+      {
+        "x": 108,
+        "y": 237,
+        "deg": 112
+      }
+    ],
+    "angle": 59.2,
+    "power": 51
+  }
+}
