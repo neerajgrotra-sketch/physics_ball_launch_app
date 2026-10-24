@@ -26,7 +26,8 @@ export function WinCard({ text, onAgain, onGo, onClose }: { text: WinText; onAga
           <Text style={[styles.score, { color: c.ink }]}>+{text.score}</Text>
         </View>
       )}
-      <Text style={[styles.detail, { color: c.muted }]}>{text.detail}</Text>
+      <Text style={[styles.detail, text.next && styles.detailTight, { color: c.muted }]}>{text.detail}</Text>
+      {text.next && <Text style={[styles.next, { color: c.pencil, backgroundColor: c.panel }]}>{text.next}</Text>}
       <View style={styles.btns}>
         <Pressable onPress={onAgain} accessibilityRole="button" style={[styles.ghost, { borderColor: c.line }]}>
           <Text style={[styles.ghostText, { color: c.muted }]}>{text.again}</Text>
@@ -54,6 +55,11 @@ const styles = StyleSheet.create({
   score: { fontSize: 22, fontFamily: FONTS.condensedBold },
   title: { fontSize: 28, lineHeight: 30, fontFamily: FONTS.condensedBold, marginBottom: 4, textAlign: 'center' },
   detail: { fontSize: 15, fontFamily: FONTS.body, marginBottom: 12 },
+  detailTight: { marginBottom: 8 },
+  next: {
+    fontSize: 15, lineHeight: 20, fontFamily: FONTS.bodySemi, textAlign: 'center', marginBottom: 12,
+    paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, overflow: 'hidden',
+  },
   btns: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
   ghost: { height: 38, paddingHorizontal: 12, borderRadius: 19, borderWidth: 1.5, justifyContent: 'center' },
   ghostText: { fontSize: 14, fontFamily: FONTS.bodyMedium },

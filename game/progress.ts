@@ -1,5 +1,5 @@
 // Level unlocking and the win card's wording, as in reference/prototype.html. Pure: no UI imports.
-import { golfName, scoreFor, starsFor } from './score';
+import { golfName, nextStarsText, scoreFor, starsFor } from './score';
 
 /** Storage key for the index of the furthest unlocked level. */
 export const UNLOCKED_KEY = 'bank-shot/unlocked';
@@ -22,6 +22,8 @@ export interface WinText {
   stars: number;
   /** Points for this win, or null when assisted. */
   score: number | null;
+  /** What earns more stars next time (null at three stars or when assisted). */
+  next: string | null;
   /** Left button: starts the level over from scratch (Watch again replays the winning shot). */
   again: string;
   /** Right button: the next level, or this one again after the last. */
@@ -40,10 +42,10 @@ export function winText(opts: {
   const { assisted, tries, bounces, par, last } = opts;
   const go = last ? 'Play again' : 'Next level';
   if (assisted === 'solve') {
-    return { title: 'Here’s one way in', detail: `${plural(bounces, 'bounce')}, par ${par}`, stars: 0, score: null, again: 'Try it yourself', go };
+    return { title: 'Here’s one way in', detail: `${plural(bounces, 'bounce')}, par ${par}`, stars: 0, score: null, next: null, again: 'Try it yourself', go };
   }
   if (assisted === 'hint') {
-    return { title: 'In, with a hint', detail: `${plural(bounces, 'bounce')}, par ${par}. Win it without help for stars.`, stars: 0, score: null, again: 'Start over', go };
+    return { title: 'In, with a hint', detail: `${plural(bounces, 'bounce')}, par ${par}. Win it without help for stars.`, stars: 0, score: null, next: null, again: 'Start over', go };
   }
   const name = golfName(bounces, par);
   return {
@@ -51,6 +53,7 @@ export function winText(opts: {
     detail: `${plural(bounces, 'bounce')}, par ${par} · ${tries === 1 ? 'first try' : `${tries} tries`}`,
     stars: starsFor(bounces, par),
     score: scoreFor({ bounces, par, tries }),
+    next: nextStarsText(bounces, par),
     again: 'Start over',
     go,
   };

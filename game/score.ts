@@ -26,6 +26,17 @@ export function starsFor(bounces: number, par: number): number {
 }
 
 /**
+ * What it takes to earn more stars, for the win card; null at three stars.
+ * e.g. "Get it in with 5 bounces or fewer for ★★, or 3 for ★★★".
+ */
+export function nextStarsText(bounces: number, par: number): string | null {
+  const stars = starsFor(bounces, par);
+  if (stars === 3) return null;
+  if (stars === 2) return `Get it in with ${par} bounce${par === 1 ? '' : 's'} or fewer for ★★★`;
+  return `Get it in with ${par + 2} bounces or fewer for ★★, or ${par} for ★★★`;
+}
+
+/**
  * Points for a win: 500 for landing; 300 at par, plus 200 for each bounce under it or minus 100 for each
  * over (never below 0); and a bonus for few tries: 200 on the first, 100 on the second, 50 on the third.
  */

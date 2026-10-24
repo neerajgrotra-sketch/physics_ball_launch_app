@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { better, golfName, goalText, parseBest, scoreFor, starsFor, totalScore } from './score';
+import { better, golfName, nextStarsText, goalText, parseBest, scoreFor, starsFor, totalScore } from './score';
 
 describe('golf scoring', () => {
   it('names a shot against par', () => {
@@ -33,6 +33,13 @@ describe('golf scoring', () => {
     expect(parseBest('nonsense')).toEqual({});
     expect(parseBest(JSON.stringify({ x: a, y: { stars: 'x' } }))).toEqual({ x: a });
     expect(totalScore({ x: a, y: b })).toBe(1600);
+  });
+
+  it('says what earns more stars', () => {
+    expect(nextStarsText(6, 3)).toBe('Get it in with 5 bounces or fewer for ★★, or 3 for ★★★');
+    expect(nextStarsText(4, 3)).toBe('Get it in with 3 bounces or fewer for ★★★');
+    expect(nextStarsText(2, 1)).toBe('Get it in with 1 bounce or fewer for ★★★');
+    expect(nextStarsText(3, 3)).toBeNull();
   });
 
   it('says the goal in words', () => {

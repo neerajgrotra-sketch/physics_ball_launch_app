@@ -31,8 +31,8 @@ describe('winText', () => {
   const base = { assisted: null, tries: 3, bounces: 4, par: 3, last: false } as const;
 
   it('names the result against par, with stars and score', () => {
-    expect(winText(base)).toMatchObject({ title: 'Bogey!', detail: '4 bounces, par 3 · 3 tries', stars: 2, score: 750 });
-    expect(winText({ ...base, bounces: 3, tries: 1 })).toMatchObject({ title: 'Par!', detail: '3 bounces, par 3 · first try', stars: 3 });
+    expect(winText(base)).toMatchObject({ title: 'Bogey!', detail: '4 bounces, par 3 · 3 tries', stars: 2, score: 750, next: 'Get it in with 3 bounces or fewer for ★★★' });
+    expect(winText({ ...base, bounces: 3, tries: 1 })).toMatchObject({ title: 'Par!', detail: '3 bounces, par 3 · first try', stars: 3, next: null });
     expect(winText({ ...base, bounces: 2 }).title).toBe('Birdie!');
     expect(winText({ ...base, bounces: 9 })).toMatchObject({ title: 'In the glass', stars: 1 });
     expect(winText(base)).toMatchObject({ again: 'Start over', go: 'Next level' });
