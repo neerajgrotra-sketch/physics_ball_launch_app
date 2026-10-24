@@ -1,32 +1,53 @@
 import Slider from '@react-native-community/slider';
-import { useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, type ComponentRef, type Ref } from 'react';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   ANGLE_MAX, ANGLE_MIN, POWER_MAX, POWER_MIN, nudgeAngle, nudgePower, toGrid,
 } from '../../game/aim';
 import { ANGLE_STEP, POWER_STEP } from '../../physics';
 import { FONTS, useColors } from '../../theme/colors';
 
+type ViewRef = ComponentRef<typeof View>;
+
+/**
+ * On the web the slider remembers where it sits on the page from when it was first laid out, and only
+ * measures again on a window resize or scroll. If the screen was still sliding in then (or anything
+ * has moved since), every touch is read from the wrong place and the thumb runs to an end. So each touch
+ * on a slider first sends it the resize it's listening for.
+ */
+function remeasureSliders(): boolean {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') window.dispatchEvent(new Event('resize'));
+  return false;
+}
+
 interface Props {
   angle: number;
   power: number;
   onAngle: (v: number) => void;
   onPower: (v: number) => void;
+  /** A value was settled (a slider let go, or a −/+ tap): the tutorial snaps it onto the answer here. */
+  onAngleDone?: (v: number) => void;
+  onPowerDone?: (v: number) => void;
+  /** The slider rows' track views, so the ghost finger can find the thumb. */
+  angleTrackRef?: Ref<ViewRef>;
+  powerTrackRef?: Ref<ViewRef>;
 }
 
 /** Angle and power sliders with −/+ nudge buttons, laid out like the prototype's .row grid. */
-export function AimControls({ angle, power, onAngle, onPower }: Props) {
+export function AimControls({ angle, power, onAngle, onPower, onAngleDone, onPowerDone, angleTrackRef, powerTrackRef }: Props) {
   return (
     <View style={styles.rows}>
       <Row
         label="Angle" value={angle} readout={`${angle.toFixed(1)}°`}
         min={ANGLE_MIN} max={ANGLE_MAX} step={ANGLE_STEP}
-        onChange={onAngle} onNudge={(d) => onAngle(nudgeAngle(angle, d))}
+        onChange={onAngle} onDone={onAngleDone} trackRef={angleTrackRef}
+        onNudge={(d) => { const v = nudgeAngle(angle, d); onAngle(v); onAngleDone?.(v); }}
       />
       <Row
         label="Power" value={power} readout={power.toFixed(1)}
         min={POWER_MIN} max={POWER_MAX} step={POWER_STEP}
-        onChange={onPower} onNudge={(d) => onPower(nudgePower(power, d))}
+        onChange={onPower} onDone={onPowerDone} trackRef={powerTrackRef}
+        onNudge={(d) => { const v = nudgePower(power, d); onPower(v); onPowerDone?.(v); }}
       />
     </View>
   );
@@ -76,15 +97,18 @@ interface RowProps {
   step: number;
   onChange: (v: number) => void;
   onNudge: (dir: 1 | -1) => void;
+  onDone?: (v: number) => void;
+  trackRef?: Ref<ViewRef>;
 }
 
-function Row({ label, value, readout, min, max, step, onChange, onNudge }: RowProps) {
+function Row({ label, value, readout, min, max, step, onChange, onNudge, onDone, trackRef }: RowProps) {
   const c = useColors();
   const name = label.toLowerCase();
   return (
     <View style={styles.row}>
       <Text style={[styles.label, { color: c.muted }]}>{label}</Text>
       <Nudge text="−" onStep={() => onNudge(-1)} a11y={`Decrease ${name}`} />
+      <View ref={trackRef} style={styles.track} onStartShouldSetResponderCapture={remeasureSliders}>
       <Slider
         style={styles.slider}
         value={value}
@@ -92,11 +116,13 @@ function Row({ label, value, readout, min, max, step, onChange, onNudge }: RowPr
         maximumValue={max}
         step={step}
         onValueChange={(v) => onChange(toGrid(v))}
+        onSlidingComplete={(v) => onDone?.(toGrid(v))}
         minimumTrackTintColor={c.pencil}
         maximumTrackTintColor={c.line}
         thumbTintColor={c.pencil}
         accessibilityLabel={label}
       />
+      </View>
       <Nudge text="+" onStep={() => onNudge(1)} a11y={`Increase ${name}`} />
       <Text style={[styles.readout, { color: c.ink }]}>{readout}</Text>
     </View>
@@ -150,6 +176,7 @@ const styles = StyleSheet.create({
   label: { width: 52, fontSize: 15, fontFamily: FONTS.condensed },
   nudge: { width: 30, height: 28, borderRadius: 8, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   nudgeText: { fontSize: 16, fontFamily: FONTS.bodySemi },
+  track: { flex: 1, height: 28 },
   slider: { flex: 1, height: 28 },
   readout: { width: 58, textAlign: 'right', fontSize: 18, fontFamily: FONTS.condensed, fontVariant: ['tabular-nums'] },
   title: { fontSize: 17, fontFamily: FONTS.condensedBold },

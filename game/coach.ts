@@ -16,8 +16,8 @@ export type CoachStep =
   | { kind: 'move'; bar: number }     // drag a bar onto its dashed outline
   | { kind: 'select'; bar: number }   // tap a bar to select it (its dotted turn handle appears)
   | { kind: 'twist'; bar: number }    // drag the selected bar's handle to turn it to match
-  | { kind: 'angle' }                 // set the cannon's angle
-  | { kind: 'power' }                 // set the cannon's power
+  | { kind: 'angle' }                 // set the cannon's angle by dragging the dotted line
+  | { kind: 'power' }                 // set the cannon's power with the Power slider
   | { kind: 'launch' };               // fire
 
 /** How the player's setup compares with the tutorial level's stored solution (game/tutorial.ts). */
@@ -65,8 +65,8 @@ export function coachText(step: CoachStep, aim?: { angle: number; power: number 
     case 'move': return `Drag Bar ${step.bar + 1} onto the dashed outline`;
     case 'select': return `Tap Bar ${step.bar + 1} to select it`;
     case 'twist': return `Drag the round handle to turn Bar ${step.bar + 1} to match`;
-    case 'angle': return aim ? `Set the angle to ${aim.angle.toFixed(1)}°: drag the dotted line round, or use the slider` : 'Set the angle';
-    case 'power': return aim ? `Set the power to ${aim.power.toFixed(1)}: pull the dotted line out, or use the slider` : 'Set the power';
+    case 'angle': return aim ? `Drag the dotted line round to set the angle to ${aim.angle.toFixed(1)}°` : 'Set the angle';
+    case 'power': return aim ? `Slide Power to ${aim.power.toFixed(1)}` : 'Set the power';
     case 'launch': return 'Tap Launch to fire';
   }
 }

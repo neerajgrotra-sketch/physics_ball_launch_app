@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.7.2
+
+- Fixed the Angle and Power sliders sometimes jumping to their end when dragged (seen in the tutorial): they
+  now work out where they are on every touch.
+- The tutorial finger now teaches both ways of aiming: it drags the dotted line for the angle, then slides the
+  Power slider for the power. The tutorial aim snaps onto the answer when you let go, not while you drag.
+
 ## 0.7.1
 
 - The tutorial card no longer looks locked once you've done it: it shows "Tutorial ✓" and your winning shot

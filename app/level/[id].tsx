@@ -134,6 +134,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   const [coach, setCoach] = useState<{ x: number; y: number; dx?: number; dy?: number; mode: 'tap' | 'drag'; text: string } | null>(null);
   const [idleKey, setIdleKey] = useState(0);
   const touching = useRef(false); // a finger is down on the board
+  const angleTrackRef = useRef<ViewRef>(null), powerTrackRef = useRef<ViewRef>(null);
   const rootRef = useRef<ViewRef>(null), trayRef = useRef<ViewRef>(null), stageRef = useRef<ViewRef>(null), launchRef = useRef<ViewRef>(null);
   const chips = useRef<LayoutRectangle[]>([]);
   const latest = useRef({ slots, selected, lever, angle, power });
@@ -225,14 +226,21 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           if (chip) at(trayRef.current, (x, y) => setCoach({ x: x + chip.x + chip.width / 2, y: y + chip.y + chip.height / 2, mode: 'tap', text }));
         } else if (st.kind === 'launch') {
           at(launchRef.current, (x, y, w, h) => setCoach({ x: x + w / 2, y: y + h / 2, mode: 'tap', text }));
+        } else if (st.kind === 'power') {
+          // Slide the Power slider's thumb to the target (the thumb's centre runs 12 in from each end).
+          at(powerTrackRef.current, (x, y, w, h) => {
+            const at100 = (v: number) => x + 12 + (v / 100) * (w - 24);
+            const target = level.solution?.power ?? L.power;
+            setCoach({ x: at100(L.power), y: y + h / 2, dx: at100(target) - at100(L.power), dy: 0, mode: 'drag', text });
+          });
         } else {
           // The board is drawn centred in the stage (inside its padding), scaled to fit.
           at(stageRef.current, (x, y, w, h) => {
             const iw = w - 12, ih = h - 2, k = Math.min(iw / WORLD.width, ih / WORLD.height);
             const left = x + 6 + (iw - WORLD.width * k) / 2, top = y + 2 + (ih - WORLD.height * k) / 2;
             const px = (wx: number) => left + wx * k, py = (wy: number) => top + wy * k;
-            if (st.kind === 'angle' || st.kind === 'power') {
-              const d = aimDemo(level, L.angle, L.power, st.kind);
+            if (st.kind === 'angle') {
+              const d = aimDemo(level, L.angle, L.power, 'angle');
               setCoach({ x: px(d.from.x), y: py(d.from.y), dx: d.dx * k, dy: d.dy * k, mode: 'drag', text });
               return;
             }
@@ -354,11 +362,16 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     if (!flying) setTrails([]);
   };
 
-  // In the tutorial the aim snaps onto the answer when it's close.
   const setAim = (a: number, p: number) => {
-    const t = tutorial ? snapAim(level, a, p) : { angle: a, power: p };
-    setAngle(t.angle);
-    setPower(t.power);
+    setAngle(a);
+    setPower(p);
+  };
+  // In the tutorial the aim snaps onto the answer when it's let go close to it (not while dragging: a slider
+  // that has its value changed under the finger runs away).
+  const snapDone = (which: 'angle' | 'power', v: number) => {
+    if (!tutorial) return;
+    const t = snapAim(level, which === 'angle' ? v : angle, which === 'power' ? v : power);
+    if (which === 'angle') setAngle(t.angle); else setPower(t.power);
   };
   const aimTo = (p: { x: number; y: number }) => {
     const a = aimAt(p);
@@ -403,6 +416,10 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     } else {
       const d = drag.current;
       drag.current = null;
+      if (tutorial && (d?.mode === 'aim' || d?.mode === 'swing')) {
+        const t = snapAim(level, angle, power);
+        setAim(t.angle, t.power);
+      }
       if (d && (d.mode === 'move' || d.mode === 'rotate')) {
         // In the tutorial a bar dropped (or turned) close to its outline snaps onto it, if that's allowed.
         const snapped = tutorial ? snapBar(level, slots, d.k, d.mode === 'move' ? 'pos' : 'deg') : slots;
@@ -450,7 +467,8 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     {/* Any touch anywhere on the level hides the coach and restarts its idle clock (without taking the touch). */}
     <View
       style={[styles.wrap, { paddingBottom: insets.bottom + 8 }]}
-      onStartShouldSetResponderCapture={() => { if (coach) poke(); return false; }}
+      // (Deferred: changing the screen in the middle of a touch's negotiation confuses the sliders' drags.)
+      onStartShouldSetResponderCapture={() => { if (coach) setTimeout(poke, 0); return false; }}
     >
       <Stack.Screen
         options={{
@@ -539,8 +557,12 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         ) : (
           <AimControls
             angle={angle} power={power}
-            onAngle={(v) => { keepPlaying(); setAim(v, power); }}
-            onPower={(v) => { keepPlaying(); setAim(angle, v); }}
+            onAngle={(v) => { keepPlaying(); setAngle(v); }}
+            onPower={(v) => { keepPlaying(); setPower(v); }}
+            onAngleDone={(v) => snapDone('angle', v)}
+            onPowerDone={(v) => snapDone('power', v)}
+            angleTrackRef={angleTrackRef}
+            powerTrackRef={powerTrackRef}
           />
         )}
         <View style={styles.bottom}>
