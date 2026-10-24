@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.7.1
+
+- The tutorial card no longer looks locked once you've done it: it shows "Tutorial ✓" and your winning shot
+  (with Replay). Tapping the card, or ⚙ "Replay the tutorial", runs the guided tutorial again; "Try it
+  yourself" after winning it gives the plain level.
+- The tutorial caption no longer shows "n of 12".
+
 ## 0.7.0
 
 - A guided tutorial: a new level 1, "Learn the ropes", with three bars. A new player starts in it, and the

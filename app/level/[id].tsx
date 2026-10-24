@@ -48,6 +48,10 @@ export default function LevelScreen() {
   const c = useColors();
   const { unlocked, shots } = useProgress();
   const [round, setRound] = useState(0);
+  // Start over / Try it yourself on the tutorial level gives the plain level; opening it again (from its card,
+  // or "Replay the tutorial") gives the guide.
+  const [unguided, setUnguided] = useState(false);
+  useEffect(() => setUnguided(false), [id]);
   const index = LEVELS.findIndex((l) => l.id === id);
 
   if (index < 0 || index > unlocked) {
@@ -61,12 +65,17 @@ export default function LevelScreen() {
     );
   }
   const shot = replay === '1' && round === 0 ? shots[id] : undefined;
-  return <LevelGame key={`${id}:${round}:${shot ? 'replay' : ''}`} index={index} shot={shot} onReplay={() => setRound((r) => r + 1)} />;
+  return (
+    <LevelGame
+      key={`${id}:${round}:${shot ? 'replay' : ''}`} index={index} shot={shot} guide={!unguided}
+      onReplay={(guide) => { setUnguided(guide !== true); setRound((r) => r + 1); }}
+    />
+  );
 }
 
 // Laid out like the prototype: board, hint, aim controls, tray, then Solve and Launch.
 // Each launch runs simulate() once and plays the path back.
-function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onReplay: () => void }) {
+function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Shot; guide: boolean; onReplay: (guide?: boolean) => void }) {
   const level = LEVELS[index];
   const last = index === LEVELS.length - 1;
   const c = useColors();
@@ -74,8 +83,11 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
   const router = useRouter();
   const { unlocked, best, won } = useProgress();
   const tips = useTips();
-  /** The guided tutorial: the first time through the tutorial level, unless tips are off. */
-  const [tutorial, setTutorial] = useState(() => level.id === TUTORIAL_ID && !tips.tutorialDone && tips.tipsOn);
+  /**
+   * The guided tutorial: whenever the tutorial level is opened (the first time automatically, and again
+   * from its card or "Replay the tutorial"), unless tips are off or it's opened to replay a saved shot.
+   */
+  const [tutorial, setTutorial] = useState(() => level.id === TUTORIAL_ID && tips.tipsOn && guide && !shot);
   /** The last win was the guided one (no stars or score), for the win card's wording. */
   const [guided, setGuided] = useState(false);
 
@@ -151,10 +163,12 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
         setWinShot({ angle: a, power: p, slots: shot, bounces: res.bounces });
         setDone(true);
         if (tutorial) { tips.finishTutorial(); setTutorial(false); }
-        if (assisted) won(index);
-        else won(index, bestOf({ bounces: res.bounces, par, tries: tryNo }), {
-          pieces: placed.map(({ x, y, deg, len }) => ({ x, y, deg, len })), angle: a, power: p,
-        });
+        // The winning shot is kept for the level card's drawing and Replay, but only unassisted wins (and the
+        // tutorial's guided one, which has no score) save it.
+        const saved = { pieces: placed.map(({ x, y, deg, len }) => ({ x, y, deg, len })), angle: a, power: p };
+        if (tutorial) won(index, undefined, saved);
+        else if (assisted) won(index);
+        else won(index, bestOf({ bounces: res.bounces, par, tries: tryNo }), saved);
       }
     };
     feedback.launched();
@@ -246,7 +260,7 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
   const replayTutorial = () => {
     tips.restartTutorial();
     setSettings(false);
-    if (level.id === TUTORIAL_ID) onReplay();
+    if (level.id === TUTORIAL_ID) onReplay(true);
     else router.setParams({ id: TUTORIAL_ID });
   };
 
@@ -504,9 +518,9 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
         {done && !flying && (
           <WinCard
             text={winText({ assisted: solved ? 'solve' : helped ? 'hint' : guided ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last })}
-            onAgain={onReplay}
+            onAgain={() => onReplay(false)}
             onClose={keepPlaying}
-            onGo={() => (last ? onReplay() : goTo(index + 1))}
+            onGo={() => (last ? onReplay(false) : goTo(index + 1))}
           />
         )}
       </View>

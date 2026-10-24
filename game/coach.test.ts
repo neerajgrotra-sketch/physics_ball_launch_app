@@ -30,11 +30,11 @@ describe('tutorial plan', () => {
     expect(tutorialPlan({ ...base, onBoard: [false], posOk: [false], degOk: [false] }).total).toBe(6);
   });
 
-  it('says what to do, with progress and the aim targets', () => {
+  it('says what to do, with the aim targets and no step counter', () => {
     expect(coachText({ kind: 'move', bar: 1 })).toBe('Drag Bar 2 onto the dashed outline');
     expect(coachText({ kind: 'angle' }, { angle: 47.7, power: 24.8 })).toContain('47.7°');
     expect(coachText({ kind: 'power' }, { angle: 47.7, power: 24.8 })).toContain('24.8');
-    expect(tutorialText({ step: { kind: 'launch' }, done: 11, total: 12 })).toBe('12 of 12 · Tap Launch to fire');
+    expect(tutorialText({ step: { kind: 'launch' }, done: 11, total: 12 })).toBe('Tap Launch to fire');
   });
 });
 

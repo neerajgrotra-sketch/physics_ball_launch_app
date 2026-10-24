@@ -53,7 +53,9 @@ export default function LevelSelect() {
           const locked = index > unlocked;
           const b = best[level.id];
           const next = index === nextUp && !locked;
-          const looksLocked = !b && !next;
+          const isTut = level.id === TUTORIAL_ID;
+          // The tutorial, once done, is a finished level (it has no stars: its win is guided), not a locked one.
+          const looksLocked = !b && !next && !(isTut && tutorialDone);
           const label = `Level ${index + 1}, ${level.name}${locked ? ', locked' : b ? `, ${b.stars} of 3 stars` : ''}`;
           const body = (
             <Pressable
@@ -84,6 +86,11 @@ export default function LevelSelect() {
               <Text style={[styles.name, { color: next ? c.paper : c.ink }]} numberOfLines={1}>{level.name}</Text>
               {looksLocked ? (
                 <Text style={[styles.best, styles.lockedNote, { color: c.muted }]}>Par {level.par}</Text>
+              ) : isTut && !b ? (
+                <View style={styles.meta}>
+                  <Text style={[styles.tutorialDone, { color: c.pencil }]}>Tutorial ✓</Text>
+                  <Text style={[styles.best, { color: next ? c.paper : c.muted }]}>par {level.par}</Text>
+                </View>
               ) : (
                 <View style={styles.meta}>
                   <Text style={styles.stars}>
@@ -143,5 +150,6 @@ const styles = StyleSheet.create({
   lockIcon: { position: 'absolute', bottom: 8, right: 10, fontSize: 18, opacity: 0.7 },
   lockedNote: { paddingHorizontal: 4, paddingBottom: 2 },
   stars: { fontSize: 17, letterSpacing: 1 },
+  tutorialDone: { fontSize: 16, fontFamily: FONTS.condensedBold },
   version: { marginTop: 8, textAlign: 'center', fontSize: 12, fontFamily: FONTS.body },
 });

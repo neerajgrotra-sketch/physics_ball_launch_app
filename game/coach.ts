@@ -71,7 +71,7 @@ export function coachText(step: CoachStep, aim?: { angle: number; power: number 
   }
 }
 
-/** The caption in the tutorial, with how far along it is. */
+/** The caption in the tutorial: what to do now (no step counter: players found "3 of 12" off-putting). */
 export function tutorialText(plan: TutorialPlan, aim?: { angle: number; power: number }): string {
-  return `${plan.done + 1} of ${plan.total} · ${coachText(plan.step, aim)}`;
+  return coachText(plan.step, aim);
 }
