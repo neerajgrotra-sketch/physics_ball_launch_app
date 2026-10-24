@@ -4,6 +4,10 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.5.4
+
+- The goal line names the bounce target: "Goal: into the glass in 3 bounces, off all 3 bars".
+
 ## 0.5.3
 
 - Replay on a won level's card: opens the level with your winning shot set up (bars, angle, power),

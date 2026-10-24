@@ -43,7 +43,8 @@ describe('golf scoring', () => {
   });
 
   it('says the goal in words', () => {
-    expect(goalText(1, 2)).toBe('Par 2: bounce off the bar, then into the glass');
-    expect(goalText(3, undefined)).toBe('bounce off all 3 bars, then into the glass');
+    expect(goalText(3, 3)).toBe('Goal: into the glass in 3 bounces, off all 3 bars');
+    expect(goalText(1, 1)).toBe('Goal: into the glass in 1 bounce, off the bar');
+    expect(goalText(2, undefined)).toBe('Goal: off both bars, then into the glass');
   });
 });
