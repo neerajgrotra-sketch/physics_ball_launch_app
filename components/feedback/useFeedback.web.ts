@@ -18,6 +18,12 @@ type Sound = keyof typeof SOUNDS;
 /** Bounce speed (px/s) that counts as a full-strength hit. Launches top out at 1120. */
 const HARD_HIT = 700;
 
+
+/** Each bar hit in a shot climbs a major arpeggio (semitones), so a chain sounds like it's building up. */
+const ARPEGGIO = [0, 4, 7, 12, 16, 19, 24];
+const pitch = (n: number) => 2 ** (ARPEGGIO[Math.min(n, ARPEGGIO.length - 1)] / 12);
+let barHits = 0;
+
 const decoded: Partial<Record<Sound, AudioBuffer>> = {};
 let loading: Promise<void> | null = null;
 function load() {
@@ -28,9 +34,9 @@ function load() {
   return loading;
 }
 
-function play(name: Sound, volume: number) {
+function play(name: Sound, volume: number, rate = 1) {
   const b = decoded[name];
-  if (b) playBuffer(b, volume);
+  if (b) playBuffer(b, volume, false, rate);
 }
 
 export function useFeedback() {
@@ -41,13 +47,14 @@ export function useFeedback() {
       load();
     },
     launched() {
+      barHits = 0;
       play('launch', 0.8);
     },
     hit(h: Hit) {
       const strength = Math.max(0.2, Math.min(1, h.speed / HARD_HIT));
       if (h.kind === 'glass') play('glass', strength);
-      else if (h.kind === 'wall') play('wall', strength * 0.8);
-      else play('bounce', strength);
+      else if (h.kind === 'wall') play('wall', strength * 0.6);
+      else play('bounce', Math.max(0.6, strength), pitch(barHits++));
     },
     landed() {
       play('land', 1);

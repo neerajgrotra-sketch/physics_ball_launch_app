@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.2.1
+
+- Music is quieter and dips while the ball flies, so bounces cut through.
+- Each bar hit in a shot plays a step higher (a rising arpeggio); bar hits are punchier, wall bounces softer.
+- A near miss (landed but skipped a bar) is now a pop-up card over the board, not a line of small text.
+
 ## 0.2.0
 
 - Real bounces off bars, the glass, the floor and all four walls; open glasses.

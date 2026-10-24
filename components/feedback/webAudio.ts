@@ -6,6 +6,12 @@ import { Asset } from 'expo-asset';
 // resume() must be called from a tap.
 
 let ctx: AudioContext | null = null;
+let lastGain: GainNode | null = null;
+
+/** The gain node of the most recent play() (music uses it to duck). */
+export function latestGain(): GainNode | null {
+  return lastGain;
+}
 const buffers = new Map<number | string, Promise<AudioBuffer | null>>();
 
 export function audioContext(): AudioContext | null {
@@ -41,8 +47,8 @@ export function buffer(module: number): Promise<AudioBuffer | null> {
   return p;
 }
 
-/** Play a decoded sound once (effects), or looped (music). Returns a stop function. */
-export function play(buf: AudioBuffer, volume: number, loop = false): () => void {
+/** Play a decoded sound once (effects), or looped (music). `rate` > 1 raises the pitch. Returns a stop function. */
+export function play(buf: AudioBuffer, volume: number, loop = false, rate = 1): () => void {
   const ac = ctx;
   if (!ac || ac.state !== 'running') return () => {};
   const src = ac.createBufferSource();
@@ -50,6 +56,8 @@ export function play(buf: AudioBuffer, volume: number, loop = false): () => void
   gain.gain.value = volume;
   src.buffer = buf;
   src.loop = loop;
+  src.playbackRate.value = rate;
+  lastGain = gain;
   src.connect(gain).connect(ac.destination);
   src.start();
   return () => {

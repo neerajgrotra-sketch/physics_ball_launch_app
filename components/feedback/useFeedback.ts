@@ -1,6 +1,6 @@
 import { setAudioModeAsync, useAudioPlayer, type AudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { Hit } from '../../physics';
 
 // Sounds come from scripts/make-sounds.mjs. Re-run it to change them.
@@ -22,7 +22,12 @@ const HARD_HIT = 700;
  * faster); a success buzz and chime when the ball settles in the glass; a soft thump on a dead surface.
  * Sounds follow the silent switch and mix with whatever else is playing.
  */
+/** Each bar hit in a shot climbs a major arpeggio (semitones), so a chain sounds like it's building up. */
+const ARPEGGIO = [0, 4, 7, 12, 16, 19, 24];
+const pitch = (n: number) => 2 ** (ARPEGGIO[Math.min(n, ARPEGGIO.length - 1)] / 12);
+
 export function useFeedback() {
+  const barHits = useRef(0);
   const launch = useAudioPlayer(SOUNDS.launch);
   const wall = useAudioPlayer(SOUNDS.wall);
   const bounce = useAudioPlayer(SOUNDS.bounce);
@@ -38,6 +43,7 @@ export function useFeedback() {
     /** Web needs a user gesture to start audio (see useFeedback.web.ts); nothing to do here. */
     prime() {},
     launched() {
+      barHits.current = 0;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       play(launch, 0.8);
     },
@@ -48,8 +54,8 @@ export function useFeedback() {
         : Haptics.ImpactFeedbackStyle.Light;
       Haptics.impactAsync(style).catch(() => {});
       if (h.kind === 'glass') play(glass, strength);
-      else if (h.kind === 'wall') play(wall, strength * 0.8);
-      else play(bounce, strength);
+      else if (h.kind === 'wall') play(wall, strength * 0.6);
+      else play(bounce, Math.max(0.6, strength), pitch(barHits.current++));
     },
     landed() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -63,9 +69,11 @@ export function useFeedback() {
 }
 
 /** Restart a short effect from the top, so quick repeats retrigger instead of being dropped. */
-function play(player: AudioPlayer, volume: number) {
+function play(player: AudioPlayer, volume: number, rate = 1) {
   try {
     player.volume = volume;
+    player.shouldCorrectPitch = false;
+    player.playbackRate = rate;
     player.seekTo(0).catch(() => {});
     player.play();
   } catch {

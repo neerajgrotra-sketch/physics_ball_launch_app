@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
 import { usePlayback } from '../../components/board/usePlayback';
+import { NoticeCard } from '../../components/board/NoticeCard';
 import { WinCard } from '../../components/board/WinCard';
 import { AimControls, RotateControls } from '../../components/controls/AimControls';
 import { Tray } from '../../components/controls/Tray';
@@ -74,7 +75,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   const { flight, flying, play, skip } = usePlayback();
   const feedback = useFeedback();
   const { musicOn, toggleMusic } = useSoundSettings();
-  const music = useLevelMusic(level.id, musicOn);
+  const music = useLevelMusic(level.id, musicOn, flying); // music dips while the ball flies
   const hasMusic = MUSIC[level.id] !== undefined;
   // Browsers only start audio from a tap, so every tap on the level unlocks it (no-op on phones).
   const primeAudio = () => { feedback.prime(); music.prime(); };
@@ -126,6 +127,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
 
   const launch = () => {
     if (flying || done) return;
+    setNotice(null);
     // Backstop: drags snap back and rotation skips clipping angles, so this shouldn't trigger.
     if (!slotsLegal(level, slots)) {
       setNotice('A bar is touching the glass, the launcher or another bar. Move it first.');
@@ -157,6 +159,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   // After a win, any edit (board touch, bar chip, slider, rotation) or the card's ✕ goes back to normal play:
   // the card closes and Launch launches again. Bars, trails and tries stay; the level stays won.
   const keepPlaying = () => {
+    setNotice(null); // any edit also closes a near-miss card
     if (!done || flying) return;
     setDone(false);
     setSolved(false);
@@ -265,6 +268,9 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
           done={done}
           onTouch={onTouch}
         />
+        {notice && !done && !flying && (
+          <NoticeCard title="So close!" message={notice} onClose={() => setNotice(null)} />
+        )}
         {done && !flying && (
           <WinCard
             text={winText({ solved, tries, ...winShot, last })}
@@ -274,7 +280,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
           />
         )}
       </View>
-      <Text style={[styles.hint, { color: notice ? c.red : c.muted }]} numberOfLines={2}>{notice ?? level.hint}</Text>
+      <Text style={[styles.hint, { color: c.muted }]} numberOfLines={2}>{level.hint}</Text>
       <View style={styles.controls}>
         {selectedBar != null ? (
           <RotateControls

@@ -5,5 +5,6 @@ export const MUSIC: Record<string, number> = {
   '01-first-bounce': require('../../assets/music/01-first-bounce.mp3'),
 };
 
-/** Music sits under the effects (bounces, chime), which play at up to full volume. */
-export const MUSIC_VOLUME = 0.35;
+/** Music sits well under the effects, and dips further while the ball is flying so bounces cut through. */
+export const MUSIC_VOLUME = 0.18;
+export const MUSIC_DUCKED = 0.06;
