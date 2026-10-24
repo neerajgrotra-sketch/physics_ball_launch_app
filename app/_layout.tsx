@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RewardedAdsProvider } from '../components/ads/RewardedAds';
+import { TipsProvider } from '../components/coach/Tips';
 import { SoundSettingsProvider } from '../components/feedback/SoundSettings';
 import { ProgressProvider } from '../components/progress/ProgressProvider';
 import { Intro } from '../components/splash/Intro';
@@ -39,6 +40,7 @@ export default function RootLayout() {
         <ProgressProvider>
           <SoundSettingsProvider>
             <RewardedAdsProvider>
+              <TipsProvider>
             <StatusBar style="auto" />
             <Stack
               screenOptions={{
@@ -52,6 +54,7 @@ export default function RootLayout() {
               <Stack.Screen name="index" options={{ title: 'Bank Shot', headerShown: false }} />
               <Stack.Screen name="level/[id]" options={{ title: '' }} />
             </Stack>
+              </TipsProvider>
             </RewardedAdsProvider>
           </SoundSettingsProvider>
         </ProgressProvider>

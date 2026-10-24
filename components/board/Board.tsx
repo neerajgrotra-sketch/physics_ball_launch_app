@@ -1,4 +1,4 @@
-import { Canvas, Circle, Group, Path, Rect, Text, useCanvasRef, useFont } from '@shopify/react-native-skia';
+import { Canvas, Circle, DashPathEffect, Group, Path, Rect, Text, useCanvasRef, useFont } from '@shopify/react-native-skia';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
@@ -30,6 +30,8 @@ export interface BoardProps {
   selected?: number | null;
   /** Which end of the selected piece has the rotate lever (game/pieces leverLine). */
   lever?: End;
+  /** Dashed outlines of where pieces should go (the tutorial's guide). */
+  ghosts?: PlacedPiece[];
   /** Each on-board piece's bar number (as on its tray chip), drawn beside it. */
   numbers?: number[];
   /** Per on-board piece, whether it's somewhere it isn't allowed (game/placement): drawn red. */
@@ -57,7 +59,7 @@ const condensed500 = require('@expo-google-fonts/barlow-condensed/500Medium/Barl
  * Pure rendering: everything it shows comes from props. Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, trails, angle, power, tries, flight = null, done = false, onTouch } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, flight = null, done = false, onTouch } = props;
   const c = useColors();
   const [box, setBox] = useState({ w: 0, h: 0 });
   const hudFont = useFont(condensed600, 15);
@@ -208,6 +210,14 @@ export function Board(props: BoardProps) {
                   const [x1, y1, x2, y2] = pieceEnds(p);
                   return (
                     <Path key={i} path={linePath(x1, y1, x2, y2)} color={illegal[i] ? c.red : c.pencil} style="stroke" strokeWidth={6} strokeCap="round" />
+                  );
+                })}
+                {ghosts.map((g, i) => {
+                  const [x1, y1, x2, y2] = pieceEnds(g);
+                  return (
+                    <Path key={`gh${i}`} path={linePath(x1, y1, x2, y2)} color={c.pencil} style="stroke" strokeWidth={9} strokeCap="round" opacity={0.5}>
+                      <DashPathEffect intervals={[10, 9]} />
+                    </Path>
                   );
                 })}
                 {sel && selEnds && (

@@ -28,13 +28,15 @@ export function leverLine(p: PlacedPiece, end: End): [number, number, number, nu
   return [ex, ey, ex + s * Math.cos(a) * LEVER, ey + s * Math.sin(a) * LEVER];
 }
 
+/** Whether the lever on end `end` of a piece has its tip on the board (not hanging off an edge). */
+export function leverTipInside(p: PlacedPiece, end: End): boolean {
+  const [, , tx, ty] = leverLine(p, end);
+  return tx > 8 && tx < WORLD.width - 8 && ty > 8 && ty < WORLD.ground - 8;
+}
+
 /** Which end to put the lever on when a bar is selected: end 2, unless its tip would be off the board. */
 export function leverEnd(p: PlacedPiece): End {
-  const inside = (e: End) => {
-    const [, , tx, ty] = leverLine(p, e);
-    return tx > 8 && tx < WORLD.width - 8 && ty > 8 && ty < WORLD.ground - 8;
-  };
-  return inside(2) || !inside(1) ? 2 : 1;
+  return leverTipInside(p, 2) || !leverTipInside(p, 1) ? 2 : 1;
 }
 
 const bearing = (p: { x: number; y: number }, c: { x: number; y: number }) => (Math.atan2(p.y - c.y, p.x - c.x) * 180) / Math.PI;

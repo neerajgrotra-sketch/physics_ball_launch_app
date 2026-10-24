@@ -9,7 +9,12 @@ import { NoticeCard } from '../../components/board/NoticeCard';
 import { useRewardedAd } from '../../components/ads/RewardedAds';
 import { SettingsSheet } from '../../components/settings/SettingsSheet';
 import { GhostFinger } from '../../components/coach/GhostFinger';
-import { IDLE_MS, coachStep, coachText } from '../../game/coach';
+import { useTips } from '../../components/coach/Tips';
+import {
+  IDLE_MS, TUTORIAL_ID, TUTORIAL_IDLE_MS, coachText, firstBarStep, tutorialPlan, tutorialText, type CoachStep,
+} from '../../game/coach';
+import { LEVER, leverLine, leverTipInside } from '../../game/pieces';
+import { aimDemo, ghostFor, snapAim, snapBar, tutorialState } from '../../game/tutorial';
 import { WinCard } from '../../components/board/WinCard';
 import { AimControls, RotateControls } from '../../components/controls/AimControls';
 import { Tray } from '../../components/controls/Tray';
@@ -67,7 +72,12 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
   const c = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { unlocked, won } = useProgress();
+  const { unlocked, best, won } = useProgress();
+  const tips = useTips();
+  /** The guided tutorial: the first time through the tutorial level, unless tips are off. */
+  const [tutorial, setTutorial] = useState(() => level.id === TUTORIAL_ID && !tips.tutorialDone && tips.tipsOn);
+  /** The last win was the guided one (no stars or score), for the win card's wording. */
+  const [guided, setGuided] = useState(false);
 
   const [slots, setSlots] = useState<Slot[]>(() => (shot ? shotSlots(level, shot) : emptySlots(level)));
   const [selected, setSelected] = useState<number | null>(null);
@@ -105,15 +115,17 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
   const primeAudio = () => { feedback.prime(); music.prime(); };
   const drag = useRef<Drag | null>(null);
 
-  // The idle coach: after IDLE_MS without a touch, a ghost finger shows the next step (place a bar, drag
-  // one into the ball's path, launch; game/coach.ts). Any edit or launch hides it and restarts the clock.
+  // The ghost finger (game/coach.ts). In the tutorial it leads the player through the level's stored solution,
+  // step by step, after a short pause on each; elsewhere it only shows the first bar to place, after a longer
+  // idle. Any touch hides it and restarts the clock; it can be stopped for good (the caption's button,
+  // or Tips in settings).
   const [coach, setCoach] = useState<{ x: number; y: number; dx?: number; dy?: number; mode: 'tap' | 'drag'; text: string } | null>(null);
   const [idleKey, setIdleKey] = useState(0);
-  const moved = useRef(false); // the player has moved or turned a bar this round
+  const touching = useRef(false); // a finger is down on the board
   const rootRef = useRef<ViewRef>(null), trayRef = useRef<ViewRef>(null), stageRef = useRef<ViewRef>(null), launchRef = useRef<ViewRef>(null);
   const chips = useRef<LayoutRectangle[]>([]);
-  const latest = useRef({ slots });
-  latest.current = { slots };
+  const latest = useRef({ slots, selected, lever, angle, power });
+  latest.current = { slots, selected, lever, angle, power };
   const poke = () => { setCoach(null); setIdleKey((k) => k + 1); };
   const lastLegal = useRef<Slot[]>([]);
 
@@ -122,8 +134,9 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
   // `shot` is the bar setup fired: the win keeps it for Watch again, and a near miss uses its bar
   // numbers to say which bar the ball skipped.
   // The bounce counter ticks up as the ball reaches each scored bounce, and shows the full count at the end.
-  const fire = (shot: Slot[], a: number, p: number, assisted = helped) => {
+  const fire = (shot: Slot[], a: number, p: number, assisted = helped || tutorial) => {
     const placed = boardPieces(shot), numbers = boardNumbers(shot);
+    setGuided(tutorial);
     const res = simulate(buildWorld(level, placed), a, p);
     const tryNo = tries + 1;
     setTries(tryNo);
@@ -137,6 +150,7 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
         feedback.landed();
         setWinShot({ angle: a, power: p, slots: shot, bounces: res.bounces });
         setDone(true);
+        if (tutorial) { tips.finishTutorial(); setTutorial(false); }
         if (assisted) won(index);
         else won(index, bestOf({ bounces: res.bounces, par, tries: tryNo }), {
           pieces: placed.map(({ x, y, deg, len }) => ({ x, y, deg, len })), angle: a, power: p,
@@ -172,35 +186,69 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
   }, []);
 
   useEffect(() => {
-    if (flying || done || help || notice || settings) return;
+    if (flying || done || help || notice || settings || !tips.tipsOn) return;
+    if (!tutorial && best[level.id]) return; // the first-bar hint is for levels not yet won
     const timer = setTimeout(() => {
-      const { slots: s } = latest.current;
-      const step = coachStep(s.map((x) => x.onBoard), moved.current);
-      const text = coachText(step);
+      if (touching.current) return;
+      const L = latest.current;
+      let step: CoachStep | null, text: string;
+      if (tutorial) {
+        const plan = tutorialPlan(tutorialState(level, L.slots, L.selected, L.angle, L.power));
+        step = plan.step;
+        text = tutorialText(plan, level.solution);
+      } else {
+        step = firstBarStep(L.slots.map((x) => x.onBoard));
+        text = step ? coachText(step) : '';
+      }
       const root = rootRef.current;
-      if (!root) return;
+      if (!step || !root) return;
+      const st = step;
       root.measureInWindow((rx, ry) => {
         const at = (ref: ViewRef | null, f: (x: number, y: number, w: number, h: number) => void) =>
           ref?.measureInWindow((x, y, w, h) => f(x - rx, y - ry, w, h));
-        if (step.kind === 'place') {
-          const chip = chips.current[step.bar];
+        if (st.kind === 'place') {
+          const chip = chips.current[st.bar];
           if (chip) at(trayRef.current, (x, y) => setCoach({ x: x + chip.x + chip.width / 2, y: y + chip.y + chip.height / 2, mode: 'tap', text }));
-        } else if (step.kind === 'launch') {
+        } else if (st.kind === 'launch') {
           at(launchRef.current, (x, y, w, h) => setCoach({ x: x + w / 2, y: y + h / 2, mode: 'tap', text }));
         } else {
           // The board is drawn centred in the stage (inside its padding), scaled to fit.
           at(stageRef.current, (x, y, w, h) => {
             const iw = w - 12, ih = h - 2, k = Math.min(iw / WORLD.width, ih / WORLD.height);
             const left = x + 6 + (iw - WORLD.width * k) / 2, top = y + 2 + (ih - WORLD.height * k) / 2;
-            const bar = s[step.bar];
-            setCoach({ x: left + bar.x * k, y: top + bar.y * k, dx: 70, dy: -50, mode: 'drag', text });
+            const px = (wx: number) => left + wx * k, py = (wy: number) => top + wy * k;
+            if (st.kind === 'angle' || st.kind === 'power') {
+              const d = aimDemo(level, L.angle, L.power, st.kind);
+              setCoach({ x: px(d.from.x), y: py(d.from.y), dx: d.dx * k, dy: d.dy * k, mode: 'drag', text });
+              return;
+            }
+            const bar = L.slots[st.bar], g = ghostFor(level, st.bar);
+            if (st.kind === 'select') {
+              setCoach({ x: px(bar.x), y: py(bar.y), mode: 'tap', text });
+            } else if (st.kind === 'move') {
+              setCoach({ x: px(bar.x), y: py(bar.y), dx: g ? (g.x - bar.x) * k : 70, dy: g ? (g.y - bar.y) * k : -50, mode: 'drag', text });
+            } else {
+              // twist: from the lever's tip to where it will be once the bar is turned to its outline.
+              const [, , tx, ty] = leverLine(bar, L.lever);
+              const sgn = L.lever === 2 ? 1 : -1, reach = bar.len / 2 + LEVER;
+              const ga = ((g ? g.deg : bar.deg) * Math.PI) / 180;
+              const gx = bar.x + sgn * Math.cos(ga) * reach, gy = bar.y + sgn * Math.sin(ga) * reach;
+              setCoach({ x: px(tx), y: py(ty), dx: (gx - tx) * k, dy: (gy - ty) * k, mode: 'drag', text });
+            }
           });
         }
       });
-    }, IDLE_MS);
+    }, tutorial ? TUTORIAL_IDLE_MS : IDLE_MS);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idleKey, flying, done, help, notice, settings]);
+  }, [idleKey, flying, done, help, notice, settings, tutorial, tips.tipsOn]);
+
+  const replayTutorial = () => {
+    tips.restartTutorial();
+    setSettings(false);
+    if (level.id === TUTORIAL_ID) onReplay();
+    else router.setParams({ id: TUTORIAL_ID });
+  };
 
   const goTo = (i: number) => {
     if (!flying) router.setParams({ id: LEVELS[i].id });
@@ -292,10 +340,15 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
     if (!flying) setTrails([]);
   };
 
+  // In the tutorial the aim snaps onto the answer when it's close.
+  const setAim = (a: number, p: number) => {
+    const t = tutorial ? snapAim(level, a, p) : { angle: a, power: p };
+    setAngle(t.angle);
+    setPower(t.power);
+  };
   const aimTo = (p: { x: number; y: number }) => {
     const a = aimAt(p);
-    setAngle(a.angle);
-    setPower(a.power);
+    setAim(a.angle, a.power);
   };
 
   // One finger on the board: rotate the selected piece by its end handle, move a piece, or aim from the
@@ -304,6 +357,8 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
   // A bar dragged somewhere it isn't allowed (game/placement) shows red, and snaps back to the last
   // allowed spot when the finger lifts.
   const onTouch = (phase: TouchPhase, p: { x: number; y: number }) => {
+    touching.current = phase !== 'up';
+    if (phase === 'up') poke();
     if (phase === 'down') {
       drag.current = null;
       if (flying) {
@@ -321,12 +376,10 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
     } else if (phase === 'move') {
       const d = drag.current;
       if (!d) return;
-      if (d.mode === 'move' || d.mode === 'rotate') moved.current = true;
       if (d.mode === 'aim') aimTo(p);
       else if (d.mode === 'swing') {
         const a = swingTo(p, d.grab);
-        setAngle(a.angle);
-        setPower(a.power);
+        setAim(a.angle, a.power);
       }
       else setSlots((s) => {
         const next = dragTo(s, d, p);
@@ -337,7 +390,13 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
       const d = drag.current;
       drag.current = null;
       if (d && (d.mode === 'move' || d.mode === 'rotate')) {
-        setSlots((s) => (slotsLegal(level, s) ? s : lastLegal.current));
+        // In the tutorial a bar dropped (or turned) close to its outline snaps onto it, if that's allowed.
+        const snapped = tutorial ? snapBar(level, slots, d.k, d.mode === 'move' ? 'pos' : 'deg') : slots;
+        const final = slotsLegal(level, snapped) ? snapped : slotsLegal(level, slots) ? slots : lastLegal.current;
+        setSlots(final);
+        // If the move left the lever's tip hanging off the board, put the lever on the bar's other end.
+        const bar = final[d.k];
+        if (bar?.onBoard && !leverTipInside(bar, lever)) setLever(leverEnd(bar));
       }
     }
   };
@@ -359,10 +418,24 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
     select(r.selected, r.slots);
   };
 
+  // The tutorial's dashed outline: where the bar being lined up belongs.
+  const plan = tutorial ? tutorialPlan(tutorialState(level, slots, selected, angle, power)) : null;
+  const ghosts = plan && (plan.step.kind === 'move' || plan.step.kind === 'select' || plan.step.kind === 'twist')
+    ? [ghostFor(level, plan.step.bar)].filter((g): g is NonNullable<typeof g> => g != null)
+    : [];
+
+  // Once the bars are lined up the tutorial moves on to aiming, whose sliders only show with no bar selected.
+  const planKind = plan?.step.kind;
+  useEffect(() => {
+    if ((planKind === 'angle' || planKind === 'power' || planKind === 'launch') && selected != null) setSelected(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planKind]);
+
   return (
-    // Any touch anywhere on the level hides the coach and restarts its idle clock (without taking the touch).
+    <View ref={rootRef} style={styles.wrap}>
+    {/* Any touch anywhere on the level hides the coach and restarts its idle clock (without taking the touch). */}
     <View
-      ref={rootRef} style={[styles.wrap, { paddingBottom: insets.bottom + 8 }]}
+      style={[styles.wrap, { paddingBottom: insets.bottom + 8 }]}
       onStartShouldSetResponderCapture={() => { if (coach) poke(); return false; }}
     >
       <Stack.Screen
@@ -395,7 +468,7 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
           ),
         }}
       />
-      <SettingsSheet visible={settings} onClose={() => setSettings(false)} onMusicTap={primeAudio} />
+      <SettingsSheet visible={settings} onClose={() => setSettings(false)} onMusicTap={primeAudio} onReplayTutorial={replayTutorial} />
       <View ref={stageRef} style={styles.stage}>
         <Board
           level={level}
@@ -404,6 +477,7 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
           illegal={illegalBars(level, slots)}
           selected={boardIndex(slots, selected)}
           lever={lever}
+          ghosts={ghosts}
           trails={trails}
           angle={angle}
           power={power}
@@ -429,7 +503,7 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
         )}
         {done && !flying && (
           <WinCard
-            text={winText({ assisted: solved ? 'solve' : helped ? 'hint' : null, tries, bounces: winShot.bounces, par, last })}
+            text={winText({ assisted: solved ? 'solve' : helped ? 'hint' : guided ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last })}
             onAgain={onReplay}
             onClose={keepPlaying}
             onGo={() => (last ? onReplay() : goTo(index + 1))}
@@ -451,8 +525,8 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
         ) : (
           <AimControls
             angle={angle} power={power}
-            onAngle={(v) => { keepPlaying(); setAngle(v); }}
-            onPower={(v) => { keepPlaying(); setPower(v); }}
+            onAngle={(v) => { keepPlaying(); setAim(v, power); }}
+            onPower={(v) => { keepPlaying(); setAim(angle, v); }}
           />
         )}
         <View style={styles.bottom}>
@@ -476,7 +550,17 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
           </Pressable>
         </View>
       </View>
-      {coach && !flying && !done && !help && <GhostFinger {...coach} />}
+    </View>
+      {coach && !flying && !done && !help && (
+        <GhostFinger
+          {...coach}
+          stopLabel={tutorial ? 'Skip tutorial' : 'Stop tips'}
+          onStop={() => {
+            if (tutorial) { tips.finishTutorial(); setTutorial(false); } else tips.setTipsOn(false);
+            setCoach(null);
+          }}
+        />
+      )}
     </View>
   );
 }

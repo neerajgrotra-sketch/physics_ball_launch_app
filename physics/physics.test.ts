@@ -91,7 +91,7 @@ describe('rules', () => {
 
   it('a win needs every bar the level gives placed and hit', () => {
     // Level 1's stored shot, which lands off its one bar.
-    const one = LEVELS[0], s = one.solution!, bar = solutionPieces(one);
+    const one = LEVELS.find((l) => l.id === '01-first-bounce')!, s = one.solution!, bar = solutionPieces(one);
     expect(simulate(buildWorld(one, bar), s.angle, s.power).success).toBe(true);
 
     // The same shot on a level that gives two bars: one placed is not enough...

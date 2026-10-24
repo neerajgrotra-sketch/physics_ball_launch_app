@@ -1,18 +1,19 @@
 import { useEffect } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming,
 } from 'react-native-reanimated';
 import { FONTS, useColors } from '../../theme/colors';
 
 /**
- * The idle coach's ghost finger (game/coach.ts picks what it shows). It points at (x, y), in the
- * coordinates of the view it's placed in, and either taps there or drags by (dx, dy), over and over,
- * with a ripple where it presses and a caption above. It never takes touches: the first touch anywhere
- * hides it (the level screen does that).
+ * The ghost finger (game/coach.ts picks what it shows). It points at (x, y), in the coordinates of the
+ * view it's placed in, and either taps there or drags by (dx, dy), over and over, with a ripple where it
+ * presses and a caption above. The finger and ripple never take touches. The caption carries a small
+ * stop button (`stopLabel`, "Skip tutorial" or "Stop tips"), the only touchable part. The level screen
+ * hides the whole thing on the first touch anywhere else.
  */
-export function GhostFinger({ x, y, dx = 0, dy = 0, mode, text }: {
-  x: number; y: number; dx?: number; dy?: number; mode: 'tap' | 'drag'; text: string;
+export function GhostFinger({ x, y, dx = 0, dy = 0, mode, text, stopLabel, onStop }: {
+  x: number; y: number; dx?: number; dy?: number; mode: 'tap' | 'drag'; text: string; stopLabel: string; onStop: () => void;
 }) {
   const c = useColors();
   const { width } = useWindowDimensions();
@@ -43,16 +44,22 @@ export function GhostFinger({ x, y, dx = 0, dy = 0, mode, text }: {
   });
   const caption = useAnimatedStyle(() => ({ opacity: appear.value }));
 
-  const capW = Math.min(280, width - 32);
-  const capLeft = Math.max(16 - 0, Math.min(width - 16 - capW, x - capW / 2));
+  const capW = Math.min(290, width - 32);
+  const capLeft = Math.max(16, Math.min(width - 16 - capW, x - capW / 2));
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Animated.View style={[styles.caption, { left: capLeft, top: y - 92, width: capW, backgroundColor: c.ink }, caption]}>
-        <Text style={[styles.captionText, { color: c.paper }]}>{text}</Text>
+    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+      <Animated.View
+        pointerEvents="box-none"
+        style={[styles.caption, { left: capLeft, top: Math.max(8, y - 118), width: capW, backgroundColor: c.ink }, caption]}
+      >
+        <Text pointerEvents="none" style={[styles.captionText, { color: c.paper }]}>{text}</Text>
+        <Pressable onPress={onStop} accessibilityRole="button" accessibilityLabel={stopLabel} hitSlop={10} style={styles.stop}>
+          <Text style={[styles.stopText, { color: c.paper }]}>{stopLabel}</Text>
+        </Pressable>
       </Animated.View>
-      <Animated.View style={[styles.ripple, { left: x - 22, top: y - 22, borderColor: c.pencil }, ripple]} />
-      <Animated.View style={[styles.finger, { left: x - 15, top: y - 2 }, finger]}>
+      <Animated.View pointerEvents="none" style={[styles.ripple, { left: x - 22, top: y - 22, borderColor: c.pencil }, ripple]} />
+      <Animated.View pointerEvents="none" style={[styles.finger, { left: x - 15, top: y - 2 }, finger]}>
         <Text style={styles.hand}>👆</Text>
       </Animated.View>
     </View>
@@ -60,8 +67,10 @@ export function GhostFinger({ x, y, dx = 0, dy = 0, mode, text }: {
 }
 
 const styles = StyleSheet.create({
-  caption: { position: 'absolute', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, opacity: 0.94 },
+  caption: { position: 'absolute', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, opacity: 0.95, alignItems: 'center', gap: 4 },
   captionText: { fontSize: 15, lineHeight: 19, fontFamily: FONTS.bodySemi, textAlign: 'center' },
+  stop: { paddingVertical: 2, paddingHorizontal: 8 },
+  stopText: { fontSize: 12, fontFamily: FONTS.bodyMedium, textDecorationLine: 'underline', opacity: 0.75 },
   ripple: { position: 'absolute', width: 44, height: 44, borderRadius: 22, borderWidth: 3 },
   finger: { position: 'absolute' },
   hand: { fontSize: 40, lineHeight: 46, textShadowColor: 'rgba(0,0,0,0.25)', textShadowRadius: 6, textShadowOffset: { width: 0, height: 2 } },

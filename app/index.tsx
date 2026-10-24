@@ -1,8 +1,11 @@
 import { Link, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ShotThumbnail } from '../components/levels/ShotThumbnail';
+import { useTips } from '../components/coach/Tips';
 import { useProgress } from '../components/progress/ProgressProvider';
+import { TUTORIAL_ID } from '../game/coach';
 import { VERSION_LABEL } from '../components/version';
 import { totalScore } from '../game/score';
 import { LEVELS } from '../levels';
@@ -21,10 +24,21 @@ export default function LevelSelect() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { tipsOn, tutorialDone } = useTips();
   const { unlocked, best, shots } = useProgress();
   const total = totalScore(best);
   const tile = Math.floor((Math.min(width, 560) - 2 * 18 - (COLUMNS - 1) * GAP) / COLUMNS);
-  const nextUp = LEVELS.findIndex((l) => !best[l.id]);
+  // The next level to play: the first without a result (the tutorial has none once it's been done).
+  const nextUp = LEVELS.findIndex((l) => !best[l.id] && !(l.id === TUTORIAL_ID && tutorialDone));
+
+  // A brand-new player goes straight into the tutorial. (On a cold start only: this screen stays mounted
+  // underneath the level, so coming back to it doesn't send them in again.)
+  useEffect(() => {
+    if (tipsOn && !tutorialDone && Object.keys(best).length === 0) {
+      router.push({ pathname: '/level/[id]', params: { id: TUTORIAL_ID } });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <ScrollView contentContainerStyle={[styles.page, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18 }]}>

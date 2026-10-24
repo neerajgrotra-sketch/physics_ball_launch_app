@@ -4,6 +4,18 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.7.0
+
+- A guided tutorial: a new level 1, "Learn the ropes", with three bars. A new player starts in it, and the
+  ghost finger leads them step by step to a winning shot: place the bars, drag each onto its dashed outline,
+  turn it to match, set the angle, set the power, launch. Each step waits for you to do it, and things snap
+  into place when you're close, so the first launch lands.
+- Everywhere else the finger only shows the first bar to place. "Stop tips" on its caption, or the Tips switch
+  in ⚙, stops it for good; "Skip tutorial" skips the tutorial; ⚙ can replay it.
+- Dragging the dotted aim line is now an exact rubber band: turning it no longer changes the power, and
+  pulling it out no longer changes the angle.
+- A bar's turn handle moves to its other end if a move would leave it hanging off the edge of the board.
+
 ## 0.6.0
 
 - Idle coach: sit still on a level for a few seconds and a ghost finger shows what to do next, with a

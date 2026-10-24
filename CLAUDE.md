@@ -74,8 +74,9 @@ reference/    prototype.html, the behaviour and look to match
 ## Gameplay behaviour to match the prototype
 
 - **Aim:** drag out from the launcher. Direction sets the angle and distance sets the power. Grabbing the
-  dotted aim line anywhere steers it like a rubber band: round the launcher sets the angle, away from or
-  towards it stretches or shrinks the power (`grabAimLine`/`swingTo`).
+  dotted aim line is a rubber band: the dot you took stays under your finger, so round the launcher sets
+  the angle, in or out sets the power, and nothing else drifts (`grabAimLine`/`swingTo` invert the
+  launch velocity from the dot's position).
   Bars on the board take a touch first. The −/+ buttons beside each slider nudge by 0.1.
 - **Aim preview:** only the first 0.3 s of free flight is shown, with no bounce prediction. Bounces are
   the puzzle, so never preview them.
@@ -122,10 +123,20 @@ reference/    prototype.html, the behaviour and look to match
 
 ## Screens and navigation
 
-- **Idle coach:** after 4 s on a level without a touch, a ghost finger (`components/coach/GhostFinger.tsx`)
-  shows the next step with a caption: tap a bar's chip to place it, then drag a bar into the ball's path
-  (until the player has moved one), then tap Launch (`game/coach.ts`). Any touch hides it and restarts the
-  clock; it doesn't show in flight, after a win, or over a card.
+- **Tutorial** (`levels/00-tutorial.json`, "Learn the ropes": a real level with three bars, level 1 in the
+  list; `game/coach.ts`, `game/tutorial.ts`): a new player goes straight into it from the levels screen, and
+  a ghost finger (`components/coach/GhostFinger.tsx`) leads them through the level's stored solution, one
+  step at a time, each step waiting for them to actually do it: place each bar, then for each bar drag it
+  onto its dashed outline (drawn on the board) and turn it to match (tap it, drag its handle), then set the
+  angle, set the power, launch. A bar dropped or turned near its outline, and an aim near the answer, snaps
+  onto it, so the guided shot always lands. The plan is derived from the board each time (undo something and
+  that step returns), the finger appears after 1.5 s without a touch, and the caption shows "n of 12". The
+  win is marked assisted (no stars or score). It runs once: "Skip tutorial" on the caption, finishing it, or
+  Tips off in settings ends it for good; ⚙ has "Replay the tutorial".
+- **First-bar hint:** on every other level, the finger only shows Bar 1 to place, after 4 s idle with
+  nothing on the board, and not on a level already won. "Stop tips" on its caption, or Tips in ⚙, turns it
+  off for good (`components/coach/Tips.tsx`, remembered). Any touch hides the finger and restarts the clock.
+- Moving a bar so its turn handle's tip would hang off the board puts the handle on the bar's other end.
 
 - **Levels screen** (`app/index.tsx`): two-column cards. Won levels and the next one to play show a drawing
   of the level (launcher, glass and, once won, the player's last unassisted winning shot (`components/levels/ShotThumbnail.tsx`, SVG, re-simulated from the stored

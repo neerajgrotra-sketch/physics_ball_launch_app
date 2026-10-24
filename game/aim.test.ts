@@ -57,35 +57,41 @@ describe('nearLauncher', () => {
 });
 
 describe('dragging the dotted aim line', () => {
-  const dot = aimPreview(40, 60)[6];
+  const dots = aimPreview(40, 60);
+  const dot = dots[6];
   const grab = grabAimLine(dot, 40, 60)!;
-  const r = Math.hypot(dot.x - LAUNCHER.x, dot.y - LAUNCHER.y);
-  const b = Math.atan2(LAUNCHER.y - dot.y, dot.x - LAUNCHER.x);
-  const polar = (rr: number, bb: number) => ({ x: LAUNCHER.x + rr * Math.cos(bb), y: LAUNCHER.y - rr * Math.sin(bb) });
+  // Where the same dot would be for another aim: that's where the finger has to be.
+  const dotFor = (a: number, p: number) => aimPreview(a, p)[6];
 
-  it('grabs the line without jumping', () => {
+  it('grabs the nearest dot without jumping', () => {
     expect(grab).not.toBeNull();
+    expect(grab.t).toBeCloseTo(dot.t, 9);
     expect(swingTo(dot, grab)).toEqual({ angle: 40, power: 60 });
+    // A touch a little off the dot doesn't jump the aim either.
+    const off = { x: dot.x + 8, y: dot.y - 5 };
+    expect(swingTo(off, grabAimLine(off, 40, 60)!)).toEqual({ angle: 40, power: 60 });
   });
 
-  it('swings the angle round the launcher, keeping power', () => {
-    const a = swingTo(polar(r, b + (10 * Math.PI) / 180), grab);
-    expect(a.angle).toBeCloseTo(50, 0);
-    expect(a.power).toBeCloseTo(60, 0);
+  it('turns the angle without drifting the power', () => {
+    expect(swingTo(dotFor(50, 60), grab)).toEqual({ angle: 50, power: 60 });
+    expect(swingTo(dotFor(15, 60), grab)).toEqual({ angle: 15, power: 60 });
   });
 
   it('stretches for more power and shrinks for less, keeping the angle', () => {
-    const out = swingTo(polar(r * 1.3, b), grab), back = swingTo(polar(r * 0.7, b), grab);
-    expect(out.angle).toBe(40);
-    expect(out.power).toBeGreaterThan(75);
-    expect(back.power).toBeLessThan(45);
-    expect(swingTo(polar(r * 5, b), grab).power).toBe(100);
-    expect(swingTo(polar(1, b), grab).power).toBe(0);
+    expect(swingTo(dotFor(40, 85), grab)).toEqual({ angle: 40, power: 85 });
+    expect(swingTo(dotFor(40, 30), grab)).toEqual({ angle: 40, power: 30 });
   });
 
-  it('ignores touches away from the line and clamps the angle to 0–90', () => {
+  it('does both at once', () => {
+    expect(swingTo(dotFor(63.3, 22.5), grab)).toEqual({ angle: 63.3, power: 22.5 });
+  });
+
+  it('ignores touches away from the line, and keeps angle in 0–90 and power in 0–100', () => {
     expect(grabAimLine({ x: 350, y: 100 }, 40, 60)).toBeNull();
-    expect(swingTo(at(-100, 50), { ...grab, offset: 0 }).angle).toBe(90);
-    expect(swingTo(at(100, -50), { ...grab, offset: 0 }).angle).toBe(0);
+    const g = { t: 0.27, ox: 0, oy: 0 };
+    expect(swingTo(at(-100, 50), g).angle).toBe(90);
+    expect(swingTo(at(-100, -50), g).angle).toBe(0);
+    expect(swingTo(at(2000, 0), g).power).toBe(100);
+    expect(swingTo(at(1, 0), g).power).toBe(0);
   });
 });

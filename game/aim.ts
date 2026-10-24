@@ -31,47 +31,56 @@ export function aimAt(p: { x: number; y: number }): { angle: number; power: numb
 
 /**
  * The dotted aim preview: the first 0.3 s of free flight only (never bounces), oldest dot first, `a` its
- * opacity. Same gravity as the board draws it with.
+ * opacity, `t` its time since launch. Same gravity as the board draws it with.
  */
-export function aimPreview(angle: number, power: number): { x: number; y: number; a: number }[] {
+export function aimPreview(angle: number, power: number): { x: number; y: number; a: number; t: number }[] {
   const ang = (angle * Math.PI) / 180, sp = speedFor(power);
   const vx = Math.cos(ang) * sp, vy = -Math.sin(ang) * sp;
-  const dots: { x: number; y: number; a: number }[] = [];
+  const dots: { x: number; y: number; a: number; t: number }[] = [];
   for (let t = 0.03; t <= 0.3; t += 0.03) {
-    dots.push({ x: LAUNCHER.x + vx * t, y: LAUNCHER.y + vy * t + 450 * t * t, a: 1 - t * 2.6 });
+    dots.push({ x: LAUNCHER.x + vx * t, y: LAUNCHER.y + vy * t + GRAVITY_HALF * t * t, a: 1 - t * 2.6, t });
   }
   return dots;
 }
 
-/** A finger this close (world units) to the dotted line grabs it to swing the aim. */
+/** Half the board's gravity (900 px/s²): the y drop of a free-flying ball is GRAVITY_HALF · t². */
+const GRAVITY_HALF = 450;
+
+/** A finger this close (world units) to the dotted line grabs it to steer the aim. */
 export const LINE_GRAB = 26;
 
-const bearing = (p: { x: number; y: number }) => (Math.atan2(LAUNCHER.y - p.y, p.x - LAUNCHER.x) * 180) / Math.PI;
-
-/** A grab on the dotted line: what the aim was, and where the finger took hold of it. */
-export interface LineGrab { offset: number; dist: number; speed: number }
+/** A grab on the dotted line: which dot (its time since launch) the finger took, and how far the dot was from it. */
+export interface LineGrab { t: number; ox: number; oy: number }
 
 /**
- * Grabbing the dotted line lets the finger steer it like a rubber band: moving round the launcher swings
- * the angle, and moving away from or towards it stretches or shrinks the power. Returns what's needed
- * to keep the line from jumping under the finger (the dots curve under gravity), or null if the line
- * wasn't touched.
+ * Grabbing the dotted line works like a rubber band: the dot you took stays under your finger. Moving it
+ * round the launcher turns the angle, pulling it out or pushing it in changes the power, and any
+ * mix of the two works, with nothing else drifting (the dots curve under gravity, which a plain
+ * "distance from the launcher" would get wrong). Returns the nearest dot's time and its offset from the
+ * finger (so the line doesn't jump if the touch was a little off), or null if the line wasn't touched.
  */
 export function grabAimLine(p: { x: number; y: number }, angle: number, power: number): LineGrab | null {
-  const near = aimPreview(angle, power).some((d) => Math.hypot(p.x - d.x, p.y - d.y) < LINE_GRAB);
-  const dist = Math.hypot(p.x - LAUNCHER.x, p.y - LAUNCHER.y);
-  return near && dist > 1 ? { offset: angle - bearing(p), dist, speed: speedFor(power) } : null;
+  let best: LineGrab | null = null, bestD = LINE_GRAB;
+  for (const d of aimPreview(angle, power)) {
+    const dist = Math.hypot(p.x - d.x, p.y - d.y);
+    if (dist < bestD) { bestD = dist; best = { t: d.t, ox: d.x - p.x, oy: d.y - p.y }; }
+  }
+  return best;
 }
 
 /**
- * Angle and power for a line drag. Angle: the finger's bearing from the launcher plus the grab offset.
- * Power: launch speed scales with the finger's distance from the launcher, so the dot under the finger
- * stays (about) under it as the line stretches.
+ * Angle and power for a line drag: the launch velocity that puts the grabbed dot where the finger is
+ * (plus the grab offset). Angle is held to 0–90 like everywhere else (a finger behind the launcher
+ * pins to the nearest legal angle) and power to 0–100.
  */
 export function swingTo(p: { x: number; y: number }, g: LineGrab): { angle: number; power: number } {
-  const speed = (g.speed * Math.hypot(p.x - LAUNCHER.x, p.y - LAUNCHER.y)) / g.dist;
+  const dx = p.x + g.ox - LAUNCHER.x, dy = p.y + g.oy - LAUNCHER.y - GRAVITY_HALF * g.t * g.t;
+  const vx = dx / g.t, vy = -dy / g.t; // vy up-positive
+  let ang = (Math.atan2(vy, vx) * 180) / Math.PI;
+  if (vx < 0) ang = vy > 0 ? 90 : 0;
+  const speed = Math.hypot(vx, vy);
   return {
-    angle: toGrid(clamp(bearing(p) + g.offset, ANGLE_MIN, ANGLE_MAX)),
+    angle: toGrid(clamp(ang, ANGLE_MIN, ANGLE_MAX)),
     power: toGrid(clamp((speed - speedFor(0)) / (speedFor(1) - speedFor(0)), POWER_MIN, POWER_MAX)),
   };
 }

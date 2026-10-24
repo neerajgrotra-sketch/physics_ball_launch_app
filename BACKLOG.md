@@ -8,11 +8,11 @@ Agreed work that isn't built yet, roughly in priority order. Move an item to CHA
   convex arcs, spring), each defining its collision outline (segments, circles, arcs), bounce behaviour,
   look, grab points and footprint. Placement, solver, hints and onboarding work against that, so a new
   shape is one file plus physics tests.
-- **Onboarding.**
+- **Onboarding** (the guided tutorial level and first-bar hint are done):
   - Bars start on the board in random legal spots that can't already win (fixed per level; Start over may
     reshuffle), with a wiggle when the level opens.
-  - Level 1 coach: extend the idle ghost finger (0.6.0) with a "Twist it with the lever" step.
   - Goal card at the start of each level in big type; an ⓘ in the header brings it back.
+  - A short "how to earn stars" card after the tutorial.
 
 ## Menus and settings
 

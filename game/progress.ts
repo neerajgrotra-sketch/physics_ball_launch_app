@@ -43,12 +43,18 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
  * hint was used on this level; either way there are no stars or score.
  */
 export function winText(opts: {
-  assisted: 'solve' | 'hint' | null; tries: number; bounces: number; par: number; last: boolean;
+  assisted: 'solve' | 'hint' | 'tutorial' | null; tries: number; bounces: number; par: number; last: boolean;
 }): WinText {
   const { assisted, tries, bounces, par, last } = opts;
   const go = last ? 'Play again' : 'Next level';
   if (assisted === 'solve') {
     return { title: 'Here’s one way in', detail: `${plural(bounces, 'bounce')}, par ${par}`, stars: 0, score: null, next: null, again: 'Try it yourself', go };
+  }
+  if (assisted === 'tutorial') {
+    return {
+      title: 'You’ve got it!', detail: `${plural(bounces, 'bounce')}, par ${par}. That’s the whole game: now win levels for stars.`,
+      stars: 0, score: null, next: null, again: 'Try it yourself', go,
+    };
   }
   if (assisted === 'hint') {
     return { title: 'In, with a hint', detail: `${plural(bounces, 'bounce')}, par ${par}. Win it without help for stars.`, stars: 0, score: null, next: null, again: 'Start over', go };

@@ -9,6 +9,10 @@ import { findSolution } from './find-solution';
 // Glass: x is its centre, w its inside width (the ball is 16 across), h its height, base the y of its
 // floor (default: the floor, WORLD.ground). A raised glass stands on its plate in mid-air.
 const designs: Omit<Level, 'solution' | 'par'>[] = [
+  // The tutorial (components/coach, game/tutorial.ts): three bars and a roomy glass, played once with a guide that
+  // leads the player to this level's stored solution.
+  { id: '00-tutorial', name: 'Learn the ropes', glass: { x: 300, w: 46, h: 54 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }, { len: 90 }],
+    hint: 'Follow the guide: place the three bars, line them up, set the aim and launch.' },
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],

@@ -3,7 +3,7 @@ import { LEVELS } from '../levels';
 import { LAUNCHER, WORLD, pieceEnds, solutionPieces, type Level } from '../physics';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle,
-  atSolution, hintSlots, shotSlots, LEVER, leverEnd, leverLine, slotsLegal, solutionSlots, tapChip, type Slot,
+  atSolution, hintSlots, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
 } from './pieces';
 
 const level = LEVELS[0];
@@ -71,6 +71,12 @@ describe('pressAt', () => {
     // Pull end 1 straight up: the bar stands upright (end 1 on top).
     expect(Math.abs(dragTo(placed, r.drag!, { x: placed[0].x, y: placed[0].y - 50 })[0].deg)).toBe(90);
     expect(leverLine(placed[0], 1)[2]).toBe(x1 - LEVER);
+  });
+
+  it('knows when a lever tip would hang off the board', () => {
+    const p = { len: 90, x: 292, y: 361, deg: 0 };
+    expect(leverTipInside(p, 2)).toBe(false);
+    expect(leverTipInside(p, 1)).toBe(true);
   });
 
   it('puts the lever where its tip stays on the board', () => {
