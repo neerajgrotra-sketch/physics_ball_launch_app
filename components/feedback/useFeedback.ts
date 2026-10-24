@@ -5,6 +5,8 @@ import type { Hit } from '../../physics';
 
 // Sounds come from scripts/make-sounds.mjs. Re-run it to change them.
 const SOUNDS = {
+  launch: require('../../assets/sounds/launch.wav'),
+  wall: require('../../assets/sounds/wall.wav'),
   bounce: require('../../assets/sounds/bounce.wav'),
   glass: require('../../assets/sounds/glass.wav'),
   land: require('../../assets/sounds/land.wav'),
@@ -15,12 +17,14 @@ const SOUNDS = {
 const HARD_HIT = 700;
 
 /**
- * Haptics and sound for a shot: a tap and a tink on each bounce (stronger and louder when it's faster,
- * quieter off the floor and edges), a success buzz and chime when the ball settles in the glass,
- * and a soft thump on a dead surface.
+ * Haptics and sound for a shot: a thunk and whoosh at launch; on each bounce a tap plus a metallic tink
+ * off a bar, a dull tok off the floor or an edge, or a clink off the glass (stronger and louder when
+ * faster); a success buzz and chime when the ball settles in the glass; a soft thump on a dead surface.
  * Sounds follow the silent switch and mix with whatever else is playing.
  */
 export function useFeedback() {
+  const launch = useAudioPlayer(SOUNDS.launch);
+  const wall = useAudioPlayer(SOUNDS.wall);
   const bounce = useAudioPlayer(SOUNDS.bounce);
   const glass = useAudioPlayer(SOUNDS.glass);
   const land = useAudioPlayer(SOUNDS.land);
@@ -33,6 +37,10 @@ export function useFeedback() {
   return {
     /** Web needs a user gesture to start audio (see useFeedback.web.ts); nothing to do here. */
     prime() {},
+    launched() {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      play(launch, 0.8);
+    },
     hit(h: Hit) {
       const strength = Math.max(0.2, Math.min(1, h.speed / HARD_HIT));
       const style = h.kind === 'piece' && strength > 0.6
@@ -40,7 +48,8 @@ export function useFeedback() {
         : Haptics.ImpactFeedbackStyle.Light;
       Haptics.impactAsync(style).catch(() => {});
       if (h.kind === 'glass') play(glass, strength);
-      else play(bounce, h.kind === 'wall' ? strength * 0.5 : strength);
+      else if (h.kind === 'wall') play(wall, strength * 0.8);
+      else play(bounce, strength);
     },
     landed() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});

@@ -8,6 +8,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SoundSettingsProvider } from '../components/feedback/SoundSettings';
 import { ProgressProvider } from '../components/progress/ProgressProvider';
 import { FONTS, useColors } from '../theme/colors';
 
@@ -27,19 +28,21 @@ export default function RootLayout() {
       {/* On wide screens (web, iPad) the game keeps the prototype's 560px column. */}
       <View style={styles.column}>
         <ProgressProvider>
-          <StatusBar style="auto" />
-          <Stack
-            screenOptions={{
-              headerStyle: { backgroundColor: c.panel },
-              headerTintColor: c.ink,
-              headerTitleStyle: { fontFamily: FONTS.condensedBold, fontSize: 22 },
-              headerShadowVisible: false,
-              contentStyle: { backgroundColor: c.panel },
-            }}
-          >
-            <Stack.Screen name="index" options={{ title: 'Bank Shot' }} />
-            <Stack.Screen name="level/[id]" options={{ title: '' }} />
-          </Stack>
+          <SoundSettingsProvider>
+            <StatusBar style="auto" />
+            <Stack
+              screenOptions={{
+                headerStyle: { backgroundColor: c.panel },
+                headerTintColor: c.ink,
+                headerTitleStyle: { fontFamily: FONTS.condensedBold, fontSize: 22 },
+                headerShadowVisible: false,
+                contentStyle: { backgroundColor: c.panel },
+              }}
+            >
+              <Stack.Screen name="index" options={{ title: 'Bank Shot' }} />
+              <Stack.Screen name="level/[id]" options={{ title: '' }} />
+            </Stack>
+          </SoundSettingsProvider>
         </ProgressProvider>
       </View>
     </GestureHandlerRootView>

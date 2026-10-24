@@ -7,7 +7,10 @@ import { usePlayback } from '../../components/board/usePlayback';
 import { WinCard } from '../../components/board/WinCard';
 import { AimControls, RotateControls } from '../../components/controls/AimControls';
 import { Tray } from '../../components/controls/Tray';
+import { MUSIC } from '../../components/feedback/music';
+import { useSoundSettings } from '../../components/feedback/SoundSettings';
 import { useFeedback } from '../../components/feedback/useFeedback';
+import { useLevelMusic } from '../../components/feedback/useLevelMusic';
 import { useProgress } from '../../components/progress/ProgressProvider';
 import { aimAt } from '../../game/aim';
 import {
@@ -70,6 +73,11 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   const [notice, setNotice] = useState<string | null>(null);
   const { flight, flying, play, skip } = usePlayback();
   const feedback = useFeedback();
+  const { musicOn, toggleMusic } = useSoundSettings();
+  const music = useLevelMusic(level.id, musicOn);
+  const hasMusic = MUSIC[level.id] !== undefined;
+  // Browsers only start audio from a tap, so every tap on the level unlocks it (no-op on phones).
+  const primeAudio = () => { feedback.prime(); music.prime(); };
   const drag = useRef<Drag | null>(null);
   const lastLegal = useRef<Slot[]>([]);
 
@@ -92,6 +100,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
         won(index);
       }
     };
+    feedback.launched();
     play(res.path, finished, res.hits.map((h) => h.i), (k) => feedback.hit(res.hits[k]));
   };
 
@@ -103,7 +112,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   // it's the same path). Nothing resets and it isn't a try. Bars moved since the win are put back first.
   const watchAgain = () => {
     if (flying || !done) return;
-    feedback.prime();
+    primeAudio();
     const { slots: shot, angle: a, power: p } = winShot;
     setSlots(shot);
     setSelected(null);
@@ -111,6 +120,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
     setPower(p);
     setNotice(null);
     const res = simulate(buildWorld(level, boardPieces(shot)), a, p);
+    feedback.launched();
     play(res.path, () => { if (res.success) feedback.landed(); }, res.hits.map((h) => h.i), (k) => feedback.hit(res.hits[k]));
   };
 
@@ -121,7 +131,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
       setNotice('A bar is touching the glass, the launcher or another bar. Move it first.');
       return;
     }
-    feedback.prime();
+    primeAudio();
     setSelected(null);
     fire(slots, angle, power);
   };
@@ -130,7 +140,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   const solve = () => {
     const s = level.solution;
     if (flying || !s) return;
-    feedback.prime();
+    primeAudio();
     const next = solutionSlots(level);
     setSlots(next);
     setSelected(null);
@@ -174,6 +184,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
         skip();
         return;
       }
+      primeAudio();
       keepPlaying();
       const r = pressAt(slots, selected, p, true);
       drag.current = r.drag;
@@ -208,6 +219,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
 
   const onChip = (k: number) => {
     if (flying) return;
+    primeAudio();
     keepPlaying();
     const r = tapChip(slots, selected, k, level);
     setSlots(r.slots);
@@ -226,6 +238,12 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
           ),
           headerRight: () => (
             <View style={styles.nav}>
+              {hasMusic && (
+                <IconButton
+                  label="♪" a11y={musicOn ? 'Turn music off' : 'Turn music on'}
+                  dim={!musicOn} disabled={false} onPress={() => { primeAudio(); toggleMusic(); }}
+                />
+              )}
               <IconButton label="‹" a11y="Previous level" disabled={index === 0} onPress={() => goTo(index - 1)} />
               <IconButton label="›" a11y="Next level" disabled={index >= unlocked} onPress={() => goTo(index + 1)} />
             </View>
@@ -299,7 +317,8 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   );
 }
 
-function IconButton({ label, a11y, disabled, onPress }: { label: string; a11y: string; disabled: boolean; onPress: () => void }) {
+/** Round header button. `dim` shows a setting that's off (still pressable), `disabled` one that isn't available. */
+function IconButton({ label, a11y, disabled, dim, onPress }: { label: string; a11y: string; disabled: boolean; dim?: boolean; onPress: () => void }) {
   const c = useColors();
   return (
     <Pressable
@@ -308,7 +327,7 @@ function IconButton({ label, a11y, disabled, onPress }: { label: string; a11y: s
       accessibilityRole="button"
       accessibilityLabel={a11y}
       accessibilityState={{ disabled }}
-      style={[styles.icon, { borderColor: c.line, opacity: disabled ? 0.3 : 1 }]}
+      style={[styles.icon, { borderColor: c.line, opacity: disabled ? 0.3 : dim ? 0.45 : 1 }]}
     >
       <Text style={[styles.iconText, { color: c.ink }]}>{label}</Text>
     </Pressable>

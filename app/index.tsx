@@ -1,6 +1,7 @@
 import { Link } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useProgress } from '../components/progress/ProgressProvider';
+import { VERSION_LABEL } from '../components/version';
 import { LEVELS } from '../levels';
 import { FONTS, useColors } from '../theme/colors';
 
@@ -13,6 +14,7 @@ export default function LevelSelect() {
       data={LEVELS}
       keyExtractor={(l) => l.id}
       contentContainerStyle={styles.list}
+      ListFooterComponent={<Text style={[styles.version, { color: c.muted }]}>{VERSION_LABEL}</Text>}
       renderItem={({ item, index }) => {
         const locked = index > unlocked;
         const next = index === unlocked;
@@ -54,4 +56,5 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: 2 },
   name: { fontSize: 18, fontFamily: FONTS.bodySemi },
   hint: { fontSize: 13, fontFamily: FONTS.body },
+  version: { marginTop: 14, textAlign: 'center', fontSize: 12, fontFamily: FONTS.body },
 });

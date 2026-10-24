@@ -39,6 +39,26 @@ function thud(seconds, f0, f1, tau) {
   return out;
 }
 
+/** Air rushing past: low-passed noise that swells and fades. Seeded, so the file is the same every run. */
+function whoosh(seconds, peakAt, cutoff) {
+  const n = Math.round(seconds * RATE), out = new Float64Array(n);
+  let seed = 12345, lp = 0;
+  const a = 1 - Math.exp((-2 * Math.PI * cutoff) / RATE); // one-pole low-pass
+  for (let i = 0; i < n; i++) {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    const white = seed / 2147483648 - 1;
+    lp += a * (white - lp);
+    const t = i / RATE;
+    const env = t < peakAt ? t / peakAt : Math.exp(-(t - peakAt) / (seconds * 0.25));
+    out[i] = lp * env;
+  }
+  return out;
+}
+
+function scale(track, k) {
+  return track.map((v) => v * k);
+}
+
 function wav(samples, peak = 0.8) {
   const max = samples.reduce((m, v) => Math.max(m, Math.abs(v)), 0) || 1;
   const buf = Buffer.alloc(44 + samples.length * 2);
@@ -56,6 +76,10 @@ function wav(samples, peak = 0.8) {
 }
 
 const sounds = {
+  // The launcher firing: a short thunk with a whoosh of air behind it.
+  launch: mix(thud(0.3, 190, 85, 0.04), scale(whoosh(0.3, 0.05, 1800), 0.9)),
+  // Ball off the floor or a board edge: a dull, woody tok (bars ring; walls don't).
+  wall: partials(0.12, [[520, 1, 0.018], [1240, 0.35, 0.01], [2010, 0.15, 0.006]], { attack: 0.001 }),
   // Steel ball on a bar: a short bright tink.
   bounce: partials(0.16, [[1420, 1, 0.035], [3380, 0.45, 0.02], [5150, 0.2, 0.012]]),
   // Ball against the glass: higher, glassy, rings a little longer.
