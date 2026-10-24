@@ -22,10 +22,31 @@ export function audioContext(): AudioContext | null {
   return ctx;
 }
 
-/** Call from a tap: unlocks audio. Resolves once it's running (or immediately if it can't). */
+let unlocked = false;
+
+/**
+ * Call from a tap: unlocks audio. Resolves once it's running (or immediately if it can't).
+ * On iPhone, web audio is silenced by the silent switch unless the page asks for "playback" audio
+ * (Safari 16.4+), and some iOS versions only unlock after a sound starts inside the tap, so a
+ * one-sample silent buffer is played the first time.
+ */
 export function resume(): Promise<void> {
+  const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+  if (session && session.type !== 'playback') {
+    try { session.type = 'playback'; } catch { /* not allowed here */ }
+  }
   const ac = audioContext();
-  if (!ac || ac.state !== 'suspended') return Promise.resolve();
+  if (!ac) return Promise.resolve();
+  if (!unlocked) {
+    unlocked = true;
+    try {
+      const src = ac.createBufferSource();
+      src.buffer = ac.createBuffer(1, 1, 22050);
+      src.connect(ac.destination);
+      src.start(0);
+    } catch { /* best effort */ }
+  }
+  if (ac.state === 'running') return Promise.resolve();
   return ac.resume().catch(() => undefined);
 }
 

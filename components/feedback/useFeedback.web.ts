@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { Hit } from '../../physics';
 import { buffer, play as playBuffer, resume } from './webAudio';
 
@@ -40,6 +41,8 @@ function play(name: Sound, volume: number, rate = 1) {
 }
 
 export function useFeedback() {
+  // Decode up front (no tap needed for that), so the very first Launch is heard.
+  useEffect(() => { load(); }, []);
   return {
     /** Call from a tap (Launch, Solve, the board): browsers only start audio from a user gesture. */
     prime() {

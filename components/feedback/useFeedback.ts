@@ -20,7 +20,7 @@ const HARD_HIT = 700;
  * Haptics and sound for a shot: a thunk and whoosh at launch; on each bounce a tap plus a metallic tink
  * off a bar, a dull tok off the floor or an edge, or a clink off the glass (stronger and louder when
  * faster); a success buzz and chime when the ball settles in the glass; a soft thump on a dead surface.
- * Sounds follow the silent switch and mix with whatever else is playing.
+ * Sounds play even with the silent switch on and mix with whatever else is playing.
  */
 /** Each bar hit in a shot climbs a major arpeggio (semitones), so a chain sounds like it's building up. */
 const ARPEGGIO = [0, 4, 7, 12, 16, 19, 24];
@@ -36,7 +36,8 @@ export function useFeedback() {
   const dead = useAudioPlayer(SOUNDS.dead);
 
   useEffect(() => {
-    setAudioModeAsync({ playsInSilentMode: false, interruptionMode: 'mixWithOthers' }).catch(() => {});
+    // Play even with the silent switch on (it muted every sound), still mixing with other audio.
+    setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => {});
   }, []);
 
   return {
