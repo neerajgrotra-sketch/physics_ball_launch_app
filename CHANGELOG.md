@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.5.2
+
+- Rotating a bar: the rotate icon now sits at the tip of a dotted lever sticking out of the bar's end, so
+  your finger turns it from out there without covering the bar. Tap the bar's other end to move the
+  lever to that side.
+
 ## 0.5.1
 
 - Level cards: the drawings now show the launcher and glass properly (the bottom of the board was cut

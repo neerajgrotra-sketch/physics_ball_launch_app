@@ -10,8 +10,34 @@ export interface Slot extends PlacedPiece {
   onBoard: boolean;
 }
 
-/** Touch within this distance of the selected piece's end handle rotates it. */
+/** Touch within this distance of the selected piece's rotate handle (its dotted lever) rotates it. */
 export const ROTATE_GRAB = 22;
+/**
+ * The rotate handle: a dotted lever sticking out of one end of the selected bar, this long, with the
+ * rotate icon at its tip. Turning it from out there keeps the finger off the bar, and the longer reach
+ * gives finer control. Tapping the bar's other end moves the lever there.
+ */
+export const LEVER = 60;
+export type End = 1 | 2;
+
+/** The lever on end `end` of a piece: [end x, end y, tip x, tip y]. End 2 is the (x2, y2) end of pieceEnds. */
+export function leverLine(p: PlacedPiece, end: End): [number, number, number, number] {
+  const [x1, y1, x2, y2] = pieceEnds(p);
+  const a = (p.deg * Math.PI) / 180, s = end === 2 ? 1 : -1;
+  const [ex, ey] = end === 2 ? [x2, y2] : [x1, y1];
+  return [ex, ey, ex + s * Math.cos(a) * LEVER, ey + s * Math.sin(a) * LEVER];
+}
+
+/** Which end to put the lever on when a bar is selected: end 2, unless its tip would be off the board. */
+export function leverEnd(p: PlacedPiece): End {
+  const inside = (e: End) => {
+    const [, , tx, ty] = leverLine(p, e);
+    return tx > 8 && tx < WORLD.width - 8 && ty > 8 && ty < WORLD.ground - 8;
+  };
+  return inside(2) || !inside(1) ? 2 : 1;
+}
+
+const bearing = (p: { x: number; y: number }, c: { x: number; y: number }) => (Math.atan2(p.y - c.y, p.x - c.x) * 180) / Math.PI;
 /** Touch within this distance of a piece picks it up. */
 export const PIECE_GRAB = 16;
 /** Moved pieces keep their centre this far inside the board. */
@@ -68,23 +94,32 @@ export function removeBar(slots: Slot[], k: number): { slots: Slot[]; selected: 
   return { slots: replace(slots, k, { ...slots[k], onBoard: false }), selected: null };
 }
 
+/**
+ * A drag in progress. Rotate: turning piece k by the lever on `end` (default 2); `offset` (degrees,
+ * default 0) keeps the bar from jumping when the lever is grabbed away from its exact line.
+ */
 export type Drag =
-  | { mode: 'rotate'; k: number }
+  | { mode: 'rotate'; k: number; end?: End; offset?: number }
   | { mode: 'move'; k: number; ox: number; oy: number }
   | { mode: 'aim' }
   | { mode: 'swing'; grab: LineGrab };
 
 /**
- * A finger lands on the board. In order: the selected piece's rotate handle, any piece, the launcher
- * (when aiming is allowed), otherwise empty board, which deselects.
+ * A finger lands on the board. In order: the selected piece's lever (on `lever`, its current end) or its
+ * other end (which moves the lever there, returned as `lever`), any piece, the launcher (when aiming is
+ * allowed), the dotted aim line, otherwise empty board, which deselects.
  */
 export function pressAt(
   slots: Slot[], selected: number | null, p: { x: number; y: number }, canAim: boolean,
-  aim?: { angle: number; power: number },
-): { drag: Drag | null; selected: number | null } {
+  aim?: { angle: number; power: number }, lever: End = 2,
+): { drag: Drag | null; selected: number | null; lever?: End } {
   if (selected != null && slots[selected].onBoard) {
-    const [, , x2, y2] = pieceEnds(slots[selected]);
-    if (Math.hypot(p.x - x2, p.y - y2) < ROTATE_GRAB) return { drag: { mode: 'rotate', k: selected }, selected };
+    const s = slots[selected];
+    const rotate = (end: End): Drag => ({ mode: 'rotate', k: selected, end, offset: s.deg - bearing(p, s) - (end === 1 ? 180 : 0) });
+    if (distToSegment(p, leverLine(s, lever)) < ROTATE_GRAB) return { drag: rotate(lever), selected };
+    const other: End = lever === 2 ? 1 : 2;
+    const [ox, oy] = leverLine(s, other);
+    if (Math.hypot(p.x - ox, p.y - oy) < ROTATE_GRAB) return { drag: rotate(other), selected, lever: other };
   }
   const hit = slots.findIndex((s) => s.onBoard && distToSegment(p, pieceEnds(s)) < PIECE_GRAB);
   if (hit >= 0) {
@@ -109,7 +144,8 @@ export function dragTo(slots: Slot[], drag: Drag, p: { x: number; y: number }): 
   }
   if (drag.mode === 'rotate') {
     const s = slots[drag.k];
-    return replace(slots, drag.k, { ...s, deg: Math.round((Math.atan2(p.y - s.y, p.x - s.x) * 180) / Math.PI) });
+    const deg = Math.round(bearing(p, s) + (drag.end === 1 ? 180 : 0) + (drag.offset ?? 0));
+    return replace(slots, drag.k, { ...s, deg: ((deg + 180) % 360 + 360) % 360 - 180 });
   }
   return slots;
 }

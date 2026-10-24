@@ -12,6 +12,7 @@ import {
   crossPath, deadPaths, gridPaths, handleArcPath, launcherPath, linePath, polyPath,
 } from './paths';
 import type { Flight } from './usePlayback';
+import { leverLine, type End } from '../../game/pieces';
 import { aimPreview } from '../../game/aim';
 
 const { width: W, height: H, ground: GROUND } = WORLD;
@@ -27,6 +28,8 @@ export interface BoardProps {
   pieces: PlacedPiece[];
   /** Index into `pieces` of the selected piece, if any. */
   selected?: number | null;
+  /** Which end of the selected piece has the rotate lever (game/pieces leverLine). */
+  lever?: End;
   /** Each on-board piece's bar number (as on its tray chip), drawn beside it. */
   numbers?: number[];
   /** Per on-board piece, whether it's somewhere it isn't allowed (game/placement): drawn red. */
@@ -54,7 +57,7 @@ const condensed500 = require('@expo-google-fonts/barlow-condensed/500Medium/Barl
  * Pure rendering: everything it shows comes from props. Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], illegal = [], selected = null, trails, angle, power, tries, flight = null, done = false, onTouch } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, trails, angle, power, tries, flight = null, done = false, onTouch } = props;
   const c = useColors();
   const [box, setBox] = useState({ w: 0, h: 0 });
   const hudFont = useFont(condensed600, 15);
@@ -136,6 +139,16 @@ export function Board(props: BoardProps) {
   const sel = selected != null ? pieces[selected] : null;
   const selColor = selected != null && illegal[selected] ? c.red : c.pencil;
   const selEnds = sel ? pieceEnds(sel) : null;
+  // The rotate lever: dots out from the active end to the rotate icon at its tip, and a small ring on the
+  // other end to show it can take the lever instead.
+  const leverAt = sel ? leverLine(sel, lever) : null;
+  const leverDots = leverAt
+    ? Array.from({ length: 5 }, (_, i) => {
+        const t = (i + 1) / 6;
+        return { x: leverAt[0] + (leverAt[2] - leverAt[0]) * t, y: leverAt[1] + (leverAt[3] - leverAt[1]) * t };
+      })
+    : [];
+  const otherEnd = sel && selEnds ? (lever === 2 ? [selEnds[0], selEnds[1]] : [selEnds[2], selEnds[3]]) : null;
   // Each bar gets its number beside it (above it), and the selected one its rotation too: "2 · 137°".
   const labels = labelFont ? pieces.map((p, i) => {
     const text = i === selected ? `${numbers[i] ?? i + 1} · ${((-p.deg % 180) + 180) % 180}°` : String(numbers[i] ?? i + 1);
@@ -203,9 +216,15 @@ export function Board(props: BoardProps) {
                       path={linePath(selEnds[0], selEnds[1], selEnds[2], selEnds[3])}
                       color={selColor} style="stroke" strokeWidth={22} strokeCap="round" opacity={0.25}
                     />
-                    <Circle cx={selEnds[2]} cy={selEnds[3]} r={11} color={c.paper} />
-                    <Circle cx={selEnds[2]} cy={selEnds[3]} r={11} color={selColor} style="stroke" strokeWidth={2.5} />
-                    <Path path={handleArcPath(selEnds[2], selEnds[3])} color={selColor} style="stroke" strokeWidth={2.5} strokeCap="round" />
+                    {leverDots.map((d, i) => <Circle key={`lv${i}`} cx={d.x} cy={d.y} r={2.6} color={selColor} />)}
+                    {otherEnd && <Circle cx={otherEnd[0]} cy={otherEnd[1]} r={6} color={selColor} style="stroke" strokeWidth={1.5} opacity={0.6} />}
+                    {leverAt && (
+                      <Group>
+                        <Circle cx={leverAt[2]} cy={leverAt[3]} r={11} color={c.paper} />
+                        <Circle cx={leverAt[2]} cy={leverAt[3]} r={11} color={selColor} style="stroke" strokeWidth={2.5} />
+                        <Path path={handleArcPath(leverAt[2], leverAt[3])} color={selColor} style="stroke" strokeWidth={2.5} strokeCap="round" />
+                      </Group>
+                    )}
                   </Group>
                 )}
                 {labelFont && labels.map((l, i) => (

@@ -80,7 +80,10 @@ reference/    prototype.html, the behaviour and look to match
 - **Aim preview:** only the first 0.3 s of free flight is shown, with no bounce prediction. Bounces are
   the puzzle, so never preview them.
 - **Pieces:** bars are named Bar 1, 2, 3 (tray chips and board labels). Tap a tray chip to place a bar, drag
-  it to move, drag the end handle to rotate. While a bar is selected the aim rows become its rotation
+  it to move. The selected bar has a dotted lever out of one end with the rotate icon at its tip
+  (`leverLine`, 60 long): drag anywhere on it to turn the bar about its centre, finger clear of the bar.
+  Tapping the other end (small ring) moves the lever there; on selection it goes on whichever end keeps
+  its tip on the board (`leverEnd`). While a bar is selected the aim rows become its rotation
   controls: a 0–179° slider, −/+ 1° nudges (hold to repeat), Remove and Done. Tapping the selected chip
   deselects it. Bars must keep a ball's width (18) from the glass, walls, launcher and each other
   (`game/placement.ts`, the same rule the level generator uses): a bar dragged somewhere it isn't allowed

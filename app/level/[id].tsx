@@ -18,7 +18,7 @@ import { useProgress } from '../../components/progress/ProgressProvider';
 import { aimAt, swingTo } from '../../game/aim';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
-  hintSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type Slot,
+  hintSlots, leverEnd, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
 import { skipNotice, winText } from '../../game/progress';
 import { bestOf, goalText } from '../../game/score';
@@ -64,6 +64,12 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
 
   const [slots, setSlots] = useState<Slot[]>(() => emptySlots(level));
   const [selected, setSelected] = useState<number | null>(null);
+  /** Which end of the selected bar has the rotate lever; picked when a bar is selected, moved by tapping the other end. */
+  const [lever, setLever] = useState<End>(2);
+  const select = (k: number | null, s: Slot[] = slots) => {
+    if (k !== selected && k != null && s[k]?.onBoard) setLever(leverEnd(s[k]));
+    setSelected(k);
+  };
   const [trails, setTrails] = useState<Trail[]>([]);
   const [angle, setAngle] = useState(52);
   const [power, setPower] = useState(45);
@@ -174,7 +180,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
     if (!h) return;
     setHelped(true);
     setSlots(h.slots);
-    setSelected(h.k);
+    select(h.k, h.slots);
   };
   const fullSolution = async () => {
     setHelp(false);
@@ -234,10 +240,11 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
       }
       primeAudio();
       keepPlaying();
-      const r = pressAt(slots, selected, p, true, { angle, power });
+      const r = pressAt(slots, selected, p, true, { angle, power }, lever);
       drag.current = r.drag;
       lastLegal.current = slots;
-      setSelected(r.selected);
+      select(r.selected);
+      if (r.lever) setLever(r.lever);
       if (r.drag?.mode === 'aim') aimTo(p);
     } else if (phase === 'move') {
       const d = drag.current;
@@ -276,7 +283,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
     keepPlaying();
     const r = tapChip(slots, selected, k, level);
     setSlots(r.slots);
-    setSelected(r.selected);
+    select(r.selected, r.slots);
   };
 
   return (
@@ -319,6 +326,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
           numbers={boardNumbers(slots)}
           illegal={illegalBars(level, slots)}
           selected={boardIndex(slots, selected)}
+          lever={lever}
           trails={trails}
           angle={angle}
           power={power}

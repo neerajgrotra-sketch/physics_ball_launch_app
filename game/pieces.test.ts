@@ -3,7 +3,7 @@ import { LEVELS } from '../levels';
 import { LAUNCHER, WORLD, pieceEnds, solutionPieces, type Level } from '../physics';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle,
-  atSolution, hintSlots, slotsLegal, solutionSlots, tapChip, type Slot,
+  atSolution, hintSlots, LEVER, leverEnd, leverLine, slotsLegal, solutionSlots, tapChip, type Slot,
 } from './pieces';
 
 const level = LEVELS[0];
@@ -50,10 +50,32 @@ describe('pressAt', () => {
     expect(r.selected).toBe(0);
   });
 
-  it('the end handle of the selected piece rotates it', () => {
-    const [, , x2, y2] = pieceEnds(placed[0]);
-    expect(pressAt(placed, 0, { x: x2 + 3, y: y2 }, true).drag).toEqual({ mode: 'rotate', k: 0 });
+  it('the selected piece turns by its dotted lever, without jumping', () => {
+    const [, , x2, y2, tx, ty] = [...pieceEnds(placed[0]).slice(0, 2), ...leverLine(placed[0], 2)];
+    expect(tx).toBe(x2 + LEVER);
+    // Anywhere along the lever grabs it; without a selection the bar's end just moves the bar.
+    for (const x of [x2 + 3, x2 + 30, tx]) expect(pressAt(placed, 0, { x, y: ty + 4 }, true).drag?.mode).toBe('rotate');
     expect(pressAt(placed, null, { x: x2 + 3, y: y2 }, true).drag?.mode).toBe('move');
+    const grab = pressAt(placed, 0, { x: tx, y: ty + 6 }, true).drag!;
+    expect(dragTo(placed, grab, { x: tx, y: ty + 6 })[0].deg).toBe(0); // grabbed off-line: no jump
+    // Swinging the tip down by 45° about the centre turns the bar 45°.
+    const r = Math.hypot(tx - placed[0].x, ty + 6 - placed[0].y), b = Math.atan2(6, tx - placed[0].x) + Math.PI / 4;
+    expect(dragTo(placed, grab, { x: placed[0].x + r * Math.cos(b), y: placed[0].y + r * Math.sin(b) })[0].deg).toBe(45);
+  });
+
+  it('tapping the other end moves the lever there and turns from that side', () => {
+    const [x1, y1] = pieceEnds(placed[0]);
+    const r = pressAt(placed, 0, { x: x1, y: y1 }, true, undefined, 2);
+    expect(r.lever).toBe(1);
+    expect(r.drag).toMatchObject({ mode: 'rotate', k: 0, end: 1 });
+    // Pull end 1 straight up: the bar stands upright (end 1 on top).
+    expect(Math.abs(dragTo(placed, r.drag!, { x: placed[0].x, y: placed[0].y - 50 })[0].deg)).toBe(90);
+    expect(leverLine(placed[0], 1)[2]).toBe(x1 - LEVER);
+  });
+
+  it('puts the lever where its tip stays on the board', () => {
+    expect(leverEnd({ len: 90, x: 200, y: 300, deg: 0 })).toBe(2);
+    expect(leverEnd({ len: 90, x: WORLD.width - 50, y: 300, deg: 0 })).toBe(1);
   });
 
   it('aims near the launcher only when allowed, and empty board deselects', () => {
