@@ -11,10 +11,10 @@ import { FONTS, useColors } from '../theme/colors';
 const COLUMNS = 2;
 const GAP = 12;
 
-// Level select: a grid of level cards, two across. Each shows a small drawing of the level with the
-// player's last winning shot (bars and path), its number and name, and its best stars and bounces. The
-// first level without a result is highlighted as the one to play next. Locked levels (when LOCK_LEVELS
-// is on) are dashed with a lock.
+// Level select: a grid of level cards, two across, each with its number and name. Levels the player has
+// won, and the next one to play (highlighted), show a drawing of the level: launcher, glass and, once
+// won, the player's last winning shot. Levels further on show a lock instead. While LOCK_LEVELS is off
+// (levels being tested) that lock is only a look and the card still opens; with it on they're disabled.
 export default function LevelSelect() {
   const c = useColors();
   const { width } = useWindowDimensions();
@@ -37,6 +37,7 @@ export default function LevelSelect() {
           const locked = index > unlocked;
           const b = best[level.id];
           const next = index === nextUp && !locked;
+          const looksLocked = !b && !next;
           const label = `Level ${index + 1}, ${level.name}${locked ? ', locked' : b ? `, ${b.stars} of 3 stars` : ''}`;
           const body = (
             <Pressable
@@ -48,18 +49,25 @@ export default function LevelSelect() {
               style={StyleSheet.flatten([
                 styles.tile,
                 { width: tile, backgroundColor: next ? c.pencil : c.paper, borderColor: next || b ? c.pencil : c.line },
-                locked && styles.locked,
+                looksLocked && styles.locked,
               ])}
             >
-              <View style={[styles.thumb, { borderColor: c.line, backgroundColor: c.paper }]}>
-                <ShotThumbnail level={level} shot={shots[level.id]} width={tile - 16} height={(tile - 16) * 0.85} />
-                <View style={[styles.badge, { backgroundColor: next ? c.pencil : c.ink }]}>
-                  <Text style={[styles.badgeText, { color: c.paper }]}>{index + 1}</Text>
+              {looksLocked ? (
+                <View style={[styles.thumb, styles.lockedThumb, { height: (tile - 16) * 0.85, borderColor: c.line }]}>
+                  <Text style={[styles.bigNum, { color: c.muted }]}>{index + 1}</Text>
+                  <Text style={styles.lockIcon}>🔒</Text>
                 </View>
-              </View>
+              ) : (
+                <View style={[styles.thumb, { borderColor: c.line, backgroundColor: c.paper }]}>
+                  <ShotThumbnail level={level} shot={shots[level.id]} width={tile - 16} height={(tile - 16) * 0.85} />
+                  <View style={[styles.badge, { backgroundColor: next ? c.pencil : c.ink }]}>
+                    <Text style={[styles.badgeText, { color: c.paper }]}>{index + 1}</Text>
+                  </View>
+                </View>
+              )}
               <Text style={[styles.name, { color: next ? c.paper : c.ink }]} numberOfLines={1}>{level.name}</Text>
-              {locked ? (
-                <Text style={styles.lock}>🔒</Text>
+              {looksLocked ? (
+                <Text style={[styles.best, styles.lockedNote, { color: c.muted }]}>Par {level.par}</Text>
               ) : (
                 <View style={styles.meta}>
                   <Text style={styles.stars}>
@@ -97,8 +105,11 @@ const styles = StyleSheet.create({
   name: { fontSize: 17, fontFamily: FONTS.bodySemi, paddingHorizontal: 4 },
   meta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4, paddingBottom: 2 },
   best: { fontSize: 13, fontFamily: FONTS.bodyMedium },
-  locked: { opacity: 0.55, borderStyle: 'dashed' },
+  locked: { borderStyle: 'dashed' },
+  lockedThumb: { alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed' },
+  bigNum: { fontSize: 46, fontFamily: FONTS.condensedBold },
+  lockIcon: { position: 'absolute', bottom: 8, right: 10, fontSize: 18, opacity: 0.7 },
+  lockedNote: { paddingHorizontal: 4, paddingBottom: 2 },
   stars: { fontSize: 17, letterSpacing: 1 },
-  lock: { fontSize: 14, paddingHorizontal: 4 },
   version: { marginTop: 8, textAlign: 'center', fontSize: 12, fontFamily: FONTS.body },
 });

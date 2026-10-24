@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.5.1
+
+- Level cards: the drawings now show the launcher and glass properly (the bottom of the board was cut
+  off). Only won levels and the next one show a drawing; the rest show their number and a lock (a look
+  only for now: they still open while levels are being tested).
+
 ## 0.5.0
 
 - Level header: ⚙ settings (music on/off, version) and ••• to go back to the levels from any level.

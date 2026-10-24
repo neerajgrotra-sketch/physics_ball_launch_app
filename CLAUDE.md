@@ -119,10 +119,10 @@ reference/    prototype.html, the behaviour and look to match
 
 ## Screens and navigation
 
-- **Levels screen** (`app/index.tsx`): two-column cards, each with a drawing of the level and the player's
-  last unassisted winning shot (`components/levels/ShotThumbnail.tsx`, SVG, re-simulated from the stored
-  inputs in `game/shots.ts`), the level's number and name, best stars and bounces. The first level
-  without a result is highlighted. Header total score.
+- **Levels screen** (`app/index.tsx`): two-column cards. Won levels and the next one to play show a drawing
+  of the level (launcher, glass and, once won, the player's last unassisted winning shot (`components/levels/ShotThumbnail.tsx`, SVG, re-simulated from the stored
+  inputs in `game/shots.ts`), the level's number and name, best stars and bounces; levels further on show
+  a big number and a lock (only a look while `LOCK_LEVELS` is off). The next level is highlighted. Header total score.
 - **Level header:** ⚙ (settings sheet: music, version) and ••• (back to the levels, also from a deep link)
   on the left, level name in the middle, ‹ › on the right. No back arrow.
 - Level locks exist but are off while levels are tested (`LOCK_LEVELS`). Planned work is in `BACKLOG.md`.
