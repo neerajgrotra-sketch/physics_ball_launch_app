@@ -238,7 +238,11 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
       const d = drag.current;
       if (!d) return;
       if (d.mode === 'aim') aimTo(p);
-      else if (d.mode === 'swing') setAngle(swingTo(p, d.offset));
+      else if (d.mode === 'swing') {
+        const a = swingTo(p, d.grab);
+        setAngle(a.angle);
+        setPower(a.power);
+      }
       else setSlots((s) => {
         const next = dragTo(s, d, p);
         if (slotsLegal(level, next)) lastLegal.current = next;

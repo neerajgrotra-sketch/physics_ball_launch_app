@@ -74,7 +74,8 @@ reference/    prototype.html, the behaviour and look to match
 ## Gameplay behaviour to match the prototype
 
 - **Aim:** drag out from the launcher. Direction sets the angle and distance sets the power. Grabbing the
-  dotted aim line anywhere swings it round the launcher (angle only, power kept; `grabAimLine`/`swingTo`).
+  dotted aim line anywhere steers it like a rubber band: round the launcher sets the angle, away from or
+  towards it stretches or shrinks the power (`grabAimLine`/`swingTo`).
   Bars on the board take a touch first. The −/+ buttons beside each slider nudge by 0.1.
 - **Aim preview:** only the first 0.3 s of free flight is shown, with no bounce prediction. Bounces are
   the puzzle, so never preview them.

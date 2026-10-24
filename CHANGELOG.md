@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.4.2
+
+- Dragging the dotted aim line now sets power too: pull it out to stretch for more, push in for less,
+  and swing it round to change the angle.
+
 ## 0.4.1
 
 - Intro: the ball now visibly strikes the bar (true reflection, flat bar), with a continuous trail and a faint

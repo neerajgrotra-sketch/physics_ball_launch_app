@@ -48,19 +48,32 @@ export const LINE_GRAB = 26;
 
 const bearing = (p: { x: number; y: number }) => (Math.atan2(LAUNCHER.y - p.y, p.x - LAUNCHER.x) * 180) / Math.PI;
 
+/** A grab on the dotted line: what the aim was, and where the finger took hold of it. */
+export interface LineGrab { offset: number; dist: number; speed: number }
+
 /**
- * Grabbing the dotted line swings the launcher like a pointer: the angle follows the finger round the
- * launcher and power stays put. Returns the offset that keeps the line from jumping under the finger
- * (the dots curve under gravity), or null if the line wasn't touched.
+ * Grabbing the dotted line lets the finger steer it like a rubber band: moving round the launcher swings
+ * the angle, and moving away from or towards it stretches or shrinks the power. Returns what's needed
+ * to keep the line from jumping under the finger (the dots curve under gravity), or null if the line
+ * wasn't touched.
  */
-export function grabAimLine(p: { x: number; y: number }, angle: number, power: number): number | null {
+export function grabAimLine(p: { x: number; y: number }, angle: number, power: number): LineGrab | null {
   const near = aimPreview(angle, power).some((d) => Math.hypot(p.x - d.x, p.y - d.y) < LINE_GRAB);
-  return near ? angle - bearing(p) : null;
+  const dist = Math.hypot(p.x - LAUNCHER.x, p.y - LAUNCHER.y);
+  return near && dist > 1 ? { offset: angle - bearing(p), dist, speed: speedFor(power) } : null;
 }
 
-/** The angle for a line-swing drag: the finger's bearing from the launcher plus the grab offset. */
-export function swingTo(p: { x: number; y: number }, offset: number): number {
-  return toGrid(clamp(bearing(p) + offset, ANGLE_MIN, ANGLE_MAX));
+/**
+ * Angle and power for a line drag. Angle: the finger's bearing from the launcher plus the grab offset.
+ * Power: launch speed scales with the finger's distance from the launcher, so the dot under the finger
+ * stays (about) under it as the line stretches.
+ */
+export function swingTo(p: { x: number; y: number }, g: LineGrab): { angle: number; power: number } {
+  const speed = (g.speed * Math.hypot(p.x - LAUNCHER.x, p.y - LAUNCHER.y)) / g.dist;
+  return {
+    angle: toGrid(clamp(bearing(p) + g.offset, ANGLE_MIN, ANGLE_MAX)),
+    power: toGrid(clamp((speed - speedFor(0)) / (speedFor(1) - speedFor(0)), POWER_MIN, POWER_MAX)),
+  };
 }
 
 /** The −/+ buttons: one 0.1 step, kept in range. */
