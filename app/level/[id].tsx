@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useRef, useState, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
@@ -18,10 +18,11 @@ import { useProgress } from '../../components/progress/ProgressProvider';
 import { aimAt, swingTo } from '../../game/aim';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
-  hintSlots, leverEnd, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
+  hintSlots, leverEnd, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
 import { skipNotice, winText } from '../../game/progress';
 import { bestOf, goalText } from '../../game/score';
+import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
 import { buildWorld, simulate } from '../../physics';
 import { FONTS, useColors } from '../../theme/colors';
@@ -31,11 +32,13 @@ const MAX_TRAILS = 4;
 /**
  * Resolves the level from the route. The game below is keyed by level and replay count, so moving to
  * another level or replaying starts from a clean slate, like the prototype's loadLevel().
+ * `?replay=1` (the Replay button on a won level's card) opens it with the player's saved winning shot set
+ * up and plays it once; Start over then goes back to a clean slate.
  */
 export default function LevelScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, replay } = useLocalSearchParams<{ id: string; replay?: string }>();
   const c = useColors();
-  const { unlocked } = useProgress();
+  const { unlocked, shots } = useProgress();
   const [round, setRound] = useState(0);
   const index = LEVELS.findIndex((l) => l.id === id);
 
@@ -49,12 +52,13 @@ export default function LevelScreen() {
       </View>
     );
   }
-  return <LevelGame key={`${id}:${round}`} index={index} onReplay={() => setRound((r) => r + 1)} />;
+  const shot = replay === '1' && round === 0 ? shots[id] : undefined;
+  return <LevelGame key={`${id}:${round}:${shot ? 'replay' : ''}`} index={index} shot={shot} onReplay={() => setRound((r) => r + 1)} />;
 }
 
 // Laid out like the prototype: board, hint, aim controls, tray, then Solve and Launch.
 // Each launch runs simulate() once and plays the path back.
-function LevelGame({ index, onReplay }: { index: number; onReplay: () => void }) {
+function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onReplay: () => void }) {
   const level = LEVELS[index];
   const last = index === LEVELS.length - 1;
   const c = useColors();
@@ -62,7 +66,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   const router = useRouter();
   const { unlocked, won } = useProgress();
 
-  const [slots, setSlots] = useState<Slot[]>(() => emptySlots(level));
+  const [slots, setSlots] = useState<Slot[]>(() => (shot ? shotSlots(level, shot) : emptySlots(level)));
   const [selected, setSelected] = useState<number | null>(null);
   /** Which end of the selected bar has the rotate lever; picked when a bar is selected, moved by tapping the other end. */
   const [lever, setLever] = useState<End>(2);
@@ -71,8 +75,8 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
     setSelected(k);
   };
   const [trails, setTrails] = useState<Trail[]>([]);
-  const [angle, setAngle] = useState(52);
-  const [power, setPower] = useState(45);
+  const [angle, setAngle] = useState(shot?.angle ?? 52);
+  const [power, setPower] = useState(shot?.power ?? 45);
   const [tries, setTries] = useState(0);
   const [done, setDone] = useState(false);
   /** The Solve button took the winning shot, which changes the win card's wording. */
@@ -131,6 +135,27 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
       if (res.hits[k].counts) setBounces((n) => (n ?? 0) + 1);
     });
   };
+
+  // Opened with a saved shot (Replay on the level card): play it once, like Watch again. It isn't a try
+  // and isn't scored; the bars and aim are left set up, so the player carries on from there.
+  useEffect(() => {
+    if (!shot) return;
+    const timer = setTimeout(() => {
+      const res = simulate(buildWorld(level, shot.pieces), shot.angle, shot.power);
+      setBounces(0);
+      feedback.launched();
+      play(res.path, () => {
+        setBounces(res.bounces);
+        setTrails([{ path: res.path, ok: res.success, end: res.end }]);
+        if (res.success) feedback.landed();
+      }, res.hits.map((h) => h.i), (k) => {
+        feedback.hit(res.hits[k]);
+        if (res.hits[k].counts) setBounces((n) => (n ?? 0) + 1);
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const goTo = (i: number) => {
     if (!flying) router.setParams({ id: LEVELS[i].id });

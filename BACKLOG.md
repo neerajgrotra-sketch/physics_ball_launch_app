@@ -22,7 +22,6 @@ Agreed work that isn't built yet, roughly in priority order. Move an item to CHA
 - **Level locks.** Built but switched off while levels are being tested (`LOCK_LEVELS` in
   `game/progress.ts`): winning a level opens the next, locked cards show a lock. Turn on before release.
 - **Level list paging** (1–100, 101–200…) once there are many levels.
-- Watch a level's saved winning shot from the level card.
 
 ## Scoring, rewards and money
 

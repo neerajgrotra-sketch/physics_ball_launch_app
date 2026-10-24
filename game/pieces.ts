@@ -233,6 +233,14 @@ export function rotateToLegal(level: Level, slots: Slot[], k: number, shown: num
   return slotsLegal(level, next) ? next : slots;
 }
 
+/** Slots with a saved shot's bars on the board (bar k where the shot had it; any it lacks stay in the tray). */
+export function shotSlots(level: Level, shot: { pieces: { x: number; y: number; deg: number }[] }): Slot[] {
+  return emptySlots(level).map((slot, k) => {
+    const p = shot.pieces[k];
+    return p ? { ...slot, x: p.x, y: p.y, deg: p.deg, onBoard: true } : slot;
+  });
+}
+
 /** Whether bar k sits exactly where the stored solution puts it. */
 export function atSolution(level: Level, slots: Slot[], k: number): boolean {
   const p = level.solution?.pieces[k], s = slots[k];

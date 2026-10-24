@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ShotThumbnail } from '../components/levels/ShotThumbnail';
@@ -13,12 +13,14 @@ const GAP = 12;
 
 // Level select: a grid of level cards, two across, each with its number and name. Levels the player has
 // won, and the next one to play (highlighted), show a drawing of the level: launcher, glass and, once
-// won, the player's last winning shot. Levels further on show a lock instead. While LOCK_LEVELS is off
+// won, the player's last winning shot with a Replay button that reopens the level with that shot set up
+// and plays it. Levels further on show a lock instead. While LOCK_LEVELS is off
 // (levels being tested) that lock is only a look and the card still opens; with it on they're disabled.
 export default function LevelSelect() {
   const c = useColors();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { unlocked, best, shots } = useProgress();
   const total = totalScore(best);
   const tile = Math.floor((Math.min(width, 560) - 2 * 18 - (COLUMNS - 1) * GAP) / COLUMNS);
@@ -82,8 +84,22 @@ export default function LevelSelect() {
               )}
             </Pressable>
           );
-          return locked ? <View key={level.id}>{body}</View> : (
-            <Link key={level.id} href={{ pathname: '/level/[id]', params: { id: level.id } }} asChild>{body}</Link>
+          // Replay sits over the card's drawing but outside its link (a button inside a link would
+          // trigger both on the web): it opens the level with this winning shot set up and plays it.
+          const replay = shots[level.id] && !locked && (
+            <Pressable
+              onPress={() => router.push({ pathname: '/level/[id]', params: { id: level.id, replay: '1' } })}
+              accessibilityRole="button" accessibilityLabel={`Replay your winning shot on level ${index + 1}`}
+              hitSlop={6} style={[styles.replay, { top: (tile - 16) * 0.85 - 30, backgroundColor: c.red }]}
+            >
+              <Text style={styles.replayText}>Replay ▶︎</Text>
+            </Pressable>
+          );
+          return (
+            <View key={level.id}>
+              {locked ? body : <Link href={{ pathname: '/level/[id]', params: { id: level.id } }} asChild>{body}</Link>}
+              {replay}
+            </View>
           );
         })}
       </View>
@@ -101,6 +117,8 @@ const styles = StyleSheet.create({
   tile: { borderRadius: 16, borderWidth: 2, padding: 6, gap: 6 },
   thumb: { borderRadius: 10, borderWidth: 1, overflow: 'hidden', alignItems: 'center' },
   badge: { position: 'absolute', top: 6, left: 6, minWidth: 28, height: 28, borderRadius: 14, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' },
+  replay: { position: 'absolute', right: 14, height: 28, paddingHorizontal: 10, borderRadius: 14, justifyContent: 'center' },
+  replayText: { color: '#fff', fontSize: 14, fontFamily: FONTS.condensedBold },
   badgeText: { fontSize: 17, fontFamily: FONTS.condensedBold },
   name: { fontSize: 17, fontFamily: FONTS.bodySemi, paddingHorizontal: 4 },
   meta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4, paddingBottom: 2 },

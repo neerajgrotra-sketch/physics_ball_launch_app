@@ -3,7 +3,7 @@ import { LEVELS } from '../levels';
 import { LAUNCHER, WORLD, pieceEnds, solutionPieces, type Level } from '../physics';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle,
-  atSolution, hintSlots, LEVER, leverEnd, leverLine, slotsLegal, solutionSlots, tapChip, type Slot,
+  atSolution, hintSlots, shotSlots, LEVER, leverEnd, leverLine, slotsLegal, solutionSlots, tapChip, type Slot,
 } from './pieces';
 
 const level = LEVELS[0];
@@ -162,6 +162,15 @@ describe('rotation controls', () => {
       { len: 70, onBoard: true, x: 0, y: 0, deg: 0 },
     ];
     expect(boardNumbers(three)).toEqual([2, 3]);
+  });
+});
+
+describe('saved shots', () => {
+  it('put the saved bars back on the board', () => {
+    const l = LEVELS.find((x) => x.pieces.length === 3)!;
+    const s = shotSlots(l, { pieces: [{ x: 100, y: 200, deg: 10 }, { x: 150, y: 250, deg: 20 }] });
+    expect(s.map((x) => x.onBoard)).toEqual([true, true, false]);
+    expect(s[1]).toMatchObject({ x: 150, y: 250, deg: 20, len: l.pieces[1].len });
   });
 });
 

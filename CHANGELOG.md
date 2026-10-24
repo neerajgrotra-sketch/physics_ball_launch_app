@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.5.3
+
+- Replay on a won level's card: opens the level with your winning shot set up (bars, angle, power),
+  plays it once, then you can tweak it and try for fewer bounces. Not counted as a try.
+
 ## 0.5.2
 
 - Rotating a bar: the rotate icon now sits at the tip of a dotted lever sticking out of the bar's end, so
