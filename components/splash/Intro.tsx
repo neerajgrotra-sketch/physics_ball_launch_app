@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue,
 } from 'react-native-reanimated';
 import { FONTS, useColors } from '../../theme/colors';
-import { BALL, BAR, BARREL_DEG, GLASS, GO_BUTTON, INTRO_MS, LAUNCH, TITLE, TRAIL, backOut, ballAt, clamp01, quadOut } from './introPath';
+import { useFeedback } from '../feedback/useFeedback';
+import { VERSION_LABEL } from '../version';
+import { BALL, BAR, CONTACT, FLOOR, GLASS, GO_BUTTON, INTRO_MS, LAUNCHER, TITLE, TRAIL, backOut, ballAt, clamp01, quadOut } from './introPath';
 
 /**
  * The intro played over the level list on every cold start: ~2.7 s of animation, then it waits on the
@@ -33,7 +35,14 @@ export function Intro({ onDone, onShown }: { onDone: () => void; onShown: () => 
     setTimeout(onDone, 330);
   };
 
+  // The shot's sounds, in time with the animation: launch, the bar, the glass. On the web they only play
+  // if audio is already unlocked (browsers need a tap first), so the intro is often silent there.
+  const feedback = useFeedback();
+  const sounds = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const stopSounds = () => { sounds.current.forEach(clearTimeout); sounds.current = []; };
+
   const finish = () => {
+    stopSounds();
     t.value = INTRO_MS; // also cancels the running animation
     setReady(true);
   };
@@ -41,7 +50,13 @@ export function Intro({ onDone, onShown }: { onDone: () => void; onShown: () => 
   useEffect(() => {
     t.value = withTiming(INTRO_MS, { duration: reduced ? 900 : INTRO_MS, easing: Easing.linear });
     const timer = setTimeout(() => setReady(true), reduced ? 900 : INTRO_MS);
-    return () => clearTimeout(timer);
+    if (!reduced) {
+      const at = (ms: number, f: () => void) => sounds.current.push(setTimeout(f, ms));
+      at(BALL.launch, () => feedback.launched());
+      at(BALL.hitBar, () => feedback.hit({ i: 0, kind: 'piece', speed: 650, counts: true }));
+      at(BALL.land, () => { feedback.hit({ i: 0, kind: 'glass', speed: 420, counts: false }); feedback.landed(); });
+    }
+    return () => { clearTimeout(timer); stopSounds(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -93,19 +108,22 @@ export function Intro({ onDone, onShown }: { onDone: () => void; onShown: () => 
           <View style={{ width: S, height: S }}>
             {/* The trail the ball leaves, dot by dot. */}
             {TRAIL.map((d, i) => <TrailDot key={i} t={t} at={d} S={S} color={c.red} />)}
+            {/* The floor everything stands on. */}
+            <Animated.View style={[styles.abs, launcher, { left: 0, right: 0, top: FLOOR * S - 1, height: 2, backgroundColor: c.line }]} />
+            {/* The launcher: a barrel pivoting on a dome, aimed along the shot. */}
             <Animated.View style={[styles.abs, launcher, {
-              left: LAUNCH.x * S - 15, top: LAUNCH.y * S - 15, width: 30, height: 30, borderRadius: 15,
-              borderWidth: 3, borderColor: c.pencil,
+              left: (LAUNCHER.x + (LAUNCHER.len / 2) * Math.cos((LAUNCHER.deg * Math.PI) / 180)) * S - (LAUNCHER.len * S) / 2,
+              top: (FLOOR - LAUNCHER.lift + (LAUNCHER.len / 2) * Math.sin((LAUNCHER.deg * Math.PI) / 180)) * S - 5.5,
+              width: LAUNCHER.len * S, height: 11, borderRadius: 3, backgroundColor: c.ink,
+              transform: [{ rotate: `${LAUNCHER.deg}deg` }],
             }]} />
             <Animated.View style={[styles.abs, launcher, {
-              left: LAUNCH.x * S + 13 * Math.cos((BARREL_DEG * Math.PI) / 180) - 13,
-              top: LAUNCH.y * S + 13 * Math.sin((BARREL_DEG * Math.PI) / 180) - 3,
-              width: 26, height: 6, borderRadius: 3, backgroundColor: c.pencil,
-              transform: [{ rotate: `${BARREL_DEG}deg` }],
+              left: LAUNCHER.x * S - 17, top: FLOOR * S - 17, width: 34, height: 17,
+              borderTopLeftRadius: 17, borderTopRightRadius: 17, backgroundColor: c.pencil,
             }]} />
             <Animated.View style={[styles.abs, bar, {
-              left: (BAR.cx - BAR.len / 2) * S, top: BAR.cy * S - 6, width: BAR.len * S, height: 12, borderRadius: 6,
-              backgroundColor: c.pencil,
+              left: (BAR.cx - BAR.len / 2) * S, top: (BAR.cy - BAR.th / 2) * S, width: BAR.len * S, height: BAR.th * S,
+              borderRadius: (BAR.th * S) / 2, backgroundColor: c.pencil,
             }]} />
             <Animated.View style={[styles.abs, glass, {
               left: GLASS.l * S, top: GLASS.top * S, width: (GLASS.r - GLASS.l) * S, height: (GLASS.base - GLASS.top) * S,
@@ -119,6 +137,8 @@ export function Intro({ onDone, onShown }: { onDone: () => void; onShown: () => 
               left: -BALL.r * S, top: -BALL.r * S, width: BALL.r * 2 * S, height: BALL.r * 2 * S, borderRadius: BALL.r * S,
               backgroundColor: c.steel, borderWidth: 2.5, borderColor: c.ink,
             }]} />
+            {/* A faint imprint of the ball where it struck the bar, so the finished picture shows the contact. */}
+            <Imprint t={t} x={CONTACT[0] * S} y={CONTACT[1] * S} r={BALL.r * S} color={c.ink} />
             <Ring t={t} at={BALL.hitBar} x={BAR.hitX * S} y={BAR.hitY * S} color={c.pencil} />
             <Ring t={t} at={BALL.land} x={BALL.rest[0] * S} y={BALL.rest[1] * S} color={c.red} />
           </View>
@@ -140,6 +160,8 @@ export function Intro({ onDone, onShown }: { onDone: () => void; onShown: () => 
           </Animated.View>
         </View>
 
+        <Animated.Text style={[styles.version, { color: c.muted }, go]}>{VERSION_LABEL}</Animated.Text>
+
         <Animated.View style={[styles.center, styles.iconWrap, icon]} pointerEvents="none">
           <Image source={require('../../assets/splash-icon.png')} style={styles.icon} />
         </Animated.View>
@@ -159,7 +181,17 @@ function TrailDot({ t, at, S, color }: { t: SharedValue<number>; at: { x: number
   const style = useAnimatedStyle(() => ({
     opacity: t.value < at.ms ? 0 : 0.75 * (1 - 0.6 * clamp01((t.value - at.ms) / 900)),
   }));
-  return <Animated.View style={[styles.abs, styles.dot, { left: at.x * S - 2.5, top: at.y * S - 2.5, backgroundColor: color }, style]} />;
+  return <Animated.View style={[styles.abs, styles.dot, { left: at.x * S - 2, top: at.y * S - 2, backgroundColor: color }, style]} />;
+}
+
+function Imprint({ t, x, y, r, color }: { t: SharedValue<number>; x: number; y: number; r: number; color: string }) {
+  const style = useAnimatedStyle(() => ({ opacity: t.value < BALL.hitBar ? 0 : 0.3 }));
+  return (
+    <Animated.View
+      style={[styles.abs, { left: x - r, top: y - r, width: 2 * r, height: 2 * r, borderRadius: r, borderWidth: 1.5, borderColor: color, borderStyle: 'dashed' }, style]}
+      pointerEvents="none"
+    />
+  );
 }
 
 function Ring({ t, at, x, y, color }: { t: SharedValue<number>; at: number; x: number; y: number; color: string }) {
@@ -199,7 +231,7 @@ const styles = StyleSheet.create({
   center: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   iconWrap: { zIndex: 2 },
   icon: { width: 150, height: 150 },
-  dot: { width: 5, height: 5, borderRadius: 2.5 },
+  dot: { width: 4, height: 4, borderRadius: 2 },
   ring: { width: 48, height: 48, borderRadius: 24, borderWidth: 3 },
   glassFill: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, opacity: 0.12 },
   wall: { position: 'absolute', top: 0, bottom: 0, width: 6, borderRadius: 3 },
@@ -208,6 +240,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row' },
   letter: { fontFamily: FONTS.condensedBold, fontSize: 54, lineHeight: 58, letterSpacing: 1 },
   space: { width: 16 },
+  version: { position: 'absolute', left: 0, right: 0, bottom: 34, textAlign: 'center', fontSize: 13, fontFamily: FONTS.body },
   tagline: { fontFamily: FONTS.bodyMedium, fontSize: 17, marginTop: 4 },
   go: { marginTop: 28, height: 54, paddingHorizontal: 44, borderRadius: 27, justifyContent: 'center',
     boxShadow: '0 6px 18px rgba(0,0,0,0.18)' },

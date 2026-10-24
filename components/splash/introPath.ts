@@ -5,20 +5,28 @@
 /** The animation's length. It then waits on the finished picture for "Let's go". */
 export const INTRO_MS = 2700;
 
-export const LAUNCH = { x: 0.12, y: 0.86 };
-/** The launcher's barrel points the way the ball leaves (degrees, clockwise from +x). */
-export const BARREL_DEG = -80;
-/** The bar, centre and length in stage units, tilted `deg` (clockwise). `hitX/Y` is where the ball strikes. */
-export const BAR = { cx: 0.51, cy: 0.27, len: 0.33, deg: 25, hitX: 0.5, hitY: 0.265 };
-export const GLASS = { l: 0.64, r: 0.88, top: 0.6, base: 0.86 };
+/** Everything stands on this floor line. */
+export const FLOOR = 0.86;
+/** The launcher: a dome on the floor at `x`, its barrel `len` long from a pivot `lift` above the floor, aimed `deg` (clockwise from +x). */
+export const LAUNCHER = { x: 0.12, len: 0.11, lift: 0.025, deg: -77 };
+const RAD = (LAUNCHER.deg * Math.PI) / 180;
+/** The ball leaves from the barrel's muzzle. */
+export const LAUNCH = { x: LAUNCHER.x + LAUNCHER.len * Math.cos(RAD), y: FLOOR - LAUNCHER.lift + LAUNCHER.len * Math.sin(RAD) };
+/** The bar: flat, centre and length in stage units, `th` thick. `hitX/Y` is the point on its underside the ball strikes. */
+export const BAR = { cx: 0.48, cy: 0.26, len: 0.3, th: 0.035, deg: 0, hitX: 0.44, hitY: 0.26 + 0.0175 };
+export const GLASS = { l: 0.67, r: 0.91, top: 0.6, base: FLOOR };
 
 type P = [number, number];
-const A: [P, P, P] = [[LAUNCH.x, LAUNCH.y], [0.22, 0.3], [0.48, 0.31]]; // up to the bar's underside
-const B: [P, P, P] = [[0.48, 0.31], [0.7, 0.46], [0.76, 0.8]];           // banked down into the glass
+const R = 0.045;
+// Where the ball's centre is at the moment it touches the bar's underside, then a true reflection:
+// it arrives rising at about 27° and leaves falling at the same angle, curving down into the glass.
+export const CONTACT: P = [BAR.hitX, BAR.cy + BAR.th / 2 + R];
+const A: [P, P, P] = [[LAUNCH.x, LAUNCH.y], [CONTACT[0] - 0.222, CONTACT[1] + 0.115], CONTACT]; // up to the bar
+const B: [P, P, P] = [CONTACT, [0.75, 0.48], [0.79, FLOOR - 0.06]];                             // down into the glass
 
 export const BALL = {
-  r: 0.045,
-  rest: [0.76, 0.8] as P,
+  r: R,
+  rest: [0.79, FLOOR - 0.06] as P,
   launch: 750,  // leaves the launcher
   hitBar: 1150, // strikes the bar
   land: 1550,   // reaches the bottom of the glass
@@ -66,9 +74,9 @@ export function ballAt(t: number): P {
   return [BALL.rest[0], BALL.rest[1] - hop];
 }
 
-/** Dots of the trail: where the ball was every 40 ms in flight, and when it got there. */
+/** Dots of the trail: where the ball was every 25 ms in flight, and when it got there. */
 export const TRAIL: { x: number; y: number; ms: number }[] = [];
-for (let ms = BALL.launch + 40; ms < BALL.land; ms += 40) {
+for (let ms = BALL.launch + 25; ms < BALL.land; ms += 25) {
   const [x, y] = ballAt(ms);
   TRAIL.push({ x, y, ms });
 }
