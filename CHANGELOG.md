@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.8.2
+
+- Power and Angle sliders: they keep their own value while a finger is on them (they could snap back a step
+  when the screen redrew, most often while a shot was playing), and dragging one no longer redraws the whole
+  level on every step.
+
 ## 0.8.1
 
 - New level 8, "Slalom": one block rises from the floor and another hangs from the ceiling, so the ball has to be

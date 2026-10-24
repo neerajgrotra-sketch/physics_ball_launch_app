@@ -139,7 +139,13 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   const chips = useRef<LayoutRectangle[]>([]);
   const latest = useRef({ slots, selected, lever, angle, power });
   latest.current = { slots, selected, lever, angle, power };
-  const poke = () => { setCoach(null); setIdleKey((k) => k + 1); };
+  // (The idle clock restarts at most every 300 ms: a slider drag calls this for every step, and each one redraws the level.)
+  const lastPoke = useRef(0);
+  const poke = () => {
+    setCoach(null);
+    const now = Date.now();
+    if (now - lastPoke.current > 300) { lastPoke.current = now; setIdleKey((k) => k + 1); }
+  };
   const lastLegal = useRef<Slot[]>([]);
 
   // The trail and the win only land once playback reaches the end of the path, as in the prototype.

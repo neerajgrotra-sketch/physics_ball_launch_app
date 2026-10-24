@@ -1,5 +1,5 @@
 import Slider from '@react-native-community/slider';
-import { useEffect, useRef, type ComponentRef, type Ref } from 'react';
+import { useEffect, useRef, useState, type ComponentRef, type Ref } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   ANGLE_MAX, ANGLE_MIN, POWER_MAX, POWER_MIN, nudgeAngle, nudgePower, toGrid,
@@ -104,6 +104,12 @@ interface RowProps {
 function Row({ label, value, readout, min, max, step, onChange, onNudge, onDone, trackRef }: RowProps) {
   const c = useColors();
   const name = label.toLowerCase();
+  // While a finger is on the slider it owns its value: the app's value is only taken back once the finger lifts.
+  // (Fed both ways on every redraw, the web slider could be handed a value a step behind the finger, most
+  // often during a flight when the screen redraws constantly, and snap back to it.)
+  const [shown, setShown] = useState(value);
+  const held = useRef(false);
+  useEffect(() => { if (!held.current) setShown(value); }, [value]);
   return (
     <View style={styles.row}>
       <Text style={[styles.label, { color: c.muted }]}>{label}</Text>
@@ -111,12 +117,13 @@ function Row({ label, value, readout, min, max, step, onChange, onNudge, onDone,
       <View ref={trackRef} style={styles.track} onStartShouldSetResponderCapture={remeasureSliders}>
       <Slider
         style={styles.slider}
-        value={value}
+        value={shown}
         minimumValue={min}
         maximumValue={max}
         step={step}
-        onValueChange={(v) => onChange(toGrid(v))}
-        onSlidingComplete={(v) => onDone?.(toGrid(v))}
+        onSlidingStart={() => { held.current = true; }}
+        onValueChange={(v) => { const g = toGrid(v); setShown(g); onChange(g); }}
+        onSlidingComplete={(v) => { held.current = false; setShown(toGrid(v)); onDone?.(toGrid(v)); }}
         minimumTrackTintColor={c.pencil}
         maximumTrackTintColor={c.line}
         thumbTintColor={c.pencil}
