@@ -16,8 +16,8 @@ export type CoachStep =
   | { kind: 'move'; bar: number }     // drag a bar onto its dashed outline
   | { kind: 'select'; bar: number }   // tap a bar to select it (its dotted turn handle appears)
   | { kind: 'twist'; bar: number }    // drag the selected bar's handle to turn it to match
-  | { kind: 'angle' }                 // set the cannon's angle by dragging the dotted line
-  | { kind: 'power' }                 // set the cannon's power with the Power slider
+  | { kind: 'angle' }                 // set the cannon's angle (drag the dotted line, or the Angle slider)
+  | { kind: 'power' }                 // set the cannon's power (the Power slider, or the dotted line)
   | { kind: 'launch' };               // fire
 
 /** How the player's setup compares with the tutorial level's stored solution (game/tutorial.ts). */
@@ -53,6 +53,11 @@ export function tutorialPlan(s: TutorialState): TutorialPlan {
   return { step: { kind: 'launch' }, done: 3 * n + 2, total };
 }
 
+/** A short identity for a step, to tell whether a hint on screen is still for the step the player is on. */
+export function stepKey(step: CoachStep | null): string {
+  return !step ? '' : 'bar' in step ? `${step.kind}:${step.bar}` : step.kind;
+}
+
 /** Outside the tutorial: only the first bar gets a hint, and only while none is on the board. */
 export function firstBarStep(onBoard: boolean[]): CoachStep | null {
   return onBoard.length > 0 && !onBoard.some(Boolean) ? { kind: 'place', bar: 0 } : null;
@@ -65,8 +70,8 @@ export function coachText(step: CoachStep, aim?: { angle: number; power: number 
     case 'move': return `Drag Bar ${step.bar + 1} onto the dashed outline`;
     case 'select': return `Tap Bar ${step.bar + 1} to select it`;
     case 'twist': return `Drag the round handle to turn Bar ${step.bar + 1} to match`;
-    case 'angle': return aim ? `Drag the dotted line round to set the angle to ${aim.angle.toFixed(1)}°` : 'Set the angle';
-    case 'power': return aim ? `Slide Power to ${aim.power.toFixed(1)}` : 'Set the power';
+    case 'angle': return aim ? `Set the angle to ${aim.angle.toFixed(1)}°: drag the dotted line round, or slide Angle` : 'Set the angle';
+    case 'power': return aim ? `Set the power to ${aim.power.toFixed(1)}: slide Power, or pull the dotted line in or out` : 'Set the power';
     case 'launch': return 'Tap Launch to fire';
   }
 }

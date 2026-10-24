@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { coachText, firstBarStep, tutorialPlan, tutorialText, type TutorialState } from './coach';
+import { coachText, firstBarStep, stepKey, tutorialPlan, tutorialText, type TutorialState } from './coach';
 
 const base: TutorialState = {
   onBoard: [true, true, true], posOk: [false, false, false], degOk: [false, false, false],
@@ -35,6 +35,20 @@ describe('tutorial plan', () => {
     expect(coachText({ kind: 'angle' }, { angle: 47.7, power: 24.8 })).toContain('47.7°');
     expect(coachText({ kind: 'power' }, { angle: 47.7, power: 24.8 })).toContain('24.8');
     expect(tutorialText({ step: { kind: 'launch' }, done: 11, total: 12 })).toBe('Tap Launch to fire');
+  });
+});
+
+describe('step keys', () => {
+  it('tell one step from another, so a stale hint can be dropped', () => {
+    expect(stepKey({ kind: 'move', bar: 1 })).toBe('move:1');
+    expect(stepKey({ kind: 'angle' })).toBe('angle');
+    expect(stepKey(null)).toBe('');
+    expect(stepKey({ kind: 'angle' })).not.toBe(stepKey({ kind: 'power' }));
+  });
+
+  it('name both ways to aim in the angle and power captions', () => {
+    expect(coachText({ kind: 'angle' }, { angle: 35.8, power: 38.2 })).toMatch(/dotted line.*slide Angle/);
+    expect(coachText({ kind: 'power' }, { angle: 35.8, power: 38.2 })).toMatch(/slide Power.*dotted line/);
   });
 });
 

@@ -129,10 +129,11 @@ reference/    prototype.html, the behaviour and look to match
   a ghost finger (`components/coach/GhostFinger.tsx`) leads them through the level's stored solution, one
   step at a time, each step waiting for them to actually do it: place each bar, then for each bar drag it
   onto its dashed outline (drawn on the board) and turn it to match (tap it, drag its handle), then set the
-  angle (the finger drags the dotted line) and the power (the finger slides the Power slider), so both ways
-  of aiming get taught, then launch. A bar dropped or turned near its outline, and an aim let go near the answer, snaps
+  angle and the power (each step's finger alternates between the two ways: the dotted line, and the
+  slider; either is accepted for either), then launch. A bar dropped or turned near its outline, and an aim let go near the answer, snaps
   onto it (on release only: changing a slider's value under the finger sends it running), so the guided shot always lands. The plan is derived from the board each time (undo something and
-  that step returns) and the finger appears after 1.5 s without a touch (no step counter: players disliked it). The
+  that step returns), and a hint on screen is dropped the moment it isn't for the current step
+  (`stepKey`), so it can never nag about something already done and the finger appears after 1.5 s without a touch (no step counter: players disliked it). The
   win is marked assisted (no stars or score). It runs once: "Skip tutorial" on the caption, finishing it, or
   Tips off in settings ends it for good; ⚙ has "Replay the tutorial".
 - **First-bar hint:** on every other level, the finger only shows Bar 1 to place, after 4 s idle with

@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.7.3
+
+- A tutorial hint now disappears as soon as it's for a step you've already done (it could hang around asking
+  for the angle after you'd set it with the slider).
+- The aim steps teach both ways: the finger alternates between dragging the dotted line and sliding the slider,
+  for the angle and for the power, and either way is accepted.
+
 ## 0.7.2
 
 - Fixed the Angle and Power sliders sometimes jumping to their end when dragged (seen in the tutorial): they

@@ -8,10 +8,10 @@ import { HelpCard } from '../../components/board/HelpCard';
 import { NoticeCard } from '../../components/board/NoticeCard';
 import { useRewardedAd } from '../../components/ads/RewardedAds';
 import { SettingsSheet } from '../../components/settings/SettingsSheet';
-import { GhostFinger } from '../../components/coach/GhostFinger';
+import { GhostFinger, type Demo } from '../../components/coach/GhostFinger';
 import { useTips } from '../../components/coach/Tips';
 import {
-  IDLE_MS, TUTORIAL_ID, TUTORIAL_IDLE_MS, coachText, firstBarStep, tutorialPlan, tutorialText, type CoachStep,
+  IDLE_MS, TUTORIAL_ID, TUTORIAL_IDLE_MS, coachText, firstBarStep, stepKey, tutorialPlan, tutorialText, type CoachStep,
 } from '../../game/coach';
 import { LEVER, leverLine, leverTipInside } from '../../game/pieces';
 import { aimDemo, ghostFor, snapAim, snapBar, tutorialState } from '../../game/tutorial';
@@ -131,7 +131,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   // step by step, after a short pause on each; elsewhere it only shows the first bar to place, after a longer
   // idle. Any touch hides it and restarts the clock; it can be stopped for good (the caption's button,
   // or Tips in settings).
-  const [coach, setCoach] = useState<{ x: number; y: number; dx?: number; dy?: number; mode: 'tap' | 'drag'; text: string } | null>(null);
+  const [coach, setCoach] = useState<{ demos: Demo[]; text: string; key: string } | null>(null);
   const [idleKey, setIdleKey] = useState(0);
   const touching = useRef(false); // a finger is down on the board
   const angleTrackRef = useRef<ViewRef>(null), powerTrackRef = useRef<ViewRef>(null);
@@ -200,10 +200,19 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The step the player is on right now. A hint is only ever shown for this step: if what's on screen is for
+  // another (the player got past it some other way, e.g. with a slider instead of the dotted line), it goes.
+  const currentKey = tutorial
+    ? stepKey(tutorialPlan(tutorialState(level, slots, selected, angle, power)).step)
+    : stepKey(firstBarStep(slots.map((x) => x.onBoard)));
+  useEffect(() => {
+    if (coach && coach.key !== currentKey) setCoach(null);
+  }, [coach, currentKey]);
+
   useEffect(() => {
     if (flying || done || help || notice || settings || !tips.tipsOn) return;
     if (!tutorial && best[level.id]) return; // the first-bar hint is for levels not yet won
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       if (touching.current) return;
       const L = latest.current;
       let step: CoachStep | null, text: string;
@@ -217,53 +226,67 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
       }
       const root = rootRef.current;
       if (!step || !root) return;
-      const st = step;
-      root.measureInWindow((rx, ry) => {
-        const at = (ref: ViewRef | null, f: (x: number, y: number, w: number, h: number) => void) =>
-          ref?.measureInWindow((x, y, w, h) => f(x - rx, y - ry, w, h));
-        if (st.kind === 'place') {
-          const chip = chips.current[st.bar];
-          if (chip) at(trayRef.current, (x, y) => setCoach({ x: x + chip.x + chip.width / 2, y: y + chip.y + chip.height / 2, mode: 'tap', text }));
-        } else if (st.kind === 'launch') {
-          at(launchRef.current, (x, y, w, h) => setCoach({ x: x + w / 2, y: y + h / 2, mode: 'tap', text }));
-        } else if (st.kind === 'power') {
-          // Slide the Power slider's thumb to the target (the thumb's centre runs 12 in from each end).
-          at(powerTrackRef.current, (x, y, w, h) => {
-            const at100 = (v: number) => x + 12 + (v / 100) * (w - 24);
-            const target = level.solution?.power ?? L.power;
-            setCoach({ x: at100(L.power), y: y + h / 2, dx: at100(target) - at100(L.power), dy: 0, mode: 'drag', text });
-          });
-        } else {
-          // The board is drawn centred in the stage (inside its padding), scaled to fit.
-          at(stageRef.current, (x, y, w, h) => {
-            const iw = w - 12, ih = h - 2, k = Math.min(iw / WORLD.width, ih / WORLD.height);
-            const left = x + 6 + (iw - WORLD.width * k) / 2, top = y + 2 + (ih - WORLD.height * k) / 2;
-            const px = (wx: number) => left + wx * k, py = (wy: number) => top + wy * k;
-            if (st.kind === 'angle') {
-              const d = aimDemo(level, L.angle, L.power, 'angle');
-              setCoach({ x: px(d.from.x), y: py(d.from.y), dx: d.dx * k, dy: d.dy * k, mode: 'drag', text });
-              return;
-            }
-            const bar = L.slots[st.bar], g = ghostFor(level, st.bar);
-            if (st.kind === 'select') {
-              setCoach({ x: px(bar.x), y: py(bar.y), mode: 'tap', text });
-            } else if (st.kind === 'move') {
-              setCoach({ x: px(bar.x), y: py(bar.y), dx: g ? (g.x - bar.x) * k : 70, dy: g ? (g.y - bar.y) * k : -50, mode: 'drag', text });
-            } else {
-              // twist: from the lever's tip to where it will be once the bar is turned to its outline.
-              const [, , tx, ty] = leverLine(bar, L.lever);
-              const sgn = L.lever === 2 ? 1 : -1, reach = bar.len / 2 + LEVER;
-              const ga = ((g ? g.deg : bar.deg) * Math.PI) / 180;
-              const gx = bar.x + sgn * Math.cos(ga) * reach, gy = bar.y + sgn * Math.sin(ga) * reach;
-              setCoach({ x: px(tx), y: py(ty), dx: (gx - tx) * k, dy: (gy - ty) * k, mode: 'drag', text });
-            }
-          });
-        }
+      const st = step, key = stepKey(st);
+      // Where a view is on screen, relative to the level's root view.
+      const measure = (ref: ViewRef | null) => new Promise<{ x: number; y: number; w: number; h: number } | null>((res) => {
+        if (!ref || !root) { res(null); return; }
+        root.measureInWindow((rx, ry) => ref.measureInWindow((x, y, w, h) => res({ x: x - rx, y: y - ry, w, h })));
       });
+      const show = (demos: Demo[]) => setCoach({ demos, text, key });
+
+      if (st.kind === 'place') {
+        const chip = chips.current[st.bar], tray = await measure(trayRef.current);
+        if (chip && tray) show([{ x: tray.x + chip.x + chip.width / 2, y: tray.y + chip.y + chip.height / 2, mode: 'tap' }]);
+        return;
+      }
+      if (st.kind === 'launch') {
+        const m = await measure(launchRef.current);
+        if (m) show([{ x: m.x + m.w / 2, y: m.y + m.h / 2, mode: 'tap' }]);
+        return;
+      }
+      const stage = await measure(stageRef.current);
+      if (!stage) return;
+      // The board is drawn centred in the stage (inside its padding), scaled to fit.
+      const iw = stage.w - 12, ih = stage.h - 2, k = Math.min(iw / WORLD.width, ih / WORLD.height);
+      const left = stage.x + 6 + (iw - WORLD.width * k) / 2, top = stage.y + 2 + (ih - WORLD.height * k) / 2;
+      const px = (wx: number) => left + wx * k, py = (wy: number) => top + wy * k;
+      // A slider's thumb centre runs 12 in from each end of its track.
+      const sliderDemo = async (ref: ViewRef | null, now: number, target: number, max: number): Promise<Demo | null> => {
+        const m = await measure(ref);
+        if (!m) return null;
+        const at = (v: number) => m.x + 12 + (v / max) * (m.w - 24);
+        return { x: at(now), y: m.y + m.h / 2, dx: at(target) - at(now), dy: 0, mode: 'drag' };
+      };
+      const lineDemo = (which: 'angle' | 'power'): Demo => {
+        const d = aimDemo(level, L.angle, L.power, which);
+        return { x: px(d.from.x), y: py(d.from.y), dx: d.dx * k, dy: d.dy * k, mode: 'drag' };
+      };
+      const sol = level.solution;
+      if (st.kind === 'angle' || st.kind === 'power') {
+        // Two ways to do it, shown in turn: drag the dotted line, or slide the slider.
+        const slide = st.kind === 'angle'
+          ? await sliderDemo(angleTrackRef.current, L.angle, sol?.angle ?? L.angle, 90)
+          : await sliderDemo(powerTrackRef.current, L.power, sol?.power ?? L.power, 100);
+        show(st.kind === 'angle' ? [lineDemo('angle'), ...(slide ? [slide] : [])] : [...(slide ? [slide] : []), lineDemo('power')]);
+        return;
+      }
+      const bar = L.slots[st.bar], g = ghostFor(level, st.bar);
+      if (st.kind === 'select') {
+        show([{ x: px(bar.x), y: py(bar.y), mode: 'tap' }]);
+      } else if (st.kind === 'move') {
+        show([{ x: px(bar.x), y: py(bar.y), dx: g ? (g.x - bar.x) * k : 70, dy: g ? (g.y - bar.y) * k : -50, mode: 'drag' }]);
+      } else {
+        // twist: from the lever's tip to where it will be once the bar is turned to its outline.
+        const [, , tx, ty] = leverLine(bar, L.lever);
+        const sgn = L.lever === 2 ? 1 : -1, reach = bar.len / 2 + LEVER;
+        const ga = ((g ? g.deg : bar.deg) * Math.PI) / 180;
+        const gx = bar.x + sgn * Math.cos(ga) * reach, gy = bar.y + sgn * Math.sin(ga) * reach;
+        show([{ x: px(tx), y: py(ty), dx: (gx - tx) * k, dy: (gy - ty) * k, mode: 'drag' }]);
+      }
     }, tutorial ? TUTORIAL_IDLE_MS : IDLE_MS);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idleKey, flying, done, help, notice, settings, tutorial, tips.tipsOn]);
+  }, [idleKey, flying, done, help, notice, settings, tutorial, tips.tipsOn, currentKey]);
 
   const replayTutorial = () => {
     tips.restartTutorial();
@@ -587,9 +610,9 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         </View>
       </View>
     </View>
-      {coach && !flying && !done && !help && (
+      {coach && coach.key === currentKey && !flying && !done && !help && (
         <GhostFinger
-          {...coach}
+          demos={coach.demos} text={coach.text}
           stopLabel={tutorial ? 'Skip tutorial' : 'Stop tips'}
           onStop={() => {
             if (tutorial) { tips.finishTutorial(); setTutorial(false); } else tips.setTipsOn(false);

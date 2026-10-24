@@ -1,31 +1,40 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming,
 } from 'react-native-reanimated';
 import { FONTS, useColors } from '../../theme/colors';
 
+/** One thing the finger shows: press at (x, y), then either lift (tap) or slide by (dx, dy) (drag). */
+export interface Demo { x: number; y: number; dx?: number; dy?: number; mode: 'tap' | 'drag' }
+
+const LOOP_MS = 1800; // press, slide, lift, rest
+
 /**
- * The ghost finger (game/coach.ts picks what it shows). It points at (x, y), in the coordinates of the
- * view it's placed in, and either taps there or drags by (dx, dy), over and over, with a ripple where it
- * presses and a caption above. The finger and ripple never take touches. The caption carries a small
- * stop button (`stopLabel`, "Skip tutorial" or "Stop tips"), the only touchable part. The level screen
- * hides the whole thing on the first touch anywhere else.
+ * The ghost finger (game/coach.ts picks what it shows). It acts out each of `demos` in turn, over and over
+ * (a step with two ways to do it shows both: the dotted line, then a slider), with a ripple where it
+ * presses and a caption above the first one. Coordinates are in the view it's placed in. The finger and ripple
+ * never take touches; the caption carries a small stop button (`stopLabel`, "Skip tutorial" or "Stop tips"),
+ * the only touchable part. The level screen hides the whole thing on the first touch anywhere else.
  */
-export function GhostFinger({ x, y, dx = 0, dy = 0, mode, text, stopLabel, onStop }: {
-  x: number; y: number; dx?: number; dy?: number; mode: 'tap' | 'drag'; text: string; stopLabel: string; onStop: () => void;
-}) {
+export function GhostFinger({ demos, text, stopLabel, onStop }: { demos: Demo[]; text: string; stopLabel: string; onStop: () => void }) {
   const c = useColors();
   const { width } = useWindowDimensions();
   const t = useSharedValue(0); // 0..1 through one loop
   const appear = useSharedValue(0);
+  const [which, setWhich] = useState(0);
 
   useEffect(() => {
     appear.value = withTiming(1, { duration: 300 });
     t.value = withRepeat(withSequence(withTiming(1, { duration: 1500, easing: Easing.linear }), withDelay(300, withTiming(0, { duration: 0 }))), -1);
-    return () => { cancelAnimation(t); };
+    const next = demos.length > 1 ? setInterval(() => setWhich((i) => i + 1), LOOP_MS) : undefined;
+    return () => { cancelAnimation(t); clearInterval(next); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const demo = demos[which % demos.length];
+  const { x, y, dx = 0, dy = 0, mode } = demo;
+  const lead = demos[0];
 
   // Loop: press (0–0.2), then for a drag slide by (dx, dy) (0.2–0.75), lift (0.75–0.9), rest.
   const finger = useAnimatedStyle(() => {
@@ -45,13 +54,13 @@ export function GhostFinger({ x, y, dx = 0, dy = 0, mode, text, stopLabel, onSto
   const caption = useAnimatedStyle(() => ({ opacity: appear.value }));
 
   const capW = Math.min(290, width - 32);
-  const capLeft = Math.max(16, Math.min(width - 16 - capW, x - capW / 2));
+  const capLeft = Math.max(16, Math.min(width - 16 - capW, lead.x - capW / 2));
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       <Animated.View
         pointerEvents="box-none"
-        style={[styles.caption, { left: capLeft, top: Math.max(8, y - 118), width: capW, backgroundColor: c.ink }, caption]}
+        style={[styles.caption, { left: capLeft, top: Math.max(8, lead.y - 118), width: capW, backgroundColor: c.ink }, caption]}
       >
         <Text pointerEvents="none" style={[styles.captionText, { color: c.paper }]}>{text}</Text>
         <Pressable onPress={onStop} accessibilityRole="button" accessibilityLabel={stopLabel} hitSlop={10} style={styles.stop}>
