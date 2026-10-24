@@ -115,7 +115,9 @@ Barlow and Barlow Condensed type. Use the colour tokens from `reference/prototyp
   (`public/index.html`) shows the same thing while the game loads.
 - Then the intro (`components/splash/Intro.tsx`, timeline in `introPath.ts`) opens on that exact picture,
   so the handoff is seamless, and plays the app's idea once in ~2.7 s: graph paper, the ball launches, banks
-  off a bar into the glass, the title drops in. Every cold start; tap to skip; reduced motion just fades.
+  off a bar into the glass, the title drops in, then a "Let's go" button. It waits there (no auto-advance, so
+  the title can be read); "Let's go" or a tap anywhere opens the levels. A tap mid-animation jumps to the
+  finished picture. Every cold start; reduced motion just fades in.
   Built with plain Reanimated views (no Skia), one clock driving every frame. Expo Go shows its own launch
   screen; the real one appears in development and store builds.
 

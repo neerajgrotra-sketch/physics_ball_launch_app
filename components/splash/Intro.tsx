@@ -4,10 +4,11 @@ import Animated, {
   Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue,
 } from 'react-native-reanimated';
 import { FONTS, useColors } from '../../theme/colors';
-import { BALL, BAR, BARREL_DEG, GLASS, INTRO_MS, LAUNCH, TITLE, TRAIL, backOut, ballAt, clamp01, quadOut } from './introPath';
+import { BALL, BAR, BARREL_DEG, GLASS, GO_BUTTON, INTRO_MS, LAUNCH, TITLE, TRAIL, backOut, ballAt, clamp01, quadOut } from './introPath';
 
 /**
- * The intro played over the level list on every cold start, ~2.6 s, tap to skip.
+ * The intro played over the level list on every cold start: ~2.7 s of animation, then it waits on the
+ * finished picture until the player taps "Let's go" (or anywhere). A tap mid-animation jumps to the end.
  * It opens on exactly what the launch screen shows (the rounded icon on the panel colour, see
  * assets/splash-icon.png and app.json), so the handoff from the native splash is seamless. Then the
  * icon gives way to graph paper and the app's whole idea plays out once: the ball launches, banks off a
@@ -21,6 +22,7 @@ export function Intro({ onDone, onShown }: { onDone: () => void; onShown: () => 
   const t = useSharedValue(0);
   const fade = useSharedValue(1);
   const [leaving, setLeaving] = useState(false);
+  const [ready, setReady] = useState(false); // the animation has finished; waiting for "Let's go"
   // The stage the shot plays on: a square, as wide as a phone allows.
   const S = Math.min(width - 48, 340, height * 0.48);
 
@@ -31,9 +33,14 @@ export function Intro({ onDone, onShown }: { onDone: () => void; onShown: () => 
     setTimeout(onDone, 330);
   };
 
+  const finish = () => {
+    t.value = INTRO_MS; // also cancels the running animation
+    setReady(true);
+  };
+
   useEffect(() => {
-    t.value = withTiming(reduced ? TITLE.end : INTRO_MS, { duration: reduced ? 900 : INTRO_MS, easing: Easing.linear });
-    const timer = setTimeout(leave, reduced ? 1100 : INTRO_MS);
+    t.value = withTiming(INTRO_MS, { duration: reduced ? 900 : INTRO_MS, easing: Easing.linear });
+    const timer = setTimeout(() => setReady(true), reduced ? 900 : INTRO_MS);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -66,11 +73,18 @@ export function Intro({ onDone, onShown }: { onDone: () => void; onShown: () => 
     const [x, y] = ballAt(t.value);
     return { opacity: clamp01((t.value - 250) / 200), transform: [{ translateX: x * S }, { translateY: y * S }] };
   });
-  const titleBlock = useAnimatedStyle(() => ({ opacity: clamp01((t.value - TITLE.start) / 200) }));
+  const titleBlock = useAnimatedStyle(() => ({ opacity: reduced ? clamp01(t.value / 600) : clamp01((t.value - TITLE.start) / 200) }));
+  const go = useAnimatedStyle(() => {
+    const k = clamp01((t.value - GO_BUTTON.start) / (GO_BUTTON.end - GO_BUTTON.start));
+    return { opacity: clamp01(k * 2), transform: [{ translateY: (1 - quadOut(k)) * 16 }, { scale: 0.85 + 0.15 * backOut(k, 2) }] };
+  });
 
   return (
     <Animated.View style={[StyleSheet.absoluteFill, styles.root, { backgroundColor: c.panel }, root]} onLayout={onShown}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={leave} accessibilityLabel="Skip intro" accessibilityRole="button">
+      <Pressable
+        style={StyleSheet.absoluteFill} onPress={ready ? leave : finish}
+        accessibilityLabel={ready ? 'Continue' : 'Skip intro'} accessibilityRole="button"
+      >
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: c.paper }, paper]}>
           <Grid width={width} height={height} color={c.grid} />
         </Animated.View>
@@ -114,6 +128,15 @@ export function Intro({ onDone, onShown }: { onDone: () => void; onShown: () => 
               {'BANK SHOT'.split('').map((ch, i) => <Letter key={i} t={t} i={i} ch={ch} color={c.ink} reduced={reduced} />)}
             </View>
             <Text style={[styles.tagline, { color: c.muted }]}>Place the bars. Bounce it in.</Text>
+          </Animated.View>
+
+          <Animated.View style={go}>
+            <Pressable
+              onPress={ready ? leave : finish} accessibilityRole="button" accessibilityLabel="Let's go"
+              style={({ pressed }) => [styles.go, { backgroundColor: c.pencil, opacity: pressed ? 0.8 : 1 }]}
+            >
+              <Text style={[styles.goText, { color: c.paper }]}>{"Let's go ›"}</Text>
+            </Pressable>
           </Animated.View>
         </View>
 
@@ -186,4 +209,7 @@ const styles = StyleSheet.create({
   letter: { fontFamily: FONTS.condensedBold, fontSize: 54, lineHeight: 58, letterSpacing: 1 },
   space: { width: 16 },
   tagline: { fontFamily: FONTS.bodyMedium, fontSize: 17, marginTop: 4 },
+  go: { marginTop: 28, height: 54, paddingHorizontal: 44, borderRadius: 27, justifyContent: 'center',
+    boxShadow: '0 6px 18px rgba(0,0,0,0.18)' },
+  goText: { fontFamily: FONTS.condensedBold, fontSize: 24, letterSpacing: 0.5 },
 });

@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.3.1
+
+- The intro now ends on a "Let's go" button and waits for it, so there's time to read the title.
+  A tap during the animation jumps to the end.
+
 ## 0.3.0
 
 - Launch screen: the app icon on the paper colour (light and dark), on iPhone, Android and the web.

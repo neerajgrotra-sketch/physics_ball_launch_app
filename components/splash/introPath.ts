@@ -2,6 +2,7 @@
 // square (the stage), scaled to the screen; times are in ms from the start. The shot echoes the app icon:
 // launch, bank off the underside of a bar, drop into the glass. Pure functions, callable from worklets.
 
+/** The animation's length. It then waits on the finished picture for "Let's go". */
 export const INTRO_MS = 2700;
 
 export const LAUNCH = { x: 0.12, y: 0.86 };
@@ -25,6 +26,7 @@ export const BALL = {
 };
 
 export const TITLE = { start: 1500, stagger: 45, end: 2300 };
+export const GO_BUTTON = { start: 2250, end: 2650 };
 
 export function clamp01(v: number) {
   'worklet';
