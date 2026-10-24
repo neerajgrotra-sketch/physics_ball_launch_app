@@ -1,4 +1,5 @@
 // Level unlocking and the win card's wording, as in reference/prototype.html. Pure: no UI imports.
+import { golfName, scoreFor, starsFor } from './score';
 
 /** Storage key for the index of the furthest unlocked level. */
 export const UNLOCKED_KEY = 'bank-shot/unlocked';
@@ -17,20 +18,41 @@ export function unlockAfterWin(unlocked: number, i: number, count: number): numb
 export interface WinText {
   title: string;
   detail: string;
+  /** 0–3. Assisted wins (hint or Solve) earn none. */
+  stars: number;
+  /** Points for this win, or null when assisted. */
+  score: number | null;
   /** Left button: starts the level over from scratch (Watch again replays the winning shot). */
   again: string;
   /** Right button: the next level, or this one again after the last. */
   go: string;
 }
 
-/** Card text after the ball lands. `solved` means the Solve button took the shot. */
-export function winText(opts: { solved: boolean; tries: number; angle: number; power: number; last: boolean }): WinText {
-  const { solved, tries, angle, power, last } = opts;
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/**
+ * Card text after the ball lands. `assisted`: 'solve' when the Solve button took the shot, 'hint' when a
+ * hint was used on this level; either way there are no stars or score.
+ */
+export function winText(opts: {
+  assisted: 'solve' | 'hint' | null; tries: number; bounces: number; par: number; last: boolean;
+}): WinText {
+  const { assisted, tries, bounces, par, last } = opts;
+  const go = last ? 'Play again' : 'Next level';
+  if (assisted === 'solve') {
+    return { title: 'Here’s one way in', detail: `${plural(bounces, 'bounce')}, par ${par}`, stars: 0, score: null, again: 'Try it yourself', go };
+  }
+  if (assisted === 'hint') {
+    return { title: 'In, with a hint', detail: `${plural(bounces, 'bounce')}, par ${par}. Win it without help for stars.`, stars: 0, score: null, again: 'Start over', go };
+  }
+  const name = golfName(bounces, par);
   return {
-    title: solved ? 'Here’s one way in' : tries === 1 ? 'In the glass on the first try' : `In the glass in ${tries} tries`,
-    detail: `Angle ${angle.toFixed(1)}°, power ${power.toFixed(1)}`,
-    again: solved ? 'Try it yourself' : 'Start over',
-    go: last ? 'Play again' : 'Next level',
+    title: name.startsWith('+') ? 'In the glass' : `${name}!`,
+    detail: `${plural(bounces, 'bounce')}, par ${par} · ${tries === 1 ? 'first try' : `${tries} tries`}`,
+    stars: starsFor(bounces, par),
+    score: scoreFor({ bounces, par, tries }),
+    again: 'Start over',
+    go,
   };
 }
 

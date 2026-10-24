@@ -58,6 +58,25 @@ describe('bounce events', () => {
   });
 });
 
+describe('bounce count', () => {
+  it('counts real bounces outside the glass, not rattling inside it', () => {
+    // Straight up and back down onto a flat bar under the launcher: it bounces there until it settles.
+    const level: Level = { id: 't', name: 't', hint: '', glass: { x: 350, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }] };
+    const r = simulate(buildWorld(level, [{ len: 90, x: LAUNCHER.x, y: LAUNCHER.y + 18, deg: 0 }]), 90, 0);
+    expect(r.bounces).toBeGreaterThan(1);
+    expect(r.hits.filter((h) => h.counts)).toHaveLength(r.bounces);
+    for (const level of LEVELS) {
+      const s = level.solution!;
+      const w = buildWorld(level, solutionPieces(level));
+      const res = simulate(w, s.angle, s.power);
+      for (const h of res.hits) {
+        const [x, y] = res.path[Math.min(h.i, res.path.length - 1)];
+        if (h.counts) expect(x > w.glass.l + 1 && x < w.glass.r - 1 && y > w.glass.rim + 4).toBe(false);
+      }
+    }
+  });
+});
+
 describe('rules', () => {
   it('a plain lob into the glass does not win: it needs a bar', () => {
     const w = buildWorld(LEVELS[0], []);
@@ -138,6 +157,14 @@ describe.each(LEVELS.map(l => [l.id, l] as const))('level %s', (_id, level) => {
     const s = level.solution!;
     expect(simulate(buildWorld(level, placed), s.angle, s.power).success).toBe(true);
     expect(usesEveryBar(level, placed, s.angle, s.power)).toBe(true);
+  });
+
+  it('has a par: the stored solution takes exactly that many bounces, at least one per bar', () => {
+    const s = level.solution!;
+    const r = simulate(buildWorld(level, solutionPieces(level)), s.angle, s.power);
+    expect(level.par, 'run tools/design-levels.ts').toBe(r.bounces);
+    expect(level.par!).toBeGreaterThanOrEqual(level.pieces.length);
+    expect(r.hits.filter((h) => h.counts)).toHaveLength(r.bounces);
   });
 
   // Holds by rule (a win needs a bar); this guards against regressions in that rule.

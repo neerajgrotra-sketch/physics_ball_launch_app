@@ -19,25 +19,26 @@
     }
   ],
   "hint": "Barely wider than the ball, and all three bars count. Small changes matter.",
+  "par": 3,
   "solution": {
     "pieces": [
       {
-        "x": 161,
-        "y": 349,
-        "deg": 14
+        "x": 119,
+        "y": 411,
+        "deg": 30
       },
       {
-        "x": 317,
-        "y": 440,
-        "deg": 29
+        "x": 131,
+        "y": 489,
+        "deg": 32
       },
       {
-        "x": 213,
-        "y": 503,
-        "deg": 14
+        "x": 260,
+        "y": 491,
+        "deg": 160
       }
     ],
-    "angle": 66.8,
-    "power": 35.9
+    "angle": 61.8,
+    "power": 26.5
   }
 }

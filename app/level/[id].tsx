@@ -4,7 +4,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
 import { usePlayback } from '../../components/board/usePlayback';
+import { HelpCard } from '../../components/board/HelpCard';
 import { NoticeCard } from '../../components/board/NoticeCard';
+import { useRewardedAd } from '../../components/ads/RewardedAds';
 import { WinCard } from '../../components/board/WinCard';
 import { AimControls, RotateControls } from '../../components/controls/AimControls';
 import { Tray } from '../../components/controls/Tray';
@@ -15,9 +17,10 @@ import { useProgress } from '../../components/progress/ProgressProvider';
 import { aimAt, swingTo } from '../../game/aim';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
-  shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type Slot,
+  hintSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type Slot,
 } from '../../game/pieces';
 import { skipNotice, winText } from '../../game/progress';
+import { bestOf, goalText } from '../../game/score';
 import { LEVELS } from '../../levels';
 import { buildWorld, simulate } from '../../physics';
 import { FONTS, useColors } from '../../theme/colors';
@@ -67,8 +70,16 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   const [done, setDone] = useState(false);
   /** The Solve button took the winning shot, which changes the win card's wording. */
   const [solved, setSolved] = useState(false);
+  /** A hint or Solve was used this round: wins earn no stars or score until Start over. */
+  const [helped, setHelped] = useState(false);
+  /** The Solve button's help card (hint or full solution) is open. */
+  const [help, setHelp] = useState(false);
+  /** Scored bounces of the shot in flight (ticking up live) or the last shot; null before the first. */
+  const [bounces, setBounces] = useState<number | null>(null);
   /** The winning shot exactly as fired (bars, angle, power), so Watch again can replay it. */
-  const [winShot, setWinShot] = useState<{ angle: number; power: number; slots: Slot[] }>({ angle: 0, power: 0, slots: [] });
+  const [winShot, setWinShot] = useState<{ angle: number; power: number; slots: Slot[]; bounces: number }>({ angle: 0, power: 0, slots: [], bounces: 0 });
+  const ads = useRewardedAd();
+  const par = level.par ?? level.pieces.length;
   /** Shown in place of the hint after a shot that needs explaining. */
   const [notice, setNotice] = useState<string | null>(null);
   const { flight, flying, play, skip } = usePlayback();
@@ -84,23 +95,30 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   // Bounces tap and tink as the ball reaches them; the end of the shot chimes or thumps.
   // `shot` is the bar setup fired: the win keeps it for Watch again, and a near miss uses its bar
   // numbers to say which bar the ball skipped.
-  const fire = (shot: Slot[], a: number, p: number) => {
+  // The bounce counter ticks up as the ball reaches each scored bounce, and shows the full count at the end.
+  const fire = (shot: Slot[], a: number, p: number, assisted = helped) => {
     const placed = boardPieces(shot), numbers = boardNumbers(shot);
     const res = simulate(buildWorld(level, placed), a, p);
-    setTries((n) => n + 1);
+    const tryNo = tries + 1;
+    setTries(tryNo);
+    setBounces(0);
     const finished = () => {
+      setBounces(res.bounces);
       setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end }].slice(-MAX_TRAILS));
       setNotice(res.end === 'skipped' ? skipNotice(level.pieces.length, numbers, res.touched) : null);
       if (res.end === 'dead') feedback.died();
       if (res.success) {
         feedback.landed();
-        setWinShot({ angle: a, power: p, slots: shot });
+        setWinShot({ angle: a, power: p, slots: shot, bounces: res.bounces });
         setDone(true);
-        won(index);
+        won(index, assisted ? undefined : bestOf({ bounces: res.bounces, par, tries: tryNo }));
       }
     };
     feedback.launched();
-    play(res.path, finished, res.hits.map((h) => h.i), (k) => feedback.hit(res.hits[k]));
+    play(res.path, finished, res.hits.map((h) => h.i), (k) => {
+      feedback.hit(res.hits[k]);
+      if (res.hits[k].counts) setBounces((n) => (n ?? 0) + 1);
+    });
   };
 
   const goTo = (i: number) => {
@@ -136,6 +154,28 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
     fire(slots, angle, power);
   };
 
+  // Solve opens the help card: a hint or the full solution, each after a rewarded ad (components/ads).
+  const openHelp = () => {
+    if (flying || !level.solution) return;
+    primeAudio();
+    keepPlaying();
+    setSelected(null);
+    setHelp(true);
+  };
+  const hint = async () => {
+    setHelp(false);
+    if (!(await ads.show('hint'))) return;
+    const h = hintSlots(level, slots);
+    if (!h) return;
+    setHelped(true);
+    setSlots(h.slots);
+    setSelected(h.k);
+  };
+  const fullSolution = async () => {
+    setHelp(false);
+    if (await ads.show('solve')) solve();
+  };
+
   // Places the stored solution's pieces (unused ones go back to the tray), sets angle and power, launches.
   const solve = () => {
     const s = level.solution;
@@ -151,13 +191,15 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
       setDone(false);
     }
     setSolved(true);
-    fire(next, s.angle, s.power);
+    setHelped(true);
+    fire(next, s.angle, s.power, true);
   };
 
   // After a win, any edit (board touch, bar chip, slider, rotation) or the card's ✕ goes back to normal play:
   // the card closes and Launch launches again. Bars, trails and tries stay; the level stays won.
   const keepPlaying = () => {
     setNotice(null); // any edit also closes a near-miss card
+    setHelp(false);
     if (!done || flying) return;
     setDone(false);
     setSolved(false);
@@ -268,16 +310,28 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
         {notice && !done && !flying && (
           <NoticeCard title="So close!" message={notice} onClose={() => setNotice(null)} />
         )}
+        {bounces != null && !done && (
+          <View style={[styles.counter, { backgroundColor: c.paper, borderColor: c.line }]} pointerEvents="none">
+            <Text style={[styles.counterNum, { color: bounces > par ? c.red : c.ink }]}>{bounces}</Text>
+            <Text style={[styles.counterLabel, { color: c.muted }]}>{bounces === 1 ? 'bounce' : 'bounces'}{'\n'}par {par}</Text>
+          </View>
+        )}
+        {help && !flying && (
+          <HelpCard
+            hintBar={(() => { const h = hintSlots(level, slots); return h ? h.k + 1 : null; })()}
+            onHint={hint} onSolve={fullSolution} onClose={() => setHelp(false)}
+          />
+        )}
         {done && !flying && (
           <WinCard
-            text={winText({ solved, tries, ...winShot, last })}
+            text={winText({ assisted: solved ? 'solve' : helped ? 'hint' : null, tries, bounces: winShot.bounces, par, last })}
             onAgain={onReplay}
             onClose={keepPlaying}
             onGo={() => (last ? onReplay() : goTo(index + 1))}
           />
         )}
       </View>
-      <Text style={[styles.hint, { color: c.muted }]} numberOfLines={2}>{level.hint}</Text>
+      <Text style={[styles.goal, { color: c.ink }]} numberOfLines={2}>{goalText(level.pieces.length, level.par)}</Text>
       <View style={styles.controls}>
         {selectedBar != null ? (
           <RotateControls
@@ -304,7 +358,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
         </View>
         <View style={styles.actions}>
           <View style={flying && styles.busy} pointerEvents={flying ? 'none' : 'auto'}>
-            <Ghost label="Solve" onPress={solve} big />
+            <Ghost label="Solve" onPress={openHelp} big />
           </View>
           {/* Launch; during a flight, Skip (jump to the end of the shot); after a win, Watch again. */}
           <Pressable
@@ -360,6 +414,13 @@ const styles = StyleSheet.create({
   // Compact controls so the board gets as much of a phone screen as possible.
   stage: { flex: 1, paddingHorizontal: 6, paddingTop: 2 },
   hint: { marginHorizontal: 12, marginTop: 4, fontSize: 12, lineHeight: 16, fontFamily: FONTS.body },
+  goal: { marginHorizontal: 12, marginTop: 6, fontSize: 16, lineHeight: 20, fontFamily: FONTS.bodySemi, textAlign: 'center' },
+  counter: {
+    position: 'absolute', top: 10, left: 14, flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 4, paddingHorizontal: 10, borderRadius: 10, borderWidth: 1.5,
+  },
+  counterNum: { fontSize: 30, lineHeight: 32, fontFamily: FONTS.condensedBold, fontVariant: ['tabular-nums'] },
+  counterLabel: { fontSize: 11, lineHeight: 13, fontFamily: FONTS.bodyMedium },
   controls: { paddingHorizontal: 12, paddingTop: 4, gap: 6 },
   bottom: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tray: { flex: 1 },

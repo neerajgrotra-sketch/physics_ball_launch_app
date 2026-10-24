@@ -13,15 +13,16 @@
     }
   ],
   "hint": "Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.",
+  "par": 1,
   "solution": {
     "pieces": [
       {
-        "x": 139,
-        "y": 460,
-        "deg": 132
+        "x": 227,
+        "y": 448,
+        "deg": 152
       }
     ],
-    "angle": 28.3,
-    "power": 45.8
+    "angle": 47.7,
+    "power": 24.8
   }
 }

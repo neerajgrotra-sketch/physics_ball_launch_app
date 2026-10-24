@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { RewardedAdsProvider } from '../components/ads/RewardedAds';
 import { SoundSettingsProvider } from '../components/feedback/SoundSettings';
 import { ProgressProvider } from '../components/progress/ProgressProvider';
 import { Intro } from '../components/splash/Intro';
@@ -37,6 +38,7 @@ export default function RootLayout() {
       <View style={styles.column}>
         <ProgressProvider>
           <SoundSettingsProvider>
+            <RewardedAdsProvider>
             <StatusBar style="auto" />
             <Stack
               screenOptions={{
@@ -50,6 +52,7 @@ export default function RootLayout() {
               <Stack.Screen name="index" options={{ title: 'Bank Shot' }} />
               <Stack.Screen name="level/[id]" options={{ title: '' }} />
             </Stack>
+            </RewardedAdsProvider>
           </SoundSettingsProvider>
         </ProgressProvider>
       </View>

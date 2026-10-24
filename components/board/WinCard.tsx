@@ -18,6 +18,14 @@ export function WinCard({ text, onAgain, onGo, onClose }: { text: WinText; onAga
         <Text style={[styles.closeText, { color: c.muted }]}>✕</Text>
       </Pressable>
       <Text style={[styles.title, { color: c.red }]}>{text.title}</Text>
+      {text.score != null && (
+        <View style={styles.result} accessibilityLabel={`${text.stars} of 3 stars, ${text.score} points`}>
+          <Text style={styles.stars}>
+            {[0, 1, 2].map((k) => <Text key={k} style={{ color: k < text.stars ? c.red : c.line }}>★</Text>)}
+          </Text>
+          <Text style={[styles.score, { color: c.ink }]}>+{text.score}</Text>
+        </View>
+      )}
       <Text style={[styles.detail, { color: c.muted }]}>{text.detail}</Text>
       <View style={styles.btns}>
         <Pressable onPress={onAgain} accessibilityRole="button" style={[styles.ghost, { borderColor: c.line }]}>
@@ -41,7 +49,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12, paddingHorizontal: 14, borderWidth: 2, borderRadius: 10, alignItems: 'center',
     boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
   },
-  title: { fontSize: 22, lineHeight: 24, fontFamily: FONTS.condensedBold, marginBottom: 4, textAlign: 'center' },
+  result: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2 },
+  stars: { fontSize: 30, lineHeight: 34, letterSpacing: 2 },
+  score: { fontSize: 22, fontFamily: FONTS.condensedBold },
+  title: { fontSize: 28, lineHeight: 30, fontFamily: FONTS.condensedBold, marginBottom: 4, textAlign: 'center' },
   detail: { fontSize: 15, fontFamily: FONTS.body, marginBottom: 12 },
   btns: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
   ghost: { height: 38, paddingHorizontal: 12, borderRadius: 19, borderWidth: 1.5, justifyContent: 'center' },

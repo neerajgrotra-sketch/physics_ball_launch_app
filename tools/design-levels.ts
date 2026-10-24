@@ -8,7 +8,7 @@ import { findSolution } from './find-solution';
 
 // Glass: x is its centre, w its inside width (the ball is 16 across), h its height, base the y of its
 // floor (default: the floor, WORLD.ground). A raised glass stands on its plate in mid-air.
-const designs: Omit<Level, 'solution'>[] = [
+const designs: Omit<Level, 'solution' | 'par'>[] = [
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],
@@ -29,7 +29,7 @@ for (const d of designs) {
   if (direct) { console.log(`${d.id}: WON WITHOUT BARS`, direct); continue; }
   const sol = findSolution(d as Level);
   if (!sol) { console.log(`${d.id}: no solution found`); continue; }
-  const { robustness, ...solution } = sol;
-  fs.writeFileSync(`levels/${d.id}.json`, JSON.stringify({ ...d, solution }, null, 2) + '\n');
-  console.log(`${d.id}: no win without bars; solution uses all ${d.pieces.length} bar(s), robustness ${robustness}/49`, JSON.stringify(solution), `${((Date.now() - t0) / 1000).toFixed(0)}s`);
+  const { robustness, par, ...solution } = sol;
+  fs.writeFileSync(`levels/${d.id}.json`, JSON.stringify({ ...d, par, solution }, null, 2) + '\n');
+  console.log(`${d.id}: no win without bars; par ${par}, solution uses all ${d.pieces.length} bar(s), robustness ${robustness}/49`, JSON.stringify(solution), `${((Date.now() - t0) / 1000).toFixed(0)}s`);
 }

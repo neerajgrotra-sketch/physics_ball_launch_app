@@ -196,3 +196,30 @@ export function rotateToLegal(level: Level, slots: Slot[], k: number, shown: num
   const next = rotateTo(slots, k, shown);
   return slotsLegal(level, next) ? next : slots;
 }
+
+/** Whether bar k sits exactly where the stored solution puts it. */
+export function atSolution(level: Level, slots: Slot[], k: number): boolean {
+  const p = level.solution?.pieces[k], s = slots[k];
+  return !!p && s.onBoard && s.x === p.x && s.y === p.y && s.deg === p.deg;
+}
+
+/**
+ * A hint: the next bar that isn't already where the stored solution has it goes there. Any other bar
+ * that then clashes with something goes back to the tray (solution spots never clash with each other).
+ * Returns null when every bar is already in place, leaving only the full solution (the aim) to give.
+ */
+export function hintSlots(level: Level, slots: Slot[]): { slots: Slot[]; k: number } | null {
+  const sol = level.solution;
+  if (!sol) return null;
+  const k = sol.pieces.findIndex((_, i) => !atSolution(level, slots, i));
+  if (k < 0) return null;
+  let next = replace(slots, k, { ...slots[k], ...sol.pieces[k], onBoard: true });
+  while (!slotsLegal(level, next)) {
+    const onBoard = next.map((s, i) => (s.onBoard ? i : -1)).filter((i) => i >= 0);
+    const bad = illegalBars(level, next);
+    const j = onBoard.find((i, b) => bad[b] && !atSolution(level, next, i));
+    if (j === undefined) break;
+    next = replace(next, j, { ...next[j], onBoard: false });
+  }
+  return { slots: next, k };
+}

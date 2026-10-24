@@ -20,25 +20,26 @@
     }
   ],
   "hint": "The glass floats on its plate. Bounce off all three bars; the walls bounce too.",
+  "par": 3,
   "solution": {
     "pieces": [
       {
-        "x": 214,
-        "y": 265,
-        "deg": 102
+        "x": 160,
+        "y": 329,
+        "deg": 88
       },
       {
-        "x": 145,
-        "y": 142,
-        "deg": 18
+        "x": 103,
+        "y": 412,
+        "deg": 155
       },
       {
-        "x": 111,
-        "y": 202,
-        "deg": 24
+        "x": 193,
+        "y": 466,
+        "deg": 132
       }
     ],
-    "angle": 61.6,
-    "power": 77.9
+    "angle": 61.1,
+    "power": 81
   }
 }

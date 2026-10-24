@@ -3,7 +3,7 @@ import { LEVELS } from '../levels';
 import { LAUNCHER, WORLD, pieceEnds, solutionPieces, type Level } from '../physics';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle,
-  solutionSlots, tapChip, type Slot,
+  atSolution, hintSlots, slotsLegal, solutionSlots, tapChip, type Slot,
 } from './pieces';
 
 const level = LEVELS[0];
@@ -140,5 +140,29 @@ describe('rotation controls', () => {
       { len: 70, onBoard: true, x: 0, y: 0, deg: 0 },
     ];
     expect(boardNumbers(three)).toEqual([2, 3]);
+  });
+});
+
+describe('hints', () => {
+  const three = LEVELS.find((l) => l.pieces.length === 3)!;
+
+  it('place the solution bars one at a time, then run out', () => {
+    let slots = emptySlots(three);
+    for (let k = 0; k < 3; k++) {
+      const h = hintSlots(three, slots)!;
+      expect(h.k).toBe(k);
+      slots = h.slots;
+      expect(atSolution(three, slots, k)).toBe(true);
+    }
+    expect(hintSlots(three, slots)).toBeNull();
+  });
+
+  it('send a clashing bar back to the tray', () => {
+    const p = three.solution!.pieces[0];
+    const slots = emptySlots(three).map((s, i) => (i === 1 ? { ...s, onBoard: true, x: p.x, y: p.y, deg: p.deg } : s));
+    const h = hintSlots(three, slots)!;
+    expect(h.k).toBe(0);
+    expect(h.slots[1].onBoard).toBe(false);
+    expect(slotsLegal(three, h.slots)).toBe(true);
   });
 });

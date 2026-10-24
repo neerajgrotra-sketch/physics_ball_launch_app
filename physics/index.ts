@@ -12,6 +12,9 @@
  * - A win uses every bar: all of the level's bars must be on the board, and the ball must touch each one
  *   before it settles in the glass. Landing any other way doesn't count, so no level can be won with
  *   fewer bars (or none), by rule.
+ * - Bounces are the score: every real bounce (off a bar, a wall, the floor or the outside of the glass)
+ *   counts, except while the ball is down inside the glass, so rattling around in it doesn't. Each level's
+ *   par is the fewest bounces its solver found (Level.par).
  */
 
 // Board shape: 400 x 560 so it fills a phone's width once the controls are on screen.
@@ -53,6 +56,8 @@ export interface Level {
   pieces: PieceSpec[];
   /** One verified answer, shown by the Solve button. pieces[i] matches level.pieces[i]. */
   solution?: Solution;
+  /** Fewest bounces the solver found for a win (the stored solution takes exactly this many). */
+  par?: number;
 }
 
 export type SegmentKind = 'dead' | 'glass' | 'piece' | 'wall';
@@ -71,10 +76,16 @@ export interface World {
  * 'out': left the board, which the edges should make impossible (kept as a safety net).
  */
 export type EndReason = 'glass' | 'skipped' | 'out' | 'dead' | 'rest' | 'timeout';
-/** A real bounce (not resting contact) off a piece, the glass or a wall. `i` is the index of the next path point. */
-export interface Hit { i: number; kind: 'piece' | 'glass' | 'wall'; speed: number; piece?: number }
-/** `touched[k]`: whether the ball touched placed piece k during the shot. */
-export interface SimResult { path: Vec[]; success: boolean; t: number; end: EndReason; hits: Hit[]; touched: boolean[] }
+/**
+ * A real bounce (not resting contact) off a piece, the glass or a wall. `i` is the index of the next path
+ * point. `counts`: it's one of the shot's scored bounces (any real bounce outside the glass).
+ */
+export interface Hit { i: number; kind: 'piece' | 'glass' | 'wall'; speed: number; piece?: number; counts: boolean }
+/**
+ * `touched[k]`: whether the ball touched placed piece k during the shot. `bounces`: the scored bounce
+ * count (see the rules above), at most one per step so a corner hit is one bounce.
+ */
+export interface SimResult { path: Vec[]; success: boolean; t: number; end: EndReason; hits: Hit[]; touched: boolean[]; bounces: number }
 
 export function speedFor(power: number): number {
   return 280 + power * 8.4; // power 0..100 → 280..1120 px/s
@@ -153,8 +164,10 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
   const touched = new Array<boolean>(world.placedCount).fill(false);
   let touchedCount = 0;
   let slow = 0, inside = 0, t = 0, step = 0;
+  let bounces = 0;
+  const cup = world.glass; // bounces down inside the glass (below its rim) don't count
   const segs = world.segs;
-  const finish = (success: boolean, end: EndReason): SimResult => { path.push([x, y]); return { path, success, t, end, hits, touched }; };
+  const finish = (success: boolean, end: EndReason): SimResult => { path.push([x, y]); return { path, success, t, end, hits, touched, bounces }; };
   const everyBar = () => world.placedCount === world.pieceCount && touchedCount === world.pieceCount;
   const settled = () => everyBar() ? finish(true, 'glass') : finish(false, 'skipped');
 
@@ -162,6 +175,7 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
     vy += GRAVITY * DT;
     x += vx * DT;
     y += vy * DT;
+    let bouncedThisStep = false;
 
     for (let i = 0; i < segs.length; i++) {
       const s = segs[i];
@@ -188,7 +202,9 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
       const vn = vx * nx + vy * ny;
       if (vn < 0) {
         const e = -vn < RESTING_CONTACT_SPEED ? 0 : s.e;
-        if (e && recordHits) hits.push({ i: path.length, kind: s.kind as Hit['kind'], speed: -vn, piece: s.piece });
+        const counts = e > 0 && !bouncedThisStep && !(x > cup.l && x < cup.r && y > cup.rim);
+        if (counts) { bounces++; bouncedThisStep = true; }
+        if (e && recordHits) hits.push({ i: path.length, kind: s.kind as Hit['kind'], speed: -vn, piece: s.piece, counts });
         vx -= (1 + e) * vn * nx;
         vy -= (1 + e) * vn * ny;
         const vt = vx * -ny + vy * nx;

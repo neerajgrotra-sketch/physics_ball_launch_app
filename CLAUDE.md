@@ -48,6 +48,9 @@ reference/    prototype.html, the behaviour and look to match
      degrees, angle and power on the 0.1 grid) that bounces off **every** bar the level gives
      (`usesEveryBar()`). The Solve button places those pieces, sets the values and launches. Tests check
      it is a legal placement, lands, and uses every bar.
+   - Par: each level JSON has `par`, the fewest bounces the solver found for a win, and the stored
+     solution takes exactly that many (a test checks it). `findSolution()` builds many chains and keeps the
+     fewest-bounce one that is still forgiving (`MIN_ROBUSTNESS`).
    - Never hand-edit level JSON. Change designs in `tools/design-levels.ts` and run it. `findSolution()`
      builds chains bar by bar along the ball's path, then picks the most forgiving launch for one.
 5. **Tunnelling.** At 240 Hz and max speed 1120 px/s the ball moves about 4.7 px per step, under its 8 px
@@ -98,6 +101,17 @@ reference/    prototype.html, the behaviour and look to match
   "Start over" (or "Try it yourself" after Solve), which resets the level. Any edit after a win (touching the board, a
   bar chip, a slider or rotation) or the card's ✕ closes the card and goes back to normal play, keeping bars,
   trails and tries; the level stays won.
+- **Score (golf):** every real bounce counts (bars, edges, floor, outside of the glass), except down inside
+  the glass (`SimResult.bounces`, `Hit.counts`). A live counter on the board ticks up during the shot
+  ("N bounces / par P"), and the goal line under the board reads "Par P: bounce off all N bars, then into
+  the glass". A win names the result (Eagle, Birdie, Par, Bogey…), gives 1–3 stars (3 at par or better, 2
+  within two) and points (`game/score.ts`); each level's best is saved and the level list shows stars and a
+  total. Wins with a hint or Solve unlock the next level but earn no stars or score (kept clean for a
+  future verified leaderboard: physics is deterministic, so a server can re-run a submitted shot).
+- **Help (the Solve button):** opens a card offering a hint (places the next bar where the stored solution
+  has it; clashing bars go back to the tray) or the full solution. Each sits behind a rewarded ad
+  (`components/ads/RewardedAds.tsx`; a 5-second placeholder until AdMob is wired into a store build).
+  Using either marks the round as helped until Start over.
 - **Solve:** places the stored solution's pieces (unused pieces go back to the tray), sets angle and power,
   and launches. The win card then reads "Here's one way in", with "Try it yourself" (resets the level) and
   "Next level". The card sits at the top of the board so the solution path stays visible.

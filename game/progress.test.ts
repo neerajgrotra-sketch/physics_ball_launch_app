@@ -28,17 +28,19 @@ describe('unlockAfterWin', () => {
 });
 
 describe('winText', () => {
-  const base = { solved: false, tries: 3, angle: 45.5, power: 68.8, last: false };
+  const base = { assisted: null, tries: 3, bounces: 4, par: 3, last: false } as const;
 
-  it('counts tries', () => {
-    expect(winText(base).title).toBe('In the glass in 3 tries');
-    expect(winText({ ...base, tries: 1 }).title).toBe('In the glass on the first try');
-    expect(winText(base).detail).toBe('Angle 45.5°, power 68.8');
+  it('names the result against par, with stars and score', () => {
+    expect(winText(base)).toMatchObject({ title: 'Bogey!', detail: '4 bounces, par 3 · 3 tries', stars: 2, score: 750 });
+    expect(winText({ ...base, bounces: 3, tries: 1 })).toMatchObject({ title: 'Par!', detail: '3 bounces, par 3 · first try', stars: 3 });
+    expect(winText({ ...base, bounces: 2 }).title).toBe('Birdie!');
+    expect(winText({ ...base, bounces: 9 })).toMatchObject({ title: 'In the glass', stars: 1 });
     expect(winText(base)).toMatchObject({ again: 'Start over', go: 'Next level' });
   });
 
-  it('reads differently after Solve', () => {
-    expect(winText({ ...base, solved: true })).toMatchObject({ title: 'Here’s one way in', again: 'Try it yourself' });
+  it('gives no stars or score with help', () => {
+    expect(winText({ ...base, assisted: 'solve' })).toMatchObject({ title: 'Here’s one way in', again: 'Try it yourself', stars: 0, score: null });
+    expect(winText({ ...base, assisted: 'hint' })).toMatchObject({ stars: 0, score: null, again: 'Start over' });
   });
 
   it('offers to play the last level again', () => {

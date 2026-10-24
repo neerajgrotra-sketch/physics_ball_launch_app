@@ -16,20 +16,21 @@
     }
   ],
   "hint": "Two bars. The ball has to bounce off both before it lands.",
+  "par": 2,
   "solution": {
     "pieces": [
       {
-        "x": 107,
-        "y": 387,
-        "deg": 101
+        "x": 195,
+        "y": 472,
+        "deg": 25
       },
       {
-        "x": 112,
-        "y": 209,
-        "deg": 12
+        "x": 328,
+        "y": 441,
+        "deg": 80
       }
     ],
-    "angle": 68.3,
-    "power": 58.1
+    "angle": 37.6,
+    "power": 55.1
   }
 }

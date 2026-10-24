@@ -72,26 +72,39 @@ function robustness(level: Level, placed: PlacedPiece[], angle: number, power: n
   return score;
 }
 
+/** Scored bounces of a shot (see physics: every bounce until the ball first drops into the glass). */
+export const bouncesOf = (level: Level, placed: PlacedPiece[], angle: number, power: number) =>
+  simulate(buildWorld(level, placed), angle, power, Infinity).bounces;
+
+/** A solution must be at least this forgiving (wins out of the 7×7 neighbouring inputs) to be stored. */
+export const MIN_ROBUSTNESS = 8;
+
 /**
- * Finds a chain that uses every bar, then the most forgiving launch for it: the angle/power within
- * ±0.6 (still using every bar) whose 7×7 neighbourhood of 0.1 inputs has the most wins.
+ * Finds the fewest-bounce solution, which sets the level's par. Builds many chains that use every bar,
+ * then, from the fewest bounces up, looks for the most forgiving launch on those chains: the angle/power
+ * within ±0.6 that still uses every bar with exactly that many bounces, scored by how many of its 7×7
+ * neighbouring 0.1 inputs also win. The first bounce count with a launch at least MIN_ROBUSTNESS forgiving
+ * is par (a tighter shot with fewer bounces may exist, but Solve has to land on every engine).
  */
-export function findSolution(level: Level, opts: { samples?: number; seed?: number; want?: number } = {}): (Solution & { robustness: number }) | null {
-  const { samples = 200_000, seed = 1, want = 40 } = opts;
-  const chains = findChains(level, samples, seed, want);
-  let best: (Solution & { robustness: number }) | null = null;
-  for (const c of chains) {
-    const world = buildWorld(level, c.placed);
-    let here = { angle: c.angle, power: c.power, score: -1 };
-    for (let da = -6; da <= 6; da++) for (let dp = -6; dp <= 6; dp++) {
-      const angle = +(c.angle + da * 0.1).toFixed(1), power = +(c.power + dp * 0.1).toFixed(1);
-      if (angle < 0 || angle > 90 || power < 0 || power > 100) continue;
-      if (!simulate(world, angle, power, Infinity).success || !usesEveryBar(level, c.placed, angle, power)) continue;
-      const score = robustness(level, c.placed, angle, power);
-      if (score > here.score) here = { angle, power, score };
+export function findSolution(level: Level, opts: { samples?: number; seed?: number; want?: number } = {}): (Solution & { robustness: number; par: number }) | null {
+  const { samples = 400_000, seed = 1, want = 160 } = opts;
+  const chains = findChains(level, samples, seed, want).map((c) => ({ ...c, bounces: bouncesOf(level, c.placed, c.angle, c.power) }));
+  const counts = [...new Set(chains.map((c) => c.bounces))].sort((a, b) => a - b);
+  for (const par of counts) {
+    let best: (Solution & { robustness: number; par: number }) | null = null;
+    for (const c of chains.filter((ch) => ch.bounces === par).slice(0, 20)) {
+      const world = buildWorld(level, c.placed);
+      for (let da = -6; da <= 6; da++) for (let dp = -6; dp <= 6; dp++) {
+        const angle = +(c.angle + da * 0.1).toFixed(1), power = +(c.power + dp * 0.1).toFixed(1);
+        if (angle < 0 || angle > 90 || power < 0 || power > 100) continue;
+        const res = simulate(world, angle, power, Infinity);
+        if (!res.success || res.bounces !== par || !usesEveryBar(level, c.placed, angle, power)) continue;
+        const score = robustness(level, c.placed, angle, power);
+        if (!best || score > best.robustness)
+          best = { pieces: c.placed.map(p => ({ x: p.x, y: p.y, deg: p.deg })), angle, power, robustness: score, par };
+      }
     }
-    if (!best || here.score > best.robustness)
-      best = { pieces: c.placed.map(p => ({ x: p.x, y: p.y, deg: p.deg })), angle: here.angle, power: here.power, robustness: here.score };
+    if (best && best.robustness >= MIN_ROBUSTNESS) return best;
   }
-  return best;
+  return null;
 }

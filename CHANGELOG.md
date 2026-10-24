@@ -4,6 +4,16 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.4.0
+
+- The goal is now a score: get in with the fewest bounces. Every level has a par (the fewest bounces the
+  solver found), shown under the board; a live counter ticks up as the ball bounces.
+- Wins are named golf style (Birdie, Par, Bogey…) with 1–3 stars and points. Best results are saved;
+  the level list shows each level's stars and best, and a total score.
+- Solve now asks: a hint (places one bar where it belongs) or the full solution, each after a short ad
+  (placeholder until the store builds). Help means no stars or score for that round.
+- Stored solutions are now the fewest-bounce ones, so Solve shows a par shot.
+
 ## 0.3.1
 
 - The intro now ends on a "Let's go" button and waits for it, so there's time to read the title.

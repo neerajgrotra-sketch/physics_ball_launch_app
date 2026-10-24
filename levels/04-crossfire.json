@@ -20,25 +20,26 @@
     }
   ],
   "hint": "High and in the middle. Every bar has to be part of the shot.",
+  "par": 3,
   "solution": {
     "pieces": [
       {
-        "x": 317,
-        "y": 358,
-        "deg": 51
+        "x": 166,
+        "y": 490,
+        "deg": 157
       },
       {
-        "x": 189,
-        "y": 392,
-        "deg": 83
+        "x": 361,
+        "y": 363,
+        "deg": 122
       },
       {
-        "x": 289,
-        "y": 411,
-        "deg": 136
+        "x": 324,
+        "y": 476,
+        "deg": 176
       }
     ],
-    "angle": 29.3,
-    "power": 98.9
+    "angle": 15.2,
+    "power": 80.7
   }
 }
