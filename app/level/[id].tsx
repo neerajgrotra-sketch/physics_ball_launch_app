@@ -147,7 +147,9 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   // `shot` is the bar setup fired: the win keeps it for Watch again, and a near miss uses its bar
   // numbers to say which bar the ball skipped.
   // The bounce counter ticks up as the ball reaches each scored bounce, and shows the full count at the end.
-  const fire = (shot: Slot[], a: number, p: number, assisted = helped || tutorial) => {
+  // The tutorial level never scores (it's practice, and its answer is handed to you), however it's played.
+  const practice = level.id === TUTORIAL_ID;
+  const fire = (shot: Slot[], a: number, p: number, assisted = helped || practice) => {
     const placed = boardPieces(shot), numbers = boardNumbers(shot);
     setGuided(tutorial);
     const res = simulate(buildWorld(level, placed), a, p);
@@ -167,7 +169,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         // The winning shot is kept for the level card's drawing and Replay, but only unassisted wins (and the
         // tutorial's guided one, which has no score) save it.
         const saved = { pieces: placed.map(({ x, y, deg, len }) => ({ x, y, deg, len })), angle: a, power: p };
-        if (tutorial) won(index, undefined, saved);
+        if (practice) won(index, undefined, saved);
         else if (assisted) won(index);
         else won(index, bestOf({ bounces: res.bounces, par, tries: tryNo }), saved);
       }
@@ -335,6 +337,8 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     primeAudio();
     keepPlaying();
     setSelected(null);
+    // The tutorial level is practice: Solve just solves it, with no ad and no hint-or-solution card.
+    if (practice) { solve(); return; }
     setHelp(true);
   };
   const hint = async () => {
@@ -558,7 +562,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         )}
         {done && !flying && (
           <WinCard
-            text={winText({ assisted: solved ? 'solve' : helped ? 'hint' : guided ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last })}
+            text={winText({ assisted: solved ? 'solve' : helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last })}
             onAgain={() => onReplay(false)}
             onClose={keepPlaying}
             onGo={() => (last ? onReplay(false) : goTo(index + 1))}

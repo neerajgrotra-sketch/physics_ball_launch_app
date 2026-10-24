@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.7.4
+
+- The tutorial level no longer gives stars or points, even when you replay it and launch the shot yourself.
+  Any score an earlier version saved for it is cleared.
+- Solve on the tutorial level just solves it: no ad, no help card.
+
 ## 0.7.3
 
 - A tutorial hint now disappears as soon as it's for a step you've already done (it could hang around asking

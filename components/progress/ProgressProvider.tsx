@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { TUTORIAL_ID } from '../../game/coach';
 import { LOCK_LEVELS, UNLOCKED_KEY, parseUnlocked, unlockAfterWin } from '../../game/progress';
 import { BEST_KEY, better, parseBest, type Best, type BestByLevel } from '../../game/score';
 import { SHOTS_KEY, parseShots, type Shot, type ShotsByLevel } from '../../game/shots';
@@ -39,7 +40,10 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       AsyncStorage.getItem(SHOTS_KEY).catch(() => null),
     ]).then(([u, b, s]) => {
       if (!live) return;
-      setBest(parseBest(b));
+      // The tutorial doesn't score; drop any result an earlier version saved for it.
+      const saved = parseBest(b);
+      delete saved[TUTORIAL_ID];
+      setBest(saved);
       setShots(parseShots(s));
       setUnlocked(parseUnlocked(u, LEVELS.length));
     });

@@ -134,7 +134,8 @@ reference/    prototype.html, the behaviour and look to match
   onto it (on release only: changing a slider's value under the finger sends it running), so the guided shot always lands. The plan is derived from the board each time (undo something and
   that step returns), and a hint on screen is dropped the moment it isn't for the current step
   (`stepKey`), so it can never nag about something already done and the finger appears after 1.5 s without a touch (no step counter: players disliked it). The
-  win is marked assisted (no stars or score). It runs once: "Skip tutorial" on the caption, finishing it, or
+  win is marked assisted (no stars or score), and the tutorial level never scores however it is played (replayed
+  shots, "Try it yourself": no stars, points or best) and its Solve button just solves it, with no ad. It runs once: "Skip tutorial" on the caption, finishing it, or
   Tips off in settings ends it for good; ⚙ has "Replay the tutorial".
 - **First-bar hint:** on every other level, the finger only shows Bar 1 to place, after 4 s idle with
   nothing on the board, and not on a level already won. "Stop tips" on its caption, or Tips in ⚙, turns it
