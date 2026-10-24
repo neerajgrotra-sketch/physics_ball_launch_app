@@ -122,6 +122,11 @@ reference/    prototype.html, the behaviour and look to match
 
 ## Screens and navigation
 
+- **Idle coach:** after 4 s on a level without a touch, a ghost finger (`components/coach/GhostFinger.tsx`)
+  shows the next step with a caption: tap a bar's chip to place it, then drag a bar into the ball's path
+  (until the player has moved one), then tap Launch (`game/coach.ts`). Any touch hides it and restarts the
+  clock; it doesn't show in flight, after a win, or over a card.
+
 - **Levels screen** (`app/index.tsx`): two-column cards. Won levels and the next one to play show a drawing
   of the level (launcher, glass and, once won, the player's last unassisted winning shot (`components/levels/ShotThumbnail.tsx`, SVG, re-simulated from the stored
   inputs in `game/shots.ts`), the level's number and name, best stars and bounces; levels further on show

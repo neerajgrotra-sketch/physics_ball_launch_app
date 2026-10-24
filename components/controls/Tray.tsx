@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type LayoutRectangle } from 'react-native';
 import type { Slot } from '../../game/pieces';
 import { FONTS, useColors } from '../../theme/colors';
 
@@ -7,13 +7,15 @@ interface Props {
   selected: number | null;
   onTap: (k: number) => void;
   disabled?: boolean;
+  /** Where chip k sits within the tray (for the idle coach's finger). */
+  onChipLayout?: (k: number, layout: LayoutRectangle) => void;
 }
 
 /**
  * One chip per bar, named Bar 1, Bar 2, Bar 3 (the board shows the same numbers). Outlined in the tray,
  * faded and dashed on the board, filled when selected. The line icon shows the bar's length.
  */
-export function Tray({ slots, selected, onTap, disabled }: Props) {
+export function Tray({ slots, selected, onTap, disabled, onChipLayout }: Props) {
   const c = useColors();
   if (!slots.length) {
     return <Text style={[styles.none, { color: c.muted }]}>No pieces on this level</Text>;
@@ -28,6 +30,7 @@ export function Tray({ slots, selected, onTap, disabled }: Props) {
           <Pressable
             key={k}
             onPress={() => onTap(k)}
+            onLayout={(e) => onChipLayout?.(k, e.nativeEvent.layout)}
             disabled={disabled}
             accessibilityRole="button"
             accessibilityLabel={s.onBoard ? (sel ? `Deselect bar ${k + 1}` : `Select bar ${k + 1}`) : `Place bar ${k + 1}`}

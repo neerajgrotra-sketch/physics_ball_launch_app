@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.6.0
+
+- Idle coach: sit still on a level for a few seconds and a ghost finger shows what to do next, with a
+  caption: tap a bar to put it on the board, drag a bar into the ball's path, then tap Launch. Any touch
+  hides it.
+
 ## 0.5.4
 
 - The goal line names the bounce target: "Goal: into the glass in 3 bounces, off all 3 bars".

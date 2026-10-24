@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState, type ReactElement } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState, type ComponentRef, type ReactElement } from 'react';
+import { Pressable, StyleSheet, Text, View, type LayoutRectangle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
 import { usePlayback } from '../../components/board/usePlayback';
@@ -8,6 +8,8 @@ import { HelpCard } from '../../components/board/HelpCard';
 import { NoticeCard } from '../../components/board/NoticeCard';
 import { useRewardedAd } from '../../components/ads/RewardedAds';
 import { SettingsSheet } from '../../components/settings/SettingsSheet';
+import { GhostFinger } from '../../components/coach/GhostFinger';
+import { IDLE_MS, coachStep, coachText } from '../../game/coach';
 import { WinCard } from '../../components/board/WinCard';
 import { AimControls, RotateControls } from '../../components/controls/AimControls';
 import { Tray } from '../../components/controls/Tray';
@@ -24,10 +26,11 @@ import { skipNotice, winText } from '../../game/progress';
 import { bestOf, goalText } from '../../game/score';
 import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
-import { buildWorld, simulate } from '../../physics';
+import { WORLD, buildWorld, simulate } from '../../physics';
 import { FONTS, useColors } from '../../theme/colors';
 
 const MAX_TRAILS = 4;
+type ViewRef = ComponentRef<typeof View>;
 
 /**
  * Resolves the level from the route. The game below is keyed by level and replay count, so moving to
@@ -101,6 +104,17 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
   // Browsers only start audio from a tap, so every tap on the level unlocks it (no-op on phones).
   const primeAudio = () => { feedback.prime(); music.prime(); };
   const drag = useRef<Drag | null>(null);
+
+  // The idle coach: after IDLE_MS without a touch, a ghost finger shows the next step (place a bar, drag
+  // one into the ball's path, launch; game/coach.ts). Any edit or launch hides it and restarts the clock.
+  const [coach, setCoach] = useState<{ x: number; y: number; dx?: number; dy?: number; mode: 'tap' | 'drag'; text: string } | null>(null);
+  const [idleKey, setIdleKey] = useState(0);
+  const moved = useRef(false); // the player has moved or turned a bar this round
+  const rootRef = useRef<ViewRef>(null), trayRef = useRef<ViewRef>(null), stageRef = useRef<ViewRef>(null), launchRef = useRef<ViewRef>(null);
+  const chips = useRef<LayoutRectangle[]>([]);
+  const latest = useRef({ slots });
+  latest.current = { slots };
+  const poke = () => { setCoach(null); setIdleKey((k) => k + 1); };
   const lastLegal = useRef<Slot[]>([]);
 
   // The trail and the win only land once playback reaches the end of the path, as in the prototype.
@@ -157,6 +171,37 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (flying || done || help || notice || settings) return;
+    const timer = setTimeout(() => {
+      const { slots: s } = latest.current;
+      const step = coachStep(s.map((x) => x.onBoard), moved.current);
+      const text = coachText(step);
+      const root = rootRef.current;
+      if (!root) return;
+      root.measureInWindow((rx, ry) => {
+        const at = (ref: ViewRef | null, f: (x: number, y: number, w: number, h: number) => void) =>
+          ref?.measureInWindow((x, y, w, h) => f(x - rx, y - ry, w, h));
+        if (step.kind === 'place') {
+          const chip = chips.current[step.bar];
+          if (chip) at(trayRef.current, (x, y) => setCoach({ x: x + chip.x + chip.width / 2, y: y + chip.y + chip.height / 2, mode: 'tap', text }));
+        } else if (step.kind === 'launch') {
+          at(launchRef.current, (x, y, w, h) => setCoach({ x: x + w / 2, y: y + h / 2, mode: 'tap', text }));
+        } else {
+          // The board is drawn centred in the stage (inside its padding), scaled to fit.
+          at(stageRef.current, (x, y, w, h) => {
+            const iw = w - 12, ih = h - 2, k = Math.min(iw / WORLD.width, ih / WORLD.height);
+            const left = x + 6 + (iw - WORLD.width * k) / 2, top = y + 2 + (ih - WORLD.height * k) / 2;
+            const bar = s[step.bar];
+            setCoach({ x: left + bar.x * k, y: top + bar.y * k, dx: 70, dy: -50, mode: 'drag', text });
+          });
+        }
+      });
+    }, IDLE_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idleKey, flying, done, help, notice, settings]);
+
   const goTo = (i: number) => {
     if (!flying) router.setParams({ id: LEVELS[i].id });
   };
@@ -178,6 +223,7 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
   };
 
   const launch = () => {
+    poke();
     if (flying || done) return;
     setNotice(null);
     // Backstop: drags snap back and rotation skips clipping angles, so this shouldn't trigger.
@@ -234,6 +280,7 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
   // After a win, any edit (board touch, bar chip, slider, rotation) or the card's ✕ goes back to normal play:
   // the card closes and Launch launches again. Bars, trails and tries stay; the level stays won.
   const keepPlaying = () => {
+    poke();
     setNotice(null); // any edit also closes a near-miss card
     setHelp(false);
     if (!done || flying) return;
@@ -274,6 +321,7 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
     } else if (phase === 'move') {
       const d = drag.current;
       if (!d) return;
+      if (d.mode === 'move' || d.mode === 'rotate') moved.current = true;
       if (d.mode === 'aim') aimTo(p);
       else if (d.mode === 'swing') {
         const a = swingTo(p, d.grab);
@@ -312,7 +360,11 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
   };
 
   return (
-    <View style={[styles.wrap, { paddingBottom: insets.bottom + 8 }]}>
+    // Any touch anywhere on the level hides the coach and restarts its idle clock (without taking the touch).
+    <View
+      ref={rootRef} style={[styles.wrap, { paddingBottom: insets.bottom + 8 }]}
+      onStartShouldSetResponderCapture={() => { if (coach) poke(); return false; }}
+    >
       <Stack.Screen
         options={{
           // ⚙ settings and ••• the level menu on the left (no back arrow: ••• is the way back to the levels,
@@ -344,7 +396,7 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
         }}
       />
       <SettingsSheet visible={settings} onClose={() => setSettings(false)} onMusicTap={primeAudio} />
-      <View style={styles.stage}>
+      <View ref={stageRef} style={styles.stage}>
         <Board
           level={level}
           pieces={boardPieces(slots)}
@@ -404,8 +456,8 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
           />
         )}
         <View style={styles.bottom}>
-          <View style={styles.tray}>
-            <Tray slots={slots} selected={selected} onTap={onChip} disabled={flying} />
+          <View ref={trayRef} style={styles.tray}>
+            <Tray slots={slots} selected={selected} onTap={onChip} disabled={flying} onChipLayout={(k, l) => { chips.current[k] = l; }} />
           </View>
           <Ghost label="Clear" onPress={clearTrails} />
         </View>
@@ -415,6 +467,7 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
           </View>
           {/* Launch; during a flight, Skip (jump to the end of the shot); after a win, Watch again. */}
           <Pressable
+            ref={launchRef}
             onPress={flying ? skip : done ? watchAgain : launch}
             accessibilityRole="button"
             style={[styles.launch, { backgroundColor: c.red }]}
@@ -423,6 +476,7 @@ function LevelGame({ index, shot, onReplay }: { index: number; shot?: Shot; onRe
           </Pressable>
         </View>
       </View>
+      {coach && !flying && !done && !help && <GhostFinger {...coach} />}
     </View>
   );
 }

@@ -11,8 +11,7 @@ Agreed work that isn't built yet, roughly in priority order. Move an item to CHA
 - **Onboarding.**
   - Bars start on the board in random legal spots that can't already win (fixed per level; Start over may
     reshuffle), with a wiggle when the level opens.
-  - Level 1 coach: a ghost finger shows "Drag the bar", "Twist it with the handle", "Now Launch", each
-    step done by doing it.
+  - Level 1 coach: extend the idle ghost finger (0.6.0) with a "Twist it with the lever" step.
   - Goal card at the start of each level in big type; an ⓘ in the header brings it back.
 
 ## Menus and settings
