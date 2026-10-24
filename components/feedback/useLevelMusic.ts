@@ -1,6 +1,6 @@
 import { useAudioPlayer } from 'expo-audio';
 import { useEffect } from 'react';
-import { MUSIC, MUSIC_DUCKED, MUSIC_VOLUME } from './music';
+import { trackFor, MUSIC_DUCKED, MUSIC_VOLUME } from './music';
 
 /**
  * Loops the level's track while the level screen is open and music is on; stops when leaving the
@@ -8,7 +8,7 @@ import { MUSIC, MUSIC_DUCKED, MUSIC_VOLUME } from './music';
  * Web uses useLevelMusic.web.ts. `prime` is for web\'s user-gesture rule; nothing to do here.
  */
 export function useLevelMusic(levelId: string, on: boolean, duck = false) {
-  const track = MUSIC[levelId];
+  const track = trackFor(levelId);
   const player = useAudioPlayer(track ?? null);
 
   useEffect(() => {

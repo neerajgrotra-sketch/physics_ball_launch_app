@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LAUNCHER } from '../physics';
-import { aimAt, nearLauncher, nudgeAngle, nudgePower, toGrid } from './aim';
+import { aimAt, aimPreview, grabAimLine, nearLauncher, nudgeAngle, nudgePower, swingTo, toGrid } from './aim';
 
 const at = (dx: number, dy: number) => ({ x: LAUNCHER.x + dx, y: LAUNCHER.y - dy });
 
@@ -53,5 +53,24 @@ describe('nearLauncher', () => {
   it('grabs within 90 units of the launcher only', () => {
     expect(nearLauncher(at(60, 60))).toBe(true);
     expect(nearLauncher(at(90, 0))).toBe(false);
+  });
+});
+
+describe('dragging the dotted aim line', () => {
+  it('grabs the line and swings the angle without jumping, keeping power', () => {
+    const dot = aimPreview(40, 60)[6];
+    const offset = grabAimLine(dot, 40, 60);
+    expect(offset).not.toBeNull();
+    expect(swingTo(dot, offset!)).toBe(40);
+    // Swing the finger round the launcher by ~10°: the angle follows.
+    const r = Math.hypot(dot.x - LAUNCHER.x, dot.y - LAUNCHER.y);
+    const b = Math.atan2(LAUNCHER.y - dot.y, dot.x - LAUNCHER.x) + (10 * Math.PI) / 180;
+    expect(swingTo({ x: LAUNCHER.x + r * Math.cos(b), y: LAUNCHER.y - r * Math.sin(b) }, offset!)).toBeCloseTo(50, 0);
+  });
+
+  it('ignores touches away from the line and clamps to 0–90', () => {
+    expect(grabAimLine({ x: 350, y: 100 }, 40, 60)).toBeNull();
+    expect(swingTo(at(-100, 50), 0)).toBe(90);
+    expect(swingTo(at(100, -50), 0)).toBe(0);
   });
 });

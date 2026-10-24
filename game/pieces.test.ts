@@ -63,6 +63,13 @@ describe('pressAt', () => {
     expect(pressAt(placed, 0, { x: 350, y: 100 }, true)).toEqual({ drag: null, selected: null });
   });
 
+  it('grabs the dotted aim line to swing the aim, but bars come first', () => {
+    const far = { x: LAUNCHER.x + 200, y: LAUNCHER.y - 200 }; // on the line at 45°, power 100
+    expect(pressAt([], null, far, true, { angle: 45, power: 100 }).drag?.mode).toBe('swing');
+    expect(pressAt([], null, far, false, { angle: 45, power: 100 }).drag).toBeNull();
+    expect(pressAt([], null, far, true, { angle: 10, power: 100 }).drag).toBeNull();
+  });
+
   it('ignores pieces in the tray', () => {
     const tray = [{ ...placed[0], onBoard: false }];
     expect(pressAt(tray, null, { x: 200, y: 300 }, true).drag).toBeNull();

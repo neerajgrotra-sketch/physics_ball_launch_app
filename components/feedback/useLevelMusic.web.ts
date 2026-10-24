@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { MUSIC, MUSIC_DUCKED, MUSIC_VOLUME } from './music';
-import { audioContext, buffer, latestGain, play, resume, running } from './webAudio';
+import { trackFor, MUSIC_DUCKED, MUSIC_VOLUME } from './music';
+import { audioContext, buffer, latestGain, onRunning, play, resume, running } from './webAudio';
 
 /**
  * Web version of useLevelMusic.ts: loops the level's track through Web Audio while the level is open
- * and music is on. Browsers only allow audio after a tap, so it starts on the first tap on the level
- * (prime), or straight away if audio is already unlocked (e.g. moving on from a previous level).
+ * and music is on. Browsers only allow audio after a tap; any tap unlocks it (webAudio.ts), so it starts
+ * as the level loads when you came from the level list, otherwise on the first tap.
  */
 export function useLevelMusic(levelId: string, on: boolean, duck = false) {
-  const track = MUSIC[levelId];
+  const track = trackFor(levelId);
   const stop = useRef<(() => void) | null>(null);
   const gain = useRef<GainNode | null>(null);
   const ducked = useRef(duck);
@@ -24,6 +24,12 @@ export function useLevelMusic(levelId: string, on: boolean, duck = false) {
       gain.current = latestGain();
     }
   }, [track]);
+
+  // Start as soon as audio is unlocked, and decode the track right away so that's instant.
+  useEffect(() => {
+    if (track) buffer(track);
+    return onRunning(start);
+  }, [track, start]);
 
   useEffect(() => {
     if (on) start();

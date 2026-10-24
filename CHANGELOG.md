@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.2.3
+
+- Every level plays the background track (level 1's until each gets its own).
+- Music starts as soon as a level opens, not on the first launch.
+- Aim by grabbing the dotted aim line and swinging it round the launcher (power stays the same).
+
 ## 0.2.2
 
 - Sound plays even with the iPhone silent switch on (web and app).

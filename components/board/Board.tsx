@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import {
-  BALL_RADIUS, LAUNCHER, WORLD, glassBox, pieceEnds, speedFor,
+  BALL_RADIUS, LAUNCHER, WORLD, glassBox, pieceEnds,
   type EndReason, type Level, type PlacedPiece, type Vec,
 } from '../../physics';
 import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
@@ -12,6 +12,7 @@ import {
   crossPath, deadPaths, gridPaths, handleArcPath, launcherPath, linePath, polyPath,
 } from './paths';
 import type { Flight } from './usePlayback';
+import { aimPreview } from '../../game/aim';
 
 const { width: W, height: H, ground: GROUND } = WORLD;
 const R = BALL_RADIUS;
@@ -125,15 +126,8 @@ export function Board(props: BoardProps) {
   const deadEnd = last && last.end === 'dead' && !flight ? last.path[last.path.length - 1] : null;
 
   const ang = (angle * Math.PI) / 180;
-  const sp = speedFor(power);
-  const vx = Math.cos(ang) * sp, vy = -Math.sin(ang) * sp;
   // Aim preview: the first 0.3 s of free flight only. Never preview bounces.
-  const aimDots: { x: number; y: number; a: number }[] = [];
-  if (!flight && !done) {
-    for (let t = 0.03; t <= 0.3; t += 0.03) {
-      aimDots.push({ x: L.x + vx * t, y: L.y + vy * t + 450 * t * t, a: 1 - t * 2.6 });
-    }
-  }
+  const aimDots = !flight && !done ? aimPreview(angle, power) : [];
 
   // At rest the ball sits on the launcher, or where it settled after a win. In flight it moves on the UI thread.
   let ball: Vec = [L.x, L.y];

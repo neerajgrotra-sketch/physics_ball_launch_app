@@ -1,4 +1,4 @@
-import { ANGLE_STEP, LAUNCHER, POWER_STEP } from '../physics';
+import { ANGLE_STEP, LAUNCHER, POWER_STEP, speedFor } from '../physics';
 
 // Aim input, as in reference/prototype.html. Pure: no UI imports, so Vitest covers it.
 
@@ -27,6 +27,40 @@ export function aimAt(p: { x: number; y: number }): { angle: number; power: numb
   a = clamp(a, ANGLE_MIN, ANGLE_MAX);
   const pw = clamp((Math.hypot(dx, dy) - 20) / 2.6, POWER_MIN, POWER_MAX);
   return { angle: toGrid(a), power: toGrid(pw) };
+}
+
+/**
+ * The dotted aim preview: the first 0.3 s of free flight only (never bounces), oldest dot first, `a` its
+ * opacity. Same gravity as the board draws it with.
+ */
+export function aimPreview(angle: number, power: number): { x: number; y: number; a: number }[] {
+  const ang = (angle * Math.PI) / 180, sp = speedFor(power);
+  const vx = Math.cos(ang) * sp, vy = -Math.sin(ang) * sp;
+  const dots: { x: number; y: number; a: number }[] = [];
+  for (let t = 0.03; t <= 0.3; t += 0.03) {
+    dots.push({ x: LAUNCHER.x + vx * t, y: LAUNCHER.y + vy * t + 450 * t * t, a: 1 - t * 2.6 });
+  }
+  return dots;
+}
+
+/** A finger this close (world units) to the dotted line grabs it to swing the aim. */
+export const LINE_GRAB = 26;
+
+const bearing = (p: { x: number; y: number }) => (Math.atan2(LAUNCHER.y - p.y, p.x - LAUNCHER.x) * 180) / Math.PI;
+
+/**
+ * Grabbing the dotted line swings the launcher like a pointer: the angle follows the finger round the
+ * launcher and power stays put. Returns the offset that keeps the line from jumping under the finger
+ * (the dots curve under gravity), or null if the line wasn't touched.
+ */
+export function grabAimLine(p: { x: number; y: number }, angle: number, power: number): number | null {
+  const near = aimPreview(angle, power).some((d) => Math.hypot(p.x - d.x, p.y - d.y) < LINE_GRAB);
+  return near ? angle - bearing(p) : null;
+}
+
+/** The angle for a line-swing drag: the finger's bearing from the launcher plus the grab offset. */
+export function swingTo(p: { x: number; y: number }, offset: number): number {
+  return toGrid(clamp(bearing(p) + offset, ANGLE_MIN, ANGLE_MAX));
 }
 
 /** The −/+ buttons: one 0.1 step, kept in range. */

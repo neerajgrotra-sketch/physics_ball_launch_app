@@ -54,6 +54,27 @@ export function running(): boolean {
   return ctx?.state === 'running';
 }
 
+/** Calls `cb` whenever audio starts running (e.g. after the first tap). Returns an unsubscribe function. */
+export function onRunning(cb: () => void): () => void {
+  const ac = audioContext();
+  if (!ac) return () => {};
+  const f = () => { if (ac.state === 'running') cb(); };
+  ac.addEventListener('statechange', f);
+  return () => ac.removeEventListener('statechange', f);
+}
+
+// Any tap anywhere unlocks audio, including the tap that opens a level from the list, so its music can
+// start as the level loads. touchend and click count as user gestures on iPhone (pointerdown doesn't).
+if (typeof document !== 'undefined') {
+  const UNLOCK_EVENTS = ['touchend', 'click', 'keydown'] as const;
+  const unlock = () => {
+    resume().then(() => {
+      if (running()) for (const e of UNLOCK_EVENTS) document.removeEventListener(e, unlock, true);
+    });
+  };
+  for (const e of UNLOCK_EVENTS) document.addEventListener(e, unlock, true);
+}
+
 /** Decode a bundled sound (a require()d asset) once; null if it can't be loaded. */
 export function buffer(module: number): Promise<AudioBuffer | null> {
   let p = buffers.get(module);

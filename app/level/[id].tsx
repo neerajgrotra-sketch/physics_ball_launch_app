@@ -8,12 +8,11 @@ import { NoticeCard } from '../../components/board/NoticeCard';
 import { WinCard } from '../../components/board/WinCard';
 import { AimControls, RotateControls } from '../../components/controls/AimControls';
 import { Tray } from '../../components/controls/Tray';
-import { MUSIC } from '../../components/feedback/music';
 import { useSoundSettings } from '../../components/feedback/SoundSettings';
 import { useFeedback } from '../../components/feedback/useFeedback';
 import { useLevelMusic } from '../../components/feedback/useLevelMusic';
 import { useProgress } from '../../components/progress/ProgressProvider';
-import { aimAt } from '../../game/aim';
+import { aimAt, swingTo } from '../../game/aim';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
   shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type Slot,
@@ -76,7 +75,6 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
   const feedback = useFeedback();
   const { musicOn, toggleMusic } = useSoundSettings();
   const music = useLevelMusic(level.id, musicOn, flying); // music dips while the ball flies
-  const hasMusic = MUSIC[level.id] !== undefined;
   // Browsers only start audio from a tap, so every tap on the level unlocks it (no-op on phones).
   const primeAudio = () => { feedback.prime(); music.prime(); };
   const drag = useRef<Drag | null>(null);
@@ -189,7 +187,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
       }
       primeAudio();
       keepPlaying();
-      const r = pressAt(slots, selected, p, true);
+      const r = pressAt(slots, selected, p, true, { angle, power });
       drag.current = r.drag;
       lastLegal.current = slots;
       setSelected(r.selected);
@@ -198,6 +196,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
       const d = drag.current;
       if (!d) return;
       if (d.mode === 'aim') aimTo(p);
+      else if (d.mode === 'swing') setAngle(swingTo(p, d.offset));
       else setSlots((s) => {
         const next = dragTo(s, d, p);
         if (slotsLegal(level, next)) lastLegal.current = next;
@@ -206,7 +205,7 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
     } else {
       const d = drag.current;
       drag.current = null;
-      if (d && d.mode !== 'aim') {
+      if (d && (d.mode === 'move' || d.mode === 'rotate')) {
         setSlots((s) => (slotsLegal(level, s) ? s : lastLegal.current));
       }
     }
@@ -241,12 +240,10 @@ function LevelGame({ index, onReplay }: { index: number; onReplay: () => void })
           ),
           headerRight: () => (
             <View style={styles.nav}>
-              {hasMusic && (
-                <IconButton
-                  label="♪" a11y={musicOn ? 'Turn music off' : 'Turn music on'}
-                  dim={!musicOn} disabled={false} onPress={() => { primeAudio(); toggleMusic(); }}
-                />
-              )}
+              <IconButton
+                label="♪" a11y={musicOn ? 'Turn music off' : 'Turn music on'}
+                dim={!musicOn} disabled={false} onPress={() => { primeAudio(); toggleMusic(); }}
+              />
               <IconButton label="‹" a11y="Previous level" disabled={index === 0} onPress={() => goTo(index - 1)} />
               <IconButton label="›" a11y="Next level" disabled={index >= unlocked} onPress={() => goTo(index + 1)} />
             </View>

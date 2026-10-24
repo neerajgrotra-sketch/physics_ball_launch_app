@@ -1,5 +1,5 @@
 import { WORLD, pieceEnds, type Level, type PlacedPiece } from '../physics';
-import { nearLauncher } from './aim';
+import { grabAimLine, nearLauncher } from './aim';
 import { illegalPieces, legalPlacement } from './placement';
 
 // Piece tray and placement, as in reference/prototype.html. Pure: no UI imports, so Vitest covers it.
@@ -71,7 +71,8 @@ export function removeBar(slots: Slot[], k: number): { slots: Slot[]; selected: 
 export type Drag =
   | { mode: 'rotate'; k: number }
   | { mode: 'move'; k: number; ox: number; oy: number }
-  | { mode: 'aim' };
+  | { mode: 'aim' }
+  | { mode: 'swing'; offset: number };
 
 /**
  * A finger lands on the board. In order: the selected piece's rotate handle, any piece, the launcher
@@ -79,6 +80,7 @@ export type Drag =
  */
 export function pressAt(
   slots: Slot[], selected: number | null, p: { x: number; y: number }, canAim: boolean,
+  aim?: { angle: number; power: number },
 ): { drag: Drag | null; selected: number | null } {
   if (selected != null && slots[selected].onBoard) {
     const [, , x2, y2] = pieceEnds(slots[selected]);
@@ -90,6 +92,8 @@ export function pressAt(
     return { drag: { mode: 'move', k: hit, ox: p.x - s.x, oy: p.y - s.y }, selected: hit };
   }
   if (canAim && nearLauncher(p)) return { drag: { mode: 'aim' }, selected };
+  const offset = canAim && aim ? grabAimLine(p, aim.angle, aim.power) : null;
+  if (offset != null) return { drag: { mode: 'swing', offset }, selected };
   return { drag: null, selected: null };
 }
 
