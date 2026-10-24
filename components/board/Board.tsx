@@ -3,13 +3,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import {
-  BALL_RADIUS, LAUNCHER, WORLD, glassBox, pieceEnds,
+  BALL_RADIUS, LAUNCHER, WORLD, blockCorners, glassBox, pieceEnds,
   type EndReason, type Level, type PlacedPiece, type Vec,
 } from '../../physics';
 import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
 import { useColors, type Palette } from '../../theme/colors';
 import {
-  crossPath, deadPaths, gridPaths, handleArcPath, launcherPath, linePath, polyPath,
+  blockPath, crossPath, deadPaths, gridPaths, handleArcPath, launcherPath, linePath, polyPath,
 } from './paths';
 import type { Flight } from './usePlayback';
 import { leverLine, type End } from '../../game/pieces';
@@ -68,6 +68,7 @@ export function Board(props: BoardProps) {
 
   const grid = useMemo(() => gridPaths(), []);
   const dead = useMemo(() => deadPaths(level.fixed), [level]);
+  const blocks = useMemo(() => (level.blocks ?? []).map((b) => blockPath(blockCorners(b))), [level]);
   const trailPaths = useMemo(() => trails.map((t) => polyPath(t.path)), [trails]);
   const launcher = useMemo(() => launcherPath(L.x, L.y), []);
   const flightPath = useMemo(() => (flight ? polyPath(flight.path) : null), [flight?.path]);
@@ -191,6 +192,12 @@ export function Board(props: BoardProps) {
                 {/* floor and board edges bounce: solid ink. Fixed obstacles are dead: grey and hatched. */}
                 <Rect x={1.5} y={1.5} width={W - 3} height={GROUND - 1.5} color={c.ink} style="stroke" strokeWidth={3} />
                 <Path path={linePath(0, GROUND, W, GROUND)} color={c.ink} style="stroke" strokeWidth={4} strokeCap="round" />
+                {blocks.map((b, i) => (
+                  <Group key={`blk${i}`}>
+                    <Path path={b} color={c.steel} />
+                    <Path path={b} color={c.ink} style="stroke" strokeWidth={2.5} strokeJoin="round" />
+                  </Group>
+                ))}
                 <Path path={dead.bars} color={c.muted} style="stroke" strokeWidth={6} strokeCap="round" />
                 <Path path={dead.hatch} color={c.paper} style="stroke" strokeWidth={1.4} strokeCap="round" />
 

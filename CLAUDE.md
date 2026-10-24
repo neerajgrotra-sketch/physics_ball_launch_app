@@ -121,6 +121,13 @@ reference/    prototype.html, the behaviour and look to match
   and launches. The win card then reads "Here's one way in", with "Try it yourself" (resets the level) and
   "Next level". The card sits at the top of the board so the solution path stays visible.
 
+## Level design
+
+Levels live in `tools/design-levels.ts` (geometry), then `npx tsx tools/design-levels.ts <id-prefix>` finds the
+stored solution and par (a few minutes per level). Optional extras on a level: `blocks` (fixed solid rectangles
+the ball bounces off, softly like the walls; bars keep a ball's width clear of them, the same rule as for
+the glass) and `fixed` (dead segments that end the shot). Next worlds are listed in `BACKLOG.md`.
+
 ## Screens and navigation
 
 - **Tutorial** (`levels/00-tutorial.json`, "Learn the ropes": a real level with three bars, level 1 in the

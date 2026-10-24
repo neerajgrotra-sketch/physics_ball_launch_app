@@ -14,6 +14,15 @@ Agreed work that isn't built yet, roughly in priority order. Move an item to CHA
   - Goal card at the start of each level in big type; an ⓘ in the header brings it back.
   - A short "how to earn stars" card after the tutorial.
 
+## Level design (next worlds)
+
+Each new idea is introduced on its own, then mixed. Order agreed so far:
+- **Fixed bouncy blocks** (rectangles, optionally turned; built, 0.8.0: level "Roadblock"): more levels using one, two, then a bank shot round one.
+- **Shielded jar:** a glass with a roof or one tall side, so the ball must enter at a steep angle or from one side.
+- **Gates (pass-through jars):** a jar with no base the ball falls through; a level's goal becomes touch every bar, pass every gate, then land in the glass.
+- **Curved objects:** concave and convex arcs, circles and round bumpers (a ball bounces off the surface normal at each point, so these need circle and arc collision beside the straight edges), and a curved ramp. Part of the piece-shape groundwork below.
+- Later: springs (energy in), moving or spinning parts (needs a time-aware solver), grey dead hazards used sparingly and clearly marked.
+
 ## Menus and settings
 
 - **Settings screen** (the ⚙ button; today it only has Music): sound effects, music, haptics,

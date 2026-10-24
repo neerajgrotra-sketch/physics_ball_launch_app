@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildWorld, simulate, solutionPieces, inputGrid, glassBox, BALL_RADIUS, LAUNCHER, WALL_RESTITUTION, WORLD, type Level } from './index';
+import { buildWorld, simulate, solutionPieces, inputGrid, glassBox, blockCorners, BALL_RADIUS, LAUNCHER, WALL_RESTITUTION, WORLD, type Level } from './index';
 import { LEVELS } from '../levels';
 import { legalPlacement } from '../tools/geometry';
 import { usesEveryBar } from '../tools/find-solution';
@@ -55,6 +55,32 @@ describe('bounce events', () => {
     expect([fast.success, fast.end, fast.t]).toEqual([full.success, full.end, full.t]);
     expect(fast.path[fast.path.length - 1]).toEqual(full.path[full.path.length - 1]);
     expect(fast.hits).toEqual([]);
+  });
+});
+
+describe('fixed bouncy blocks', () => {
+  const base: Level = { id: 't', name: 't', hint: '', glass: { x: 360, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }] };
+
+  it('have four corners, turned by deg about their centre', () => {
+    expect(blockCorners({ x: 100, y: 200, w: 40, h: 20 })).toEqual([[80, 190], [120, 190], [120, 210], [80, 210]]);
+    const t = blockCorners({ x: 0, y: 0, w: 20, h: 10, deg: 90 });
+    expect(t[0][0]).toBeCloseTo(5, 9); expect(t[0][1]).toBeCloseTo(-10, 9);
+  });
+
+  it('bounce the ball back, softly, without ending the shot', () => {
+    // A tall block right in front of the launcher; a flat shot hits it and comes back.
+    const level: Level = { ...base, blocks: [{ x: 120, y: 400, w: 30, h: 300 }] };
+    const r = simulate(buildWorld(level, []), 20, 60);
+    expect(r.hits.some((h) => h.kind === 'block')).toBe(true);
+    expect(r.end).not.toBe('dead');
+    expect(Math.max(...r.path.map((p) => p[0]))).toBeLessThan(120);   // never got past it
+    expect(r.hits.filter((h) => h.kind === 'block').every((h) => h.counts)).toBe(true); // a block bounce is scored
+  });
+
+  it('are kept clear of when placing bars', () => {
+    const level: Level = { ...base, blocks: [{ x: 200, y: 300, w: 40, h: 40 }] };
+    expect(legalPlacement(level, [{ len: 90, x: 200, y: 300, deg: 0 }])).toBe(false);
+    expect(legalPlacement(level, [{ len: 90, x: 200, y: 450, deg: 0 }])).toBe(true);
   });
 });
 

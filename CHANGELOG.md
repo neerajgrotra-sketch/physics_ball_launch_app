@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.8.0
+
+- New: fixed bouncy blocks, solid shapes on the board that the ball bounces off (softly, like the walls).
+  They're drawn grey with an ink outline, and bars can't be placed against them.
+- New level 7, "Roadblock": a tall block stands between the cannon and the glass, and both bars still have to be
+  used.
+
 ## 0.7.4
 
 - The tutorial level no longer gives stars or points, even when you replay it and launch the shot yourself.

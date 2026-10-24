@@ -1,0 +1,44 @@
+{
+  "id": "06-roadblock",
+  "name": "Roadblock",
+  "glass": {
+    "x": 290,
+    "w": 40,
+    "h": 52
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 90
+    }
+  ],
+  "blocks": [
+    {
+      "x": 215,
+      "y": 395,
+      "w": 30,
+      "h": 290
+    }
+  ],
+  "hint": "A wall stands between you and the glass, which is tucked right behind it. The ball has to drop in from above, and still touch both bars.",
+  "par": 4,
+  "solution": {
+    "pieces": [
+      {
+        "x": 310,
+        "y": 131,
+        "deg": 72
+      },
+      {
+        "x": 99,
+        "y": 354,
+        "deg": 80
+      }
+    ],
+    "angle": 77,
+    "power": 88.3
+  }
+}

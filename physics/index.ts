@@ -41,6 +41,18 @@ export type Vec = [number, number];
 /** Fixed (dead) obstacle: [x1, y1, x2, y2] */
 export type FixedSegment = [number, number, number, number];
 
+/**
+ * A fixed solid block the ball bounces off (as softly as the walls): a rectangle `w` × `h` centred on (x, y),
+ * turned `deg` degrees (default 0). Unlike a dead obstacle, touching one doesn't end the shot.
+ */
+export interface Block { x: number; y: number; w: number; h: number; deg?: number }
+
+/** The four corners of a block, in order round it. */
+export function blockCorners(b: Block): [number, number][] {
+  const a = ((b.deg ?? 0) * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a), hw = b.w / 2, hh = b.h / 2;
+  return ([[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]] as [number, number][]).map(([dx, dy]) => [b.x + dx * c - dy * s, b.y + dx * s + dy * c]);
+}
+
 /** `base` is the y of the glass floor; it defaults to WORLD.ground. */
 export interface Glass { x: number; w: number; h: number; base?: number }
 export interface PieceSpec { len: number; restitution?: number }
@@ -53,6 +65,8 @@ export interface Level {
   hint: string;
   glass: Glass;
   fixed: FixedSegment[];
+  /** Fixed bouncy blocks (see Block). Optional: most levels have none. */
+  blocks?: Block[];
   pieces: PieceSpec[];
   /** One verified answer, shown by the Solve button. pieces[i] matches level.pieces[i]. */
   solution?: Solution;
@@ -60,7 +74,7 @@ export interface Level {
   par?: number;
 }
 
-export type SegmentKind = 'dead' | 'glass' | 'piece' | 'wall';
+export type SegmentKind = 'dead' | 'glass' | 'piece' | 'wall' | 'block';
 /** `piece` is the index of the placed piece a 'piece' segment belongs to. */
 export interface Segment { x1: number; y1: number; x2: number; y2: number; e: number; f: number; kind: SegmentKind; piece?: number }
 export interface World {
@@ -80,7 +94,7 @@ export type EndReason = 'glass' | 'skipped' | 'out' | 'dead' | 'rest' | 'timeout
  * A real bounce (not resting contact) off a piece, the glass or a wall. `i` is the index of the next path
  * point. `counts`: it's one of the shot's scored bounces (any real bounce outside the glass).
  */
-export interface Hit { i: number; kind: 'piece' | 'glass' | 'wall'; speed: number; piece?: number; counts: boolean }
+export interface Hit { i: number; kind: 'piece' | 'glass' | 'wall' | 'block'; speed: number; piece?: number; counts: boolean }
 /**
  * `touched[k]`: whether the ball touched placed piece k during the shot. `bounces`: the scored bounce
  * count (see the rules above), at most one per step so a corner hit is one bounce.
@@ -129,6 +143,11 @@ export function buildWorld(level: Level, placed: PlacedPiece[]): World {
   add(l - PLATE_OVERHANG, base, r + PLATE_OVERHANG, base, 0.3, 0.05, 'glass');
 
   for (const s of level.fixed) add(s[0], s[1], s[2], s[3], 0, 0, 'dead');
+  // Blocks bounce like the walls do (a stray ball loses energy and settles), one edge at a time.
+  for (const b of level.blocks ?? []) {
+    const k = blockCorners(b);
+    k.forEach((p, i) => { const q = k[(i + 1) % 4]; add(p[0], p[1], q[0], q[1], WALL_RESTITUTION, WALL_FRICTION, 'block'); });
+  }
   placed.forEach((p, k) => {
     const [x1, y1, x2, y2] = pieceEnds(p);
     add(x1, y1, x2, y2, p.restitution ?? 0.85, 0.01, 'piece', k);

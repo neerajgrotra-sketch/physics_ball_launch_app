@@ -13,6 +13,9 @@ const designs: Omit<Level, 'solution' | 'par'>[] = [
   // leads the player to this level's stored solution.
   { id: '00-tutorial', name: 'Learn the ropes', glass: { x: 300, w: 46, h: 54 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }, { len: 90 }],
     hint: 'Follow the guide: place the three bars, line them up, set the aim and launch.' },
+  { id: '06-roadblock', name: 'Roadblock', glass: { x: 290, w: 40, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],
+    blocks: [{ x: 215, y: 395, w: 30, h: 290 }],
+    hint: 'A wall stands between you and the glass, which is tucked right behind it. The ball has to drop in from above, and still touch both bars.' },
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],

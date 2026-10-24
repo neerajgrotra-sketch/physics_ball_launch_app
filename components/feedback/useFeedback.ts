@@ -55,7 +55,7 @@ export function useFeedback() {
         : Haptics.ImpactFeedbackStyle.Light;
       Haptics.impactAsync(style).catch(() => {});
       if (h.kind === 'glass') play(glass, strength);
-      else if (h.kind === 'wall') play(wall, strength * 0.6);
+      else if (h.kind === 'wall' || h.kind === 'block') play(wall, strength * (h.kind === 'block' ? 0.8 : 0.6));
       else play(bounce, Math.max(0.6, strength), pitch(barHits.current++));
     },
     landed() {

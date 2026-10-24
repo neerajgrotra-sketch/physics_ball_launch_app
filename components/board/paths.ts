@@ -43,6 +43,14 @@ export function deadPaths(fixed: FixedSegment[]): { bars: SkPath; hatch: SkPath 
   return { bars: bars.detach(), hatch: hatch.detach() };
 }
 
+/** Fixed bouncy blocks: one closed outline each (fill and stroke it). */
+export function blockPath(corners: [number, number][]): SkPath {
+  const p = Skia.PathBuilder.Make();
+  corners.forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y)));
+  p.close();
+  return p.detach();
+}
+
 /** Polyline through the first `n` points of a path. */
 export function polyPath(path: Vec[], n = path.length): SkPath {
   const p = Skia.PathBuilder.Make();
