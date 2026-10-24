@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bank Shot",
     "slug": "bank-shot",
-    "version": "0.2.3",
+    "version": "0.3.0",
     "scheme": "bankshot",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -15,7 +15,20 @@
       "expo-status-bar",
       "expo-font",
       "expo-audio",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 150,
+          "resizeMode": "contain",
+          "backgroundColor": "#dfe5d8",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#0f2b52"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

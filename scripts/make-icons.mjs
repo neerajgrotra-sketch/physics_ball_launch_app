@@ -1,6 +1,7 @@
 // Draws the app icon: graph paper, a bar, the ball's path off it into the glass, and the ball.
 // Writes assets/icon.png (1024, for the iOS/Android builds) and public/icons/icon-{180,192,512}.png
-// (web: home-screen icon and manifest). Opaque, as the App Store requires. Deterministic: no randomness.
+// (web: home-screen icon and manifest), plus assets/splash-icon.png: the same picture with rounded corners on
+// a transparent background, shown on the launch screen and as the first frame of the intro (components/splash). Opaque, as the App Store requires. Deterministic: no randomness.
 // Run with: node scripts/make-icons.mjs
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -78,11 +79,12 @@ function chunk(type, data) {
   const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(td));
   return Buffer.concat([len, td, crc]);
 }
-function png(size, rgb) {
+function png(size, rgb, channels = 3) {
   const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(size, 0); ihdr.writeUInt32BE(size, 4); ihdr[8] = 8; ihdr[9] = 2;
-  const raw = Buffer.alloc(size * (size * 3 + 1));
-  for (let y = 0; y < size; y++) rgb.copy(raw, y * (size * 3 + 1) + 1, y * size * 3, (y + 1) * size * 3);
+  ihdr.writeUInt32BE(size, 0); ihdr.writeUInt32BE(size, 4); ihdr[8] = 8; ihdr[9] = channels === 4 ? 6 : 2;
+  const row = size * channels;
+  const raw = Buffer.alloc(size * (row + 1));
+  for (let y = 0; y < size; y++) rgb.copy(raw, y * (row + 1) + 1, y * row, (y + 1) * row);
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
 }
 
@@ -92,6 +94,27 @@ const outputs = [
   [join(ROOT, 'public', 'icons', 'icon-192.png'), 192, 4],
   [join(ROOT, 'public', 'icons', 'icon-180.png'), 180, 4],
 ];
+// Rounded square (iOS-style corner, 22.5% of the side), alpha from supersampled coverage.
+function rounded(size, ss = 4) {
+  const rgb = render(size, ss), out = Buffer.alloc(size * size * 4), R = 0.225;
+  const inside = (x, y) => {
+    const dx = Math.max(R - x, x - (1 - R), 0), dy = Math.max(R - y, y - (1 - R), 0);
+    return dx * dx + dy * dy <= R * R;
+  };
+  for (let j = 0; j < size; j++) for (let i = 0; i < size; i++) {
+    let n = 0;
+    for (let sj = 0; sj < ss; sj++) for (let si = 0; si < ss; si++) n += inside((i + (si + 0.5) / ss) / size, (j + (sj + 0.5) / ss) / size);
+    const o = (j * size + i) * 4, p = (j * size + i) * 3;
+    out[o] = rgb[p]; out[o + 1] = rgb[p + 1]; out[o + 2] = rgb[p + 2]; out[o + 3] = Math.round((255 * n) / (ss * ss));
+  }
+  return out;
+}
+const splashPng = png(512, rounded(512, 3), 4);
+for (const splash of [join(ROOT, 'assets', 'splash-icon.png'), join(ROOT, 'public', 'icons', 'splash-icon.png')]) {
+  writeFileSync(splash, splashPng);
+  console.log(`${splash} (512x512, rounded)`);
+}
+
 for (const [file, size, ss] of outputs) {
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, png(size, render(size, ss)));

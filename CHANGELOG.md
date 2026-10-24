@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.3.0
+
+- Launch screen: the app icon on the paper colour (light and dark), on iPhone, Android and the web.
+- Animated intro on every start: the ball launches, banks off a bar into the glass, and the title drops in.
+  Tap to skip; respects Reduce Motion.
+
 ## 0.2.3
 
 - Every level plays the background track (level 1's until each gets its own).

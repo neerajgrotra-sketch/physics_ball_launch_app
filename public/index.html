@@ -45,9 +45,13 @@
       canvas { touch-action: none; }
 
       /* Shown until the app replaces it (the game engine is ~10 MB, so this can take a few seconds). */
-      #boot { margin: auto; text-align: center; font: 600 17px -apple-system, system-ui, sans-serif; color: #78837d; }
-      #boot b { display: block; font-size: 26px; color: #2c3133; margin-bottom: 6px; }
-      @media (prefers-color-scheme: dark) { #boot { color: #8fa6c4; } #boot b { color: #e6edf6; } }
+      /* The launch screen: the same rounded icon, size and spot the intro (components/splash) opens on. */
+      #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+      #boot img { width: 150px; height: 150px; }
+      #boot span { position: absolute; top: calc(50% + 100px); left: 0; right: 0; text-align: center;
+        font: 600 15px -apple-system, system-ui, sans-serif; color: #78837d; opacity: 0; animation: boot-wait 0.4s 1.5s forwards; }
+      @keyframes boot-wait { to { opacity: 1; } }
+      @media (prefers-color-scheme: dark) { #boot span { color: #8fa6c4; } }
       /* Any startup error is printed on screen, so a phone without dev tools can still say what broke. */
       #boot-error { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom));
         padding: 12px; border-radius: 10px; background: #b5352a; color: #fff; font: 13px/1.4 ui-monospace, Menlo, monospace;
@@ -87,6 +91,6 @@
 
   <body>
     <noscript>You need to enable JavaScript to play Bank Shot.</noscript>
-    <div id="root"><div id="boot"><b>Bank Shot</b>Loading…</div></div>
+    <div id="root"><div id="boot"><img src="/icons/splash-icon.png" alt="Bank Shot" /><span>Loading…</span></div></div>
   </body>
 </html>

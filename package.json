@@ -1,6 +1,6 @@
 {
   "name": "bank-shot",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "main": "index",
@@ -32,6 +32,7 @@
     "expo-haptics": "~58.0.7",
     "expo-linking": "~58.0.14",
     "expo-router": "~58.0.25",
+    "expo-splash-screen": "~58.0.11",
     "expo-status-bar": "~58.0.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",

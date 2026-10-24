@@ -5,15 +5,23 @@ import { BarlowCondensed_600SemiBold } from '@expo-google-fonts/barlow-condensed
 import { BarlowCondensed_700Bold } from '@expo-google-fonts/barlow-condensed/700Bold';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SoundSettingsProvider } from '../components/feedback/SoundSettings';
 import { ProgressProvider } from '../components/progress/ProgressProvider';
+import { Intro } from '../components/splash/Intro';
 import { FONTS, useColors } from '../theme/colors';
+
+// The launch screen (app.json, expo-splash-screen) stays up until the intro, which starts on the same
+// picture, is on screen to take over.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const c = useColors();
+  const [intro, setIntro] = useState(true);
   const [fontsLoaded, fontError] = useFonts({
     Barlow_400Regular, Barlow_500Medium, Barlow_600SemiBold,
     BarlowCondensed_600SemiBold, BarlowCondensed_700Bold,
@@ -45,6 +53,7 @@ export default function RootLayout() {
           </SoundSettingsProvider>
         </ProgressProvider>
       </View>
+      {intro && <Intro onDone={() => setIntro(false)} onShown={() => SplashScreen.hideAsync().catch(() => {})} />}
     </GestureHandlerRootView>
   );
 }
