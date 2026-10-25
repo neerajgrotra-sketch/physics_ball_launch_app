@@ -51,6 +51,31 @@ export function blockPath(corners: [number, number][]): SkPath {
   return p.detach();
 }
 
+/**
+ * A spiked hazard: its body outline, and a row of triangular spikes along every edge pointing outwards
+ * (`length` long, a spike about every 12 units). `corners` go clockwise on screen, as blockCorners returns them.
+ */
+export function hazardPaths(corners: [number, number][], length: number): { body: SkPath; spikes: SkPath } {
+  const body = Skia.PathBuilder.Make(), spikes = Skia.PathBuilder.Make();
+  corners.forEach(([x, y], i) => (i ? body.lineTo(x, y) : body.moveTo(x, y)));
+  body.close();
+  corners.forEach(([x1, y1], i) => {
+    const [x2, y2] = corners[(i + 1) % corners.length];
+    const L = Math.hypot(x2 - x1, y2 - y1);
+    if (L < 6) return;
+    const ux = (x2 - x1) / L, uy = (y2 - y1) / L, nx = uy, ny = -ux; // along, and outwards
+    const count = Math.max(1, Math.floor(L / 12)), gap = L / count;
+    for (let k = 0; k < count; k++) {
+      const mid = (k + 0.5) * gap, half = Math.min(5.5, gap / 2 - 0.5);
+      spikes.moveTo(x1 + ux * (mid - half), y1 + uy * (mid - half));
+      spikes.lineTo(x1 + ux * mid + nx * length, y1 + uy * mid + ny * length);
+      spikes.lineTo(x1 + ux * (mid + half), y1 + uy * (mid + half));
+      spikes.close();
+    }
+  });
+  return { body: body.detach(), spikes: spikes.detach() };
+}
+
 /** Polyline through the first `n` points of a path. */
 export function polyPath(path: Vec[], n = path.length): SkPath {
   const p = Skia.PathBuilder.Make();

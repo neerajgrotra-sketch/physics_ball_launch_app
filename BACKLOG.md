@@ -21,6 +21,7 @@ Each new idea is introduced on its own, then mixed. Order agreed so far:
 - **Shielded jar:** a glass with a roof or one tall side, so the ball must enter at a steep angle or from one side.
 - **Gates (pass-through jars):** a jar with no base the ball falls through; a level's goal becomes touch every bar, pass every gate, then land in the glass.
 - **Curved objects:** concave and convex arcs, circles and round bumpers (a ball bounces off the surface normal at each point, so these need circle and arc collision beside the straight edges), and a curved ramp. Part of the piece-shape groundwork below.
+- **Hazards** (built, 0.10.0): spiked rectangles; next, a slanted or triangular hazard and a hazard that the solution must pass close to.
 - Later: springs (energy in), moving or spinning parts (needs a time-aware solver), grey dead hazards used sparingly and clearly marked.
 
 ## Menus and settings

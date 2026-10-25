@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildWorld, simulate, solutionPieces, inputGrid, glassBox, blockCorners, BALL_RADIUS, LAUNCHER, WALL_RESTITUTION, WORLD, type Level } from './index';
+import { buildWorld, simulate, solutionPieces, inputGrid, glassBox, blockCorners, hazardReach, SPIKE_LENGTH, BALL_RADIUS, LAUNCHER, WALL_RESTITUTION, WORLD, type Level } from './index';
 import { LEVELS } from '../levels';
 import { legalPlacement } from '../tools/geometry';
 import { usesEveryBar } from '../tools/find-solution';
@@ -80,6 +80,33 @@ describe('fixed bouncy blocks', () => {
   it('are kept clear of when placing bars', () => {
     const level: Level = { ...base, blocks: [{ x: 200, y: 300, w: 40, h: 40 }] };
     expect(legalPlacement(level, [{ len: 90, x: 200, y: 300, deg: 0 }])).toBe(false);
+    expect(legalPlacement(level, [{ len: 90, x: 200, y: 450, deg: 0 }])).toBe(true);
+  });
+});
+
+describe('spiked hazards', () => {
+  const base: Level = { id: 't', name: 't', hint: '', glass: { x: 360, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }] };
+
+  it('reach out to their spike tips', () => {
+    const h = { x: 200, y: 300, w: 40, h: 20 };
+    expect(hazardReach(h)).toMatchObject({ x: 200, y: 300, w: 40 + 2 * SPIKE_LENGTH, h: 20 + 2 * SPIKE_LENGTH });
+  });
+
+  it('destroy the ball: the shot ends there, as dead', () => {
+    // A tall spiked wall right in front of the launcher; a flat shot hits it.
+    const level: Level = { ...base, hazards: [{ x: 120, y: 400, w: 24, h: 300 }] };
+    const r = simulate(buildWorld(level, []), 20, 60);
+    expect(r.end).toBe('dead');
+    expect(r.success).toBe(false);
+    expect(Math.max(...r.path.map((p) => p[0]))).toBeLessThan(120);   // never got past it
+    // ...and the same shot with no hazard carries on.
+    expect(simulate(buildWorld(base, []), 20, 60).end).not.toBe('dead');
+  });
+
+  it('are kept clear of when placing bars', () => {
+    const level: Level = { ...base, hazards: [{ x: 200, y: 300, w: 40, h: 20 }] };
+    expect(legalPlacement(level, [{ len: 90, x: 200, y: 300, deg: 0 }])).toBe(false);
+    expect(legalPlacement(level, [{ len: 90, x: 200, y: 330, deg: 0 }])).toBe(false);   // within the spike tips plus a ball's width
     expect(legalPlacement(level, [{ len: 90, x: 200, y: 450, deg: 0 }])).toBe(true);
   });
 });

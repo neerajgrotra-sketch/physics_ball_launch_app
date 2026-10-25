@@ -126,7 +126,8 @@ reference/    prototype.html, the behaviour and look to match
 Levels live in `tools/design-levels.ts` (geometry), then `npx tsx tools/design-levels.ts <id-prefix>` finds the
 stored solution and par (a few minutes per level). Optional extras on a level: `blocks` (fixed solid rectangles
 the ball bounces off, softly like the walls; bars keep a ball's width clear of them, the same rule as for
-the glass) and `fixed` (dead segments that end the shot). Next worlds are listed in `BACKLOG.md`.
+the glass) `hazards` (spiked red rectangles, same shape as blocks: touching one, out to the tips of its spikes, destroys
+the ball and ends the shot as "dead"; bars keep clear of them like any obstacle) and `fixed` (plain dead segments). Next worlds are listed in `BACKLOG.md`.
 
 ## Screens and navigation
 

@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.10.0
+
+- Hazards: spiked red shapes that destroy the ball. A hit ends the shot (it counts as a try), shows "Ouch!"
+  and plays a new destroyed sound (a crack, a falling zap, shards and a boom).
+- New level 11, "Spikes": spikes on the floor and the ceiling and a wall to clear, with three bars. Par 4.
+
 ## 0.9.0
 
 - New level 10, "Gauntlet": the first with four bars and three blocks. The glass sits in a pit between a ceiling

@@ -53,6 +53,14 @@ export function blockCorners(b: Block): [number, number][] {
   return ([[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]] as [number, number][]).map(([dx, dy]) => [b.x + dx * c - dy * s, b.y + dx * s + dy * c]);
 }
 
+/** How far a hazard's spikes stick out of its body; the ball is destroyed when it touches a spike tip. */
+export const SPIKE_LENGTH = 8;
+
+/** The outline the ball dies on: the hazard's body grown by its spikes. */
+export function hazardReach(b: Block): Block {
+  return { ...b, w: b.w + 2 * SPIKE_LENGTH, h: b.h + 2 * SPIKE_LENGTH };
+}
+
 /** `base` is the y of the glass floor; it defaults to WORLD.ground. */
 export interface Glass { x: number; w: number; h: number; base?: number }
 export interface PieceSpec { len: number; restitution?: number }
@@ -67,6 +75,11 @@ export interface Level {
   fixed: FixedSegment[];
   /** Fixed bouncy blocks (see Block). Optional: most levels have none. */
   blocks?: Block[];
+  /**
+   * Spiked hazards (same shape as a Block, drawn red with spikes all round). Touching one destroys the ball:
+   * the shot ends there ('dead') and counts as a try. Optional.
+   */
+  hazards?: Block[];
   pieces: PieceSpec[];
   /** One verified answer, shown by the Solve button. pieces[i] matches level.pieces[i]. */
   solution?: Solution;
@@ -143,6 +156,11 @@ export function buildWorld(level: Level, placed: PlacedPiece[]): World {
   add(l - PLATE_OVERHANG, base, r + PLATE_OVERHANG, base, 0.3, 0.05, 'glass');
 
   for (const s of level.fixed) add(s[0], s[1], s[2], s[3], 0, 0, 'dead');
+  // Hazards are dead all the way out to their spike tips.
+  for (const h of level.hazards ?? []) {
+    const k = blockCorners(hazardReach(h));
+    k.forEach((p, i) => { const q = k[(i + 1) % 4]; add(p[0], p[1], q[0], q[1], 0, 0, 'dead'); });
+  }
   // Blocks bounce like the walls do (a stray ball loses energy and settles), one edge at a time.
   for (const b of level.blocks ?? []) {
     const k = blockCorners(b);

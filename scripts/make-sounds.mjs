@@ -55,6 +55,31 @@ function whoosh(seconds, peakAt, cutoff) {
   return out;
 }
 
+/** A crack: seeded noise with the low end taken out (a differentiator), dying fast. */
+function crack(seconds, tau) {
+  const n = Math.round(seconds * RATE), out = new Float64Array(n);
+  let seed = 987654, prev = 0;
+  for (let i = 0; i < n; i++) {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    const white = seed / 2147483648 - 1;
+    out[i] = (white - prev) * Math.exp(-(i / RATE) / tau);
+    prev = white;
+  }
+  return out;
+}
+
+/** A zap: a tone whose pitch falls from f0 to f1, like air going out of something. */
+function zap(seconds, f0, f1, tau, fall) {
+  const n = Math.round(seconds * RATE), out = new Float64Array(n);
+  let phase = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / RATE;
+    phase += (2 * Math.PI * (f1 + (f0 - f1) * Math.exp(-t / fall))) / RATE;
+    out[i] = Math.min(1, t / 0.002) * Math.exp(-t / tau) * Math.sin(phase);
+  }
+  return out;
+}
+
 function scale(track, k) {
   return track.map((v) => v * k);
 }
@@ -89,8 +114,14 @@ const sounds = {
     partials(0.75, [[880, 1, 0.22], [1760, 0.3, 0.12]]),
     partials(0.75, [[1318.5, 1, 0.28], [2637, 0.3, 0.14]], { start: 0.09 }),
   ),
-  // A dead surface: a soft low thump.
-  dead: thud(0.22, 150, 70, 0.07),
+  // The ball destroyed on a hazard: a sharp crack, a falling zap, glass-like shards, and a low boom under it all.
+  dead: mix(
+    scale(crack(0.14, 0.03), 0.7),
+    scale(zap(0.45, 1500, 90, 0.16, 0.09), 0.55),
+    partials(0.5, [[3300, 0.35, 0.05], [4800, 0.25, 0.04], [6100, 0.18, 0.03]], { start: 0.04 }),
+    partials(0.4, [[2700, 0.3, 0.05], [5200, 0.2, 0.035]], { start: 0.11 }),
+    scale(thud(0.5, 130, 40, 0.14), 0.9),
+  ),
 };
 
 mkdirSync(OUT, { recursive: true });

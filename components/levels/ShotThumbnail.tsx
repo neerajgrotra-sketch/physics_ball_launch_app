@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import Svg, { Circle, Line, Polygon, Polyline, Rect } from 'react-native-svg';
-import { BALL_RADIUS, blockCorners, glassBox, LAUNCHER, PLATE_OVERHANG, WORLD, buildWorld, pieceEnds, simulate, type Level } from '../../physics';
+import { BALL_RADIUS, blockCorners, hazardReach, glassBox, LAUNCHER, PLATE_OVERHANG, WORLD, buildWorld, pieceEnds, simulate, type Level } from '../../physics';
 import { thin, type Shot } from '../../game/shots';
 import { useColors } from '../../theme/colors';
 
@@ -31,6 +31,9 @@ export function ShotThumbnail({ level, shot, width, height }: { level: Level; sh
       <Line x1={0} y1={WORLD.ground} x2={WORLD.width} y2={WORLD.ground} stroke={c.ink} strokeWidth={6} />
       {(level.blocks ?? []).map((b, i) => (
         <Polygon key={`blk${i}`} points={blockCorners(b).map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')} fill={c.steel} stroke={c.ink} strokeWidth={4} />
+      ))}
+      {(level.hazards ?? []).map((h, i) => (
+        <Polygon key={`hz${i}`} points={blockCorners(hazardReach(h)).map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')} fill={c.red} />
       ))}
       {path && (
         <Polyline
