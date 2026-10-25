@@ -1,3 +1,4 @@
+import Svg, { Path } from 'react-native-svg';
 import { Pressable, StyleSheet, Text, View, type LayoutRectangle } from 'react-native';
 import type { Slot } from '../../game/pieces';
 import { FONTS, useColors } from '../../theme/colors';
@@ -25,7 +26,7 @@ export function Tray({ slots, selected, onTap, disabled, onChipLayout }: Props) 
     <View style={styles.tray}>
       {slots.map((s, k) => {
         const sel = selected === k && s.onBoard;
-        const label = compact ? `${k + 1}` : `Bar ${k + 1}`;
+        const label = `Bar ${k + 1}`;
         const spring = (s.restitution ?? 0) > 1;
         const fg = sel ? c.panel : spring ? '#e08a00' : c.pencil;
         return (
@@ -44,14 +45,27 @@ export function Tray({ slots, selected, onTap, disabled, onChipLayout }: Props) 
               sel && { backgroundColor: spring ? '#e08a00' : c.pencil },
             ]}
           >
-            <View style={[styles.iconBox, compact && styles.iconBoxCompact]}>
-              <View style={[styles.icon, { width: ((s.len / 90) * 34 * ICON_SCALE) * (compact ? 0.5 : 1), backgroundColor: fg }]} />
-            </View>
+            {spring ? (
+              <Bolt color={fg} />
+            ) : !compact && (
+              <View style={styles.iconBox}>
+                <View style={[styles.icon, { width: (s.len / 90) * 34 * ICON_SCALE, backgroundColor: fg }]} />
+              </View>
+            )}
             <Text style={[styles.text, { color: fg }]}>{label}</Text>
           </Pressable>
         );
       })}
     </View>
+  );
+}
+
+/** The energy bolt on a spring bar's chip. */
+function Bolt({ color }: { color: string }) {
+  return (
+    <Svg width={11} height={16} viewBox="0 0 11 16">
+      <Path d="M6.8 0 L0.6 9 H4.6 L3.4 16 L10.4 6.4 H6.2 Z" fill={color} />
+    </Svg>
   );
 }
 

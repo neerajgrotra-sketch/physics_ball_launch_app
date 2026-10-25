@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.13.1
+
+- Tray chips on levels with 4 or more bars read "Bar 1", "Bar 2"... again (they had shrunk to bare numbers), and a spring bar's chip
+  carries a gold energy bolt in place of the length line.
+
 ## 0.13.0
 
 - Spring bars: a bar with restitution above 1 is a spring the player places. It kicks like a pad (1.3x plus a small kick, capped at
