@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.11.9
+
+- Tutorial: the outline showing where to drag each bar is red again, bolder and with a soft glow (it was a pale dashed grey
+  that was easy to miss), and the board is asked to redraw whenever the outline changes, which on Safari could leave it
+  undrawn.
+
 ## 0.11.8
 
 - Move handles: a selected bar now has two dotted arms out of its centre, one along x and one along y, each ending in a

@@ -100,6 +100,7 @@ export function Board(props: BoardProps) {
   const drawKey = [
     trails.length, trails.at(-1)?.path.length ?? 0, flight ? 1 : 0, done ? 1 : 0, selected ?? -1,
     pieces.map((p) => `${p.x},${p.y},${p.deg}`).join(';'), illegal.join(','), angle, power, tries,
+    ghosts.map((g) => `${g.x},${g.y},${g.deg}`).join(';'),
   ].join('|');
   const [, setFollowUp] = useState(0);
   useEffect(() => {
@@ -270,9 +271,12 @@ export function Board(props: BoardProps) {
                 {ghosts.map((g, i) => {
                   const [x1, y1, x2, y2] = pieceEnds(g);
                   return (
-                    <Path key={`gh${i}`} path={linePath(x1, y1, x2, y2)} color={c.pencil} style="stroke" strokeWidth={9} strokeCap="round" opacity={0.5}>
-                      <DashPathEffect intervals={[10, 9]} />
-                    </Path>
+                    <Group key={`gh${i}`}>
+                      <Path path={linePath(x1, y1, x2, y2)} color={c.red} style="stroke" strokeWidth={16} strokeCap="round" opacity={0.14} />
+                      <Path path={linePath(x1, y1, x2, y2)} color={c.red} style="stroke" strokeWidth={9} strokeCap="round" opacity={0.85}>
+                        <DashPathEffect intervals={[10, 8]} />
+                      </Path>
+                    </Group>
                   );
                 })}
                 {sel && selEnds && (
