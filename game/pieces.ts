@@ -39,6 +39,32 @@ export function leverEnd(p: PlacedPiece): End {
   return leverTipInside(p, 2) || !leverTipInside(p, 1) ? 2 : 1;
 }
 
+/**
+ * The move handles: two dotted arms out of the selected bar's centre, one along x and one along y, each this
+ * long with a grip at its tip. Dragging a grip slides the bar along that axis with the finger well clear of it.
+ */
+export const MOVE_ARM = 72;
+/** Touch within this distance of a grip, or of the arm out beyond the bar's end, takes hold of it. */
+export const MOVE_GRAB = 18;
+export type Axis = 'x' | 'y';
+
+/**
+ * Where the two grips sit: [x grip, y grip]. Each arm goes to the side of the centre that keeps its tip on the
+ * board, and away from the rotate lever when the bar lies along that axis (so the two never cover each other).
+ */
+export function moveArms(p: PlacedPiece, lever: End): [[number, number], [number, number]] {
+  const a = (p.deg * Math.PI) / 180, s = lever === 2 ? 1 : -1;
+  const fits = (x: number, y: number) => x > 12 && x < WORLD.width - 12 && y > 12 && y < WORLD.ground - 12;
+  // The lever leaves the bar towards (s·cos a, s·sin a); take the arm the other way where they'd line up.
+  const pick = (towards: number, inside: (d: 1 | -1) => boolean, preferred: 1 | -1): 1 | -1 => {
+    const want: 1 | -1 = Math.abs(towards) > 0.5 ? (towards > 0 ? -1 : 1) : preferred;
+    return inside(want) ? want : (-want as 1 | -1);
+  };
+  const dx = pick(s * Math.cos(a), (d) => fits(p.x + d * MOVE_ARM, p.y), 1);
+  const dy = pick(s * Math.sin(a), (d) => fits(p.x, p.y + d * MOVE_ARM), -1);
+  return [[p.x + dx * MOVE_ARM, p.y], [p.x, p.y + dy * MOVE_ARM]];
+}
+
 const bearing = (p: { x: number; y: number }, c: { x: number; y: number }) => (Math.atan2(p.y - c.y, p.x - c.x) * 180) / Math.PI;
 /** Touch within this distance of a piece picks it up. */
 export const PIECE_GRAB = 16;
@@ -102,7 +128,7 @@ export function removeBar(slots: Slot[], k: number): { slots: Slot[]; selected: 
  */
 export type Drag =
   | { mode: 'rotate'; k: number; end?: End; offset?: number }
-  | { mode: 'move'; k: number; ox: number; oy: number }
+  | { mode: 'move'; k: number; ox: number; oy: number; axis?: Axis }
   | { mode: 'aim' }
   | { mode: 'swing'; grab: LineGrab };
 
@@ -119,6 +145,15 @@ export function pressAt(
     const s = slots[selected];
     const rotate = (end: End): Drag => ({ mode: 'rotate', k: selected, end, offset: s.deg - bearing(p, s) - (end === 1 ? 180 : 0) });
     if (distToSegment(p, leverLine(s, lever)) < ROTATE_GRAB) return { drag: rotate(lever), selected };
+    const arms = moveArms(s, lever);
+    for (const axis of ['x', 'y'] as const) {
+      const [tx, ty] = arms[axis === 'x' ? 0 : 1];
+      const out = (f: number): [number, number, number, number] => [s.x + (tx - s.x) * f, s.y + (ty - s.y) * f, tx, ty];
+      // the grip itself, or the dotted arm beyond the bar's end (nearer the bar the bar's own touch wins)
+      if (Math.hypot(p.x - tx, p.y - ty) < MOVE_GRAB + 2 || distToSegment(p, out(0.9)) < MOVE_GRAB - 4) {
+        return { drag: { mode: 'move', k: selected, ox: p.x - s.x, oy: p.y - s.y, axis }, selected };
+      }
+    }
     const other: End = lever === 2 ? 1 : 2;
     const [ox, oy] = leverLine(s, other);
     if (Math.hypot(p.x - ox, p.y - oy) < ROTATE_GRAB) return { drag: rotate(other), selected, lever: other };
@@ -140,8 +175,8 @@ export function dragTo(slots: Slot[], drag: Drag, p: { x: number; y: number }): 
     const s = slots[drag.k];
     return replace(slots, drag.k, {
       ...s,
-      x: clamp(p.x - drag.ox, EDGE, WORLD.width - EDGE),
-      y: clamp(p.y - drag.oy, EDGE, WORLD.ground - EDGE),
+      x: drag.axis === 'y' ? s.x : clamp(p.x - drag.ox, EDGE, WORLD.width - EDGE),
+      y: drag.axis === 'x' ? s.y : clamp(p.y - drag.oy, EDGE, WORLD.ground - EDGE),
     });
   }
   if (drag.mode === 'rotate') {

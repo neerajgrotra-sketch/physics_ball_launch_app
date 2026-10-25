@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.11.8
+
+- Move handles: a selected bar now has two dotted arms out of its centre, one along x and one along y, each ending in a
+  two-way arrow grip. Dragging a grip slides the bar along that axis with the finger well clear of it (the bar itself still
+  drags freely). The arms keep to the board and stay off the rotate lever.
+
 ## 0.11.7
 
 - After a refused rotation drag the slider thumb now really snaps back to the bar's angle when the finger lifts (it was

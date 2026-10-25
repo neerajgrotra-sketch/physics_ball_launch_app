@@ -9,10 +9,10 @@ import {
 import { Easing, useDerivedValue, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useColors, type Palette } from '../../theme/colors';
 import {
-  blockPath, crossPath, hazardPaths, deadPaths, gridPaths, handleArcPath, launcherPath, linePath, polyPath,
+  blockPath, crossPath, hazardPaths, deadPaths, gridPaths, handleArcPath, moveIconPath, launcherPath, linePath, polyPath,
 } from './paths';
 import type { Flight } from './usePlayback';
-import { leverLine, type End } from '../../game/pieces';
+import { leverLine, moveArms, type End } from '../../game/pieces';
 import { aimPreview } from '../../game/aim';
 
 const { width: W, height: H, ground: GROUND } = WORLD;
@@ -176,6 +176,14 @@ export function Board(props: BoardProps) {
         return { x: leverAt[0] + (leverAt[2] - leverAt[0]) * t, y: leverAt[1] + (leverAt[3] - leverAt[1]) * t };
       })
     : [];
+  // The move handles: dotted arms along x and y out of the centre, a two-way arrow grip on each tip.
+  const arms = sel ? moveArms(sel, lever) : null;
+  const armDots = sel && arms
+    ? arms.flatMap(([tx, ty], j) => Array.from({ length: 5 }, (_, i) => {
+        const t = (i + 1) / 6;
+        return { key: `mv${j}${i}`, x: sel.x + (tx - sel.x) * t, y: sel.y + (ty - sel.y) * t };
+      }))
+    : [];
   const otherEnd = sel && selEnds ? (lever === 2 ? [selEnds[0], selEnds[1]] : [selEnds[2], selEnds[3]]) : null;
   // Each bar gets its number beside it (above it), and the selected one its rotation too: "2 · 137°".
   const labels = labelFont ? pieces.map((p, i) => {
@@ -274,6 +282,14 @@ export function Board(props: BoardProps) {
                       color={selColor} style="stroke" strokeWidth={22} strokeCap="round" opacity={0.25}
                     />
                     {leverDots.map((d, i) => <Circle key={`lv${i}`} cx={d.x} cy={d.y} r={2.6} color={selColor} />)}
+                    {armDots.map((d) => <Circle key={d.key} cx={d.x} cy={d.y} r={2.2} color={selColor} opacity={0.75} />)}
+                    {arms && arms.map(([tx, ty], j) => (
+                      <Group key={`grip${j}`}>
+                        <Circle cx={tx} cy={ty} r={11} color={c.paper} />
+                        <Circle cx={tx} cy={ty} r={11} color={selColor} style="stroke" strokeWidth={2.5} />
+                        <Path path={moveIconPath(tx, ty, j === 0)} color={selColor} style="stroke" strokeWidth={1.8} strokeCap="round" strokeJoin="round" />
+                      </Group>
+                    ))}
                     {otherEnd && <Circle cx={otherEnd[0]} cy={otherEnd[1]} r={6} color={selColor} style="stroke" strokeWidth={1.5} opacity={0.6} />}
                     {leverAt && (
                       <Group>

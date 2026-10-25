@@ -3,7 +3,7 @@ import { LEVELS } from '../levels';
 import { LAUNCHER, WORLD, pieceEnds, solutionPieces, type Level } from '../physics';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle,
-  atSolution, hintSlots, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
+  atSolution, hintSlots, moveArms, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
 } from './pieces';
 
 const level = LEVELS[0];
@@ -201,5 +201,49 @@ describe('hints', () => {
     expect(h.k).toBe(0);
     expect(h.slots[1].onBoard).toBe(false);
     expect(slotsLegal(three, h.slots)).toBe(true);
+  });
+});
+
+describe('move handles', () => {
+  const bar = (x: number, y: number, deg = 0): Slot => ({ x, y, deg, len: 90, onBoard: true });
+
+  it('dragging the x grip slides the bar sideways only', () => {
+    const slots = [bar(200, 300)];
+    const [gx] = moveArms(slots[0], 2);
+    const r = pressAt(slots, 0, { x: gx[0], y: gx[1] }, true, undefined, 2);
+    expect(r.drag).toMatchObject({ mode: 'move', k: 0, axis: 'x' });
+    const moved = dragTo(slots, r.drag!, { x: gx[0] + 30, y: gx[1] + 50 });
+    expect(moved[0].x).toBe(230);
+    expect(moved[0].y).toBe(300);
+  });
+
+  it('dragging the y grip slides the bar up and down only', () => {
+    const slots = [bar(200, 300, 90)];
+    const [, gy] = moveArms(slots[0], 2);
+    const r = pressAt(slots, 0, { x: gy[0], y: gy[1] }, true, undefined, 2);
+    expect(r.drag).toMatchObject({ mode: 'move', axis: 'y' });
+    const moved = dragTo(slots, r.drag!, { x: gy[0] + 40, y: gy[1] - 20 });
+    expect(moved[0].x).toBe(200);
+    expect(moved[0].y).toBe(280);
+  });
+
+  it('keeps both grips on the board and off the lever side', () => {
+    for (const [x, y] of [[30, 30], [370, 30], [30, 520], [370, 520], [200, 280]]) {
+      for (const deg of [0, 45, 90, 135, -30]) {
+        for (const lever of [1, 2] as const) {
+          for (const [gx, gy] of moveArms(bar(x, y, deg), lever)) {
+            expect(gx).toBeGreaterThan(0); expect(gx).toBeLessThan(WORLD.width);
+            expect(gy).toBeGreaterThan(0); expect(gy).toBeLessThan(WORLD.ground);
+          }
+        }
+      }
+    }
+  });
+
+  it('a touch on the bar itself still moves it freely', () => {
+    const slots = [bar(200, 300)];
+    const r = pressAt(slots, 0, { x: 190, y: 300 }, true, undefined, 2);
+    expect(r.drag).toMatchObject({ mode: 'move' });
+    expect((r.drag as { axis?: string }).axis).toBeUndefined();
   });
 });

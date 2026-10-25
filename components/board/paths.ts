@@ -104,6 +104,17 @@ export function launcherPath(lx: number, ly: number): SkPath {
   return p.detach();
 }
 
+/** Two-way arrow for a move grip at (x, y): arrowheads left and right, or up and down. */
+export function moveIconPath(x: number, y: number, horizontal: boolean): SkPath {
+  const p = Skia.PathBuilder.Make();
+  const [ux, uy] = horizontal ? [1, 0] : [0, 1], [vx, vy] = [-uy, ux];
+  const pt = (a: number, b: number): [number, number] => [x + ux * a + vx * b, y + uy * a + vy * b];
+  const line = (a: [number, number], b: [number, number]) => { p.moveTo(a[0], a[1]); p.lineTo(b[0], b[1]); };
+  line(pt(-5.5, 0), pt(5.5, 0));
+  for (const s of [-1, 1]) { line(pt(s * 5.5, 0), pt(s * 2.5, 2.6)); line(pt(s * 5.5, 0), pt(s * 2.5, -2.6)); }
+  return p.detach();
+}
+
 /** Rotate-handle arc on the selected piece's end, as in the prototype (radius 5, -2.2 to 1.4 rad). */
 export function handleArcPath(x: number, y: number): SkPath {
   const p = Skia.PathBuilder.Make();

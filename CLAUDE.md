@@ -83,6 +83,8 @@ reference/    prototype.html, the behaviour and look to match
 - **Pieces:** bars are named Bar 1, 2, 3 (tray chips and board labels). Tap a tray chip to place a bar, drag
   it to move. The selected bar has a dotted lever out of one end with the rotate icon at its tip
   (`leverLine`, 60 long): drag anywhere on it to turn the bar about its centre, finger clear of the bar.
+  Two dotted arms out of its centre (`moveArms`, one along x, one along y, each with a two-way arrow grip) slide the bar along
+  that axis from a distance; dragging the bar itself still moves it freely.
   Tapping the other end (small ring) moves the lever there; on selection it goes on whichever end keeps
   its tip on the board (`leverEnd`). While a bar is selected the aim rows become its rotation
   controls: a 0–179° slider, −/+ 1° nudges (hold to repeat), Remove and Done. Tapping the selected chip
