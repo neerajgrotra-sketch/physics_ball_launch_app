@@ -89,7 +89,9 @@ export const MIN_ROBUSTNESS = 8;
 export function findSolution(level: Level, opts: { samples?: number; seed?: number; want?: number } = {}): (Solution & { robustness: number; par: number }) | null {
   const { samples = 400_000, seed = 1, want = 160 } = opts;
   const chains = findChains(level, samples, seed, want).map((c) => ({ ...c, bounces: bouncesOf(level, c.placed, c.angle, c.power) }));
-  const counts = [...new Set(chains.map((c) => c.bounces))].sort((a, b) => a - b);
+  // Par can never be below the number of bars: a feather-light touch on a bar counts as touching it but not as a
+  // bounce, which would let a solution "use" three bars in two bounces.
+  const counts = [...new Set(chains.map((c) => c.bounces))].filter((n) => n >= level.pieces.length).sort((a, b) => a - b);
   for (const par of counts) {
     let best: (Solution & { robustness: number; par: number }) | null = null;
     for (const c of chains.filter((ch) => ch.bounces === par).slice(0, 20)) {

@@ -1,0 +1,61 @@
+{
+  "id": "12-stilts",
+  "name": "Stilts",
+  "glass": {
+    "x": 325,
+    "w": 38,
+    "h": 52,
+    "base": 350
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 70
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 130,
+      "y": 450,
+      "w": 24,
+      "h": 180
+    }
+  ],
+  "hazards": [
+    {
+      "x": 325,
+      "y": 528,
+      "w": 120,
+      "h": 24
+    }
+  ],
+  "hint": "The glass is up on tall stilts over a bed of spikes. Clear the wall, use all three bars, and do not fall short.",
+  "par": 3,
+  "solution": {
+    "pieces": [
+      {
+        "x": 160,
+        "y": 297,
+        "deg": 160
+      },
+      {
+        "x": 344,
+        "y": 420,
+        "deg": 106
+      },
+      {
+        "x": 186,
+        "y": 442,
+        "deg": 48
+      }
+    ],
+    "angle": 69.3,
+    "power": 94.4
+  }
+}

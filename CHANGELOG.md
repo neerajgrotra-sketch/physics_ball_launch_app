@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.10.2
+
+- New level 13, "Stilts": the glass stands on stilts, 190 up, over a bed of spikes, behind a wall, with three bars. Measured at
+  6.0 on the toughness scale (BACKLOG.md).
+- Par is now never below the number of bars (a feather-light touch on a bar counts as touching it but not as a bounce, which
+  had let the solver find a par below the bar count).
+
 ## 0.10.1
 
 - New level 12, "Moat": spiked patches on both sides of the glass, a spiked block hanging from the ceiling and a wall on the

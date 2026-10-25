@@ -39,6 +39,11 @@ flat baseline instead of a rising one.
 - **Measure real play:** record tries, time to win and hint use per level (locally now, to a server later) and use it to calibrate the
   numbers above, since "found" is only a proxy for how hard a person finds a level.
 
+What moves toughness (measured on candidate layouts): a **4th bar** about +2; **raising the glass** about +2 for the first 90 and
+more after (a glass 190 up is about 6 with 3 bars and a wall); a **second block** about +1; a **narrower glass** about +0.2; **hazards**
+almost nothing (they raise the chance a try fails, 36–46% of plain shots, not how hard a way in is to find). Level 13 "Stilts" was
+tuned to 6.0 with this.
+
 ## Menus and settings
 
 - **Settings screen** (the ⚙ button; today it only has Music): sound effects, music, haptics,
