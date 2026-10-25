@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.11.1
+
+- New level 15, "Boomerang": the glass sits in a spiked-roof garage by the cannon, open only on the right, with four bars and
+  three spiked walls. The ball has to fly out over the walls and come back home from the right. Par 6.
+
 ## 0.11.0
 
 - New level 14, "Needle", from your mockup: five bars, three walls with spikes along one edge each, and spikes either

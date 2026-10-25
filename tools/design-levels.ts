@@ -46,6 +46,15 @@ const designs: Omit<Level, 'solution' | 'par'>[] = [
       { x: 277, y: 528, w: 34, h: 24 }, { x: 378, y: 528, w: 32, h: 24 },
     ],
     hint: 'Five bars, three walls with spikes on one side each, and spikes either side of the glass. Thread the ball down through all five.' },
+  // Same recipe as Needle (walls with one spiked edge each, spikes beside the glass) but the glass is back by the cannon
+  // under a spiked roof, so the ball has to fly out past the walls and return from the right, under the roof.
+  { id: '14-boomerang', name: 'Boomerang', glass: { x: 140, w: 40, h: 56 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }, { len: 70 }, { len: 70 }],
+    blocks: [{ x: 135, y: 330, w: 120, h: 24 }, { x: 88, y: 430, w: 14, h: 200 }, { x: 255, y: 150, w: 24, h: 300 }, { x: 340, y: 395, w: 26, h: 290 }],
+    hazards: [
+      { x: 135, y: 318, w: 120, h: 2 }, { x: 81, y: 430, w: 2, h: 200 }, { x: 243, y: 210, w: 2, h: 180 }, { x: 340, y: 250, w: 26, h: 2 },
+      { x: 215, y: 528, w: 36, h: 24 },
+    ],
+    hint: 'The glass sits in a garage by the cannon, open only on the right. Send the ball out past the spiked walls and bring it home.' },
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],

@@ -48,6 +48,11 @@ Level 14 "Needle" (from the owner's mockup; 5 bars, 3 walls with one spiked edge
 a finale-class level, 79% of plain shots die. Its stored answer is forgiving (24/49) and bounces off the walls twice. Its place is
 the end of the first set, after gauntlet and crossfire.
 
+Level 15 "Boomerang" (garage by the cannon, spiked roof and back wall, four bars, par 6) is **off the scale (found 8 per 10,000,
+where Crossfire, the old hardest, was 91)** and every plain shot dies. Its stored answer is forgiving (40/49) and needs the walls,
+but watch it closely in playtests: if players stall here, ease it (open the garage, drop the roof spikes) or move it later. Its first
+two designs were too easy (the winning shot never went near the walls): check "does the answer need the blocks" for every new level.
+
 ## Menus and settings
 
 - **Settings screen** (the ⚙ button; today it only has Music): sound effects, music, haptics,
