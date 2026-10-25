@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.11.3
+
+- New level 17, "Skyline": Penthouse with a fifth bar. The glass is up under a spiked roof; the ball goes out high past the
+  spiked walls, uses all five bars and comes home from the right. Par 8.
+
 ## 0.11.2
 
 - New level 16, "Penthouse": Boomerang's garage raised 120 up on stilts, with a spiked roof and back wall, a bed of spikes

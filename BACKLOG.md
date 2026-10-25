@@ -58,6 +58,12 @@ Level 16 "Penthouse" (Boomerang's garage raised 120 up, over spikes, four bars, 
 solution at the edge (8/49 at power 99.5 of 100), too fragile to ship, so 120 is the practical ceiling of this layout. These two are the
 finale; if players stall, the first thing to ease is the spiked roof.
 
+Level 17 "Skyline" (Penthouse plus a fifth bar, par 8) is the hardest yet. The random-search measure can no longer rank it: Penthouse
+and Skyline both found **0 in 60,000** tries (Boomerang: 8 per 10,000), so the scale tops out here. Other signs it is harder: a fifth bar,
+par 8 versus 6, an answer only 11/49 forgiving at power 96.7 (Penthouse 17/49), and a solution only turned up in 1 of 8 searches of 3M
+attempts each (Penthouse needed 700k). To go beyond, the solver needs a stronger search, not just a harder layout. Levels 16 and 17 are
+the ceiling of this layout; the sensible next step for variety is a *different* kind of hard (curves, gates), not more of this.
+
 ## Menus and settings
 
 - **Settings screen** (the ⚙ button; today it only has Music): sound effects, music, haptics,
