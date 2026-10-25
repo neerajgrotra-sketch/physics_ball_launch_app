@@ -69,7 +69,10 @@ export function hazardReach(b: Block): Block {
 
 /** `base` is the y of the glass floor; it defaults to WORLD.ground. */
 export interface Glass { x: number; w: number; h: number; base?: number }
+/** A piece the player places: `restitution` above 1 makes it a spring bar (see isSpring). */
 export interface PieceSpec { len: number; restitution?: number }
+/** A piece or pad with restitution above 1 is a spring: it throws the ball back harder, with the pad kick. */
+export const isSpring = (restitution?: number): boolean => (restitution ?? 0) > 1;
 /** A piece the player has placed. `deg` is rotation in whole degrees. */
 export interface PlacedPiece { len: number; x: number; y: number; deg: number; restitution?: number }
 export interface Solution { pieces: { x: number; y: number; deg: number }[]; angle: number; power: number }
@@ -105,7 +108,7 @@ export interface Level {
 
 export type SegmentKind = 'dead' | 'glass' | 'piece' | 'wall' | 'block' | 'pad';
 /** `piece` is the index of the placed piece a 'piece' segment belongs to. */
-export interface Segment { x1: number; y1: number; x2: number; y2: number; e: number; f: number; kind: SegmentKind; piece?: number; /** index of the spring pad a 'pad' segment belongs to */ pad?: number }
+export interface Segment { x1: number; y1: number; x2: number; y2: number; e: number; f: number; kind: SegmentKind; piece?: number; /** index of the spring pad a 'pad' segment belongs to */ pad?: number; /** a player's spring bar */ spring?: boolean }
 export interface World {
   segs: Segment[];
   glass: { l: number; r: number; rim: number; base: number };
@@ -125,7 +128,7 @@ export type EndReason = 'glass' | 'skipped' | 'out' | 'dead' | 'rest' | 'timeout
  * A real bounce (not resting contact) off a piece, the glass or a wall. `i` is the index of the next path
  * point. `counts`: it's one of the shot's scored bounces (any real bounce outside the glass).
  */
-export interface Hit { i: number; kind: 'piece' | 'glass' | 'wall' | 'block' | 'pad'; speed: number; piece?: number; counts: boolean }
+export interface Hit { i: number; kind: 'piece' | 'glass' | 'wall' | 'block' | 'pad'; speed: number; piece?: number; spring?: boolean; counts: boolean }
 /**
  * `touched[k]`: whether the ball touched placed piece k during the shot. `bounces`: the scored bounce
  * count (see the rules above), at most one per step so a corner hit is one bounce.
@@ -193,6 +196,7 @@ export function buildWorld(level: Level, placed: PlacedPiece[]): World {
   placed.forEach((p, k) => {
     const [x1, y1, x2, y2] = pieceEnds(p);
     add(x1, y1, x2, y2, p.restitution ?? 0.85, 0.01, 'piece', k);
+    if (isSpring(p.restitution)) segs[segs.length - 1].spring = true;
   });
   return { segs, glass: { l, r, rim, base }, pieceCount: level.pieces.length, placedCount: placed.length, padCount: (level.pads ?? []).length };
 }
@@ -264,11 +268,11 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
       y += ny * (R - d);
       const vn = vx * nx + vy * ny;
       if (vn < 0) {
-        const pad = s.kind === 'pad';
+        const pad = s.kind === 'pad' || s.spring === true;
         const e = !pad && -vn < RESTING_CONTACT_SPEED ? 0 : s.e;
         const counts = e > 0 && !bouncedThisStep && !(x > cup.l && x < cup.r && y > cup.rim);
         if (counts) { bounces++; bouncedThisStep = true; }
-        if (e && recordHits) hits.push({ i: path.length, kind: s.kind as Hit['kind'], speed: -vn, piece: s.piece, counts });
+        if (e && recordHits) hits.push({ i: path.length, kind: s.kind as Hit['kind'], speed: -vn, piece: s.piece, spring: s.spring, counts });
         if (pad) {
           // Out along the normal at e × the arrival speed plus the kick, and never above the speed cap.
           const out = Math.min(-vn * e + PAD_KICK, MAX_BALL_SPEED);

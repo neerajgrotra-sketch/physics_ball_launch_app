@@ -279,7 +279,10 @@ export function Board(props: BoardProps) {
                 {pieces.map((p, i) => {
                   const [x1, y1, x2, y2] = pieceEnds(p);
                   return (
-                    <Path key={i} path={linePath(x1, y1, x2, y2)} color={illegal[i] ? c.red : c.pencil} style="stroke" strokeWidth={6} strokeCap="round" />
+                    <Group key={i}>
+                      {(p.restitution ?? 0) > 1 && <Path path={linePath(x1, y1, x2, y2)} color={c.ink} style="stroke" strokeWidth={10} strokeCap="round" />}
+                      <Path path={linePath(x1, y1, x2, y2)} color={illegal[i] ? c.red : (p.restitution ?? 0) > 1 ? '#ffb020' : c.pencil} style="stroke" strokeWidth={6} strokeCap="round" />
+                    </Group>
                   );
                 })}
                 {ghosts.map((g, i) => {

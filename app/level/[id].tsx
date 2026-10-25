@@ -170,7 +170,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   const hitAt = (res: { path: Vec[]; hits: Hit[] }, k: number) => {
     const h = res.hits[k];
     feedback.hit(h);
-    if (h.kind !== 'pad') return;
+    if (h.kind !== 'pad' && !h.spring) return;
     const at = res.path[Math.min(h.i, res.path.length - 1)];
     kickX.value = at[0];
     kickY.value = at[1];

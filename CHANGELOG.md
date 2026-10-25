@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.13.0
+
+- Spring bars: a bar with restitution above 1 is a spring the player places. It kicks like a pad (1.3x plus a small kick, capped at
+  the launch speed), draws gold with a dark edge, has a gold tray chip, and plays the boing, burst and energised ball.
+- New level 21, "Trampoline": four bars, Bar 4 a spring bar, the glass high in the top right under a spiked roof. Par 4, 43/49
+  forgiving; the same shot with Bar 4 as a plain bar fails.
+
 ## 0.12.2
 
 - A win now needs the ball to touch every spring pad, as well as every bar (a pad level could be won without its pads, which

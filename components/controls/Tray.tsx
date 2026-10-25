@@ -26,7 +26,8 @@ export function Tray({ slots, selected, onTap, disabled, onChipLayout }: Props) 
       {slots.map((s, k) => {
         const sel = selected === k && s.onBoard;
         const label = compact ? `${k + 1}` : `Bar ${k + 1}`;
-        const fg = sel ? c.panel : c.pencil;
+        const spring = (s.restitution ?? 0) > 1;
+        const fg = sel ? c.panel : spring ? '#e08a00' : c.pencil;
         return (
           <Pressable
             key={k}
@@ -38,9 +39,9 @@ export function Tray({ slots, selected, onTap, disabled, onChipLayout }: Props) 
             style={[
               styles.chip,
               compact && styles.chipCompact,
-              { borderColor: c.pencil },
+              { borderColor: spring ? '#e08a00' : c.pencil },
               s.onBoard && !sel && styles.on,
-              sel && { backgroundColor: c.pencil },
+              sel && { backgroundColor: spring ? '#e08a00' : c.pencil },
             ]}
           >
             <View style={[styles.iconBox, compact && styles.iconBoxCompact]}>

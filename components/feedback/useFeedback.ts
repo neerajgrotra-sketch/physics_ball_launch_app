@@ -55,8 +55,8 @@ export function useFeedback() {
       const style = h.kind === 'piece' && strength > 0.6
         ? Haptics.ImpactFeedbackStyle.Medium
         : Haptics.ImpactFeedbackStyle.Light;
-      Haptics.impactAsync(h.kind === 'pad' ? Haptics.ImpactFeedbackStyle.Heavy : style).catch(() => {});
-      if (h.kind === 'pad') play(boing, Math.max(0.7, strength));
+      Haptics.impactAsync(h.kind === 'pad' || h.spring ? Haptics.ImpactFeedbackStyle.Heavy : style).catch(() => {});
+      if (h.kind === 'pad' || h.spring) play(boing, Math.max(0.7, strength));
       else if (h.kind === 'glass') play(glass, strength);
       else if (h.kind === 'wall' || h.kind === 'block') play(wall, strength * (h.kind === 'block' ? 0.8 : 0.6));
       else play(bounce, Math.max(0.6, strength), pitch(barHits.current++));

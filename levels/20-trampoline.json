@@ -1,0 +1,82 @@
+{
+  "id": "20-trampoline",
+  "name": "Trampoline",
+  "glass": {
+    "x": 335,
+    "w": 40,
+    "h": 56,
+    "base": 175
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    },
+    {
+      "len": 70
+    },
+    {
+      "len": 70,
+      "restitution": 1.3
+    }
+  ],
+  "blocks": [
+    {
+      "x": 170,
+      "y": 430,
+      "w": 22,
+      "h": 220
+    },
+    {
+      "x": 285,
+      "y": 310,
+      "w": 100,
+      "h": 20
+    }
+  ],
+  "hazards": [
+    {
+      "x": 335,
+      "y": 62,
+      "w": 130,
+      "h": 12
+    },
+    {
+      "x": 330,
+      "y": 528,
+      "w": 100,
+      "h": 24
+    }
+  ],
+  "hint": "Bar 4 is a golden spring bar: it throws the ball back harder. Place it where a falling ball will land, and use all four bars to reach the glass.",
+  "par": 4,
+  "solution": {
+    "pieces": [
+      {
+        "x": 224,
+        "y": 187,
+        "deg": 100
+      },
+      {
+        "x": 143,
+        "y": 196,
+        "deg": 121
+      },
+      {
+        "x": 186,
+        "y": 281,
+        "deg": 153
+      },
+      {
+        "x": 55,
+        "y": 269,
+        "deg": 44
+      }
+    ],
+    "angle": 70.4,
+    "power": 61.9
+  }
+}

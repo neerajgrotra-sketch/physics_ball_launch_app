@@ -56,7 +56,7 @@ export function useFeedback() {
     },
     hit(h: Hit) {
       const strength = Math.max(0.2, Math.min(1, h.speed / HARD_HIT));
-      if (h.kind === 'pad') play('boing', Math.max(0.7, strength));
+      if (h.kind === 'pad' || h.spring) play('boing', Math.max(0.7, strength));
       else if (h.kind === 'glass') play('glass', strength);
       else if (h.kind === 'wall' || h.kind === 'block') play('wall', strength * (h.kind === 'block' ? 0.8 : 0.6));
       else play('bounce', Math.max(0.6, strength), pitch(barHits++));

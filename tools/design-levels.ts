@@ -94,6 +94,13 @@ const designs: Omit<Level, 'solution' | 'par'>[] = [
     pads: [{ x: 330, y: 530, w: 80, h: 12 }, { x: 391, y: 330, w: 12, h: 110 }],
     hazards: [{ x: 205, y: 118, w: 170, h: 12 }],
     hint: 'Two golden spring pads, and a spiked roof over the glass. Throw too hard and the ball is lost on the spikes: use a pad and both bars to drop it in.' },
+  // The first spring BAR: Bar 4 has restitution 1.3 (isSpring), so the player places the trampoline themselves. Every bar must be hit, so
+  // the spring is always part of the answer. Glass high in the top right under a spiked roof, a wall in front of the cannon, spikes on the floor.
+  { id: '20-trampoline', name: 'Trampoline', glass: { x: 335, w: 40, h: 56, base: 175 }, fixed: [],
+    pieces: [{ len: 90 }, { len: 80 }, { len: 70 }, { len: 70, restitution: 1.3 }],
+    blocks: [{ x: 170, y: 430, w: 22, h: 220 }, { x: 285, y: 310, w: 100, h: 20 }],
+    hazards: [{ x: 335, y: 62, w: 130, h: 12 }, { x: 330, y: 528, w: 100, h: 24 }],
+    hint: 'Bar 4 is a golden spring bar: it throws the ball back harder. Place it where a falling ball will land, and use all four bars to reach the glass.' },
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],

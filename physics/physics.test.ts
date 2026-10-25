@@ -287,3 +287,15 @@ describe('a win needs every spring pad touched', () => {
     }
   });
 });
+
+describe('spring bars (restitution above 1)', () => {
+  it('throw the ball back harder than a plain bar, and the stored answer of Trampoline needs the spring', () => {
+    const l = LEVELS.find((x) => x.id === '20-trampoline')!;
+    const s = l.solution!;
+    const r = simulate(buildWorld(l, solutionPieces(l)), s.angle, s.power);
+    expect(r.success).toBe(true);
+    expect(r.hits.some((h) => h.spring)).toBe(true);
+    const plain: Level = { ...l, pieces: l.pieces.map((p) => ({ ...p, restitution: undefined })) };
+    expect(simulate(buildWorld(plain, solutionPieces(plain)), s.angle, s.power).success).toBe(false);
+  });
+});
