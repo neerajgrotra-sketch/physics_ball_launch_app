@@ -588,15 +588,18 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
             disabled={flying}
           />
         ) : (
+          // Touching the angle or power controls while a shot is playing skips it, like a tap on the board.
+          <View onStartShouldSetResponderCapture={() => { if (flying) skip(); return false; }}>
           <AimControls
             angle={angle} power={power}
-            onAngle={(v) => { keepPlaying(); setAngle(v); }}
-            onPower={(v) => { keepPlaying(); setPower(v); }}
+            onAngle={(v) => { if (flying) skip(); keepPlaying(); setAngle(v); }}
+            onPower={(v) => { if (flying) skip(); keepPlaying(); setPower(v); }}
             onAngleDone={(v) => snapDone('angle', v)}
             onPowerDone={(v) => snapDone('power', v)}
             angleTrackRef={angleTrackRef}
             powerTrackRef={powerTrackRef}
           />
+          </View>
         )}
         <View style={styles.bottom}>
           <View ref={trayRef} style={styles.tray}>

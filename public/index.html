@@ -43,6 +43,9 @@
       #root { display: flex; height: 100%; flex: 1; }
       /* The board handles every touch itself (aim, move, rotate). */
       canvas { touch-action: none; }
+      /* So are the sliders: a horizontal drag that drifts a little up or down must not be taken by the page
+         (or the in-app browser sheet), which cancels the touch and leaves the slider stuck. */
+      [role="slider"], [role="slider"] * { touch-action: none; }
 
       /* Shown until the app replaces it (the game engine is ~10 MB, so this can take a few seconds). */
       /* The launch screen: the same rounded icon, size and spot the intro (components/splash) opens on. */
@@ -79,11 +82,11 @@
         }, true);
         window.addEventListener('unhandledrejection', function (e) { window.__bankShotError(e.reason); });
 
-        // A drag on the board is a game move (aim, move or rotate a bar). Without this, iOS also treats
+        // A drag on the board or on a slider is a game move (aim, move or rotate a bar; set angle or power). Without this, iOS also treats
         // it as a page drag, which in an in-app browser sheet pulls the whole sheet down to close it.
         // Non-passive so preventDefault is allowed; sliders and the level list scroll as normal.
         document.addEventListener('touchmove', function (e) {
-          if (e.target && e.target.closest && e.target.closest('canvas, [data-board]')) e.preventDefault();
+          if (e.target && e.target.closest && e.target.closest('canvas, [data-board], [role="slider"]')) e.preventDefault();
         }, { passive: false });
       })();
     </script>

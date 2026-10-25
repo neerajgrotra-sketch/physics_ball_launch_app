@@ -114,7 +114,7 @@ function Row({ label, value, readout, min, max, step, onChange, onNudge, onDone,
     <View style={styles.row}>
       <Text style={[styles.label, { color: c.muted }]}>{label}</Text>
       <Nudge text="−" onStep={() => onNudge(-1)} a11y={`Decrease ${name}`} />
-      <View ref={trackRef} style={styles.track} onStartShouldSetResponderCapture={remeasureSliders}>
+      <View ref={trackRef} style={[styles.track, Platform.OS === 'web' && ({ touchAction: 'none' } as object)]} onStartShouldSetResponderCapture={remeasureSliders}>
       <Slider
         style={styles.slider}
         value={shown}

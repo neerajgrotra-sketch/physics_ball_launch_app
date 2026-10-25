@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.8.3
+
+- Sliders on iPhone: a horizontal drag that drifted a little up or down could be taken by Safari as a page
+  gesture, which froze the slider or bounced it back. Sliders now keep their touches, as the board already did.
+- Touching the angle or power controls while a shot is playing now skips the shot (like tapping the board), then
+  lets you adjust.
+
 ## 0.8.2
 
 - Power and Angle sliders: they keep their own value while a finger is on them (they could snap back a step

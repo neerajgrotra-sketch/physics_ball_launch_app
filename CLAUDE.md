@@ -91,7 +91,7 @@ reference/    prototype.html, the behaviour and look to match
   turns red and snaps back to its last allowed spot on release; rotation skips clipping angles; a new bar
   lands on the nearest allowed spot. Pieces can't be edited mid-flight. (The prototype removed a bar by re-tapping its chip.)
 - **Trails:** keep the last 4 launches, oldest faintest. A successful trail is drawn in red.
-- **Skip:** during a flight, a tap on the board (or Launch, which reads "Skip ›") jumps to the end of the
+- **Skip:** during a flight, a tap on the board, a touch on the angle or power controls (or Launch, which reads "Skip ›") jumps to the end of the
   shot. The path is already computed in full, so the whole trajectory becomes the trail and the outcome
   counts exactly as if watched; only the remaining bounce sounds are dropped (`usePlayback().skip`).
 - **Bounces:** bars (restitution 0.85), the glass and its plate, and the floor and four edges
