@@ -37,6 +37,15 @@ const designs: Omit<Level, 'solution' | 'par'>[] = [
     blocks: [{ x: 130, y: 450, w: 24, h: 180 }],
     hazards: [{ x: 325, y: 528, w: 120, h: 24 }],
     hint: 'The glass is up on tall stilts over a bed of spikes. Clear the wall, use all three bars, and do not fall short.' },
+  // From the owner's mockup: five bars, three blocks with spikes along one edge each (thin hazards laid on the block edge,
+  // drawn under the block so only the outer spikes show), and spiked floor either side of the glass.
+  { id: '13-needle', name: 'Needle', glass: { x: 326, w: 44, h: 60 }, fixed: [], pieces: [{ len: 76 }, { len: 80 }, { len: 76 }, { len: 76 }, { len: 70 }],
+    blocks: [{ x: 210, y: 79, w: 23, h: 158 }, { x: 125, y: 239, w: 29, h: 132 }, { x: 230, y: 346, w: 26, h: 140 }],
+    hazards: [
+      { x: 198, y: 35, w: 2, h: 70 }, { x: 125, y: 173, w: 29, h: 2 }, { x: 244, y: 310, w: 2, h: 72 },
+      { x: 277, y: 528, w: 34, h: 24 }, { x: 378, y: 528, w: 32, h: 24 },
+    ],
+    hint: 'Five bars, three walls with spikes on one side each, and spikes either side of the glass. Thread the ball down through all five.' },
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],

@@ -29,13 +29,13 @@ export function ShotThumbnail({ level, shot, width, height }: { level: Level; sh
     <Svg width={width} height={height} viewBox={`0 ${top} ${WORLD.width} ${viewH}`}>
       <Rect x={0} y={top} width={WORLD.width} height={viewH} fill={c.paper} />
       <Line x1={0} y1={WORLD.ground} x2={WORLD.width} y2={WORLD.ground} stroke={c.ink} strokeWidth={6} />
-      {(level.blocks ?? []).map((b, i) => (
-        <Polygon key={`blk${i}`} points={blockCorners(b).map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')} fill={c.steel} stroke={c.ink} strokeWidth={4} />
-      ))}
       {(level.hazards ?? []).map((h, i) => (
         <Polygon key={`hz${i}`} points={blockCorners(hazardReach(h)).map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')} fill={c.red} />
       ))}
-      {path && (
+      {(level.blocks ?? []).map((b, i) => (
+        <Polygon key={`blk${i}`} points={blockCorners(b).map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')} fill={c.steel} stroke={c.ink} strokeWidth={4} />
+      ))}
+            {path && (
         <Polyline
           points={path.map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')}
           fill="none" stroke={c.red} strokeWidth={5} strokeLinejoin="round" strokeLinecap="round" opacity={0.85}

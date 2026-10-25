@@ -20,11 +20,12 @@ export function Tray({ slots, selected, onTap, disabled, onChipLayout }: Props) 
   if (!slots.length) {
     return <Text style={[styles.none, { color: c.muted }]}>No pieces on this level</Text>;
   }
+  const compact = slots.length > 3; // 4 or more bars: just the number, so they all fit on one row
   return (
     <View style={styles.tray}>
       {slots.map((s, k) => {
         const sel = selected === k && s.onBoard;
-        const label = `Bar ${k + 1}`;
+        const label = compact ? `${k + 1}` : `Bar ${k + 1}`;
         const fg = sel ? c.panel : c.pencil;
         return (
           <Pressable
@@ -36,13 +37,14 @@ export function Tray({ slots, selected, onTap, disabled, onChipLayout }: Props) 
             accessibilityLabel={s.onBoard ? (sel ? `Deselect bar ${k + 1}` : `Select bar ${k + 1}`) : `Place bar ${k + 1}`}
             style={[
               styles.chip,
+              compact && styles.chipCompact,
               { borderColor: c.pencil },
               s.onBoard && !sel && styles.on,
               sel && { backgroundColor: c.pencil },
             ]}
           >
-            <View style={styles.iconBox}>
-              <View style={[styles.icon, { width: (s.len / 90) * 34 * ICON_SCALE, backgroundColor: fg }]} />
+            <View style={[styles.iconBox, compact && styles.iconBoxCompact]}>
+              <View style={[styles.icon, { width: ((s.len / 90) * 34 * ICON_SCALE) * (compact ? 0.5 : 1), backgroundColor: fg }]} />
             </View>
             <Text style={[styles.text, { color: fg }]}>{label}</Text>
           </Pressable>
@@ -62,6 +64,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6, height: 34, paddingHorizontal: 10,
     borderRadius: 17, borderWidth: 1.5,
   },
+  chipCompact: { paddingHorizontal: 7, gap: 3 },
+  iconBoxCompact: { width: 20 },
   on: { opacity: 0.55, borderStyle: 'dashed' },
   iconBox: { width: 34, height: 10, justifyContent: 'center', paddingLeft: 3 * ICON_SCALE },
   icon: { height: 3.5, borderRadius: 2 },

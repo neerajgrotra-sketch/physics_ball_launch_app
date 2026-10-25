@@ -44,6 +44,10 @@ more after (a glass 190 up is about 6 with 3 bars and a wall); a **second block*
 almost nothing (they raise the chance a try fails, 36–46% of plain shots, not how hard a way in is to find). Level 13 "Stilts" was
 tuned to 6.0 with this.
 
+Level 14 "Needle" (from the owner's mockup; 5 bars, 3 walls with one spiked edge each, spikes beside the glass) measures **9.6**:
+a finale-class level, 79% of plain shots die. Its stored answer is forgiving (24/49) and bounces off the walls twice. Its place is
+the end of the first set, after gauntlet and crossfire.
+
 ## Menus and settings
 
 - **Settings screen** (the ⚙ button; today it only has Music): sound effects, music, haptics,

@@ -193,17 +193,18 @@ export function Board(props: BoardProps) {
                 {/* floor and board edges bounce: solid ink. Fixed obstacles are dead: grey and hatched. */}
                 <Rect x={1.5} y={1.5} width={W - 3} height={GROUND - 1.5} color={c.ink} style="stroke" strokeWidth={3} />
                 <Path path={linePath(0, GROUND, W, GROUND)} color={c.ink} style="stroke" strokeWidth={4} strokeCap="round" />
-                {blocks.map((b, i) => (
-                  <Group key={`blk${i}`}>
-                    <Path path={b} color={c.steel} />
-                    <Path path={b} color={c.ink} style="stroke" strokeWidth={2.5} strokeJoin="round" />
-                  </Group>
-                ))}
+                {/* Hazards first, then blocks over them: a thin hazard laid along a block's edge shows spikes on the outside only. */}
                 {hazards.map((h, i) => (
                   <Group key={`hz${i}`}>
                     <Path path={h.body} color={c.red} />
                     <Path path={h.spikes} color={c.red} />
                     <Path path={h.body} color={c.paper} style="stroke" strokeWidth={1.2} opacity={0.5} />
+                  </Group>
+                ))}
+                {blocks.map((b, i) => (
+                  <Group key={`blk${i}`}>
+                    <Path path={b} color={c.steel} />
+                    <Path path={b} color={c.ink} style="stroke" strokeWidth={2.5} strokeJoin="round" />
                   </Group>
                 ))}
                 <Path path={dead.bars} color={c.muted} style="stroke" strokeWidth={6} strokeCap="round" />

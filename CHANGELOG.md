@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.11.0
+
+- New level 14, "Needle", from your mockup: five bars, three walls with spikes along one edge each, and spikes either
+  side of the glass. Par 7.
+- Spikes can now sit on one edge of a block (a thin hazard laid along the edge, drawn under the block so only the outer spikes show).
+- With four or more bars the tray shows just the numbers, so five bars fit on one row.
+
 ## 0.10.2
 
 - New level 13, "Stilts": the glass stands on stilts, 190 up, over a bed of spikes, behind a wall, with three bars. Measured at
