@@ -82,8 +82,9 @@ export function totalScore(best: BestByLevel): number {
  * The goal line under the board, with the bounce target, e.g. "Goal: into the glass in 3 bounces,
  * off all 3 bars" (par is the target: that many bounces or fewer earns ★★★).
  */
-export function goalText(pieces: number, par: number | undefined): string {
-  const every = pieces === 1 ? 'the bar' : pieces === 2 ? 'both bars' : `all ${pieces} bars`;
+export function goalText(pieces: number, par: number | undefined, pads = 0): string {
+  const bars = pieces === 1 ? 'the bar' : pieces === 2 ? 'both bars' : `all ${pieces} bars`;
+  const every = pads === 0 ? bars : `${bars} and ${pads === 1 ? 'the spring pad' : 'both spring pads'}`;
   if (par == null) return `Goal: off ${every}, then into the glass`;
   return `Goal: into the glass in ${par} bounce${par === 1 ? '' : 's'}, off ${every}`;
 }

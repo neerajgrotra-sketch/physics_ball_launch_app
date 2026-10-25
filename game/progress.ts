@@ -76,12 +76,15 @@ export function winText(opts: {
  * or the ball missed some. `numbers[i]` is the bar number of placed piece i; `touched[i]` whether the
  * ball hit it.
  */
-export function skipNotice(total: number, numbers: number[], touched: boolean[]): string {
+export function skipNotice(total: number, numbers: number[], touched: boolean[], pads?: { total: number; touched: boolean[] }): string {
   const every = total === 1 ? 'the bar' : total === 2 ? 'both bars' : `all ${total} bars`;
   if (numbers.length < total) return `In the glass, but it has to bounce off ${every}. Place ${every} first.`;
   const missed = numbers.filter((_, i) => !touched[i]);
+  const padWord = !pads || pads.total === 0 ? '' : pads.total === 1 ? 'the spring pad' : 'both spring pads';
+  const padsMissed = !!pads && pads.touched.some((t) => !t);
+  if (missed.length === 0 && padsMissed) return `In the glass, but it never touched ${padWord}. It has to bounce off ${padWord} as well as ${every}.`;
   const names = missed.length === 1
     ? `Bar ${missed[0]}`
     : `Bars ${missed.slice(0, -1).join(', ')} and ${missed[missed.length - 1]}`;
-  return `In the glass, but it missed ${names}. It has to bounce off ${every}.`;
+  return `In the glass, but it missed ${names}. It has to bounce off ${every}${padWord ? ` and ${padWord}` : ''}.`;
 }

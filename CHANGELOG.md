@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.12.2
+
+- A win now needs the ball to touch every spring pad, as well as every bar (a pad level could be won without its pads, which
+  made its par and goal wrong). A landing that skipped a pad says so ("So close!"), and the goal line names the pads.
+- Pinball re-solved under the new rule: par 10, 32/49 forgiving.
+
 ## 0.12.1
 
 - New level 20, "Pinball": two spring pads (one on the floor, one set into the right wall as a bumper), a spiked roof just above

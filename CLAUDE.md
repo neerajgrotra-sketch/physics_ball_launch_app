@@ -129,7 +129,7 @@ Levels live in `tools/design-levels.ts` (geometry), then `npx tsx tools/design-l
 stored solution and par (a few minutes per level). A spiked edge on a block is a thin hazard laid along that edge (hazards are drawn under blocks, so only the outer spikes show). Optional extras on a level: `blocks` (fixed solid rectangles
 the ball bounces off, softly like the walls; bars keep a ball's width clear of them, the same rule as for
 the glass) `hazards` (spiked red rectangles, same shape as blocks: touching one, out to the tips of its spikes, destroys
-the ball and ends the shot as "dead"; bars keep clear of them like any obstacle) `pads` (spring pads: same shape as blocks, but they throw the ball back at 1.3× plus a 240 px/s kick along the normal, capped at 1120 px/s; the solver makes a pad level's answer use one) and `fixed` (plain dead segments). Next worlds are listed in `BACKLOG.md`.
+the ball and ends the shot as "dead"; bars keep clear of them like any obstacle) `pads` (spring pads: same shape as blocks, but they throw the ball back at 1.3× plus a 240 px/s kick along the normal, capped at 1120 px/s; like bars, a win needs every pad touched) and `fixed` (plain dead segments). Next worlds are listed in `BACKLOG.md`.
 
 ## Screens and navigation
 

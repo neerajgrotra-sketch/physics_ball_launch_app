@@ -263,3 +263,27 @@ describe('spring pads', () => {
     expect(legalPlacement(level, [{ len: 90, x: 200, y: 400, deg: 0 }])).toBe(true);
   });
 });
+
+describe('a win needs every spring pad touched', () => {
+  it('lands without touching the pad: skipped, not a win', () => {
+    const base = LEVELS[1];
+    const s = base.solution!;
+    const plain = simulate(buildWorld(base, solutionPieces(base)), s.angle, s.power);
+    expect(plain.success).toBe(true);
+    // A pad the ball never goes near.
+    const padded: Level = { ...base, pads: [{ x: 200, y: 60, w: 40, h: 10 }] };
+    const r = simulate(buildWorld(padded, solutionPieces(padded)), s.angle, s.power);
+    expect(r.success).toBe(false);
+    expect(r.end).toBe('skipped');
+    expect(r.padsTouched).toEqual([false]);
+  });
+
+  it('every pad level has a stored answer that touches all its pads', () => {
+    for (const l of LEVELS.filter((x) => x.pads?.length)) {
+      const s = l.solution!;
+      const r = simulate(buildWorld(l, solutionPieces(l)), s.angle, s.power);
+      expect(r.success).toBe(true);
+      expect(r.padsTouched.every(Boolean)).toBe(true);
+    }
+  });
+});

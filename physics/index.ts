@@ -105,13 +105,15 @@ export interface Level {
 
 export type SegmentKind = 'dead' | 'glass' | 'piece' | 'wall' | 'block' | 'pad';
 /** `piece` is the index of the placed piece a 'piece' segment belongs to. */
-export interface Segment { x1: number; y1: number; x2: number; y2: number; e: number; f: number; kind: SegmentKind; piece?: number }
+export interface Segment { x1: number; y1: number; x2: number; y2: number; e: number; f: number; kind: SegmentKind; piece?: number; /** index of the spring pad a 'pad' segment belongs to */ pad?: number }
 export interface World {
   segs: Segment[];
   glass: { l: number; r: number; rim: number; base: number };
   /** How many pieces the level gives, and how many are placed. A win needs them all placed and touched. */
   pieceCount: number;
   placedCount: number;
+  /** How many spring pads the level has. A win needs the ball to touch every one of them as well. */
+  padCount: number;
 }
 /**
  * How a shot ended. 'glass': settled in the glass after touching every bar (a win). 'skipped': settled
@@ -128,7 +130,7 @@ export interface Hit { i: number; kind: 'piece' | 'glass' | 'wall' | 'block' | '
  * `touched[k]`: whether the ball touched placed piece k during the shot. `bounces`: the scored bounce
  * count (see the rules above), at most one per step so a corner hit is one bounce.
  */
-export interface SimResult { path: Vec[]; success: boolean; t: number; end: EndReason; hits: Hit[]; touched: boolean[]; bounces: number }
+export interface SimResult { path: Vec[]; success: boolean; t: number; end: EndReason; hits: Hit[]; touched: boolean[]; /** per spring pad: whether the ball touched it */ padsTouched: boolean[]; bounces: number }
 
 export function speedFor(power: number): number {
   return 280 + power * 8.4; // power 0..100 → 280..1120 px/s
@@ -154,8 +156,8 @@ export function solutionPieces(level: Level): PlacedPiece[] {
 
 export function buildWorld(level: Level, placed: PlacedPiece[]): World {
   const segs: Segment[] = [];
-  const add = (x1: number, y1: number, x2: number, y2: number, e: number, f: number, kind: SegmentKind, piece?: number) =>
-    segs.push({ x1, y1, x2, y2, e, f, kind, piece });
+  const add = (x1: number, y1: number, x2: number, y2: number, e: number, f: number, kind: SegmentKind, piece?: number, pad?: number) =>
+    segs.push({ x1, y1, x2, y2, e, f, kind, piece, pad });
 
   // Floor and the four board edges.
   const { width: W, ground: GROUND } = WORLD;
@@ -184,15 +186,15 @@ export function buildWorld(level: Level, placed: PlacedPiece[]): World {
     k.forEach((p, i) => { const q = k[(i + 1) % 4]; add(p[0], p[1], q[0], q[1], WALL_RESTITUTION, WALL_FRICTION, 'block'); });
   }
   // Spring pads: their own kind, so the bounce can kick.
-  for (const b of level.pads ?? []) {
+  (level.pads ?? []).forEach((b, n) => {
     const k = blockCorners(b);
-    k.forEach((p, i) => { const q = k[(i + 1) % 4]; add(p[0], p[1], q[0], q[1], PAD_RESTITUTION, 0.01, 'pad'); });
-  }
+    k.forEach((p, i) => { const q = k[(i + 1) % 4]; add(p[0], p[1], q[0], q[1], PAD_RESTITUTION, 0.01, 'pad', undefined, n); });
+  });
   placed.forEach((p, k) => {
     const [x1, y1, x2, y2] = pieceEnds(p);
     add(x1, y1, x2, y2, p.restitution ?? 0.85, 0.01, 'piece', k);
   });
-  return { segs, glass: { l, r, rim, base }, pieceCount: level.pieces.length, placedCount: placed.length };
+  return { segs, glass: { l, r, rim, base }, pieceCount: level.pieces.length, placedCount: placed.length, padCount: (level.pads ?? []).length };
 }
 
 export function inGlass(world: World, x: number, y: number): boolean {
@@ -222,12 +224,13 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
   // Which pieces the ball has touched. A win needs every one of the level's pieces placed and touched.
   const touched = new Array<boolean>(world.placedCount).fill(false);
   let touchedCount = 0;
+  const padsTouched = new Array<boolean>(world.padCount).fill(false);
   let slow = 0, inside = 0, t = 0, step = 0;
   let bounces = 0;
   const cup = world.glass; // bounces down inside the glass (below its rim) don't count
   const segs = world.segs;
-  const finish = (success: boolean, end: EndReason): SimResult => { path.push([x, y]); return { path, success, t, end, hits, touched, bounces }; };
-  const everyBar = () => world.placedCount === world.pieceCount && touchedCount === world.pieceCount;
+  const finish = (success: boolean, end: EndReason): SimResult => { path.push([x, y]); return { path, success, t, end, hits, touched, padsTouched, bounces }; };
+  const everyBar = () => world.placedCount === world.pieceCount && touchedCount === world.pieceCount && padsTouched.every(Boolean);
   const settled = () => everyBar() ? finish(true, 'glass') : finish(false, 'skipped');
 
   while (t < MAX_SIM_SECONDS) {
@@ -252,6 +255,7 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
         return inGlass(world, x, y) ? settled() : finish(false, 'dead');
       }
       if (s.piece !== undefined && !touched[s.piece]) { touched[s.piece] = true; touchedCount++; }
+      if (s.pad !== undefined) padsTouched[s.pad] = true;
 
       let d = Math.sqrt(d2);
       if (d < 1e-6) { dx = -ey; dy = ex; d = Math.hypot(dx, dy) || 1; }

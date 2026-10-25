@@ -191,7 +191,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
       setBounces(res.bounces);
       setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end }].slice(-MAX_TRAILS));
       // A destroyed ball needs no card: the board shows the burst and the sound plays.
-      setNotice(res.end === 'skipped' ? skipNotice(level.pieces.length, numbers, res.touched) : null);
+      setNotice(res.end === 'skipped' ? skipNotice(level.pieces.length, numbers, res.touched, { total: (level.pads ?? []).length, touched: res.padsTouched }) : null);
       if (res.end === 'dead') feedback.died();
       if (res.success) {
         feedback.landed();
@@ -603,7 +603,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           />
         )}
       </View>
-      <Text style={[styles.goal, { color: c.ink }]} numberOfLines={2}>{goalText(level.pieces.length, level.par)}</Text>
+      <Text style={[styles.goal, { color: c.ink }]} numberOfLines={2}>{goalText(level.pieces.length, level.par, (level.pads ?? []).length)}</Text>
       <View style={styles.controls}>
         {selectedBar != null ? (
           <RotateControls

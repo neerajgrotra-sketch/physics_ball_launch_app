@@ -48,3 +48,10 @@ describe('golf scoring', () => {
     expect(goalText(2, undefined)).toBe('Goal: off both bars, then into the glass');
   });
 });
+
+describe('goalText with spring pads', () => {
+  it('adds the pads to the goal', () => {
+    expect(goalText(2, 6, 2)).toBe('Goal: into the glass in 6 bounces, off both bars and both spring pads');
+    expect(goalText(2, 4, 1)).toBe('Goal: into the glass in 4 bounces, off both bars and the spring pad');
+  });
+});

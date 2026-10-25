@@ -47,21 +47,21 @@
     }
   ],
   "hint": "Two golden spring pads, and a spiked roof over the glass. Throw too hard and the ball is lost on the spikes: use a pad and both bars to drop it in.",
-  "par": 6,
+  "par": 10,
   "solution": {
     "pieces": [
       {
-        "x": 313,
-        "y": 436,
-        "deg": 58
+        "x": 281,
+        "y": 395,
+        "deg": 90
       },
       {
-        "x": 280,
-        "y": 351,
-        "deg": 44
+        "x": 236,
+        "y": 170,
+        "deg": 30
       }
     ],
-    "angle": 75.2,
-    "power": 66.7
+    "angle": 48.7,
+    "power": 97
   }
 }
