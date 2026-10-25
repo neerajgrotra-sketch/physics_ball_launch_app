@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.10.1
+
+- New level 12, "Moat": spiked patches on both sides of the glass, a spiked block hanging from the ceiling and a wall on the
+  way, with three bars. The ball has to stay under the hanging spikes, clear the wall and drop straight in. Par 4.
+
 ## 0.10.0
 
 - Hazards: spiked red shapes that destroy the ball. A hit ends the shot (it counts as a try), shows "Ouch!"

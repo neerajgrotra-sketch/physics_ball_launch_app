@@ -1,0 +1,72 @@
+{
+  "id": "11-moat",
+  "name": "Moat",
+  "glass": {
+    "x": 330,
+    "w": 40,
+    "h": 52
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 70
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 125,
+      "y": 450,
+      "w": 24,
+      "h": 180
+    }
+  ],
+  "hazards": [
+    {
+      "x": 215,
+      "y": 105,
+      "w": 26,
+      "h": 210
+    },
+    {
+      "x": 272,
+      "y": 528,
+      "w": 36,
+      "h": 24
+    },
+    {
+      "x": 384,
+      "y": 528,
+      "w": 28,
+      "h": 24
+    }
+  ],
+  "hint": "Spikes guard the glass on both sides, and one hangs from the ceiling. Clear the wall, stay under the hanging spikes, and drop straight in.",
+  "par": 4,
+  "solution": {
+    "pieces": [
+      {
+        "x": 94,
+        "y": 306,
+        "deg": 142
+      },
+      {
+        "x": 252,
+        "y": 472,
+        "deg": 141
+      },
+      {
+        "x": 170,
+        "y": 425,
+        "deg": 68
+      }
+    ],
+    "angle": 81.1,
+    "power": 42.9
+  }
+}
