@@ -582,7 +582,12 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           <RotateControls
             bar={selectedBar + 1}
             angle={shownAngle(slots[selectedBar].deg)}
-            onAngle={(a) => rotate((s) => rotateToLegal(level, s, selectedBar, a))}
+            onAngle={(a) => {
+              // false when the bar can't turn that far (it would clip something): the slider pulls back and shakes.
+              const ok = rotateToLegal(level, slots, selectedBar, a) !== slots;
+              rotate((s) => rotateToLegal(level, s, selectedBar, a));
+              return ok;
+            }}
             onNudge={(by) => rotate((s) => rotateLegal(level, s, selectedBar, by))}
             onDone={() => setSelected(null)}
             onRemove={() => { if (!flying) { const r = removeBar(slots, selectedBar); setSlots(r.slots); setSelected(r.selected); } }}

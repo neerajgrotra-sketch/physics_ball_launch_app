@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.11.6
+
+- The bar rotation slider no longer runs ahead of a bar that cannot turn (it would clip the glass, a block or another bar):
+  the thumb pulls back to the real angle, shakes and turns red for a moment.
+
 ## 0.11.5
 
 - Hitting a hazard no longer opens an "Ouch!" card that had to be dismissed. The ball bursts in a ring and sparks where it
