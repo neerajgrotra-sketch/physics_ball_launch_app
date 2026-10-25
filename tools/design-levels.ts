@@ -74,6 +74,13 @@ const designs: Omit<Level, 'solution' | 'par'>[] = [
       { x: 155, y: 528, w: 150, h: 24 },
     ],
     hint: 'Penthouse with a fifth bar. The glass is up under a spiked roof: go out high past the walls, use all five bars, and come home from the right.' },
+  // A wall-bank level: the glass is under a spiked roof, shut on the left, so it can only be entered from the right through a
+  // corridor only 45 wide beside the board's own right wall (too narrow to place a bar across), so the way in is to come down it and
+  // bank off that wall (tools/needs-walls.ts checks it).
+  { id: '17-cushion', name: 'Cushion', glass: { x: 315, w: 40, h: 56 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }],
+    blocks: [{ x: 300, y: 380, w: 110, h: 24 }, { x: 252, y: 460, w: 14, h: 160 }],
+    hazards: [{ x: 300, y: 368, w: 110, h: 2 }, { x: 245, y: 460, w: 2, h: 160 }, { x: 277, y: 528, w: 36, h: 24 }, { x: 378, y: 528, w: 40, h: 24 }],
+    hint: 'The glass is shut in on the left and the only way in is a narrow gap beside the right wall. Come down it and bank off the wall, using both bars.' },
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],

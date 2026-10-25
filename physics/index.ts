@@ -80,6 +80,11 @@ export interface Level {
    * the shot ends there ('dead') and counts as a try. Optional.
    */
   hazards?: Block[];
+  /**
+   * Analysis only (tools/needs-walls.ts): make the floor and all four board edges deadly instead of bouncy, to test
+   * whether a level can be won without bouncing off the board's own walls. Never set on a shipped level.
+   */
+  edgesDead?: boolean;
   pieces: PieceSpec[];
   /** One verified answer, shown by the Solve button. pieces[i] matches level.pieces[i]. */
   solution?: Solution;
@@ -143,7 +148,8 @@ export function buildWorld(level: Level, placed: PlacedPiece[]): World {
 
   // Floor and the four board edges.
   const { width: W, ground: GROUND } = WORLD;
-  const wall = (x1: number, y1: number, x2: number, y2: number) => add(x1, y1, x2, y2, WALL_RESTITUTION, WALL_FRICTION, 'wall');
+  const wall = (x1: number, y1: number, x2: number, y2: number) =>
+    level.edgesDead ? add(x1, y1, x2, y2, 0, 0, 'dead') : add(x1, y1, x2, y2, WALL_RESTITUTION, WALL_FRICTION, 'wall');
   wall(0, GROUND, W, GROUND);
   wall(0, 0, 0, GROUND);
   wall(W, 0, W, GROUND);

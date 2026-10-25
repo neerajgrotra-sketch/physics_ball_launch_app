@@ -1,0 +1,76 @@
+{
+  "id": "17-cushion",
+  "name": "Cushion",
+  "glass": {
+    "x": 315,
+    "w": 40,
+    "h": 56
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 300,
+      "y": 380,
+      "w": 110,
+      "h": 24
+    },
+    {
+      "x": 252,
+      "y": 460,
+      "w": 14,
+      "h": 160
+    }
+  ],
+  "hazards": [
+    {
+      "x": 300,
+      "y": 368,
+      "w": 110,
+      "h": 2
+    },
+    {
+      "x": 245,
+      "y": 460,
+      "w": 2,
+      "h": 160
+    },
+    {
+      "x": 277,
+      "y": 528,
+      "w": 36,
+      "h": 24
+    },
+    {
+      "x": 378,
+      "y": 528,
+      "w": 40,
+      "h": 24
+    }
+  ],
+  "hint": "The glass is shut in on the left and the only way in is a narrow gap beside the right wall. Come down it and bank off the wall, using both bars.",
+  "par": 3,
+  "solution": {
+    "pieces": [
+      {
+        "x": 169,
+        "y": 217,
+        "deg": 55
+      },
+      {
+        "x": 243,
+        "y": 293,
+        "deg": 32
+      }
+    ],
+    "angle": 82.7,
+    "power": 63.7
+  }
+}

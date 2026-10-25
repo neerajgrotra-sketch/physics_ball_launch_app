@@ -199,6 +199,8 @@ Barlow and Barlow Condensed type. Use the colour tokens from `reference/prototyp
 - `npx vitest run`: physics and level tests. Run them before every commit.
 - `npx tsx tools/report.ts`: full no-direct-shot proof plus how forgiving each solution is (about 1 min per level).
 - `npx tsx tools/design-levels.ts [id-prefix]`: regenerate level JSON after changing geometry.
+- `npx tsx tools/needs-walls.ts <id prefix> [samples] [seed]`: how many of a level's bounces are off the floor or board edges,
+  and whether any answer exists when those are deadly (`Level.edgesDead`, analysis only). Use it for wall-bank levels.
 - `npx tsx tools/assess-levels.ts [samples] [level index]`: difficulty numbers per level (bars, obstacles, par, how forgiving
   the answer is, hazard deaths, and "found": random bar-chains the solver finds per 10,000 tries, lower = harder to stumble
   on). Run it after adding a level and keep the curve rising (see BACKLOG.md). Pass a level index to run one level alone,

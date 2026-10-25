@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.11.4
+
+- New level 18, "Cushion": the glass is shut in under a spiked roof and can only be reached through a narrow gap beside the
+  right wall of the board, so the answer banks off that wall. Par 3, two bars.
+- A new analysis tool, `tools/needs-walls.ts`, checks whether a level needs the board's own walls (it searches again with the
+  floor and edges deadly).
+
 ## 0.11.3
 
 - New level 17, "Skyline": Penthouse with a fifth bar. The glass is up under a spiked roof; the ball goes out high past the
