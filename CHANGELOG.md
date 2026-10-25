@@ -4,6 +4,15 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.14.0
+
+- Portals: linked pairs (`Level.portals`, blue and orange rings). A ball whose centre enters one end comes out of the other with its
+  speed kept and its heading turned by an optional `turn`; it can't go straight back in. Like bars and pads, a win needs every pair used
+  (the goal line says "through the portal"). Bars keep clear of portals. The trail breaks at a portal instead of drawing a line across
+  the board, a ring flashes where the ball comes out, and there is a new warp sound.
+- New level 22, "Wormhole": the glass is walled into a box in the bottom right and the only way in is the blue portal in the open, whose
+  orange end opens inside the box. Par 2, 49/49 forgiving.
+
 ## 0.13.2
 
 - Tray chips on levels with 4 or more bars have their dash back ("— Bar 1"): a short line icon, tighter chips and a slightly smaller

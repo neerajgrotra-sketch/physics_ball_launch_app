@@ -13,6 +13,8 @@ export interface Flight {
   y: SharedValue<number>;
   /** Fraction of the path's length drawn so far, for Skia's path trim. */
   end: SharedValue<number>;
+  /** Path indices where the ball came out of a portal: no line is drawn into them. */
+  jumps: number[];
 }
 
 /**
@@ -33,6 +35,7 @@ export function usePlayback() {
   const events = useSharedValue<number[]>([]); // path index of each event, ascending
   const nextEvent = useSharedValue(0);
   const [path, setPath] = useState<Vec[] | null>(null);
+  const [jumpAt, setJumpAt] = useState<number[]>([]);
   const onDone = useRef<(() => void) | null>(null);
   const onEvent = useRef<((k: number) => void) | null>(null);
 
@@ -75,12 +78,13 @@ export function usePlayback() {
   }, []);
   const frame = useFrameCallback(step, false);
 
-  const play = (p: Vec[], done: () => void, eventAt: number[] = [], onEventAt?: (k: number) => void) => {
+  const play = (p: Vec[], done: () => void, eventAt: number[] = [], onEventAt?: (k: number) => void, jumps: number[] = []) => {
     const flat: number[] = [];
     const lengths: number[] = [0];
     for (let i = 0; i < p.length; i++) {
       flat.push(p[i][0], p[i][1]);
-      if (i > 0) lengths.push(lengths[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]));
+      // A trip through a portal is a jump, not distance travelled: it adds nothing to the drawn length.
+      if (i > 0) lengths.push(lengths[i - 1] + (jumps.includes(i) ? 0 : Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1])));
     }
     const total = lengths[lengths.length - 1];
     pts.value = flat;
@@ -94,6 +98,7 @@ export function usePlayback() {
     running.value = true;
     onDone.current = done;
     onEvent.current = onEventAt ?? null;
+    setJumpAt(jumps);
     setPath(p);
     frame.setActive(true);
   };
@@ -106,6 +111,6 @@ export function usePlayback() {
     finish();
   };
 
-  const flight: Flight | null = path ? { path, x, y, end } : null;
+  const flight: Flight | null = path ? { path, x, y, end, jumps: jumpAt } : null;
   return { flight, flying: path !== null, play, skip };
 }

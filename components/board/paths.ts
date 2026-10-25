@@ -77,11 +77,15 @@ export function hazardPaths(corners: [number, number][], length: number): { body
 }
 
 /** Polyline through the first `n` points of a path. */
-export function polyPath(path: Vec[], n = path.length): SkPath {
+export function polyPath(path: Vec[], n = path.length, jumps: number[] = []): SkPath {
   const p = Skia.PathBuilder.Make();
   if (n < 2) return p.detach();
   p.moveTo(path[0][0], path[0][1]);
-  for (let i = 1; i < n; i++) p.lineTo(path[i][0], path[i][1]);
+  // A path index in `jumps` is where the ball came out of a portal: start a new line there.
+  for (let i = 1; i < n; i++) {
+    if (jumps.includes(i)) p.moveTo(path[i][0], path[i][1]);
+    else p.lineTo(path[i][0], path[i][1]);
+  }
   return p.detach();
 }
 

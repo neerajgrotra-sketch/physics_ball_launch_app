@@ -299,3 +299,56 @@ describe('spring bars (restitution above 1)', () => {
     expect(simulate(buildWorld(plain, solutionPieces(plain)), s.angle, s.power).success).toBe(false);
   });
 });
+
+describe('portals', () => {
+  const base: Level = { id: 't', name: 't', hint: '', glass: { x: 360, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }] };
+
+  it('carry the ball from one end to the other with its speed kept', () => {
+    // Fire straight up from the launcher at x = 44: a portal in its way at (44, 300) lets it out at (200, 300), still going up.
+    const level: Level = { ...base, portals: [{ a: { x: 44, y: 300 }, b: { x: 200, y: 300 } }] };
+    const r = simulate(buildWorld(level, []), 90, 60);
+    expect(r.portalsUsed).toEqual([true]);
+    expect(r.jumps.length).toBeGreaterThanOrEqual(1);
+    const j = r.jumps[0];
+    expect(r.path[j]).toEqual([200, 300]);
+    // The move across is a jump, not travel: the point before it is near the entry, the one after is the exit.
+    expect(Math.hypot(r.path[j - 1][0] - 44, r.path[j - 1][1] - 300)).toBeLessThan(15);
+    // Speed is kept: the next steps rise at about the speed that went in.
+    const into = Math.abs(r.path[j - 1][1] - r.path[j - 2][1]), out = Math.abs(r.path[j + 2][1] - r.path[j + 1][1]);
+    expect(out).toBeGreaterThan(into * 0.9);
+    expect(out).toBeLessThan(into * 1.1);
+    expect(Math.max(...r.path.map((p) => p[0]))).toBeGreaterThan(190);
+  });
+
+  it('turn the heading by `turn` degrees on the way out', () => {
+    const level: Level = { ...base, portals: [{ a: { x: 44, y: 300 }, b: { x: 200, y: 300 }, turn: 90 }] };
+    const r = simulate(buildWorld(level, []), 90, 60);
+    const j = r.jumps[0];
+    // Going up (-y) turned a quarter turn clockwise (towards +x on screen) leaves moving right.
+    expect(r.path[j + 4][0]).toBeGreaterThan(r.path[j][0] + 1);
+  });
+
+  it('Wormhole: the stored answer goes through the portal and wins', () => {
+    const level = LEVELS.find((x) => x.id === '21-wormhole')!;
+    const s = level.solution!;
+    const r = simulate(buildWorld(level, solutionPieces(level)), s.angle, s.power);
+    expect(r.success).toBe(true);
+    expect(r.portalsUsed.every(Boolean)).toBe(true);
+    expect(r.jumps.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('a landing that skipped the portal is not a win', () => {
+    const first = LEVELS[1];
+    const s = first.solution!;
+    const withPortal: Level = { ...first, portals: [{ a: { x: 200, y: 40 }, b: { x: 300, y: 40 } }] };
+    const r = simulate(buildWorld(withPortal, solutionPieces(withPortal)), s.angle, s.power);
+    expect(r.portalsUsed).toEqual([false]);
+    expect(r.success).toBe(false);
+  });
+
+  it('are kept clear of when placing bars', () => {
+    const level: Level = { ...base, portals: [{ a: { x: 200, y: 300 }, b: { x: 300, y: 300 } }] };
+    expect(legalPlacement(level, [{ len: 90, x: 200, y: 300, deg: 0 }])).toBe(false);
+    expect(legalPlacement(level, [{ len: 90, x: 200, y: 400, deg: 0 }])).toBe(true);
+  });
+});

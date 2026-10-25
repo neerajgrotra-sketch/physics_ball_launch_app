@@ -55,3 +55,10 @@ describe('goalText with spring pads', () => {
     expect(goalText(2, 4, 1)).toBe('Goal: into the glass in 4 bounces, off both bars and the spring pad');
   });
 });
+
+describe('goalText with portals', () => {
+  it('adds the portal to the goal', () => {
+    expect(goalText(2, 3, 0, 1)).toBe('Goal: into the glass in 3 bounces, off both bars and through the portal');
+    expect(goalText(2, 3, 1, 1)).toBe('Goal: into the glass in 3 bounces, off both bars and the spring pad and through the portal');
+  });
+});

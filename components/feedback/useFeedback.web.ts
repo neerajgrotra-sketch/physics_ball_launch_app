@@ -14,6 +14,7 @@ const SOUNDS = {
   land: require('../../assets/sounds/land.wav'),
   dead: require('../../assets/sounds/dead.wav'),
   boing: require('../../assets/sounds/boing.wav'),
+  warp: require('../../assets/sounds/warp.wav'),
 };
 type Sound = keyof typeof SOUNDS;
 
@@ -63,6 +64,9 @@ export function useFeedback() {
     },
     landed() {
       play('land', 1);
+    },
+    warped() {
+      play('warp', 0.8);
     },
     died() {
       play('dead', 0.7);

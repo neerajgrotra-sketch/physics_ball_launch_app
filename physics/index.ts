@@ -38,6 +38,8 @@ export const PAD_RESTITUTION = 1.3;
 export const PAD_KICK = 240;
 /** No bounce may send the ball faster than a full-power launch, so it can't tunnel through a thin surface. */
 export const MAX_BALL_SPEED = 1120;
+/** How close the ball's centre must come to a portal's centre to go through it. */
+export const PORTAL_RADIUS = 14;
 /** The glass stands on a plate this much wider than the glass on each side. */
 export const PLATE_OVERHANG = 8;
 export const ANGLE_STEP = 0.1;       // the only angle values a player can enter
@@ -70,6 +72,7 @@ export function hazardReach(b: Block): Block {
 /** `base` is the y of the glass floor; it defaults to WORLD.ground. */
 export interface Glass { x: number; w: number; h: number; base?: number }
 /** A piece the player places: `restitution` above 1 makes it a spring bar (see isSpring). */
+export interface Portal { a: { x: number; y: number }; b: { x: number; y: number }; turn?: number }
 export interface PieceSpec { len: number; restitution?: number }
 /** A piece or pad with restitution above 1 is a spring: it throws the ball back harder, with the pad kick. */
 export const isSpring = (restitution?: number): boolean => (restitution ?? 0) > 1;
@@ -95,6 +98,11 @@ export interface Level {
    */
   pads?: Block[];
   /**
+   * Portals: linked pairs. A ball whose centre enters one end comes out of the other with its speed kept, its direction turned
+   * by `turn` degrees (default 0; going back the other way turns it by -turn). Like bars and pads, a win needs every pair used.
+   */
+  portals?: Portal[];
+  /**
    * Analysis only (tools/needs-walls.ts): make the floor and all four board edges deadly instead of bouncy, to test
    * whether a level can be won without bouncing off the board's own walls. Never set on a shipped level.
    */
@@ -117,6 +125,7 @@ export interface World {
   placedCount: number;
   /** How many spring pads the level has. A win needs the ball to touch every one of them as well. */
   padCount: number;
+  portals: Portal[];
 }
 /**
  * How a shot ended. 'glass': settled in the glass after touching every bar (a win). 'skipped': settled
@@ -133,7 +142,7 @@ export interface Hit { i: number; kind: 'piece' | 'glass' | 'wall' | 'block' | '
  * `touched[k]`: whether the ball touched placed piece k during the shot. `bounces`: the scored bounce
  * count (see the rules above), at most one per step so a corner hit is one bounce.
  */
-export interface SimResult { path: Vec[]; success: boolean; t: number; end: EndReason; hits: Hit[]; touched: boolean[]; /** per spring pad: whether the ball touched it */ padsTouched: boolean[]; bounces: number }
+export interface SimResult { path: Vec[]; success: boolean; t: number; end: EndReason; hits: Hit[]; touched: boolean[]; /** per spring pad: whether the ball touched it */ padsTouched: boolean[]; /** per portal pair: whether the ball went through it */ portalsUsed: boolean[]; /** path indices where the ball came out of a portal: the segment ending there is a jump, not a line */ jumps: number[]; bounces: number }
 
 export function speedFor(power: number): number {
   return 280 + power * 8.4; // power 0..100 → 280..1120 px/s
@@ -198,7 +207,7 @@ export function buildWorld(level: Level, placed: PlacedPiece[]): World {
     add(x1, y1, x2, y2, p.restitution ?? 0.85, 0.01, 'piece', k);
     if (isSpring(p.restitution)) segs[segs.length - 1].spring = true;
   });
-  return { segs, glass: { l, r, rim, base }, pieceCount: level.pieces.length, placedCount: placed.length, padCount: (level.pads ?? []).length };
+  return { segs, glass: { l, r, rim, base }, pieceCount: level.pieces.length, placedCount: placed.length, padCount: (level.pads ?? []).length, portals: level.portals ?? [] };
 }
 
 export function inGlass(world: World, x: number, y: number): boolean {
@@ -229,12 +238,16 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
   const touched = new Array<boolean>(world.placedCount).fill(false);
   let touchedCount = 0;
   const padsTouched = new Array<boolean>(world.padCount).fill(false);
+  const portalsUsed = new Array<boolean>(world.portals.length).fill(false);
+  const jumps: number[] = [];
+  // After coming out of a portal the ball can't go straight back in: its exit stays shut until it has left.
+  let shut: { n: number; x: number; y: number } | null = null;
   let slow = 0, inside = 0, t = 0, step = 0;
   let bounces = 0;
   const cup = world.glass; // bounces down inside the glass (below its rim) don't count
   const segs = world.segs;
-  const finish = (success: boolean, end: EndReason): SimResult => { path.push([x, y]); return { path, success, t, end, hits, touched, padsTouched, bounces }; };
-  const everyBar = () => world.placedCount === world.pieceCount && touchedCount === world.pieceCount && padsTouched.every(Boolean);
+  const finish = (success: boolean, end: EndReason): SimResult => { path.push([x, y]); return { path, success, t, end, hits, touched, padsTouched, portalsUsed, jumps, bounces }; };
+  const everyBar = () => world.placedCount === world.pieceCount && touchedCount === world.pieceCount && padsTouched.every(Boolean) && portalsUsed.every(Boolean);
   const settled = () => everyBar() ? finish(true, 'glass') : finish(false, 'skipped');
 
   while (t < MAX_SIM_SECONDS) {
@@ -287,6 +300,28 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
         const vt = vx * -ny + vy * nx;
         vx -= vt * s.f * -ny;
         vy -= vt * s.f * nx;
+      }
+    }
+
+    // Portals: the ball's centre coming within PORTAL_RADIUS of one end puts it at the other, speed kept (direction turned by `turn`).
+    if (shut && Math.hypot(x - shut.x, y - shut.y) > PORTAL_RADIUS + R + 4) shut = null;
+    if (!shut) {
+      for (let n = 0; n < world.portals.length; n++) {
+        const pr = world.portals[n];
+        const enterA = Math.hypot(x - pr.a.x, y - pr.a.y) < PORTAL_RADIUS;
+        const enterB = !enterA && Math.hypot(x - pr.b.x, y - pr.b.y) < PORTAL_RADIUS;
+        if (!enterA && !enterB) continue;
+        const out = enterA ? pr.b : pr.a;
+        const turn = ((enterA ? 1 : -1) * (pr.turn ?? 0) * Math.PI) / 180;
+        if (turn) {
+          const c = Math.cos(turn), s = Math.sin(turn);
+          [vx, vy] = [vx * c - vy * s, vx * s + vy * c];
+        }
+        if (recordHits) { path.push([x, y]); jumps.push(path.length); path.push([out.x, out.y]); }
+        x = out.x; y = out.y;
+        portalsUsed[n] = true;
+        shut = { n, x: out.x, y: out.y };
+        break;
       }
     }
 

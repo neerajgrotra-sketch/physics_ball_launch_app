@@ -12,6 +12,7 @@ const SOUNDS = {
   land: require('../../assets/sounds/land.wav'),
   dead: require('../../assets/sounds/dead.wav'),
   boing: require('../../assets/sounds/boing.wav'),
+  warp: require('../../assets/sounds/warp.wav'),
 };
 
 /** Bounce speed (px/s) that counts as a full-strength hit. Launches top out at 1120. */
@@ -36,6 +37,7 @@ export function useFeedback() {
   const land = useAudioPlayer(SOUNDS.land);
   const dead = useAudioPlayer(SOUNDS.dead);
   const boing = useAudioPlayer(SOUNDS.boing);
+  const warp = useAudioPlayer(SOUNDS.warp);
 
   useEffect(() => {
     // Play even with the silent switch on (it muted every sound), still mixing with other audio.
@@ -64,6 +66,10 @@ export function useFeedback() {
     landed() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       play(land, 1);
+    },
+    warped() {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      play(warp, 0.8);
     },
     died() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft).catch(() => {});

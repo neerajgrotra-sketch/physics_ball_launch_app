@@ -1,4 +1,4 @@
-import { buildWorld, pieceEnds, WORLD, LAUNCHER, BALL_RADIUS, type Level, type PlacedPiece } from '../physics';
+import { buildWorld, pieceEnds, WORLD, LAUNCHER, BALL_RADIUS, PORTAL_RADIUS, type Level, type PlacedPiece } from '../physics';
 
 // Where a bar may go. One rule for the player and the level generator, so every stored solution can be
 // placed by hand, and nothing the player places can do what a solution couldn't. Pure: no UI imports.
@@ -36,6 +36,7 @@ export function illegalPieces(level: Level, placed: PlacedPiece[]): boolean[] {
     if (Math.min(e[0], e[2]) < MARGIN || Math.max(e[0], e[2]) > WORLD.width - MARGIN) return true;
     if (Math.min(e[1], e[3]) < MARGIN || Math.max(e[1], e[3]) > WORLD.ground - MARGIN) return true;
     if (segDist(e, [LAUNCHER.x, LAUNCHER.y - 40, LAUNCHER.x, WORLD.ground]) < LAUNCHER_CLEARANCE) return true;
+    if ((level.portals ?? []).some((pr) => [pr.a, pr.b].some((q) => segDist(e, [q.x, q.y, q.x, q.y]) < PORTAL_RADIUS + CLEARANCE))) return true;
     return world.segs.some((s) => segDist(e, [s.x1, s.y1, s.x2, s.y2]) < CLEARANCE);
   });
   for (let i = 0; i < ends.length; i++) for (let j = i + 1; j < ends.length; j++)

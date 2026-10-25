@@ -3,10 +3,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import {
-  BALL_RADIUS, LAUNCHER, WORLD, blockCorners, glassBox, pieceEnds, SPIKE_LENGTH,
+  BALL_RADIUS, LAUNCHER, PORTAL_RADIUS, WORLD, blockCorners, glassBox, pieceEnds, SPIKE_LENGTH,
   type EndReason, type Level, type PlacedPiece, type Vec,
 } from '../../physics';
-import { Easing, useDerivedValue, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useColors, type Palette } from '../../theme/colors';
 import {
   blockPath, padChevrons, crossPath, hazardPaths, deadPaths, gridPaths, handleArcPath, moveIconPath, launcherPath, linePath, polyPath,
@@ -20,7 +20,7 @@ const R = BALL_RADIUS;
 const L = LAUNCHER;
 
 /** A finished launch, kept on screen as a fading ghost trail. */
-export interface Trail { path: Vec[]; ok: boolean; end?: EndReason }
+export interface Trail { path: Vec[]; ok: boolean; end?: EndReason; /** path indices where the ball came out of a portal */ jumps?: number[] }
 
 export interface BoardProps {
   level: Level;
@@ -47,6 +47,8 @@ export interface BoardProps {
   charge?: SharedValue<number>;
   /** The latest pad kick: `t` runs 0 → 1 for the burst ring and the pad's flash, at (x, y). */
   kick?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
+  /** The latest trip through a portal: `t` runs 0 → 1 for the ring where the ball comes out. */
+  warp?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
   /** The level is won: the ball rests where the last trail ended. */
   done?: boolean;
   /** Touches on the board, in world units. One drag is a 'down', any number of 'move's, then an 'up'. */
@@ -75,7 +77,7 @@ function Spark({ t, x, y, k, color }: { t: SharedValue<number>; x: number; y: nu
  * Pure rendering: everything it shows comes from props. Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, flight = null, charge, kick, done = false, onTouch } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, flight = null, charge, kick, warp, done = false, onTouch } = props;
   const c = useColors();
   const [box, setBox] = useState({ w: 0, h: 0 });
   const hudFont = useFont(condensed600, 15);
@@ -87,9 +89,9 @@ export function Board(props: BoardProps) {
   const hazards = useMemo(() => (level.hazards ?? []).map((h) => hazardPaths(blockCorners(h), SPIKE_LENGTH)), [level]);
   const pads = useMemo(() => (level.pads ?? []).map((b) => ({ body: blockPath(blockCorners(b)), chevrons: padChevrons(b) })), [level]);
   const blocks = useMemo(() => (level.blocks ?? []).map((b) => blockPath(blockCorners(b))), [level]);
-  const trailPaths = useMemo(() => trails.map((t) => polyPath(t.path)), [trails]);
+  const trailPaths = useMemo(() => trails.map((t) => polyPath(t.path, t.path.length, t.jumps)), [trails]);
   const launcher = useMemo(() => launcherPath(L.x, L.y), []);
-  const flightPath = useMemo(() => (flight ? polyPath(flight.path) : null), [flight?.path]);
+  const flightPath = useMemo(() => (flight ? polyPath(flight.path, flight.path.length, flight.jumps) : null), [flight?.path]);
 
   const scale = box.w && box.h ? Math.min(box.w / W, box.h / H) : 0;
 
@@ -261,7 +263,14 @@ export function Board(props: BoardProps) {
                   <Path path={crossPath(deadEnd[0], deadEnd[1])} color={c.red} style="stroke" strokeWidth={2} strokeCap="round" />
                 )}
 
+                {(level.portals ?? []).map((pr, n) => (
+                  <Group key={`portal${n}`}>
+                    <PortalRing x={pr.a.x} y={pr.a.y} color="#2f9bff" />
+                    <PortalRing x={pr.b.x} y={pr.b.y} color="#ff7a1a" />
+                  </Group>
+                ))}
                 {kick && <KickRing t={kick.t} x={kick.x} y={kick.y} />}
+                {warp && <KickRing t={warp.t} x={warp.x} y={warp.y} />}
                 {deadEnd && (
                   <Group>
                     <Circle cx={bx} cy={by} r={ringR} color={c.red} style="stroke" strokeWidth={2.5} opacity={ringO} />
@@ -374,6 +383,25 @@ function Ball({ x, y, c }: { x: number; y: number; c: Palette }) {
 }
 
 /** The ball during playback: its position comes from shared values, so moving it never re-renders React. */
+/** One end of a portal: a glowing ring with a dark centre, breathing slowly. */
+function PortalRing({ x, y, color }: { x: number; y: number; color: string }) {
+  const pulse = useSharedValue(0);
+  useEffect(() => {
+    pulse.value = withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.quad) }), -1, true);
+  }, [pulse]);
+  const glow = useDerivedValue(() => PORTAL_RADIUS + 5 + 3 * pulse.value);
+  const glowO = useDerivedValue(() => 0.25 + 0.2 * pulse.value);
+  const inner = useDerivedValue(() => PORTAL_RADIUS - 4 - 2 * pulse.value);
+  return (
+    <Group>
+      <Circle cx={x} cy={y} r={glow} color={color} opacity={glowO} />
+      <Circle cx={x} cy={y} r={PORTAL_RADIUS} color="#14202e" />
+      <Circle cx={x} cy={y} r={PORTAL_RADIUS - 1.5} color={color} style="stroke" strokeWidth={3.5} />
+      <Circle cx={x} cy={y} r={inner} color={color} style="stroke" strokeWidth={1.6} opacity={0.8} />
+    </Group>
+  );
+}
+
 /** A pad flashes white-hot when it kicks the ball. */
 function PadFlash({ path, t }: { path: SkPath; t: SharedValue<number> }) {
   const o = useDerivedValue(() => 0.9 * (1 - t.value));

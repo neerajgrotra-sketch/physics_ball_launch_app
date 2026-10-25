@@ -1,0 +1,62 @@
+{
+  "id": "21-wormhole",
+  "name": "Wormhole",
+  "glass": {
+    "x": 340,
+    "w": 36,
+    "h": 56
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 325,
+      "y": 380,
+      "w": 150,
+      "h": 20
+    },
+    {
+      "x": 262,
+      "y": 460,
+      "w": 20,
+      "h": 160
+    }
+  ],
+  "portals": [
+    {
+      "a": {
+        "x": 150,
+        "y": 240
+      },
+      "b": {
+        "x": 340,
+        "y": 425
+      }
+    }
+  ],
+  "hint": "The glass is shut in a box. Blue and orange are a portal: go in the blue one and you come out of the orange one, still moving the same way. Send the ball down into the blue end, using both bars.",
+  "par": 2,
+  "solution": {
+    "pieces": [
+      {
+        "x": 145,
+        "y": 417,
+        "deg": 110
+      },
+      {
+        "x": 84,
+        "y": 260,
+        "deg": 86
+      }
+    ],
+    "angle": 41.4,
+    "power": 78.9
+  }
+}

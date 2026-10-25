@@ -114,6 +114,13 @@ const sounds = {
     partials(0.75, [[880, 1, 0.22], [1760, 0.3, 0.12]]),
     partials(0.75, [[1318.5, 1, 0.28], [2637, 0.3, 0.14]], { start: 0.09 }),
   ),
+  // A portal: a soft whoosh in, a rising shimmer out, glassy overtones.
+  warp: mix(
+    scale(zap(0.5, 220, 1100, 0.25, 0.16), 0.55),
+    scale(zap(0.4, 1500, 420, 0.14, 0.09), 0.35),
+    partials(0.5, [[1800, 0.22, 0.07], [2700, 0.16, 0.06], [3900, 0.1, 0.05]], { start: 0.05 }),
+    scale(whoosh(0.35, 0.15, 2200), 0.5),
+  ),
   // A spring pad: a springy rising boing, a bright zap over it, sparkling overtones and a firm thump under.
   boing: mix(
     scale(zap(0.42, 260, 1500, 0.2, 0.09), 0.6),

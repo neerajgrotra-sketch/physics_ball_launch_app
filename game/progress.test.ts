@@ -63,11 +63,11 @@ describe('skipNotice', () => {
 
 describe('skipNotice with spring pads', () => {
   it('names a missed pad when every bar was hit', () => {
-    expect(skipNotice(2, [1, 2], [true, true], { total: 1, touched: [false] }))
+    expect(skipNotice(2, [1, 2], [true, true], { pads: { total: 1, touched: [false] } }))
       .toBe('In the glass, but it never touched the spring pad. It has to bounce off the spring pad as well as both bars.');
   });
   it('adds the pad to the bar message', () => {
-    expect(skipNotice(2, [1, 2], [true, false], { total: 2, touched: [true, true] }))
+    expect(skipNotice(2, [1, 2], [true, false], { pads: { total: 2, touched: [true, true] } }))
       .toBe('In the glass, but it missed Bar 2. It has to bounce off both bars and both spring pads.');
   });
 });

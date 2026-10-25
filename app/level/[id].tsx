@@ -167,8 +167,30 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     kick.value = 1;
     feedback.launched();
   };
-  const hitAt = (res: { path: Vec[]; hits: Hit[] }, k: number) => {
-    const h = res.hits[k];
+  // A portal: a ring flashes where the ball comes out (warp runs 0 → 1 at warpX, warpY).
+  const warp = useSharedValue(1);
+  const warpX = useSharedValue(0);
+  const warpY = useSharedValue(0);
+  const warpAt = (res: { path: Vec[] }, i: number) => {
+    const at = res.path[Math.min(i, res.path.length - 1)];
+    warpX.value = at[0];
+    warpY.value = at[1];
+    warp.value = 0;
+    warp.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
+    feedback.warped();
+  };
+  // Everything the ball meets on its way, in order: bounces and trips through a portal. Each fires as playback reaches it.
+  const playShot = (res: { path: Vec[]; hits: Hit[]; jumps: number[] }, done: () => void, count = true) => {
+    const events = [...res.hits.map((h) => ({ i: h.i, h })), ...res.jumps.map((i) => ({ i, h: undefined as Hit | undefined }))]
+      .sort((x, y) => x.i - y.i);
+    play(res.path, done, events.map((e) => e.i), (k) => {
+      const e = events[k];
+      if (!e.h) { warpAt(res, e.i); return; }
+      hitAt(res, e.h);
+      if (count && e.h.counts) setBounces((n) => (n ?? 0) + 1);
+    }, res.jumps);
+  };
+  const hitAt = (res: { path: Vec[] }, h: Hit) => {
     feedback.hit(h);
     if (h.kind !== 'pad' && !h.spring) return;
     const at = res.path[Math.min(h.i, res.path.length - 1)];
@@ -189,9 +211,9 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     const finished = () => {
       charge.value = withTiming(0, { duration: 500 });
       setBounces(res.bounces);
-      setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end }].slice(-MAX_TRAILS));
+      setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end, jumps: res.jumps }].slice(-MAX_TRAILS));
       // A destroyed ball needs no card: the board shows the burst and the sound plays.
-      setNotice(res.end === 'skipped' ? skipNotice(level.pieces.length, numbers, res.touched, { total: (level.pads ?? []).length, touched: res.padsTouched }) : null);
+      setNotice(res.end === 'skipped' ? skipNotice(level.pieces.length, numbers, res.touched, { pads: { total: (level.pads ?? []).length, touched: res.padsTouched }, portals: { total: (level.portals ?? []).length, used: res.portalsUsed } }) : null);
       if (res.end === 'dead') feedback.died();
       if (res.success) {
         feedback.landed();
@@ -207,10 +229,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
       }
     };
     launched();
-    play(res.path, finished, res.hits.map((h) => h.i), (k) => {
-      hitAt(res, k);
-      if (res.hits[k].counts) setBounces((n) => (n ?? 0) + 1);
-    });
+    playShot(res, finished);
   };
 
   // Opened with a saved shot (Replay on the level card): play it once, like Watch again. It isn't a try
@@ -221,13 +240,10 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
       const res = simulate(buildWorld(level, shot.pieces), shot.angle, shot.power);
       setBounces(0);
       launched();
-      play(res.path, () => {
+      playShot(res, () => {
         setBounces(res.bounces);
-        setTrails([{ path: res.path, ok: res.success, end: res.end }]);
+        setTrails([{ path: res.path, ok: res.success, end: res.end, jumps: res.jumps }]);
         if (res.success) feedback.landed();
-      }, res.hits.map((h) => h.i), (k) => {
-        hitAt(res, k);
-        if (res.hits[k].counts) setBounces((n) => (n ?? 0) + 1);
       });
     }, 500);
     return () => clearTimeout(timer);
@@ -346,7 +362,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     setNotice(null);
     const res = simulate(buildWorld(level, boardPieces(shot)), a, p);
     launched();
-    play(res.path, () => { if (res.success) feedback.landed(); }, res.hits.map((h) => h.i), (k) => hitAt(res, k));
+    playShot(res, () => { if (res.success) feedback.landed(); }, false);
   };
 
   const launch = () => {
@@ -575,6 +591,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           tries={tries}
           flight={flight}
           charge={charge}
+          warp={{ t: warp, x: warpX, y: warpY }}
           kick={{ t: kick, x: kickX, y: kickY }}
           done={done}
           onTouch={onTouch}
@@ -603,7 +620,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           />
         )}
       </View>
-      <Text style={[styles.goal, { color: c.ink }]} numberOfLines={2}>{goalText(level.pieces.length, level.par, (level.pads ?? []).length)}</Text>
+      <Text style={[styles.goal, { color: c.ink }]} numberOfLines={2}>{goalText(level.pieces.length, level.par, (level.pads ?? []).length, (level.portals ?? []).length)}</Text>
       <View style={styles.controls}>
         {selectedBar != null ? (
           <RotateControls

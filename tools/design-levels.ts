@@ -101,6 +101,13 @@ const designs: Omit<Level, 'solution' | 'par'>[] = [
     blocks: [{ x: 170, y: 430, w: 22, h: 220 }, { x: 285, y: 310, w: 100, h: 20 }],
     hazards: [{ x: 335, y: 62, w: 130, h: 12 }, { x: 330, y: 528, w: 100, h: 24 }],
     hint: 'Bar 4 is a golden spring bar: it throws the ball back harder. Place it where a falling ball will land, and use all four bars to reach the glass.' },
+  // The first portal: the glass is walled into a box in the bottom right corner (a roof and a side wall), and the way in is the blue
+  // portal in the open, whose orange end opens inside the box right above the glass. Whatever comes out keeps its speed and heading,
+  // so the ball has to be sent down into the blue end by the bars.
+  { id: '21-wormhole', name: 'Wormhole', glass: { x: 340, w: 36, h: 56 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }],
+    blocks: [{ x: 325, y: 380, w: 150, h: 20 }, { x: 262, y: 460, w: 20, h: 160 }],
+    portals: [{ a: { x: 150, y: 240 }, b: { x: 340, y: 425 } }],
+    hint: 'The glass is shut in a box. Blue and orange are a portal: go in the blue one and you come out of the orange one, still moving the same way. Send the ball down into the blue end, using both bars.' },
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],

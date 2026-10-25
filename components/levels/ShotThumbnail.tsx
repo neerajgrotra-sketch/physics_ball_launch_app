@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 import Svg, { Circle, Line, Polygon, Polyline, Rect } from 'react-native-svg';
-import { BALL_RADIUS, blockCorners, hazardReach, glassBox, LAUNCHER, PLATE_OVERHANG, WORLD, buildWorld, pieceEnds, simulate, type Level } from '../../physics';
+import { BALL_RADIUS, PORTAL_RADIUS, blockCorners, hazardReach, glassBox, LAUNCHER, PLATE_OVERHANG, WORLD, buildWorld, pieceEnds, simulate, type Level } from '../../physics';
 import { thin, type Shot } from '../../game/shots';
 import { useColors } from '../../theme/colors';
 
@@ -16,14 +16,17 @@ export function ShotThumbnail({ level, shot, width, height }: { level: Level; sh
   const path = useMemo(() => {
     if (!shot) return null;
     const res = simulate(buildWorld(level, shot.pieces), shot.angle, shot.power);
-    return thin(res.path, 3);
+    // One line per stretch between portals, so no line is drawn through one.
+    const cuts = [0, ...res.jumps, res.path.length];
+    return cuts.slice(0, -1).map((from, k) => thin(res.path.slice(from, cuts[k + 1]), 3)).filter((s) => s.length > 1);
   }, [level, shot]);
   const g = glassBox(level.glass);
   // The visible window: full board width, and as much height as the tile's shape allows, from the bottom.
   const viewH = Math.min(WORLD.height, (WORLD.width * height) / width);
   const top = WORLD.height - viewH;
   const ang = ((shot?.angle ?? 52) * Math.PI) / 180;
-  const ball = path ? path[path.length - 1] : [LAUNCHER.x, LAUNCHER.y];
+  const lastStretch = path?.[path.length - 1];
+  const ball = lastStretch ? lastStretch[lastStretch.length - 1] : [LAUNCHER.x, LAUNCHER.y];
 
   return (
     <Svg width={width} height={height} viewBox={`0 ${top} ${WORLD.width} ${viewH}`}>
@@ -32,18 +35,25 @@ export function ShotThumbnail({ level, shot, width, height }: { level: Level; sh
       {(level.hazards ?? []).map((h, i) => (
         <Polygon key={`hz${i}`} points={blockCorners(hazardReach(h)).map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')} fill={c.red} />
       ))}
+      {(level.portals ?? []).map((pr, i) => (
+        <Fragment key={`portal${i}`}>
+          <Circle cx={pr.a.x} cy={pr.a.y} r={PORTAL_RADIUS} fill="#14202e" stroke="#2f9bff" strokeWidth={5} />
+          <Circle cx={pr.b.x} cy={pr.b.y} r={PORTAL_RADIUS} fill="#14202e" stroke="#ff7a1a" strokeWidth={5} />
+        </Fragment>
+      ))}
       {(level.pads ?? []).map((b, i) => (
         <Polygon key={`pad${i}`} points={blockCorners(b).map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')} fill="#ffb020" stroke={c.ink} strokeWidth={4} />
       ))}
       {(level.blocks ?? []).map((b, i) => (
         <Polygon key={`blk${i}`} points={blockCorners(b).map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')} fill={c.steel} stroke={c.ink} strokeWidth={4} />
       ))}
-            {path && (
+            {path?.map((stretch, k) => (
         <Polyline
-          points={path.map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')}
+          key={`s${k}`}
+          points={stretch.map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')}
           fill="none" stroke={c.red} strokeWidth={5} strokeLinejoin="round" strokeLinecap="round" opacity={0.85}
         />
-      )}
+      ))}
       {shot?.pieces.map((p, k) => {
         const [x1, y1, x2, y2] = pieceEnds(p);
         return <Line key={k} x1={x1} y1={y1} x2={x2} y2={y2} stroke={c.pencil} strokeWidth={12} strokeLinecap="round" />;
