@@ -11,6 +11,7 @@ const SOUNDS = {
   glass: require('../../assets/sounds/glass.wav'),
   land: require('../../assets/sounds/land.wav'),
   dead: require('../../assets/sounds/dead.wav'),
+  boing: require('../../assets/sounds/boing.wav'),
 };
 
 /** Bounce speed (px/s) that counts as a full-strength hit. Launches top out at 1120. */
@@ -34,6 +35,7 @@ export function useFeedback() {
   const glass = useAudioPlayer(SOUNDS.glass);
   const land = useAudioPlayer(SOUNDS.land);
   const dead = useAudioPlayer(SOUNDS.dead);
+  const boing = useAudioPlayer(SOUNDS.boing);
 
   useEffect(() => {
     // Play even with the silent switch on (it muted every sound), still mixing with other audio.
@@ -53,8 +55,9 @@ export function useFeedback() {
       const style = h.kind === 'piece' && strength > 0.6
         ? Haptics.ImpactFeedbackStyle.Medium
         : Haptics.ImpactFeedbackStyle.Light;
-      Haptics.impactAsync(style).catch(() => {});
-      if (h.kind === 'glass') play(glass, strength);
+      Haptics.impactAsync(h.kind === 'pad' ? Haptics.ImpactFeedbackStyle.Heavy : style).catch(() => {});
+      if (h.kind === 'pad') play(boing, Math.max(0.7, strength));
+      else if (h.kind === 'glass') play(glass, strength);
       else if (h.kind === 'wall' || h.kind === 'block') play(wall, strength * (h.kind === 'block' ? 0.8 : 0.6));
       else play(bounce, Math.max(0.6, strength), pitch(barHits.current++));
     },

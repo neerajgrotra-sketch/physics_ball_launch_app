@@ -1,0 +1,53 @@
+{
+  "id": "18-springboard",
+  "name": "Springboard",
+  "glass": {
+    "x": 345,
+    "w": 40,
+    "h": 56,
+    "base": 200
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 190,
+      "y": 420,
+      "w": 20,
+      "h": 240
+    }
+  ],
+  "pads": [
+    {
+      "x": 300,
+      "y": 530,
+      "w": 80,
+      "h": 12
+    }
+  ],
+  "hint": "The golden pad is a spring: whatever lands on it is thrown back harder. Drop the ball onto it and send it up to the glass, using both bars.",
+  "par": 4,
+  "solution": {
+    "pieces": [
+      {
+        "x": 339,
+        "y": 440,
+        "deg": 77
+      },
+      {
+        "x": 149,
+        "y": 405,
+        "deg": 102
+      }
+    ],
+    "angle": 46.3,
+    "power": 85.7
+  }
+}

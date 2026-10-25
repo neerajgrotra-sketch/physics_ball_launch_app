@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildWorld, simulate, solutionPieces, inputGrid, glassBox, blockCorners, hazardReach, SPIKE_LENGTH, BALL_RADIUS, LAUNCHER, WALL_RESTITUTION, WORLD, type Level } from './index';
+import { buildWorld, simulate, solutionPieces, inputGrid, glassBox, blockCorners, hazardReach, SPIKE_LENGTH, BALL_RADIUS, LAUNCHER, WALL_RESTITUTION, PAD_KICK, MAX_BALL_SPEED, WORLD, type Level } from './index';
 import { LEVELS } from '../levels';
 import { legalPlacement } from '../tools/geometry';
 import { usesEveryBar } from '../tools/find-solution';
@@ -225,5 +225,41 @@ describe.each(LEVELS.map(l => [l.id, l] as const))('level %s', (_id, level) => {
     const w = buildWorld(level, []);
     for (const angle of inputGrid(0, 90, 0.5)) for (const power of inputGrid(0, 100, 0.5))
       expect(simulate(w, angle, power, Infinity).success).toBe(false);
+  });
+});
+
+describe('spring pads', () => {
+  const base: Level = { id: 't', name: 't', hint: '', glass: { x: 360, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }] };
+  const pad = { x: 200, y: 520, w: 80, h: 14 };
+
+  it('throw the ball back faster than it arrived, with a kick', () => {
+    // Straight up from x = 44 is not over the pad, so drop the ball onto it by launching from a pad near the launcher.
+    const level: Level = { ...base, pads: [{ x: 44, y: 536, w: 60, h: 8 }] };
+    const r = simulate(buildWorld(level, []), 90, 20);
+    const hit = r.hits.find((h) => h.kind === 'pad');
+    expect(hit).toBeDefined();
+    expect(hit!.counts).toBe(true);
+    // After the kick the ball rises higher than the free-flight apex it fell from.
+    const apex1 = Math.min(...r.path.slice(0, hit!.i).map((p) => p[1]));
+    const apex2 = Math.min(...r.path.slice(hit!.i, hit!.i + 240).map((p) => p[1]));
+    expect(apex2).toBeLessThan(apex1);
+  });
+
+  it('kick even a ball dropped gently, and never above the speed cap', () => {
+    expect(PAD_KICK).toBeGreaterThan(0);
+    const level: Level = { ...base, pads: [{ x: 44, y: 536, w: 60, h: 8 }] };
+    for (const [a, p] of [[90, 5], [90, 60], [90, 100], [75, 100]]) {
+      const r = simulate(buildWorld(level, []), a, p);
+      for (let i = 1; i < r.path.length; i++) {
+        const sp = Math.hypot(r.path[i][0] - r.path[i - 1][0], r.path[i][1] - r.path[i - 1][1]) * 120;
+        expect(sp).toBeLessThan(MAX_BALL_SPEED * 1.35);
+      }
+    }
+  });
+
+  it('are kept clear of when placing bars', () => {
+    const level: Level = { ...base, pads: [pad] };
+    expect(legalPlacement(level, [{ len: 90, x: 200, y: 520, deg: 0 }])).toBe(false);
+    expect(legalPlacement(level, [{ len: 90, x: 200, y: 400, deg: 0 }])).toBe(true);
   });
 });

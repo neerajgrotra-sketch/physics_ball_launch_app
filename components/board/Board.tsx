@@ -1,4 +1,4 @@
-import { Canvas, Circle, DashPathEffect, Group, Path, Rect, Text, useCanvasRef, useFont } from '@shopify/react-native-skia';
+import { Canvas, Circle, DashPathEffect, Group, Path, Rect, Text, useCanvasRef, useFont, type SkPath } from '@shopify/react-native-skia';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
@@ -9,7 +9,7 @@ import {
 import { Easing, useDerivedValue, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useColors, type Palette } from '../../theme/colors';
 import {
-  blockPath, crossPath, hazardPaths, deadPaths, gridPaths, handleArcPath, moveIconPath, launcherPath, linePath, polyPath,
+  blockPath, padChevrons, crossPath, hazardPaths, deadPaths, gridPaths, handleArcPath, moveIconPath, launcherPath, linePath, polyPath,
 } from './paths';
 import type { Flight } from './usePlayback';
 import { leverLine, moveArms, type End } from '../../game/pieces';
@@ -43,6 +43,10 @@ export interface BoardProps {
   tries: number;
   /** The launch being played back (see usePlayback). */
   flight?: Flight | null;
+  /** How energised the ball is (0–1), after a spring pad has kicked it. */
+  charge?: SharedValue<number>;
+  /** The latest pad kick: `t` runs 0 → 1 for the burst ring and the pad's flash, at (x, y). */
+  kick?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
   /** The level is won: the ball rests where the last trail ended. */
   done?: boolean;
   /** Touches on the board, in world units. One drag is a 'down', any number of 'move's, then an 'up'. */
@@ -71,7 +75,7 @@ function Spark({ t, x, y, k, color }: { t: SharedValue<number>; x: number; y: nu
  * Pure rendering: everything it shows comes from props. Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, flight = null, done = false, onTouch } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, flight = null, charge, kick, done = false, onTouch } = props;
   const c = useColors();
   const [box, setBox] = useState({ w: 0, h: 0 });
   const hudFont = useFont(condensed600, 15);
@@ -81,6 +85,7 @@ export function Board(props: BoardProps) {
   const grid = useMemo(() => gridPaths(), []);
   const dead = useMemo(() => deadPaths(level.fixed), [level]);
   const hazards = useMemo(() => (level.hazards ?? []).map((h) => hazardPaths(blockCorners(h), SPIKE_LENGTH)), [level]);
+  const pads = useMemo(() => (level.pads ?? []).map((b) => ({ body: blockPath(blockCorners(b)), chevrons: padChevrons(b) })), [level]);
   const blocks = useMemo(() => (level.blocks ?? []).map((b) => blockPath(blockCorners(b))), [level]);
   const trailPaths = useMemo(() => trails.map((t) => polyPath(t.path)), [trails]);
   const launcher = useMemo(() => launcherPath(L.x, L.y), []);
@@ -240,6 +245,14 @@ export function Board(props: BoardProps) {
                     <Path path={b} color={c.ink} style="stroke" strokeWidth={2.5} strokeJoin="round" />
                   </Group>
                 ))}
+                {pads.map((p, i) => (
+                  <Group key={`pad${i}`}>
+                    <Path path={p.body} color="#ffb020" opacity={0.92} />
+                    <Path path={p.chevrons} color={c.ink} style="stroke" strokeWidth={2.2} strokeCap="round" strokeJoin="round" opacity={0.75} />
+                    <Path path={p.body} color={c.ink} style="stroke" strokeWidth={2.5} strokeJoin="round" />
+                    {kick && <PadFlash path={p.body} t={kick.t} />}
+                  </Group>
+                ))}
                 <Path path={dead.bars} color={c.muted} style="stroke" strokeWidth={6} strokeCap="round" />
                 <Path path={dead.hatch} color={c.paper} style="stroke" strokeWidth={1.4} strokeCap="round" />
 
@@ -248,6 +261,7 @@ export function Board(props: BoardProps) {
                   <Path path={crossPath(deadEnd[0], deadEnd[1])} color={c.red} style="stroke" strokeWidth={2} strokeCap="round" />
                 )}
 
+                {kick && <KickRing t={kick.t} x={kick.x} y={kick.y} />}
                 {deadEnd && (
                   <Group>
                     <Circle cx={bx} cy={by} r={ringR} color={c.red} style="stroke" strokeWidth={2.5} opacity={ringO} />
@@ -328,7 +342,7 @@ export function Board(props: BoardProps) {
                 )}
 
                 {/* ball */}
-                {flight ? <FlyingBall x={flight.x} y={flight.y} c={c} /> : <Ball x={ball[0]} y={ball[1]} c={c} />}
+                {flight ? <FlyingBall x={flight.x} y={flight.y} c={c} charge={charge} /> : <Ball x={ball[0]} y={ball[1]} c={c} />}
 
                 {/* HUD */}
                 {hudFont && (
@@ -357,13 +371,52 @@ function Ball({ x, y, c }: { x: number; y: number; c: Palette }) {
 }
 
 /** The ball during playback: its position comes from shared values, so moving it never re-renders React. */
-function FlyingBall({ x, y, c }: { x: SharedValue<number>; y: SharedValue<number>; c: Palette }) {
-  const hx = useDerivedValue(() => x.value - 2.6);
-  const hy = useDerivedValue(() => y.value - 2.6);
+/** A pad flashes white-hot when it kicks the ball. */
+function PadFlash({ path, t }: { path: SkPath; t: SharedValue<number> }) {
+  const o = useDerivedValue(() => 0.9 * (1 - t.value));
+  return <Path path={path} color="#ffffff" opacity={o} />;
+}
+
+/** The burst where the ball was kicked: two expanding rings and eight sparks. */
+function KickRing({ t, x, y }: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> }) {
+  const r1 = useDerivedValue(() => 8 + 34 * t.value);
+  const r2 = useDerivedValue(() => 6 + 20 * t.value);
+  const o = useDerivedValue(() => (1 - t.value) * 0.9);
+  const o2 = useDerivedValue(() => (1 - t.value) * 0.6);
   return (
     <Group>
+      <Circle cx={x} cy={y} r={r1} color="#ffb020" style="stroke" strokeWidth={3} opacity={o} />
+      <Circle cx={x} cy={y} r={r2} color="#ffffff" style="stroke" strokeWidth={2} opacity={o2} />
+      {Array.from({ length: 8 }, (_, k) => <KickSpark key={k} t={t} x={x} y={y} k={k} />)}
+    </Group>
+  );
+}
+
+function KickSpark({ t, x, y, k }: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number>; k: number }) {
+  const a = (k / 8) * Math.PI * 2 + 0.3, reach = 30 + (k % 2) * 14;
+  const cx = useDerivedValue(() => x.value + Math.cos(a) * reach * t.value);
+  const cy = useDerivedValue(() => y.value + Math.sin(a) * reach * t.value);
+  const r = useDerivedValue(() => 2.8 * (1 - t.value) + 0.3);
+  const o = useDerivedValue(() => 1 - t.value);
+  return <Circle cx={cx} cy={cy} r={r} color={k % 2 ? '#ffb020' : '#ffe9a8'} opacity={o} />;
+}
+
+function FlyingBall({ x, y, c, charge }: { x: SharedValue<number>; y: SharedValue<number>; c: Palette; charge?: SharedValue<number> }) {
+  const hx = useDerivedValue(() => x.value - 2.6);
+  const hy = useDerivedValue(() => y.value - 2.6);
+  // Energised: a warm glow that breathes while the charge lasts, and a hot ring round the steel.
+  const glowR = useDerivedValue(() => R + 5 + 7 * (charge?.value ?? 0) + 1.5 * Math.sin(Date.now() / 60));
+  const glowO = useDerivedValue(() => 0.5 * (charge?.value ?? 0));
+  const haloR = useDerivedValue(() => R + 14 + 8 * (charge?.value ?? 0));
+  const haloO = useDerivedValue(() => 0.2 * (charge?.value ?? 0));
+  const ringO = useDerivedValue(() => Math.min(1, (charge?.value ?? 0) * 1.4));
+  return (
+    <Group>
+      <Circle cx={x} cy={y} r={haloR} color="#ffb020" opacity={haloO} />
+      <Circle cx={x} cy={y} r={glowR} color="#ffcf4a" opacity={glowO} />
       <Circle cx={x} cy={y} r={R} color={c.steel} />
       <Circle cx={x} cy={y} r={R} color={c.ink} style="stroke" strokeWidth={1.2} />
+      <Circle cx={x} cy={y} r={R + 1} color="#ff9a00" style="stroke" strokeWidth={2} opacity={ringO} />
       <Circle cx={hx} cy={hy} r={2.4} color="rgba(255,255,255,0.75)" />
     </Group>
   );

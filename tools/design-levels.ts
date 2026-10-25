@@ -81,6 +81,12 @@ const designs: Omit<Level, 'solution' | 'par'>[] = [
     blocks: [{ x: 300, y: 380, w: 110, h: 24 }, { x: 252, y: 460, w: 14, h: 160 }],
     hazards: [{ x: 300, y: 368, w: 110, h: 2 }, { x: 245, y: 460, w: 2, h: 160 }, { x: 277, y: 528, w: 36, h: 24 }, { x: 378, y: 528, w: 40, h: 24 }],
     hint: 'The glass is shut in on the left and the only way in is a narrow gap beside the right wall. Come down it and bank off the wall, using both bars.' },
+  // The first spring pad: it kicks the ball back harder than it arrived (PAD_RESTITUTION, PAD_KICK), so a ball dropped onto it from
+  // low down is thrown up to the glass hanging in the top right corner, behind a wall that stands between it and the cannon.
+  { id: '18-springboard', name: 'Springboard', glass: { x: 345, w: 40, h: 56, base: 200 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }],
+    blocks: [{ x: 190, y: 420, w: 20, h: 240 }],
+    pads: [{ x: 300, y: 530, w: 80, h: 12 }],
+    hint: 'The golden pad is a spring: whatever lands on it is thrown back harder. Drop the ball onto it and send it up to the glass, using both bars.' },
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],

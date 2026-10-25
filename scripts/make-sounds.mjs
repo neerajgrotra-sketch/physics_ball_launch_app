@@ -114,6 +114,14 @@ const sounds = {
     partials(0.75, [[880, 1, 0.22], [1760, 0.3, 0.12]]),
     partials(0.75, [[1318.5, 1, 0.28], [2637, 0.3, 0.14]], { start: 0.09 }),
   ),
+  // A spring pad: a springy rising boing, a bright zap over it, sparkling overtones and a firm thump under.
+  boing: mix(
+    scale(zap(0.42, 260, 1500, 0.2, 0.09), 0.6),
+    scale(zap(0.3, 520, 3000, 0.12, 0.07), 0.3),
+    partials(0.45, [[2400, 0.3, 0.05], [3600, 0.22, 0.045], [5200, 0.16, 0.04]], { start: 0.03 }),
+    partials(0.35, [[3100, 0.25, 0.04], [4700, 0.18, 0.035]], { start: 0.1 }),
+    scale(thud(0.2, 190, 80, 0.06), 0.8),
+  ),
   // The ball destroyed on a hazard: a sharp crack, a falling zap, glass-like shards, and a low boom under it all.
   dead: mix(
     scale(crack(0.14, 0.03), 0.7),

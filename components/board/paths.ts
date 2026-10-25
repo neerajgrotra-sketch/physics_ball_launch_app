@@ -1,5 +1,5 @@
 import { Skia, type SkPath } from '@shopify/react-native-skia';
-import { WORLD, type FixedSegment, type Vec } from '../../physics';
+import { WORLD, type Block, type FixedSegment, type Vec } from '../../physics';
 
 // Path builders for the board, in world units. They mirror the drawing code in reference/prototype.html.
 // Skia paths are immutable: each is built with a PathBuilder, then detached.
@@ -101,6 +101,21 @@ export function launcherPath(lx: number, ly: number): SkPath {
   p.lineTo(lx + 4, ly);
   p.lineTo(lx - 4, ly);
   p.close();
+  return p.detach();
+}
+
+/** Upward chevrons along a pad's top edge (two rows' worth for a wide pad), the 'spring' mark. */
+export function padChevrons(b: Block): SkPath {
+  const p = Skia.PathBuilder.Make();
+  const a = ((b.deg ?? 0) * Math.PI) / 180, ux = Math.cos(a), uy = Math.sin(a), vx = uy, vy = -ux; // along, and up
+  const n = Math.max(1, Math.floor(b.w / 18)), gap = b.w / n;
+  for (let k = 0; k < n; k++) {
+    const along = -b.w / 2 + (k + 0.5) * gap;
+    const cx = b.x + ux * along, cy = b.y + uy * along;
+    const pt = (s: number, h: number): [number, number] => [cx + ux * s + vx * h, cy + uy * s + vy * h];
+    const [x1, y1] = pt(-4, -1.5), [x2, y2] = pt(0, -5.5), [x3, y3] = pt(4, -1.5);
+    p.moveTo(x1, y1); p.lineTo(x2, y2); p.lineTo(x3, y3);
+  }
   return p.detach();
 }
 

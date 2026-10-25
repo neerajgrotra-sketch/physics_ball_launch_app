@@ -5,11 +5,15 @@ function rng(seed: number) { return () => { seed = (seed * 1664525 + 1013904223)
 
 type Candidate = { placed: PlacedPiece[]; angle: number; power: number };
 
-/** Wins and bounces off every placed bar. The win rule already needs every bar; this checks it explicitly. */
+/**
+ * Wins and bounces off every placed bar. The win rule already needs every bar; this checks it explicitly. On a level with
+ * spring pads the answer must also use one (a pad is the point of such a level; the game itself doesn't require it).
+ */
 export function usesEveryBar(level: Level, placed: PlacedPiece[], angle: number, power: number): boolean {
   const res = simulate(buildWorld(level, placed), angle, power, 2);
   if (!res.success) return false;
   const hit = new Set(res.hits.filter(h => h.kind === 'piece').map(h => h.piece));
+  if (level.pads?.length && !res.hits.some((h) => h.kind === 'pad')) return false;
   return placed.every((_, k) => hit.has(k));
 }
 

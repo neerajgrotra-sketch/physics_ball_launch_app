@@ -4,6 +4,16 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.12.0
+
+- Spring pads: a new fixed surface (`Level.pads`, drawn as a golden plate with chevrons) that throws the ball back harder than
+  it came: restitution 1.3 plus a small kick of 240 px/s along the surface normal, never above the 1120 px/s launch speed
+  cap (so it can never tunnel). A pad bounce counts as a bounce like any other.
+- The ball is energised by a kick: a burst ring and sparks at the pad, the pad flashing white, and a warm glow and hot ring
+  round the ball that eases to a steady glow until the shot ends. New "boing" sound and a heavy haptic on a pad.
+- New level 19, "Springboard": a wall, a pad on the floor and the glass up in the top right; the stored answer uses the
+  pad (the solver requires a pad hit on pad levels), par 4, 49/49 forgiving. The same shot with the pad as a plain block fails.
+
 ## 0.11.9
 
 - Tutorial: the outline showing where to drag each bar is red again, bolder and with a soft glow (it was a pale dashed grey

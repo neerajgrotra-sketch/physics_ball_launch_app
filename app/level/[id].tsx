@@ -31,7 +31,8 @@ import { skipNotice, winText } from '../../game/progress';
 import { bestOf, goalText } from '../../game/score';
 import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
-import { WORLD, buildWorld, simulate } from '../../physics';
+import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
+import { WORLD, buildWorld, simulate, type Hit, type Vec } from '../../physics';
 import { FONTS, useColors } from '../../theme/colors';
 
 const MAX_TRAILS = 4;
@@ -155,6 +156,29 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   // The bounce counter ticks up as the ball reaches each scored bounce, and shows the full count at the end.
   // The tutorial level never scores (it's practice, and its answer is handed to you), however it's played.
   const practice = level.id === TUTORIAL_ID;
+  // Spring pads energise the ball: `charge` is how lit up it is (1 right after a kick, easing to a steady glow, off at the
+  // end of the shot); `kick` runs 0 → 1 for the burst ring and the pad's flash, at the pad hit (kickX, kickY).
+  const charge = useSharedValue(0);
+  const kick = useSharedValue(1);
+  const kickX = useSharedValue(0);
+  const kickY = useSharedValue(0);
+  const launched = () => {
+    charge.value = 0;
+    kick.value = 1;
+    feedback.launched();
+  };
+  const hitAt = (res: { path: Vec[]; hits: Hit[] }, k: number) => {
+    const h = res.hits[k];
+    feedback.hit(h);
+    if (h.kind !== 'pad') return;
+    const at = res.path[Math.min(h.i, res.path.length - 1)];
+    kickX.value = at[0];
+    kickY.value = at[1];
+    kick.value = 0;
+    kick.value = withTiming(1, { duration: 650, easing: Easing.out(Easing.cubic) });
+    charge.value = 1;
+    charge.value = withTiming(0.55, { duration: 1400, easing: Easing.out(Easing.quad) });
+  };
   const fire = (shot: Slot[], a: number, p: number, assisted = helped || practice) => {
     const placed = boardPieces(shot), numbers = boardNumbers(shot);
     setGuided(tutorial);
@@ -163,6 +187,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     setTries(tryNo);
     setBounces(0);
     const finished = () => {
+      charge.value = withTiming(0, { duration: 500 });
       setBounces(res.bounces);
       setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end }].slice(-MAX_TRAILS));
       // A destroyed ball needs no card: the board shows the burst and the sound plays.
@@ -181,9 +206,9 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         else won(index, bestOf({ bounces: res.bounces, par, tries: tryNo }), saved);
       }
     };
-    feedback.launched();
+    launched();
     play(res.path, finished, res.hits.map((h) => h.i), (k) => {
-      feedback.hit(res.hits[k]);
+      hitAt(res, k);
       if (res.hits[k].counts) setBounces((n) => (n ?? 0) + 1);
     });
   };
@@ -195,13 +220,13 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     const timer = setTimeout(() => {
       const res = simulate(buildWorld(level, shot.pieces), shot.angle, shot.power);
       setBounces(0);
-      feedback.launched();
+      launched();
       play(res.path, () => {
         setBounces(res.bounces);
         setTrails([{ path: res.path, ok: res.success, end: res.end }]);
         if (res.success) feedback.landed();
       }, res.hits.map((h) => h.i), (k) => {
-        feedback.hit(res.hits[k]);
+        hitAt(res, k);
         if (res.hits[k].counts) setBounces((n) => (n ?? 0) + 1);
       });
     }, 500);
@@ -320,8 +345,8 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     setPower(p);
     setNotice(null);
     const res = simulate(buildWorld(level, boardPieces(shot)), a, p);
-    feedback.launched();
-    play(res.path, () => { if (res.success) feedback.landed(); }, res.hits.map((h) => h.i), (k) => feedback.hit(res.hits[k]));
+    launched();
+    play(res.path, () => { if (res.success) feedback.landed(); }, res.hits.map((h) => h.i), (k) => hitAt(res, k));
   };
 
   const launch = () => {
@@ -549,6 +574,8 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           power={power}
           tries={tries}
           flight={flight}
+          charge={charge}
+          kick={{ t: kick, x: kickX, y: kickY }}
           done={done}
           onTouch={onTouch}
         />

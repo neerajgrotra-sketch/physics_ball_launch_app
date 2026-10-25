@@ -32,6 +32,12 @@ export const RESTING_CONTACT_SPEED = 40; // below this, bounces are killed to st
 export const WALL_RESTITUTION = 0.7;
 /** Friction along the floor and edges, so a ball rolling on the floor slows to rest. */
 export const WALL_FRICTION = 0.03;
+/** Bounciness of a spring pad: more than 1, so the ball leaves faster than it arrived. */
+export const PAD_RESTITUTION = 1.3;
+/** Extra speed (px/s) a spring pad adds along its normal on top of the restitution: a small kick, so even a ball dropped gently is thrown. */
+export const PAD_KICK = 240;
+/** No bounce may send the ball faster than a full-power launch, so it can't tunnel through a thin surface. */
+export const MAX_BALL_SPEED = 1120;
 /** The glass stands on a plate this much wider than the glass on each side. */
 export const PLATE_OVERHANG = 8;
 export const ANGLE_STEP = 0.1;       // the only angle values a player can enter
@@ -81,6 +87,11 @@ export interface Level {
    */
   hazards?: Block[];
   /**
+   * Spring pads (same shape as a Block): a surface that throws the ball back harder than it came (PAD_RESTITUTION and
+   * PAD_KICK, capped at MAX_BALL_SPEED), drawn as an energised plate. Optional.
+   */
+  pads?: Block[];
+  /**
    * Analysis only (tools/needs-walls.ts): make the floor and all four board edges deadly instead of bouncy, to test
    * whether a level can be won without bouncing off the board's own walls. Never set on a shipped level.
    */
@@ -92,7 +103,7 @@ export interface Level {
   par?: number;
 }
 
-export type SegmentKind = 'dead' | 'glass' | 'piece' | 'wall' | 'block';
+export type SegmentKind = 'dead' | 'glass' | 'piece' | 'wall' | 'block' | 'pad';
 /** `piece` is the index of the placed piece a 'piece' segment belongs to. */
 export interface Segment { x1: number; y1: number; x2: number; y2: number; e: number; f: number; kind: SegmentKind; piece?: number }
 export interface World {
@@ -112,7 +123,7 @@ export type EndReason = 'glass' | 'skipped' | 'out' | 'dead' | 'rest' | 'timeout
  * A real bounce (not resting contact) off a piece, the glass or a wall. `i` is the index of the next path
  * point. `counts`: it's one of the shot's scored bounces (any real bounce outside the glass).
  */
-export interface Hit { i: number; kind: 'piece' | 'glass' | 'wall' | 'block'; speed: number; piece?: number; counts: boolean }
+export interface Hit { i: number; kind: 'piece' | 'glass' | 'wall' | 'block' | 'pad'; speed: number; piece?: number; counts: boolean }
 /**
  * `touched[k]`: whether the ball touched placed piece k during the shot. `bounces`: the scored bounce
  * count (see the rules above), at most one per step so a corner hit is one bounce.
@@ -171,6 +182,11 @@ export function buildWorld(level: Level, placed: PlacedPiece[]): World {
   for (const b of level.blocks ?? []) {
     const k = blockCorners(b);
     k.forEach((p, i) => { const q = k[(i + 1) % 4]; add(p[0], p[1], q[0], q[1], WALL_RESTITUTION, WALL_FRICTION, 'block'); });
+  }
+  // Spring pads: their own kind, so the bounce can kick.
+  for (const b of level.pads ?? []) {
+    const k = blockCorners(b);
+    k.forEach((p, i) => { const q = k[(i + 1) % 4]; add(p[0], p[1], q[0], q[1], PAD_RESTITUTION, 0.01, 'pad'); });
   }
   placed.forEach((p, k) => {
     const [x1, y1, x2, y2] = pieceEnds(p);
@@ -244,12 +260,22 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
       y += ny * (R - d);
       const vn = vx * nx + vy * ny;
       if (vn < 0) {
-        const e = -vn < RESTING_CONTACT_SPEED ? 0 : s.e;
+        const pad = s.kind === 'pad';
+        const e = !pad && -vn < RESTING_CONTACT_SPEED ? 0 : s.e;
         const counts = e > 0 && !bouncedThisStep && !(x > cup.l && x < cup.r && y > cup.rim);
         if (counts) { bounces++; bouncedThisStep = true; }
         if (e && recordHits) hits.push({ i: path.length, kind: s.kind as Hit['kind'], speed: -vn, piece: s.piece, counts });
-        vx -= (1 + e) * vn * nx;
-        vy -= (1 + e) * vn * ny;
+        if (pad) {
+          // Out along the normal at e × the arrival speed plus the kick, and never above the speed cap.
+          const out = Math.min(-vn * e + PAD_KICK, MAX_BALL_SPEED);
+          vx += (out - vn) * nx;
+          vy += (out - vn) * ny;
+          const sp2 = Math.hypot(vx, vy);
+          if (sp2 > MAX_BALL_SPEED) { vx *= MAX_BALL_SPEED / sp2; vy *= MAX_BALL_SPEED / sp2; }
+        } else {
+          vx -= (1 + e) * vn * nx;
+          vy -= (1 + e) * vn * ny;
+        }
         const vt = vx * -ny + vy * nx;
         vx -= vt * s.f * -ny;
         vy -= vt * s.f * nx;

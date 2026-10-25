@@ -32,6 +32,9 @@ export function ShotThumbnail({ level, shot, width, height }: { level: Level; sh
       {(level.hazards ?? []).map((h, i) => (
         <Polygon key={`hz${i}`} points={blockCorners(hazardReach(h)).map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')} fill={c.red} />
       ))}
+      {(level.pads ?? []).map((b, i) => (
+        <Polygon key={`pad${i}`} points={blockCorners(b).map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')} fill="#ffb020" stroke={c.ink} strokeWidth={4} />
+      ))}
       {(level.blocks ?? []).map((b, i) => (
         <Polygon key={`blk${i}`} points={blockCorners(b).map(([x, y]) => `${x.toFixed(0)},${y.toFixed(0)}`).join(' ')} fill={c.steel} stroke={c.ink} strokeWidth={4} />
       ))}
