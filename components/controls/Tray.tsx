@@ -47,12 +47,12 @@ export function Tray({ slots, selected, onTap, disabled, onChipLayout }: Props) 
           >
             {spring ? (
               <Bolt color={fg} />
-            ) : !compact && (
-              <View style={styles.iconBox}>
-                <View style={[styles.icon, { width: (s.len / 90) * 34 * ICON_SCALE, backgroundColor: fg }]} />
+            ) : (
+              <View style={[styles.iconBox, compact && styles.iconBoxCompact]}>
+                <View style={[styles.icon, { width: ((s.len / 90) * 34 * ICON_SCALE) * (compact ? 0.33 : 1), backgroundColor: fg }]} />
               </View>
             )}
-            <Text style={[styles.text, { color: fg }]}>{label}</Text>
+            <Text style={[styles.text, compact && styles.textCompact, { color: fg }]}>{label}</Text>
           </Pressable>
         );
       })}
@@ -79,10 +79,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6, height: 34, paddingHorizontal: 10,
     borderRadius: 17, borderWidth: 1.5,
   },
-  chipCompact: { paddingHorizontal: 7, gap: 3 },
-  iconBoxCompact: { width: 20 },
+  chipCompact: { paddingHorizontal: 5, gap: 2 },
+  iconBoxCompact: { width: 12, paddingLeft: 0 },
   on: { opacity: 0.55, borderStyle: 'dashed' },
   iconBox: { width: 34, height: 10, justifyContent: 'center', paddingLeft: 3 * ICON_SCALE },
   icon: { height: 3.5, borderRadius: 2 },
   text: { fontSize: 14, fontFamily: FONTS.bodySemi },
+  textCompact: { fontSize: 13 },
 });

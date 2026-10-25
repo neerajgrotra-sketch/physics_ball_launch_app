@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.13.2
+
+- Tray chips on levels with 4 or more bars have their dash back ("— Bar 1"): a short line icon, tighter chips and a slightly smaller
+  label so five chips and Clear still fit on one row.
+
 ## 0.13.1
 
 - Tray chips on levels with 4 or more bars read "Bar 1", "Bar 2"... again (they had shrunk to bare numbers), and a spring bar's chip
