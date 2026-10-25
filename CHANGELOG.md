@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.11.7
+
+- After a refused rotation drag the slider thumb now really snaps back to the bar's angle when the finger lifts (it was
+  staying where the finger left it while the number showed the real angle).
+
 ## 0.11.6
 
 - The bar rotation slider no longer runs ahead of a bar that cannot turn (it would clip the glass, a block or another bar):

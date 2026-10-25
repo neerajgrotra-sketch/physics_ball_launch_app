@@ -110,9 +110,14 @@ function Row({ label, value, readout, min, max, step, onChange, onNudge, onDone,
   latest.current = value;
   const shake = useRef(new Animated.Value(0)).current;
   const [bad, setBad] = useState(false);
+  // A slider handed back the value it already shows ignores it, so a refused drag leaves the thumb where the finger
+  // put it. Remounting it (new key) once the finger lifts puts the thumb on the real value.
+  const [snap, setSnap] = useState(0);
+  const refused = useRef(false);
   const badTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(badTimer.current), []);
   const refuse = () => {
+    refused.current = true;
     setBad(true);
     clearTimeout(badTimer.current);
     badTimer.current = setTimeout(() => setBad(false), 450);
@@ -133,6 +138,7 @@ function Row({ label, value, readout, min, max, step, onChange, onNudge, onDone,
       <Animated.View style={{ flex: 1, transform: [{ translateX: shake }] }}>
       <View ref={trackRef} style={[styles.track, Platform.OS === 'web' && ({ touchAction: 'none' } as object)]} onStartShouldSetResponderCapture={remeasureSliders}>
       <Slider
+        key={snap}
         style={styles.slider}
         value={shown}
         minimumValue={min}
@@ -146,7 +152,11 @@ function Row({ label, value, readout, min, max, step, onChange, onNudge, onDone,
         }}
         onSlidingComplete={(v) => {
           held.current = false;
-          if (rejectable) { setShown(latest.current); return; }
+          if (rejectable) {
+            setShown(latest.current);
+            if (refused.current) { refused.current = false; setSnap((n) => n + 1); }
+            return;
+          }
           setShown(toGrid(v)); onDone?.(toGrid(v));
         }}
         minimumTrackTintColor={bad ? c.red : c.pencil}
