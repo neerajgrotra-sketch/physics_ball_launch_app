@@ -1,0 +1,111 @@
+{
+  "id": "15-penthouse",
+  "name": "Penthouse",
+  "glass": {
+    "x": 140,
+    "w": 40,
+    "h": 56,
+    "base": 420
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    },
+    {
+      "len": 70
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 140,
+      "y": 220,
+      "w": 120,
+      "h": 24
+    },
+    {
+      "x": 88,
+      "y": 374,
+      "w": 14,
+      "h": 332
+    },
+    {
+      "x": 255,
+      "y": 150,
+      "w": 24,
+      "h": 300
+    },
+    {
+      "x": 340,
+      "y": 395,
+      "w": 26,
+      "h": 290
+    }
+  ],
+  "hazards": [
+    {
+      "x": 140,
+      "y": 208,
+      "w": 120,
+      "h": 2
+    },
+    {
+      "x": 81,
+      "y": 374,
+      "w": 2,
+      "h": 332
+    },
+    {
+      "x": 243,
+      "y": 210,
+      "w": 2,
+      "h": 180
+    },
+    {
+      "x": 340,
+      "y": 250,
+      "w": 26,
+      "h": 2
+    },
+    {
+      "x": 155,
+      "y": 528,
+      "w": 150,
+      "h": 24
+    }
+  ],
+  "hint": "The glass is up in a penthouse with a spiked roof and spikes below. Send the ball out past the walls and bring it home high, from the right.",
+  "par": 6,
+  "solution": {
+    "pieces": [
+      {
+        "x": 90,
+        "y": 41,
+        "deg": 156
+      },
+      {
+        "x": 119,
+        "y": 105,
+        "deg": 3
+      },
+      {
+        "x": 202,
+        "y": 116,
+        "deg": 108
+      },
+      {
+        "x": 239,
+        "y": 395,
+        "deg": 30
+      }
+    ],
+    "angle": 87.4,
+    "power": 81.4
+  }
+}

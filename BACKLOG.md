@@ -53,6 +53,11 @@ where Crossfire, the old hardest, was 91)** and every plain shot dies. Its store
 but watch it closely in playtests: if players stall here, ease it (open the garage, drop the roof spikes) or move it later. Its first
 two designs were too easy (the winning shot never went near the walls): check "does the answer need the blocks" for every new level.
 
+Level 16 "Penthouse" (Boomerang's garage raised 120 up, over spikes, four bars, par 6) is harder still: the random search found **0 in
+20,000** tries (Boomerang: 8 per 10,000), every plain shot dies, and its answer is forgiving only 17/49. A glass 140 up gave a
+solution at the edge (8/49 at power 99.5 of 100), too fragile to ship, so 120 is the practical ceiling of this layout. These two are the
+finale; if players stall, the first thing to ease is the spiked roof.
+
 ## Menus and settings
 
 - **Settings screen** (the ⚙ button; today it only has Music): sound effects, music, haptics,
