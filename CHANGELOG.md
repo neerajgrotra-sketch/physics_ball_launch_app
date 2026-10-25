@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.8.4
+
+- New level 9, "Switchback": a wall from the floor and a slanted block overhead, with three bars. The slanted block is
+  a free bank shot: the par-5 solution bounces off it first.
+
 ## 0.8.3
 
 - Sliders on iPhone: a horizontal drag that drifted a little up or down could be taken by Safari as a page
