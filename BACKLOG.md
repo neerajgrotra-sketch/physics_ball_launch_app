@@ -17,7 +17,7 @@ Agreed work that isn't built yet, roughly in priority order. Move an item to CHA
 ## Level design (next worlds)
 
 Each new idea is introduced on its own, then mixed. Order agreed so far:
-- **Fixed bouncy blocks** (rectangles, optionally turned; built, 0.8.0): levels "Roadblock" (one wall), "Slalom" (two) and "Switchback" (a wall and a slanted block you bank off, with three bars) are in; next, blocks with more bars, or a block that closes in on the glass.
+- **Fixed bouncy blocks** (rectangles, optionally turned; built, 0.8.0): levels "Roadblock" (one wall), "Slalom" (two) and "Switchback" (a wall and a slanted block you bank off, with three bars) and "Gauntlet" (three blocks, four bars, the glass in a pit) are in; next: a block that closes in on the glass, tighter glasses, and a compact tray for 4+ bars (the chips wrap to a second row now).
 - **Shielded jar:** a glass with a roof or one tall side, so the ball must enter at a steep angle or from one side.
 - **Gates (pass-through jars):** a jar with no base the ball falls through; a level's goal becomes touch every bar, pass every gate, then land in the glass.
 - **Curved objects:** concave and convex arcs, circles and round bumpers (a ball bounces off the surface normal at each point, so these need circle and arc collision beside the straight edges), and a curved ramp. Part of the piece-shape groundwork below.

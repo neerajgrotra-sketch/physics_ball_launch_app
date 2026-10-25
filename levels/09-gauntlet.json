@@ -1,0 +1,72 @@
+{
+  "id": "09-gauntlet",
+  "name": "Gauntlet",
+  "glass": {
+    "x": 285,
+    "w": 40,
+    "h": 52
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 70
+    },
+    {
+      "len": 70
+    },
+    {
+      "len": 60
+    }
+  ],
+  "blocks": [
+    {
+      "x": 130,
+      "y": 450,
+      "w": 28,
+      "h": 180
+    },
+    {
+      "x": 230,
+      "y": 150,
+      "w": 28,
+      "h": 300
+    },
+    {
+      "x": 335,
+      "y": 460,
+      "w": 28,
+      "h": 160
+    }
+  ],
+  "hint": "Three blocks and four bars. The glass sits in a pit: get past the first wall, under the hanging block, then drop in from above.",
+  "par": 8,
+  "solution": {
+    "pieces": [
+      {
+        "x": 120,
+        "y": 258,
+        "deg": 35
+      },
+      {
+        "x": 95,
+        "y": 317,
+        "deg": 161
+      },
+      {
+        "x": 264,
+        "y": 438,
+        "deg": 38
+      },
+      {
+        "x": 191,
+        "y": 371,
+        "deg": 150
+      }
+    ],
+    "angle": 75.1,
+    "power": 66.2
+  }
+}

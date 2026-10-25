@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.9.0
+
+- New level 10, "Gauntlet": the first with four bars and three blocks. The glass sits in a pit between a ceiling
+  block and a wall, so the ball has to clear the first wall, pass under the hanging block and drop in from above.
+  Par 8.
+
 ## 0.8.4
 
 - New level 9, "Switchback": a wall from the floor and a slanted block overhead, with three bars. The slanted block is
