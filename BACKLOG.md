@@ -24,6 +24,21 @@ Each new idea is introduced on its own, then mixed. Order agreed so far:
 - **Hazards** (built, 0.10.0): spiked rectangles; next, a slanted or triangular hazard and a hazard that the solution must pass close to.
 - Later: springs (energy in), moving or spinning parts (needs a time-aware solver), grey dead hazards used sparingly and clearly marked.
 
+## Level order and difficulty curve
+
+Assessment of the first 12 levels (`tools/assess-levels.ts`, "toughness" 0 to 10 = how rarely a random search finds a way in):
+first-bounce 0.0, two-step 1.6, **high-ground 7.2, crossfire 10.0** (levels 4–5: the hardest pure-bar levels sit far too early),
+four-millimetres 3.7, roadblock 4.5, slalom 3.9, switchback 5.2, gauntlet 8.4, spikes 4.0, moat 4.3. The curve is a sawtooth with a
+flat baseline instead of a rising one.
+- **Reorder** (levels are keyed by id, so saved results survive): tutorial, first-bounce, two-step, four-millimetres, roadblock, slalom,
+  switchback, spikes, moat, high-ground, gauntlet, crossfire.
+- **Fill the gap** between moat (4.3) and high-ground (7.2) with 2–3 levels around 5–6: a 4-bar hazard level, a raised glass behind a block.
+- Each new mechanic starts with an easy example (a dip is right), then ramps; the baseline of those dips should rise from level to level.
+- Precision is its own kind of hard: slalom (13/49 nearby inputs win) and roadblock (23/49) are finicky, not just clever; keep an eye
+  on them in playtests.
+- **Measure real play:** record tries, time to win and hint use per level (locally now, to a server later) and use it to calibrate the
+  numbers above, since "found" is only a proxy for how hard a person finds a level.
+
 ## Menus and settings
 
 - **Settings screen** (the ⚙ button; today it only has Music): sound effects, music, haptics,

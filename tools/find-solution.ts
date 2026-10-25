@@ -19,7 +19,7 @@ export function usesEveryBar(level: Level, placed: PlacedPiece[], angle: number,
  * rotation for angles that drop the ball in the glass. Pieces sit at whole units and whole degrees,
  * angle/power on the 0.1 grid. A chain only counts if the ball bounces off every bar.
  */
-function findChains(level: Level, samples: number, seed: number, want: number): Candidate[] {
+export function findChains(level: Level, samples: number, seed: number, want: number): Candidate[] {
   const r = rng(seed);
   const specs = level.pieces;
   const found: Candidate[] = [];

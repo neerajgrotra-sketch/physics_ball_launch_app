@@ -199,6 +199,10 @@ Barlow and Barlow Condensed type. Use the colour tokens from `reference/prototyp
 - `npx vitest run`: physics and level tests. Run them before every commit.
 - `npx tsx tools/report.ts`: full no-direct-shot proof plus how forgiving each solution is (about 1 min per level).
 - `npx tsx tools/design-levels.ts [id-prefix]`: regenerate level JSON after changing geometry.
+- `npx tsx tools/assess-levels.ts [samples] [level index]`: difficulty numbers per level (bars, obstacles, par, how forgiving
+  the answer is, hazard deaths, and "found": random bar-chains the solver finds per 10,000 tries, lower = harder to stumble
+  on). Run it after adding a level and keep the curve rising (see BACKLOG.md). Pass a level index to run one level alone,
+  e.g. in parallel.
 - `npx tsc --noEmit`: typecheck.
 - `npm run play`: build the static web site and serve it at http://localhost:8090 (stable, fast, deep links work).
 - Deployed on Vercel from GitHub (`vercel.json`): every push to `main` rebuilds the site. `public/index.html`
