@@ -96,7 +96,7 @@ reference/    prototype.html, the behaviour and look to match
   counts exactly as if watched; only the remaining bounce sounds are dropped (`usePlayback().skip`).
 - **Bounces:** bars (restitution 0.85), the glass and its plate, and the floor and four edges
   (`WALL_RESTITUTION` 0.7, with a little friction so a rolling ball stops). A shot ends when the ball
-  settles in the glass, comes to rest, hits a dead grey surface if a level has one, or runs out of time
+  settles in the glass, comes to rest, hits a dead grey surface or a hazard (it bursts, no popup) if a level has one, or runs out of time
   (14 s). Landing without every bar placed and hit says so and names any bar it missed (`skipNotice`).
 - **Dead hits:** when a shot hits a dead surface, mark the spot with a small red ×.
 - **Win:** the ball has to settle inside the glass for 0.35 s. Show "In the glass in N tries", then

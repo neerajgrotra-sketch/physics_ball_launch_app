@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.11.5
+
+- Hitting a hazard no longer opens an "Ouch!" card that had to be dismissed. The ball bursts in a ring and sparks where it
+  was destroyed (with the destroyed sound and the red ×), and the next shot can be set up straight away.
+
 ## 0.11.4
 
 - New level 18, "Cushion": the glass is shut in under a spiked roof and can only be reached through a narrow gap beside the

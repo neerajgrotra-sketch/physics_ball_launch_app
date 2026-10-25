@@ -6,7 +6,7 @@ import {
   BALL_RADIUS, LAUNCHER, WORLD, blockCorners, glassBox, pieceEnds, SPIKE_LENGTH,
   type EndReason, type Level, type PlacedPiece, type Vec,
 } from '../../physics';
-import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
+import { Easing, useDerivedValue, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useColors, type Palette } from '../../theme/colors';
 import {
   blockPath, crossPath, hazardPaths, deadPaths, gridPaths, handleArcPath, launcherPath, linePath, polyPath,
@@ -53,6 +53,18 @@ export type TouchPhase = 'down' | 'move' | 'up';
 
 const condensed600 = require('@expo-google-fonts/barlow-condensed/600SemiBold/BarlowCondensed_600SemiBold.ttf');
 const condensed500 = require('@expo-google-fonts/barlow-condensed/500Medium/BarlowCondensed_500Medium.ttf');
+
+const SPARKS = 10;
+
+/** One spark of the explosion: flies out from (x, y) along its angle while `t` runs 0 → 1, shrinking and fading. */
+function Spark({ t, x, y, k, color }: { t: SharedValue<number>; x: number; y: number; k: number; color: string }) {
+  const a = (k / SPARKS) * Math.PI * 2 + (k % 2) * 0.2, reach = 26 + (k % 3) * 9;
+  const cx = useDerivedValue(() => x + Math.cos(a) * reach * t.value);
+  const cy = useDerivedValue(() => y + Math.sin(a) * reach * t.value);
+  const r = useDerivedValue(() => (k % 2 ? 2.6 : 1.8) * (1 - t.value) + 0.2);
+  const o = useDerivedValue(() => 1 - t.value);
+  return <Circle cx={cx} cy={cy} r={r} color={color} opacity={o} />;
+}
 
 /**
  * The game board, drawn in Skia in world units (WORLD, 400 × 560) and scaled uniformly to fit its container.
@@ -131,6 +143,18 @@ export function Board(props: BoardProps) {
   const last = trails[trails.length - 1];
   // Only a dead (grey) hit gets the ×.
   const deadEnd = last && last.end === 'dead' && !flight ? last.path[last.path.length - 1] : null;
+
+  // The ball bursts where it was destroyed: a ring and sparks, about half a second, once per dead shot.
+  const burst = useSharedValue(1);
+  const burstKey = deadEnd ? trails.length : 0;
+  useEffect(() => {
+    if (!burstKey) return;
+    burst.value = 0;
+    burst.value = withTiming(1, { duration: 550, easing: Easing.out(Easing.quad) });
+  }, [burstKey, burst]);
+  const ringR = useDerivedValue(() => 6 + 30 * burst.value);
+  const ringO = useDerivedValue(() => 0.9 * (1 - burst.value));
+  const [bx, by] = deadEnd ?? [0, 0];
 
   const ang = (angle * Math.PI) / 180;
   // Aim preview: the first 0.3 s of free flight only. Never preview bounces.
@@ -213,6 +237,13 @@ export function Board(props: BoardProps) {
                 {/* where the last shot died */}
                 {deadEnd && (
                   <Path path={crossPath(deadEnd[0], deadEnd[1])} color={c.red} style="stroke" strokeWidth={2} strokeCap="round" />
+                )}
+
+                {deadEnd && (
+                  <Group>
+                    <Circle cx={bx} cy={by} r={ringR} color={c.red} style="stroke" strokeWidth={2.5} opacity={ringO} />
+                    {Array.from({ length: SPARKS }, (_, k) => <Spark key={k} t={burst} x={bx} y={by} k={k} color={c.red} />)}
+                  </Group>
                 )}
 
                 {/* glass */}

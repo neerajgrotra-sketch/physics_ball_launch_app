@@ -118,7 +118,6 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   const par = level.par ?? level.pieces.length;
   /** Shown in place of the hint after a shot that needs explaining. */
   const [notice, setNotice] = useState<string | null>(null);
-  const [noticeTitle, setNoticeTitle] = useState('So close!');
   const { flight, flying, play, skip } = usePlayback();
   const feedback = useFeedback();
   const { musicOn } = useSoundSettings();
@@ -166,11 +165,8 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     const finished = () => {
       setBounces(res.bounces);
       setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end }].slice(-MAX_TRAILS));
-      setNotice(
-        res.end === 'skipped' ? skipNotice(level.pieces.length, numbers, res.touched)
-          : res.end === 'dead' ? 'The ball hit the spikes and was destroyed. Steer clear of the red.' : null,
-      );
-      setNoticeTitle(res.end === 'dead' ? 'Ouch!' : 'So close!');
+      // A destroyed ball needs no card: the board shows the burst and the sound plays.
+      setNotice(res.end === 'skipped' ? skipNotice(level.pieces.length, numbers, res.touched) : null);
       if (res.end === 'dead') feedback.died();
       if (res.success) {
         feedback.landed();
@@ -557,7 +553,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           onTouch={onTouch}
         />
         {notice && !done && !flying && (
-          <NoticeCard title={noticeTitle} message={notice} onClose={() => setNotice(null)} />
+          <NoticeCard title="So close!" message={notice} onClose={() => setNotice(null)} />
         )}
         {bounces != null && !done && (
           <View style={[styles.counter, { backgroundColor: c.paper, borderColor: c.line }]} pointerEvents="none">
