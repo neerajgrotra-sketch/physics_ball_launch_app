@@ -87,6 +87,13 @@ const designs: Omit<Level, 'solution' | 'par'>[] = [
     blocks: [{ x: 190, y: 420, w: 20, h: 240 }],
     pads: [{ x: 300, y: 530, w: 80, h: 12 }],
     hint: 'The golden pad is a spring: whatever lands on it is thrown back harder. Drop the ball onto it and send it up to the glass, using both bars.' },
+  // Pinball: two spring pads (one on the floor, one set into the right wall like a bumper), a spiked roof just above the glass so a
+  // ball thrown too hard dies and a pillar holding the glass up. The answer has to use a pad.
+  { id: '19-pinball', name: 'Pinball', glass: { x: 205, w: 40, h: 56, base: 262 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }],
+    blocks: [{ x: 205, y: 403, w: 44, h: 274 }],
+    pads: [{ x: 330, y: 530, w: 80, h: 12 }, { x: 391, y: 330, w: 12, h: 110 }],
+    hazards: [{ x: 205, y: 118, w: 170, h: 12 }],
+    hint: 'Two golden spring pads, and a spiked roof over the glass. Throw too hard and the ball is lost on the spikes: use a pad and both bars to drop it in.' },
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],

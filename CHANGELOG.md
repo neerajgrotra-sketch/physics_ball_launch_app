@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.12.1
+
+- New level 20, "Pinball": two spring pads (one on the floor, one set into the right wall as a bumper), a spiked roof just above
+  the glass so a ball thrown too hard is lost, and a pillar holding the glass up. The answer kicks off both pads and bounces
+  off both bars and the wall, par 6, 49/49 forgiving; the same shot with the pads as plain blocks fails.
+
 ## 0.12.0
 
 - Spring pads: a new fixed surface (`Level.pads`, drawn as a golden plate with chevrons) that throws the ball back harder than

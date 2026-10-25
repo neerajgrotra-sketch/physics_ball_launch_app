@@ -1,0 +1,67 @@
+{
+  "id": "19-pinball",
+  "name": "Pinball",
+  "glass": {
+    "x": 205,
+    "w": 40,
+    "h": 56,
+    "base": 262
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 205,
+      "y": 403,
+      "w": 44,
+      "h": 274
+    }
+  ],
+  "pads": [
+    {
+      "x": 330,
+      "y": 530,
+      "w": 80,
+      "h": 12
+    },
+    {
+      "x": 391,
+      "y": 330,
+      "w": 12,
+      "h": 110
+    }
+  ],
+  "hazards": [
+    {
+      "x": 205,
+      "y": 118,
+      "w": 170,
+      "h": 12
+    }
+  ],
+  "hint": "Two golden spring pads, and a spiked roof over the glass. Throw too hard and the ball is lost on the spikes: use a pad and both bars to drop it in.",
+  "par": 6,
+  "solution": {
+    "pieces": [
+      {
+        "x": 313,
+        "y": 436,
+        "deg": 58
+      },
+      {
+        "x": 280,
+        "y": 351,
+        "deg": 44
+      }
+    ],
+    "angle": 75.2,
+    "power": 66.7
+  }
+}
