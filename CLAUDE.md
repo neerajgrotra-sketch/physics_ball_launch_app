@@ -139,6 +139,9 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   shows a header at each world's first level, and the order in `levels/index.ts` must match (a test checks it). Inside a world the toughness rises
   and the first level is a gentle introduction; a new level goes at its place in its world.
 
+- **Guided tour** (`game/tour.ts` content, `components/tour/Tour.tsx` and `TourPicture.tsx`): shown once after the intro, before the tutorial:
+  eight short screens with pictures in the board's style (the game, the goal, aiming, bars, stars, the pieces, help, then a hand-off into Learn the
+  ropes). Next, Back, swipe or Skip; `tourSeen` lives with the tips (`components/coach/Tips.tsx`); Settings on the levels screen shows it again.
 - **Tutorial** (`levels/00-tutorial.json`, "Learn the ropes": a real level with three bars, level 1 in the
   list; `game/coach.ts`, `game/tutorial.ts`): a new player goes straight into it from the levels screen (and tapping its card, or ⚙ "Replay the tutorial",
   starts the guide again; Start over / Try it yourself afterwards gives the plain level), and

@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.24.0
+
+- A guided tour before the first level: after "Let's go" a new player gets eight short screens with pictures drawn in the game's own style:
+  what the game is (precision, real physics), the goal, aiming (angle and power), placing and turning bars, stars and par, the five
+  worlds' pieces (blocks, spikes, springs, portals), where to get help (Solve, Replay), and a hand-off: "the next level teaches you each
+  control step by step" with a button into Learn the ropes. Next, Back or a swipe moves through it; Skip leaves at any time. It shows
+  once; Settings on the levels screen has "How to play (the tour)", and Reset progress shows it again (`game/tour.ts`, `components/tour`).
+
 ## 0.23.0
 
 - Level locks are on: a level opens once the one before it is won (level 2 opens once the tutorial is finished or skipped). Every device

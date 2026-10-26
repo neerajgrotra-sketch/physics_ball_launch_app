@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ShotThumbnail } from '../components/levels/ShotThumbnail';
 import { SettingsSheet } from '../components/settings/SettingsSheet';
+import { Tour } from '../components/tour/Tour';
 import { useTips } from '../components/coach/Tips';
 import { useProgress, useUnlocked } from '../components/progress/ProgressProvider';
 import { TUTORIAL_ID } from '../game/coach';
@@ -25,7 +26,10 @@ export default function LevelSelect() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { tipsOn, tutorialDone, restartTutorial } = useTips();
+  const { tipsOn, tutorialDone, restartTutorial, tourSeen, finishTour, restartTour } = useTips();
+  // The guided tour shows once, before anything else; Settings can show it again.
+  const [touring, setTouring] = useState(!tourSeen);
+  const openTutorial = () => router.push({ pathname: '/level/[id]', params: { id: TUTORIAL_ID } });
   const { best, shots } = useProgress();
   const unlocked = useUnlocked();
   const total = totalScore(best);
@@ -34,20 +38,20 @@ export default function LevelSelect() {
   // The next level to play: the first without a result (the tutorial has none once it's been done).
   const nextUp = LEVELS.findIndex((l) => !best[l.id] && !(l.id === TUTORIAL_ID && tutorialDone));
 
-  // A brand-new player goes straight into the tutorial. (On a cold start only: this screen stays mounted
-  // underneath the level, so coming back to it doesn't send them in again.)
+  // A brand-new player who has already seen the tour goes straight into the tutorial; one who hasn't gets the tour, which ends there.
+  // (On a cold start only: this screen stays mounted underneath the level, so coming back to it doesn't send them in again.)
   useEffect(() => {
-    if (tipsOn && !tutorialDone && Object.keys(best).length === 0) {
-      router.push({ pathname: '/level/[id]', params: { id: TUTORIAL_ID } });
-    }
+    if (tourSeen && tipsOn && !tutorialDone && Object.keys(best).length === 0) openTutorial();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
+    <View style={styles.screen}>
     <ScrollView contentContainerStyle={[styles.page, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18 }]}>
       <SettingsSheet
         visible={settings} onClose={() => setSettings(false)}
-        onReplayTutorial={() => { setSettings(false); restartTutorial(); router.push({ pathname: '/level/[id]', params: { id: TUTORIAL_ID } }); }}
+        onReplayTutorial={() => { setSettings(false); restartTutorial(); openTutorial(); }}
+        onShowTour={() => { setSettings(false); restartTour(); setTouring(true); }}
       />
       <View style={styles.header}>
         <Pressable onPress={() => setSettings(true)} accessibilityRole="button" accessibilityLabel="Settings" style={[styles.settings, { borderColor: c.line }]}>
@@ -145,10 +149,18 @@ export default function LevelSelect() {
       </View>
       <Text style={[styles.version, { color: c.muted }]}>{VERSION_LABEL}</Text>
     </ScrollView>
+    {touring && (
+      <Tour
+        onStartTutorial={() => { finishTour(); setTouring(false); restartTutorial(); openTutorial(); }}
+        onSkip={() => { finishTour(); setTouring(false); }}
+      />
+    )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
   page: { padding: 18, gap: 18 },
   header: { alignItems: 'center', gap: 2 },
   settings: { position: 'absolute', right: 0, top: 4, height: 32, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1.5, justifyContent: 'center', zIndex: 1 },

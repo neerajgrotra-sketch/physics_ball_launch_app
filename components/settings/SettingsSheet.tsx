@@ -12,12 +12,12 @@ import { VERSION_LABEL } from '../version';
  * The ⚙ sheet: music, tips, the tutorial, "About you" (optional details kept on this device, game/profile.ts) and a Testing section
  * (open every level, or start over from level 1). The full settings screen is in BACKLOG.md.
  */
-export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial }: {
-  visible: boolean; onClose: () => void; onMusicTap?: () => void; onReplayTutorial?: () => void;
+export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, onShowTour }: {
+  visible: boolean; onClose: () => void; onMusicTap?: () => void; onReplayTutorial?: () => void; onShowTour?: () => void;
 }) {
   const c = useColors();
   const { musicOn, toggleMusic } = useSoundSettings();
-  const { tipsOn, setTipsOn, restartTutorial } = useTips();
+  const { tipsOn, setTipsOn, restartTutorial, restartTour } = useTips();
   const { unlockAll, setUnlockAll, resetProgress } = useProgress();
   const [confirmReset, setConfirmReset] = useState(false);
   useEffect(() => { if (!visible) setConfirmReset(false); }, [visible]);
@@ -50,6 +50,12 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial }
               </Pressable>
             )}
 
+            {onShowTour && (
+              <Pressable onPress={onShowTour} accessibilityRole="button" style={[styles.outline, { borderColor: c.pencil }]}>
+                <Text style={[styles.outlineText, { color: c.pencil }]}>How to play (the tour)</Text>
+              </Pressable>
+            )}
+
             <AboutYou />
 
             <Text style={[styles.section, { color: c.ink }]}>Testing</Text>
@@ -68,6 +74,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial }
                 if (!confirmReset) { setConfirmReset(true); return; }
                 resetProgress();
                 restartTutorial();
+                restartTour();
                 setConfirmReset(false);
               }}
               accessibilityRole="button"
