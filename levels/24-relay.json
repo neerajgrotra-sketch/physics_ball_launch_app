@@ -1,0 +1,88 @@
+{
+  "id": "24-relay",
+  "name": "Relay",
+  "glass": {
+    "x": 200,
+    "w": 36,
+    "h": 56
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 200,
+      "y": 400,
+      "w": 130,
+      "h": 14
+    },
+    {
+      "x": 140,
+      "y": 470,
+      "w": 14,
+      "h": 140
+    },
+    {
+      "x": 260,
+      "y": 470,
+      "w": 14,
+      "h": 140
+    }
+  ],
+  "portals": [
+    {
+      "a": {
+        "x": 110,
+        "y": 250
+      },
+      "b": {
+        "x": 330,
+        "y": 90
+      },
+      "oneWay": true
+    },
+    {
+      "a": {
+        "x": 330,
+        "y": 230
+      },
+      "b": {
+        "x": 200,
+        "y": 446
+      },
+      "oneWay": true
+    }
+  ],
+  "hint": "Two portals in a row. The blue ring at the left takes the ball up to the top right; the blue ring below that drops it into the shut box over the glass. Use the three bars to steer it from one to the next.",
+  "par": 4,
+  "solution": {
+    "pieces": [
+      {
+        "x": 355,
+        "y": 66,
+        "deg": 68
+      },
+      {
+        "x": 201,
+        "y": 147,
+        "deg": 158
+      },
+      {
+        "x": 121,
+        "y": 148,
+        "deg": 60
+      }
+    ],
+    "angle": 79.5,
+    "power": 60
+  }
+}

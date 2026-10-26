@@ -126,6 +126,16 @@ const designs: Omit<Level, 'solution' | 'par'>[] = [
     hazards: [{ x: 307, y: 337, w: 2, h: 270 }, { x: 398, y: 337, w: 2, h: 270 }],
     portals: [{ a: { x: 150, y: 300 }, b: { x: 352, y: 226 }, turn: 90, oneWay: true }],
     hint: 'The glass is at the bottom of a shut shaft. This portal turns the ball a quarter turn on the way out, so a ball that goes into the blue end heading right comes out of the orange end heading down. Use both bars to send it in sideways.' },
+  // Relay: two portal pairs in a row. The glass is in a shut box at the bottom (a roof and two side walls); the first pair carries the ball
+  // up to the top right, and the second pair, whose orange end is inside the box, drops it in. A win needs the ball through both pairs, in
+  // whatever order the bars send it (one-way exits).
+  { id: '24-relay', name: 'Relay', glass: { x: 200, w: 36, h: 56 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }, { len: 70 }],
+    blocks: [{ x: 200, y: 400, w: 130, h: 14 }, { x: 140, y: 470, w: 14, h: 140 }, { x: 260, y: 470, w: 14, h: 140 }],
+    portals: [
+      { a: { x: 110, y: 250 }, b: { x: 330, y: 90 }, oneWay: true },
+      { a: { x: 330, y: 230 }, b: { x: 200, y: 446 }, oneWay: true },
+    ],
+    hint: 'Two portals in a row. The blue ring at the left takes the ball up to the top right; the blue ring below that drops it into the shut box over the glass. Use the three bars to steer it from one to the next.' },
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],

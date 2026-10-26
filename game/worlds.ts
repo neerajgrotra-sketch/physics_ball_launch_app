@@ -28,7 +28,7 @@ export const WORLDS: World[] = [
   },
   {
     name: 'Portals', blurb: 'In one end, out the other.',
-    ids: ['21-wormhole', '23-turnstile', '22-slingshot'],
+    ids: ['21-wormhole', '23-turnstile', '22-slingshot', '24-relay'],
   },
 ];
 

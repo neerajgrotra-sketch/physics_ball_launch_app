@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.21.0
+
+- New level "Relay", the Portals world's finale: two portal pairs in a row. The first pair carries the ball up to the top right, the second drops
+  it into a shut box over the glass, and the three bars steer it from one to the next. A win needs the ball through both pairs. Par 4,
+  49/49 forgiving, toughness about 9.3.
+
 ## 0.20.0
 
 - New level "Turnstile" (Portals world, between Wormhole and Slingshot): a portal that turns the ball a quarter turn clockwise. The glass is
