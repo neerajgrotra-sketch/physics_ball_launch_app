@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.19.0
+
+- Win celebration, "light the fuse": the moment the ball settles in the glass a gold spark races along your winning shot from the cannon
+  (leaving a glowing line, and hopping across portals), then the glass flashes, rings spread out of it and confetti flies up. The better the
+  result the bigger the burst (three stars: 34 pieces and two rings; a hint or Solve win: a small one). It takes about 1.7 s; the win card
+  waits for the burst, then its stars pop in one by one, each with a rising note. New star and burst sounds, with haptics on a phone.
+  Touching the board cuts it short and goes back to playing, as it does with the card. The logic is in `game/celebration.ts`.
+
 ## 0.18.0
 
 - Levels are in worlds, one per new idea: 1 Bars, 2 Blocks, 3 Hazards, 4 Springs, 5 Portals (`game/worlds.ts`). Inside a world the toughness

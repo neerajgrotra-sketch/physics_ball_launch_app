@@ -28,10 +28,11 @@ import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
   hintSlots, leverEnd, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
+import { CELEBRATION_MS, burstFor } from '../../game/celebration';
 import { counterSpot } from '../../game/counter';
 import { emptyHistory, record, undo as undoHistory, type History } from '../../game/history';
 import { skipNotice, winText } from '../../game/progress';
-import { bestOf, goalText } from '../../game/score';
+import { bestOf, goalText, starsFor } from '../../game/score';
 import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
 import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -173,6 +174,32 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   // The bounce counter ticks up as the ball reaches each scored bounce, and shows the full count at the end.
   // The tutorial level never scores (it's practice, and its answer is handed to you), however it's played.
   const practice = level.id === TUTORIAL_ID;
+  // The win celebration (game/celebration): a spark runs the winning shot and the glass bursts; the win card waits for the burst.
+  const celeT = useSharedValue(1);
+  const [cele, setCele] = useState<{ path: Vec[]; jumps: number[]; confetti: number; rings: number } | null>(null);
+  const [cardReady, setCardReady] = useState(true);
+  const celeTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const stopCelebration = () => {
+    celeTimers.current.forEach(clearTimeout);
+    celeTimers.current = [];
+    celeT.value = 1;
+    setCele(null);
+    setCardReady(true);
+  };
+  const celebrate = (res: { path: Vec[]; jumps: number[]; bounces: number }, assisted: boolean) => {
+    stopCelebration();
+    const burst = burstFor(starsFor(res.bounces, par), assisted);
+    setCele({ path: res.path, jumps: res.jumps, ...burst });
+    setCardReady(false);
+    celeT.value = 0;
+    celeT.value = withTiming(1, { duration: CELEBRATION_MS, easing: Easing.linear });
+    celeTimers.current = [
+      setTimeout(() => feedback.burst(), CELEBRATION_MS * 0.6),
+      setTimeout(() => setCardReady(true), CELEBRATION_MS * 0.66),
+      setTimeout(() => setCele(null), CELEBRATION_MS + 100),
+    ];
+  };
+  useEffect(() => () => celeTimers.current.forEach(clearTimeout), []);
   // The live bounce counter takes the top corner that covers the least of the level (game/counter).
   const spot = counterSpot(level);
   // Spring pads energise the ball: `charge` is how lit up it is (1 right after a kick, easing to a steady glow, off at the
@@ -236,6 +263,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
       if (res.end === 'dead') feedback.died();
       if (res.success) {
         feedback.landed();
+        celebrate(res, assisted);
         setWinShot({ angle: a, power: p, slots: shot, bounces: res.bounces });
         setDone(true);
         if (tutorial) { tips.finishTutorial(); setTutorial(false); }
@@ -463,6 +491,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     setNotice(null); // any edit also closes a near-miss card
     setHelp(false);
     if (!done || flying) return;
+    stopCelebration();
     setDone(false);
     setSolved(false);
   };
@@ -644,6 +673,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           flight={flight}
           charge={charge}
           dropZone={dropZone}
+          celebrate={cele ? { t: celeT, ...cele } : null}
           warp={{ t: warp, x: warpX, y: warpY }}
           kick={{ t: kick, x: kickX, y: kickY }}
           done={done}
@@ -666,8 +696,9 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
             onHint={hint} onSolve={fullSolution} onClose={() => setHelp(false)}
           />
         )}
-        {done && !flying && (
+        {done && !flying && cardReady && (
           <WinCard
+            onStar={(k) => feedback.star(k)}
             text={winText({ assisted: solved ? 'solve' : helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last })}
             onAgain={() => onReplay(false)}
             onClose={keepPlaying}

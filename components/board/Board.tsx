@@ -14,6 +14,7 @@ import {
 import type { Flight } from './usePlayback';
 import { leverLine, moveArms, type End } from '../../game/pieces';
 import { aimPreview } from '../../game/aim';
+import { FUSE_SHARE, confettiPieces, fuseGeometry } from '../../game/celebration';
 
 const { width: W, height: H, ground: GROUND } = WORLD;
 const R = BALL_RADIUS;
@@ -47,6 +48,8 @@ export interface BoardProps {
   charge?: SharedValue<number>;
   /** While a bar is being dragged: a strip under the floor to drop it on, and whether the finger is on it ('armed'). */
   dropZone?: 'off' | 'hint' | 'armed';
+  /** The win celebration (game/celebration): `t` runs 0 → 1; the winning path to light, and how many confetti pieces to throw. */
+  celebrate?: { t: SharedValue<number>; path: Vec[]; jumps: number[]; confetti: number; rings: number } | null;
   /** The latest pad kick: `t` runs 0 → 1 for the burst ring and the pad's flash, at (x, y). */
   kick?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
   /** The latest trip through a portal: `t` runs 0 → 1 for the ring where the ball comes out. */
@@ -79,7 +82,7 @@ function Spark({ t, x, y, k, color }: { t: SharedValue<number>; x: number; y: nu
  * Pure rendering: everything it shows comes from props. Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, flight = null, charge, dropZone = 'off', kick, warp, done = false, onTouch } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, flight = null, charge, dropZone = 'off', celebrate = null, kick, warp, done = false, onTouch } = props;
   const c = useColors();
   const [box, setBox] = useState({ w: 0, h: 0 });
   const hudFont = useFont(condensed600, 15);
@@ -365,6 +368,8 @@ export function Board(props: BoardProps) {
                 {/* ball */}
                 {flight ? <FlyingBall x={flight.x} y={flight.y} c={c} charge={charge} /> : <Ball x={ball[0]} y={ball[1]} c={c} />}
 
+                {celebrate && <Celebration cele={celebrate} glass={g} c={c} />}
+
                 {/* HUD */}
                 {hudFont && (
                   <Text x={12} y={24} text={`Try ${String(tries).padStart(2, '0')}`} font={hudFont} color={c.ink} />
@@ -410,6 +415,59 @@ function PortalRing({ x, y, color, exit }: { x: number; y: number; color: string
       {exit && <Circle cx={x} cy={y} r={3} color={color} />}
     </Group>
   );
+}
+
+/**
+ * "Light the fuse": a gold spark runs along the winning shot from the cannon to the glass (the first 60% of the time), then the glass
+ * flashes, rings spread out of it and confetti flies up. Everything is driven by one shared value, so React never re-renders for it.
+ */
+function Celebration({ cele, glass, c }: { cele: NonNullable<BoardProps['celebrate']>; glass: { l: number; r: number; rim: number; base: number }; c: Palette }) {
+  const { t, path, jumps, confetti, rings } = cele;
+  const line = useMemo(() => polyPath(path, path.length, jumps), [path, jumps]);
+  const geo = useMemo(() => fuseGeometry(path, jumps), [path, jumps]);
+  const fuse = useDerivedValue(() => Math.min(1, t.value / FUSE_SHARE));
+  const burst = useDerivedValue(() => Math.max(0, (t.value - FUSE_SHARE) / (1 - FUSE_SHARE)));
+  const head = useDerivedValue(() => {
+    const f = fuse.value, cum = geo.cum;
+    let i = 0;
+    while (i < cum.length - 1 && cum[i + 1] < f) i++;
+    return [geo.flat[2 * i], geo.flat[2 * i + 1]];
+  });
+  const hx = useDerivedValue(() => head.value[0]);
+  const hy = useDerivedValue(() => head.value[1]);
+  const lineO = useDerivedValue(() => (t.value >= 1 ? 0 : 0.9 * (1 - Math.max(0, (t.value - 0.8) / 0.2))));
+  const headO = useDerivedValue(() => (fuse.value >= 1 || t.value >= 1 ? 0 : 1));
+  const flashO = useDerivedValue(() => (burst.value > 0 ? 0.55 * (1 - burst.value) : 0));
+  const ring1 = useDerivedValue(() => 6 + 70 * burst.value);
+  const ring1O = useDerivedValue(() => (burst.value > 0 ? 0.9 * (1 - burst.value) : 0));
+  const ring2 = useDerivedValue(() => 4 + 44 * burst.value);
+  const ring2O = useDerivedValue(() => (burst.value > 0 ? 0.8 * (1 - burst.value) : 0));
+  const cx = (glass.l + glass.r) / 2, cy = glass.rim + 6;
+  const pieces = useMemo(() => confettiPieces(confetti), [confetti]);
+  const colors = ['#ffb020', c.red, '#2f9bff', c.ink, '#ffe9a8'];
+  return (
+    <Group>
+      <Path path={line} end={fuse} color="#ffb020" style="stroke" strokeWidth={9} strokeCap="round" strokeJoin="round" opacity={useDerivedValue(() => lineO.value * 0.28)} />
+      <Path path={line} end={fuse} color="#ffcf4a" style="stroke" strokeWidth={3} strokeCap="round" strokeJoin="round" opacity={lineO} />
+      <Circle cx={hx} cy={hy} r={11} color="#ffb020" opacity={useDerivedValue(() => headO.value * 0.35)} />
+      <Circle cx={hx} cy={hy} r={5} color="#fffbe0" opacity={headO} />
+      <Rect x={glass.l} y={glass.rim} width={glass.r - glass.l} height={glass.base - glass.rim} color="#ffcf4a" opacity={flashO} />
+      <Circle cx={cx} cy={cy} r={ring1} color="#ffb020" style="stroke" strokeWidth={3} opacity={ring1O} />
+      {rings > 1 && <Circle cx={cx} cy={cy} r={ring2} color={c.red} style="stroke" strokeWidth={2.5} opacity={ring2O} />}
+      {pieces.map((p, k) => <Confetti key={k} burst={burst} x={cx} y={cy} angle={p.angle} speed={p.speed} color={colors[p.color]} wide={p.wide} />)}
+    </Group>
+  );
+}
+
+/** One piece of confetti: thrown up out of the glass, then pulled down, shrinking and fading. */
+function Confetti({ burst, x, y, angle, speed, color, wide }: { burst: SharedValue<number>; x: number; y: number; angle: number; speed: number; color: string; wide: boolean }) {
+  const px = useDerivedValue(() => x + Math.cos(angle) * speed * burst.value * 0.9);
+  const py = useDerivedValue(() => y + Math.sin(angle) * speed * burst.value * 0.9 + 260 * burst.value * burst.value);
+  const o = useDerivedValue(() => (burst.value <= 0 ? 0 : Math.max(0, 1 - burst.value * burst.value)));
+  const w = wide ? 7 : 4, h = wide ? 3.2 : 4;
+  const rx = useDerivedValue(() => px.value - w / 2);
+  const ry = useDerivedValue(() => py.value - h / 2);
+  return <Rect x={rx} y={ry} width={w} height={h} color={color} opacity={o} />;
 }
 
 /** A pad flashes white-hot when it kicks the ball. */

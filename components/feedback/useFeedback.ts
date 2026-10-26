@@ -13,6 +13,8 @@ const SOUNDS = {
   dead: require('../../assets/sounds/dead.wav'),
   boing: require('../../assets/sounds/boing.wav'),
   warp: require('../../assets/sounds/warp.wav'),
+  star: require('../../assets/sounds/star.wav'),
+  burst: require('../../assets/sounds/burst.wav'),
 };
 
 /** Bounce speed (px/s) that counts as a full-strength hit. Launches top out at 1120. */
@@ -38,6 +40,8 @@ export function useFeedback() {
   const dead = useAudioPlayer(SOUNDS.dead);
   const boing = useAudioPlayer(SOUNDS.boing);
   const warp = useAudioPlayer(SOUNDS.warp);
+  const star = useAudioPlayer(SOUNDS.star);
+  const burst = useAudioPlayer(SOUNDS.burst);
 
   useEffect(() => {
     // Play even with the silent switch on (it muted every sound), still mixing with other audio.
@@ -66,6 +70,14 @@ export function useFeedback() {
     landed() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       play(land, 1);
+    },
+    star(k: number) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      play(star, 0.8, 2 ** (([0, 4, 7][k] ?? 7) / 12));
+    },
+    burst() {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      play(burst, 0.85);
     },
     warped() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});

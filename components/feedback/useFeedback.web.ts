@@ -15,6 +15,8 @@ const SOUNDS = {
   dead: require('../../assets/sounds/dead.wav'),
   boing: require('../../assets/sounds/boing.wav'),
   warp: require('../../assets/sounds/warp.wav'),
+  star: require('../../assets/sounds/star.wav'),
+  burst: require('../../assets/sounds/burst.wav'),
 };
 type Sound = keyof typeof SOUNDS;
 
@@ -64,6 +66,14 @@ export function useFeedback() {
     },
     landed() {
       play('land', 1);
+    },
+    /** Star k (0-based) pops in on the win card: each a step higher up a major chord. */
+    star(k: number) {
+      play('star', 0.8, 2 ** (([0, 4, 7][k] ?? 7) / 12));
+    },
+    /** The glass bursts into confetti. */
+    burst() {
+      play('burst', 0.85);
     },
     warped() {
       play('warp', 0.8);

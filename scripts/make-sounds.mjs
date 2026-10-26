@@ -114,6 +114,18 @@ const sounds = {
     partials(0.75, [[880, 1, 0.22], [1760, 0.3, 0.12]]),
     partials(0.75, [[1318.5, 1, 0.28], [2637, 0.3, 0.14]], { start: 0.09 }),
   ),
+  // A star on the win card: a bright, short pluck (played three times, each a step higher).
+  star: mix(
+    partials(0.5, [[1320, 0.5, 0.18], [2640, 0.28, 0.12], [3960, 0.14, 0.08]], { attack: 0.002 }),
+    scale(thud(0.12, 400, 220, 0.04), 0.35),
+  ),
+  // The glass bursting into confetti: a soft pop, a shimmer rising out of it, and a little air.
+  burst: mix(
+    scale(thud(0.25, 260, 90, 0.07), 0.8),
+    scale(zap(0.55, 700, 2600, 0.22, 0.14), 0.4),
+    partials(0.6, [[2100, 0.2, 0.09], [3150, 0.16, 0.08], [4200, 0.12, 0.07]], { start: 0.06 }),
+    scale(whoosh(0.4, 0.12, 3000), 0.45),
+  ),
   // A portal: a soft whoosh in, a rising shimmer out, glassy overtones.
   warp: mix(
     scale(zap(0.5, 220, 1100, 0.25, 0.16), 0.55),
