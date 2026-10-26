@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.20.0
+
+- New level "Turnstile" (Portals world, between Wormhole and Slingshot): a portal that turns the ball a quarter turn clockwise. The glass is
+  at the bottom of a shut shaft whose walls are spiked, and the orange end of the portal is on its ceiling, so the ball must go into the blue
+  end heading right to come out heading down. Without the turn the answer dies on the spikes. Par 2, 43/49 forgiving, toughness about 6.6.
+
 ## 0.19.0
 
 - Win celebration, "light the fuse": the moment the ball settles in the glass a gold spark races along your winning shot from the cannon

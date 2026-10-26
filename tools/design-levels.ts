@@ -117,6 +117,15 @@ const designs: Omit<Level, 'solution' | 'par'>[] = [
     hazards: [{ x: 60, y: 70, w: 120, h: 12 }, { x: 310, y: 528, w: 150, h: 24 }],
     portals: [{ a: { x: 320, y: 330 }, b: { x: 235, y: 115 }, turn: -90, oneWay: true }],
     hint: 'Blue is a portal that turns the ball a quarter turn as it comes out of the orange end. Bar 3 is a golden spring. Send the ball into the blue portal from below and let it fly across to the glass.' },
+  // Turnstile: a portal that turns the ball a quarter turn clockwise. The glass is at the bottom of a shut shaft on the right, and the orange
+  // end of the portal is on the shaft's ceiling, so whatever comes out heads straight down into the glass. The ball has to go into the blue
+  // end heading right, which turns it down. Both walls of the shaft are spiked, so a ball that came out sideways (no turn) would die: the turn is
+  // needed. (A one-way exit, like Wormhole's.)
+  { id: '23-turnstile', name: 'Turnstile', glass: { x: 352, w: 36, h: 56 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }],
+    blocks: [{ x: 300, y: 370, w: 14, h: 340 }, { x: 353, y: 192, w: 100, h: 14 }],
+    hazards: [{ x: 307, y: 337, w: 2, h: 270 }, { x: 398, y: 337, w: 2, h: 270 }],
+    portals: [{ a: { x: 150, y: 300 }, b: { x: 352, y: 226 }, turn: 90, oneWay: true }],
+    hint: 'The glass is at the bottom of a shut shaft. This portal turns the ball a quarter turn on the way out, so a ball that goes into the blue end heading right comes out of the orange end heading down. Use both bars to send it in sideways.' },
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],
