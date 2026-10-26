@@ -27,6 +27,7 @@ import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
   hintSlots, leverEnd, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
+import { counterSpot } from '../../game/counter';
 import { skipNotice, winText } from '../../game/progress';
 import { bestOf, goalText } from '../../game/score';
 import type { Shot } from '../../game/shots';
@@ -156,6 +157,8 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   // The bounce counter ticks up as the ball reaches each scored bounce, and shows the full count at the end.
   // The tutorial level never scores (it's practice, and its answer is handed to you), however it's played.
   const practice = level.id === TUTORIAL_ID;
+  // The live bounce counter takes the top corner that covers the least of the level (game/counter).
+  const spot = counterSpot(level);
   // Spring pads energise the ball: `charge` is how lit up it is (1 right after a kick, easing to a steady glow, off at the
   // end of the shot); `kick` runs 0 → 1 for the burst ring and the pad's flash, at the pad hit (kickX, kickY).
   const charge = useSharedValue(0);
@@ -600,9 +603,11 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           <NoticeCard title="So close!" message={notice} onClose={() => setNotice(null)} />
         )}
         {bounces != null && !done && (
-          <View style={[styles.counter, { backgroundColor: c.paper, borderColor: c.line }]} pointerEvents="none">
-            <Text style={[styles.counterNum, { color: bounces > par ? c.red : c.ink }]}>{bounces}</Text>
-            <Text style={[styles.counterLabel, { color: c.muted }]}>{bounces === 1 ? 'bounce' : 'bounces'}{'\n'}par {par}</Text>
+          <View style={[styles.counterRow, { justifyContent: spot === 'left' ? 'flex-start' : spot === 'right' ? 'flex-end' : 'center' }]} pointerEvents="none">
+            <View style={[styles.counter, { backgroundColor: c.paper, borderColor: c.line }]}>
+              <Text style={[styles.counterNum, { color: bounces > par ? c.red : c.ink }]}>{bounces}</Text>
+              <Text style={[styles.counterLabel, { color: c.muted }]}>{bounces === 1 ? 'bounce' : 'bounces'}{'\n'}par {par}</Text>
+            </View>
           </View>
         )}
         {help && !flying && (
@@ -747,8 +752,9 @@ const styles = StyleSheet.create({
   stage: { flex: 1, paddingHorizontal: 6, paddingTop: 2 },
   hint: { marginHorizontal: 12, marginTop: 4, fontSize: 12, lineHeight: 16, fontFamily: FONTS.body },
   goal: { marginHorizontal: 12, marginTop: 6, fontSize: 16, lineHeight: 20, fontFamily: FONTS.bodySemi, textAlign: 'center' },
+  counterRow: { position: 'absolute', top: 10, left: 14, right: 14, flexDirection: 'row' },
   counter: {
-    position: 'absolute', top: 10, left: 14, flexDirection: 'row', alignItems: 'center', gap: 6,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingVertical: 4, paddingHorizontal: 10, borderRadius: 10, borderWidth: 1.5,
   },
   counterNum: { fontSize: 30, lineHeight: 32, fontFamily: FONTS.condensedBold, fontVariant: ['tabular-nums'] },

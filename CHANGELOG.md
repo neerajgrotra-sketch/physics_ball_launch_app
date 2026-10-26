@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.15.1
+
+- The live bounce counter no longer covers the level: it takes whichever top corner (left, centre or right) has the least of the puzzle
+  under it (`game/counter.ts`; Slingshot's spiked roof is top left, so its counter sits top right).
+
 ## 0.15.0
 
 - New level 23, "Slingshot": a portal that turns the ball a quarter turn on the way out (one-way exit) and a spring bar (Bar 3). The glass
