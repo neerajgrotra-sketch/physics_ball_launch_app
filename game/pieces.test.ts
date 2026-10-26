@@ -86,7 +86,7 @@ describe('pressAt', () => {
 
   it('aims near the launcher only when allowed, and empty board deselects', () => {
     const p = { x: LAUNCHER.x + 30, y: LAUNCHER.y - 30 };
-    expect(pressAt(placed, 0, p, true)).toEqual({ drag: { mode: 'aim' }, selected: 0 });
+    expect(pressAt(placed, 0, p, true)).toEqual({ drag: { mode: 'aim' }, selected: null }); // touching the cannon switches to aiming
     expect(pressAt(placed, 0, p, false)).toEqual({ drag: null, selected: null });
     expect(pressAt(placed, 0, { x: 350, y: 100 }, true)).toEqual({ drag: null, selected: null });
   });

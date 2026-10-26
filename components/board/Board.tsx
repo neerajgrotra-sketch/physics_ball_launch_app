@@ -45,6 +45,8 @@ export interface BoardProps {
   flight?: Flight | null;
   /** How energised the ball is (0–1), after a spring pad has kicked it. */
   charge?: SharedValue<number>;
+  /** While a bar is being dragged: a strip under the floor to drop it on, and whether the finger is on it ('armed'). */
+  dropZone?: 'off' | 'hint' | 'armed';
   /** The latest pad kick: `t` runs 0 → 1 for the burst ring and the pad's flash, at (x, y). */
   kick?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
   /** The latest trip through a portal: `t` runs 0 → 1 for the ring where the ball comes out. */
@@ -77,7 +79,7 @@ function Spark({ t, x, y, k, color }: { t: SharedValue<number>; x: number; y: nu
  * Pure rendering: everything it shows comes from props. Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, flight = null, charge, kick, warp, done = false, onTouch } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, flight = null, charge, dropZone = 'off', kick, warp, done = false, onTouch } = props;
   const c = useColors();
   const [box, setBox] = useState({ w: 0, h: 0 });
   const hudFont = useFont(condensed600, 15);
@@ -283,6 +285,13 @@ export function Board(props: BoardProps) {
                 <Path path={linePath(g.l, g.rim, g.l, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
                 <Path path={linePath(g.r, g.rim, g.r, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
                 <Path path={linePath(g.l - 8, g.base, g.r + 8, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
+
+                {dropZone !== 'off' && (
+                  <Group>
+                    <Rect x={0} y={GROUND + 1.5} width={W} height={H - GROUND - 1.5} color={c.red} opacity={dropZone === 'armed' ? 0.5 : 0.16} />
+                    {subFont && <Text x={W / 2 - subFont.measureText('Drop here to remove').width / 2} y={GROUND + 15} text="Drop here to remove" font={subFont} color={dropZone === 'armed' ? c.paper : c.red} />}
+                  </Group>
+                )}
 
                 {/* player's pieces */}
                 {pieces.map((p, i) => {

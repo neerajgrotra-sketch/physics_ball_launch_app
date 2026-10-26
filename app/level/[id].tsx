@@ -462,6 +462,9 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   // result counts), and does nothing else. There's no aiming once the level is won.
   // A bar dragged somewhere it isn't allowed (game/placement) shows red, and snaps back to the last
   // allowed spot when the finger lifts.
+  // Dragging a bar down past the floor takes it off the board: a red strip shows where, and letting go there removes it.
+  const armedRef = useRef(false);
+  const [dropZone, setDropZone] = useState<'off' | 'hint' | 'armed'>('off');
   const onTouch = (phase: TouchPhase, p: { x: number; y: number }) => {
     touching.current = phase !== 'up';
     if (phase === 'up') poke();
@@ -487,14 +490,29 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         const a = swingTo(p, d.grab);
         setAim(a.angle, a.power);
       }
-      else setSlots((s) => {
-        const next = dragTo(s, d, p);
-        if (slotsLegal(level, next)) lastLegal.current = next;
-        return next;
-      });
+      else if (d.mode === 'move' && p.y > WORLD.ground + 14) {
+        // out past the floor: the bar stays where it was last allowed, and letting go removes it
+        if (!armedRef.current) { armedRef.current = true; setDropZone('armed'); }
+      }
+      else {
+        if (d.mode === 'move' && (armedRef.current || dropZone === 'off')) { armedRef.current = false; setDropZone('hint'); }
+        setSlots((s) => {
+          const next = dragTo(s, d, p);
+          if (slotsLegal(level, next)) lastLegal.current = next;
+          return next;
+        });
+      }
     } else {
       const d = drag.current;
       drag.current = null;
+      const wasArmed = armedRef.current;
+      armedRef.current = false;
+      setDropZone('off');
+      if (d?.mode === 'move' && wasArmed) {
+        setSlots((s) => removeBar(s, d.k).slots);
+        setSelected(null);
+        return;
+      }
       if (tutorial && (d?.mode === 'aim' || d?.mode === 'swing')) {
         const t = snapAim(level, angle, power);
         setAim(t.angle, t.power);
@@ -595,6 +613,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           tries={tries}
           flight={flight}
           charge={charge}
+          dropZone={dropZone}
           warp={{ t: warp, x: warpX, y: warpY }}
           kick={{ t: kick, x: kickX, y: kickY }}
           done={done}
@@ -639,7 +658,6 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
               return ok;
             }}
             onNudge={(by) => rotate((s) => rotateLegal(level, s, selectedBar, by))}
-            onDone={() => setSelected(null)}
             onRemove={() => { if (!flying) { const r = removeBar(slots, selectedBar); setSlots(r.slots); setSelected(r.selected); } }}
             disabled={flying}
           />
@@ -659,14 +677,14 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         )}
         <View style={styles.bottom}>
           <View ref={trayRef} style={styles.tray}>
-            <Tray slots={slots} selected={selected} onTap={onChip} disabled={flying} onChipLayout={(k, l) => { chips.current[k] = l; }} />
+            <Tray slots={slots} selected={selected} onTap={onChip} onAim={() => { if (!flying) setSelected(null); }} aiming={selectedBar == null} disabled={flying} onChipLayout={(k, l) => { chips.current[k] = l; }} />
           </View>
-          <Ghost label="Clear" onPress={clearTrails} />
         </View>
         <View style={styles.actions}>
           <View style={flying && styles.busy} pointerEvents={flying ? 'none' : 'auto'}>
             <Ghost label="Solve" onPress={openHelp} big />
           </View>
+          <Ghost label="Clear" onPress={clearTrails} big />
           {/* Launch; during a flight, Skip (jump to the end of the shot); after a win, Watch again. */}
           <Pressable
             ref={launchRef}

@@ -61,24 +61,24 @@ interface RotateProps {
   /** Returns false when the bar can't go to that angle (the slider then pulls back and shakes). */
   onAngle: (shown: number) => boolean;
   onNudge: (by: 1 | -1) => void;
-  onDone: () => void;
   onRemove: () => void;
   disabled?: boolean;
 }
 
 /**
  * Shown in place of the aim rows while a bar is selected, at the same height so the board doesn't jump:
- * which bar, Done and Remove, then a rotation slider with −/+ 1° nudges (hold to keep turning).
+ * which bar and Remove (kept clear of the −/+ buttons), then a rotation slider with −/+ 1° nudges (hold to keep turning).
  */
-export function RotateControls({ bar, angle, onAngle, onNudge, onDone, onRemove, disabled }: RotateProps) {
+export function RotateControls({ bar, angle, onAngle, onNudge, onRemove, disabled }: RotateProps) {
   const c = useColors();
   return (
     <View style={[styles.rows, disabled && styles.disabled]} pointerEvents={disabled ? 'none' : 'auto'}>
       <View style={styles.row}>
         <Text style={[styles.title, { color: c.pencil }]}>Bar {bar}</Text>
         <View style={styles.spacer} />
-        <Pill label="Remove" onPress={onRemove} color={c.red} border={c.line} />
-        <Pill label="Done" onPress={onDone} color={c.ink} border={c.line} />
+        <Pill label="Remove" onPress={onRemove} color={c.red} border={c.line} tight />
+        {/* the same width as the readout below, so it sits over that and not over the + button */}
+        <View style={styles.readoutGap} />
       </View>
       <Row
         label="Rotate" value={angle} readout={`${angle}°`}
@@ -205,16 +205,17 @@ function Nudge({ text, onStep, a11y }: { text: string; onStep: () => void; a11y:
   );
 }
 
-function Pill({ label, onPress, color, border }: { label: string; onPress: () => void; color: string; border: string }) {
+function Pill({ label, onPress, color, border, tight }: { label: string; onPress: () => void; color: string; border: string; tight?: boolean }) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" hitSlop={4} style={[styles.pill, { borderColor: border }]}>
+    <Pressable onPress={onPress} accessibilityRole="button" hitSlop={tight ? 0 : 4} style={[styles.pill, tight && styles.pillTight, { borderColor: border }]}>
       <Text style={[styles.pillText, { color }]}>{label}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  rows: { gap: 4 },
+  rows: { gap: 10 },
+  readoutGap: { width: 2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   label: { width: 52, fontSize: 15, fontFamily: FONTS.condensed },
   nudge: { width: 30, height: 28, borderRadius: 8, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
@@ -225,6 +226,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 17, fontFamily: FONTS.condensedBold },
   spacer: { flex: 1 },
   pill: { height: 28, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1.5, justifyContent: 'center' },
+  pillTight: { paddingHorizontal: 8 },
   pillText: { fontSize: 14, fontFamily: FONTS.bodySemi },
   disabled: { opacity: 0.5 },
 });

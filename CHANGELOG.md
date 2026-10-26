@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.16.0
+
+- The cannon is a chip beside the bars: tap it to switch the sliders to the aim, tap Bar 1, 2, 3 to switch to that bar. It is filled when
+  you are aiming. Touching the cannon itself or its dotted aim line does the same, so the Done button is gone.
+- Remove is a smaller button, well away from the +/- nudges (over the angle readout), and a bar can also be dragged down past the floor to
+  take it off the board (a red strip shows where; let go there to remove it).
+- Clear (the trails) moved down beside Solve to make room for the cannon chip on the bar row.
+
 ## 0.15.2
 
 - Launching no longer deselects the bar being adjusted: its rotation slider stays up through and after the shot, instead of the aim sliders

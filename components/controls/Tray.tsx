@@ -7,6 +7,9 @@ interface Props {
   slots: Slot[];
   selected: number | null;
   onTap: (k: number) => void;
+  /** The cannon chip: switch the sliders back to the aim. `aiming` is when no bar is selected. */
+  onAim?: () => void;
+  aiming?: boolean;
   disabled?: boolean;
   /** Where chip k sits within the tray (for the idle coach's finger). */
   onChipLayout?: (k: number, layout: LayoutRectangle) => void;
@@ -16,7 +19,7 @@ interface Props {
  * One chip per bar, named Bar 1, Bar 2, Bar 3 (the board shows the same numbers). Outlined in the tray,
  * faded and dashed on the board, filled when selected. The line icon shows the bar's length.
  */
-export function Tray({ slots, selected, onTap, disabled, onChipLayout }: Props) {
+export function Tray({ slots, selected, onTap, onAim, aiming, disabled, onChipLayout }: Props) {
   const c = useColors();
   if (!slots.length) {
     return <Text style={[styles.none, { color: c.muted }]}>No pieces on this level</Text>;
@@ -24,6 +27,17 @@ export function Tray({ slots, selected, onTap, disabled, onChipLayout }: Props) 
   const compact = slots.length > 3; // 4 or more bars: just the number, so they all fit on one row
   return (
     <View style={styles.tray}>
+      {onAim && (
+        <Pressable
+          onPress={onAim}
+          disabled={disabled}
+          accessibilityRole="button"
+          accessibilityLabel="Aim the cannon"
+          style={[styles.gun, { borderColor: c.pencil }, aiming && { backgroundColor: c.pencil }]}
+        >
+          <Cannon color={aiming ? c.panel : c.pencil} />
+        </Pressable>
+      )}
       {slots.map((s, k) => {
         const sel = selected === k && s.onBoard;
         const label = `Bar ${k + 1}`;
@@ -60,6 +74,16 @@ export function Tray({ slots, selected, onTap, disabled, onChipLayout }: Props) 
   );
 }
 
+/** The cannon on its chip: a barrel on a tapered base. */
+function Cannon({ color }: { color: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 20 20">
+      <Path d="M3 17 L13 17 L11 11 L5 11 Z" fill={color} />
+      <Path d="M8 11 L14 4" stroke={color} strokeWidth={3.4} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 /** The energy bolt on a spring bar's chip. */
 function Bolt({ color }: { color: string }) {
   return (
@@ -74,6 +98,7 @@ const ICON_SCALE = 34 / 40;
 
 const styles = StyleSheet.create({
   tray: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  gun: { width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   none: { fontSize: 13, fontFamily: FONTS.body, alignSelf: 'center' },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6, height: 34, paddingHorizontal: 10,

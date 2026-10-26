@@ -163,9 +163,9 @@ export function pressAt(
     const s = slots[hit];
     return { drag: { mode: 'move', k: hit, ox: p.x - s.x, oy: p.y - s.y }, selected: hit };
   }
-  if (canAim && nearLauncher(p)) return { drag: { mode: 'aim' }, selected };
+  if (canAim && nearLauncher(p)) return { drag: { mode: 'aim' }, selected: null };
   const grab = canAim && aim ? grabAimLine(p, aim.angle, aim.power) : null;
-  if (grab) return { drag: { mode: 'swing', grab }, selected };
+  if (grab) return { drag: { mode: 'swing', grab }, selected: null };
   return { drag: null, selected: null };
 }
 
