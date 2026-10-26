@@ -4,9 +4,6 @@ Agreed work that isn't built yet, roughly in priority order. Move an item to CHA
 
 ## Next up
 
-- **Undo for bar moves** (user feedback): an undo icon just before the Launch button that steps back through the player's edits to the
-  bars (place, move, turn, remove, or a bar snapped back after an illegal drop), so an accidental drag can be put back. Needs a short
-  history of slot states (cap about 20), cleared on Start over and on a new level; undoing is not allowed mid-flight.
 - **Reset button** (user feedback): a clear "start over" on the board that takes every bar back to the tray and clears the trails (and
   the try count) without leaving the level. Today the Clear button only wipes the ghost trails, and Start over only shows after a win.
   Decide whether it keeps the aim, and whether it asks first when several bars are placed.

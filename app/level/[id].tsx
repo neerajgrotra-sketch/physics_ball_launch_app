@@ -1,5 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef, type ReactElement } from 'react';
+import Svg, { Path } from 'react-native-svg';
 import { Pressable, StyleSheet, Text, View, type LayoutRectangle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
@@ -28,6 +29,7 @@ import {
   hintSlots, leverEnd, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
 import { counterSpot } from '../../game/counter';
+import { emptyHistory, record, undo as undoHistory, type History } from '../../game/history';
 import { skipNotice, winText } from '../../game/progress';
 import { bestOf, goalText } from '../../game/score';
 import type { Shot } from '../../game/shots';
@@ -94,6 +96,20 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   const [guided, setGuided] = useState(false);
 
   const [slots, setSlots] = useState<Slot[]>(() => (shot ? shotSlots(level, shot) : emptySlots(level)));
+  // Undo: every change to the bars is remembered (a drag or held slider counts as one step), see game/history.
+  const history = useRef<History<Slot[]>>(emptyHistory());
+  const lastSlots = useRef(slots);
+  const undoing = useRef(false);
+  const [canUndo, setCanUndo] = useState(false);
+  useEffect(() => {
+    if (slots === lastSlots.current) return;
+    if (!undoing.current) {
+      history.current = record(history.current, lastSlots.current, Date.now());
+      setCanUndo(history.current.past.length > 0);
+    }
+    undoing.current = false;
+    lastSlots.current = slots;
+  }, [slots]);
   const [selected, setSelected] = useState<number | null>(null);
   /** Which end of the selected bar has the rotate lever; picked when a bar is selected, moved by tapping the other end. */
   const [lever, setLever] = useState<End>(2);
@@ -366,6 +382,20 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     const res = simulate(buildWorld(level, boardPieces(shot)), a, p);
     launched();
     playShot(res, () => { if (res.success) feedback.landed(); }, false);
+  };
+
+  // Put the bars back the way they were before the last change. Not while a shot is playing.
+  const undoMove = () => {
+    if (flying) return;
+    const step = undoHistory(history.current);
+    if (!step) return;
+    history.current = step.history;
+    setCanUndo(step.history.past.length > 0);
+    undoing.current = true;
+    keepPlaying();
+    setSlots(step.state);
+    if (selected != null && !step.state[selected]?.onBoard) setSelected(null);
+    setNotice(null);
   };
 
   const launch = () => {
@@ -685,6 +715,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
             <Ghost label="Solve" onPress={openHelp} big />
           </View>
           <Ghost label="Clear" onPress={clearTrails} big />
+          <UndoButton enabled={canUndo && !flying && !done} onPress={undoMove} />
           {/* Launch; during a flight, Skip (jump to the end of the shot); after a win, Watch again. */}
           <Pressable
             ref={launchRef}
@@ -742,6 +773,26 @@ function Gear() {
   );
 }
 
+/** The undo button just before Launch: a curved arrow, faded when there is nothing to undo. */
+function UndoButton({ enabled, onPress }: { enabled: boolean; onPress: () => void }) {
+  const c = useColors();
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!enabled}
+      accessibilityRole="button"
+      accessibilityLabel="Undo the last bar move"
+      accessibilityState={{ disabled: !enabled }}
+      style={[styles.undo, { borderColor: c.line, opacity: enabled ? 1 : 0.35 }]}
+    >
+      <Svg width={22} height={22} viewBox="0 0 24 24">
+        <Path d="M9 5.5 L4 10.5 L9 15.5" stroke={c.ink} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <Path d="M4.5 10.5 H14 A5 5 0 0 1 14 20.5 H8" stroke={c.ink} strokeWidth={2.4} strokeLinecap="round" fill="none" />
+      </Svg>
+    </Pressable>
+  );
+}
+
 function Ghost({ label, onPress, big }: { label: string; onPress: () => void; big?: boolean }) {
   const c = useColors();
   return (
@@ -783,6 +834,7 @@ const styles = StyleSheet.create({
   tray: { flex: 1 },
   actions: { flexDirection: 'row', gap: 8 },
   busy: { opacity: 0.5 },
+  undo: { width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   ghost: { height: 34, paddingHorizontal: 12, borderRadius: 17, borderWidth: 1.5, justifyContent: 'center' },
   ghostBig: { height: 44, paddingHorizontal: 20, borderRadius: 22 },
   ghostText: { fontSize: 14, fontFamily: FONTS.bodyMedium },

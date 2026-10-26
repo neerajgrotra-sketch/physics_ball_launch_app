@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.17.0
+
+- Undo: an undo button just before Launch steps the bars back one change at a time (place, move, turn, remove, a snap back; a drag or
+  a held slider counts as one step; up to 30 steps), so an accidental drag can be put back. Faded when there is nothing to undo, and
+  off during a shot (`game/history.ts`). The aim is not part of undo.
+
 ## 0.16.0
 
 - The cannon is a chip beside the bars: tap it to switch the sliders to the aim, tap Bar 1, 2, 3 to switch to that bar. It is filled when
