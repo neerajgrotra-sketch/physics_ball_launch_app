@@ -1,6 +1,9 @@
 // The guided tour: a few screens between the intro and the first level that explain what the game is, how to win, how the controls work,
 // what the board pieces are, and where to get help, ending with a hand-off to the tutorial level. Pure content: no UI imports, so a test
-// can check it. The pictures are drawn by components/tour/TourPicture.tsx, one per `picture`.
+// can check it. Each page's picture is a short scene played on the real board (components/tour/TourScene.tsx, scripts in scenes.ts):
+// real levels, real simulate() shots and their sounds, with a ghost finger doing the dragging. Only 'pieces' is a still drawing.
+
+import { WORLD } from '../physics';
 
 export type TourPicture = 'welcome' | 'goal' | 'aim' | 'bars' | 'stars' | 'pieces' | 'help' | 'ready';
 
@@ -63,3 +66,24 @@ export function withName(text: string, name: string): string {
   const n = (name.trim().split(/\s+/)[0] ?? '').slice(0, 20); // first name only: it is a greeting
   return text.replace('{, name}', n ? `, ${n}` : '').replace('{name}', n || 'there');
 }
+
+/** The scenes show the lower part of the board, from this world y down to the bottom (400 × 360), where every scene's shot stays. */
+export const TOUR_VIEW_TOP = 200;
+export const TOUR_VIEW = { top: TOUR_VIEW_TOP, width: WORLD.width, height: WORLD.height - TOUR_VIEW_TOP };
+
+/**
+ * Which level each scene plays on (by id). Shots are the level's stored solution unless a scene says otherwise; tests check that every
+ * shot a scene fires lands (or misses, for `miss`) without leaving the view.
+ */
+export const TOUR_SCENES = {
+  welcome: { level: '05-four-millimetres' },
+  /** A first try at this power misses Bar 1 (a faint trail), then the stored answer goes in. */
+  goal: { level: '02-two-step', miss: { power: 57 } },
+  aim: { level: '01-first-bounce' },
+  /** Bar 1 is placed, dragged, slid on both arms and turned to the answer's spot, drawn at -28° (the same line as the answer's 152°). */
+  bars: { level: '01-first-bounce', drop: { x: 130, y: 330 }, turnTo: -28 },
+  stars: { level: '02-two-step' },
+  help: { level: '00-tutorial' },
+  /** The tutorial's guide: Bar 1 is dragged onto its dashed outline and turned to match (-40° is the same line as the answer's 140°). */
+  ready: { level: '00-tutorial', drop: { x: 230, y: 320 }, turnTo: -40 },
+} as const;

@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PROFILE_KEY, parseProfile } from '../../game/profile';
-import { TOUR, withName } from '../../game/tour';
+import { TOUR, TOUR_VIEW, withName } from '../../game/tour';
 import { FONTS, useColors } from '../../theme/colors';
+import { useFeedback } from '../feedback/useFeedback';
 import { TourPicture } from './TourPicture';
 
 /**
@@ -14,7 +15,8 @@ import { TourPicture } from './TourPicture';
 export function Tour({ onStartTutorial, onSkip }: { onStartTutorial: () => void; onSkip: () => void }) {
   const c = useColors();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const feedback = useFeedback();
   const [page, setPage] = useState(0);
   const last = page === TOUR.length - 1;
   const p = TOUR[page];
@@ -48,6 +50,7 @@ export function Tour({ onStartTutorial, onSkip }: { onStartTutorial: () => void;
     Animated.timing(shown, { toValue: 1, duration: 260, useNativeDriver: true }).start();
   }, [page, shown]);
   const go = (to: number) => {
+    feedback.prime(); // the scenes have sound: on the web it only starts from a tap
     if (to < 0 || to >= TOUR.length) return;
     from.current = to > page ? 1 : -1;
     setPage(to);
@@ -57,12 +60,14 @@ export function Tour({ onStartTutorial, onSkip }: { onStartTutorial: () => void;
   const swipe = useRef(PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 18 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
     onPanResponderRelease: (_, g) => {
+      feedback.prime();
       if (g.dx < -40) setPage((n) => { from.current = 1; return Math.min(TOUR.length - 1, n + 1); });
       else if (g.dx > 40) setPage((n) => { from.current = -1; return Math.max(0, n - 1); });
     },
   })).current;
 
-  const picW = Math.min(width - 40, 460);
+  // The scene is 400 × 360 board units; keep it to under half the screen's height so the words fit under it.
+  const picW = Math.min(width - 40, 460, (height * 0.44 * TOUR_VIEW.width) / TOUR_VIEW.height);
   if (asking === null) return <View style={[styles.wrap, { backgroundColor: c.panel }]} />;
   if (asking) return <NameStep onDone={keepName} onSkip={onSkip} />;
   return (

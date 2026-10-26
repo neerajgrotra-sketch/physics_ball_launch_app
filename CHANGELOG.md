@@ -4,6 +4,16 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.25.0
+
+- The tour's pictures are now live scenes on the real board instead of drawings (the drawn shots didn't leave the cannon and the
+  aim picture didn't match the game). Each page plays a real level with real `simulate()` shots and their bounce sounds, and a ghost finger
+  does the controls: it drags out from the cannon to turn the angle and pull the power in and out, taps Launch, taps a bar chip, drags the
+  bar, slides it on both arms and turns it by its handle. The goal page shows a try that misses a bar and then the one that goes in, the stars
+  page counts bounces against par and pops the stars, the help page shows Solve's hint and full answer and Replay, and the last page drags a bar
+  onto the tutorial's outline. Only the pieces page is still a drawing (`components/tour/TourScene.tsx`, `scenes.ts`; levels in
+  `game/tour.ts` `TOUR_SCENES`, and a test checks every shot lands, or misses for the miss, inside the view).
+
 ## 0.24.2
 
 - Fixed two music tracks playing at once: a level left underneath another screen kept its music going. Now only the level on top plays music
