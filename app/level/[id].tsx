@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useIsFocused, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef, type ReactElement } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { Pressable, StyleSheet, Text, View, type LayoutRectangle } from 'react-native';
@@ -143,7 +143,10 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   const feedback = useFeedback();
   const { musicOn } = useSoundSettings();
   const [settings, setSettings] = useState(false);
-  const music = useLevelMusic(level.id, musicOn, flying); // music dips while the ball flies
+  // Only the screen on top plays music: a level left underneath another (the tour opening the tutorial over a level, say) stops its
+  // track, so two never play at once, and picks it up again when it is back on top.
+  const focused = useIsFocused();
+  const music = useLevelMusic(level.id, musicOn && focused, flying); // music dips while the ball flies
   // Browsers only start audio from a tap, so every tap on the level unlocks it (no-op on phones).
   const primeAudio = () => { feedback.prime(); music.prime(); };
   const drag = useRef<Drag | null>(null);

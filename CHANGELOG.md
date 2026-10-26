@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.24.2
+
+- Fixed two music tracks playing at once: a level left underneath another screen kept its music going. Now only the level on top plays music
+  (it stops when covered and picks up again when it is back on top), and when the tour hands over to Learn the ropes from a level it
+  replaces that level instead of stacking a second one on it.
+
 ## 0.24.1
 
 - The tour now shows whichever screen the app opens on (it only appeared on the level list, so reloading on a level skipped it). It lives in
