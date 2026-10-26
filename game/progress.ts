@@ -30,7 +30,7 @@ export interface WinText {
   score: number | null;
   /** What earns more stars next time (null at three stars or when assisted). */
   next: string | null;
-  /** Left button: starts the level over from scratch (Watch again replays the winning shot). */
+  /** Left button: starts the level over from scratch (Replay plays the winning shot again). */
   again: string;
   /** Right button: the next level, or this one again after the last. */
   go: string;

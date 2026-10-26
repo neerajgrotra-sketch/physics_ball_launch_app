@@ -131,7 +131,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   const [help, setHelp] = useState(false);
   /** Scored bounces of the shot in flight (ticking up live) or the last shot; null before the first. */
   const [bounces, setBounces] = useState<number | null>(null);
-  /** The winning shot exactly as fired (bars, angle, power), so Watch again can replay it. */
+  /** The winning shot exactly as fired (bars, angle, power), so Replay can play it again. */
   const [winShot, setWinShot] = useState<{ angle: number; power: number; slots: Slot[]; bounces: number }>({ angle: 0, power: 0, slots: [], bounces: 0 });
   const ads = useRewardedAd();
   const par = level.par ?? level.pieces.length;
@@ -169,7 +169,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
 
   // The trail and the win only land once playback reaches the end of the path, as in the prototype.
   // Bounces tap and tink as the ball reaches them; the end of the shot chimes or thumps.
-  // `shot` is the bar setup fired: the win keeps it for Watch again, and a near miss uses its bar
+  // `shot` is the bar setup fired: the win keeps it for Replay, and a near miss uses its bar
   // numbers to say which bar the ball skipped.
   // The bounce counter ticks up as the ball reaches each scored bounce, and shows the full count at the end.
   // The tutorial level never scores (it's practice, and its answer is handed to you), however it's played.
@@ -279,7 +279,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     playShot(res, finished);
   };
 
-  // Opened with a saved shot (Replay on the level card): play it once, like Watch again. It isn't a try
+  // Opened with a saved shot (Replay on the level card): play it once, like the Replay button. It isn't a try
   // and isn't scored; the bars and aim are left set up, so the player carries on from there.
   useEffect(() => {
     if (!shot) return;
@@ -748,14 +748,14 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           </View>
           <Ghost label="Clear" onPress={clearTrails} big />
           <UndoButton enabled={canUndo && !flying && !done} onPress={undoMove} />
-          {/* Launch; during a flight, Skip (jump to the end of the shot); after a win, Watch again. */}
+          {/* Launch; during a flight, Skip (jump to the end of the shot); after a win, Replay. */}
           <Pressable
             ref={launchRef}
             onPress={flying ? skip : done ? watchAgain : launch}
             accessibilityRole="button"
             style={[styles.launch, { backgroundColor: c.red }]}
           >
-            <Text style={styles.launchText}>{flying ? 'Skip ›' : done ? 'Watch again ▶︎' : 'Launch'}</Text>
+            <Text style={styles.launchText}>{flying ? 'Skip ›' : done ? 'Replay ▶︎' : 'Launch'}</Text>
           </Pressable>
         </View>
       </View>

@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.22.1
+
+- After a win the Launch button reads "Replay ▶" instead of "Watch again ▶" (players found "Watch again" unclear). It still replays the winning
+  shot exactly, without counting a try.
+
 ## 0.22.0
 
 - New level "Bounce house", the gentle first level of the Springs world (before Springboard): one golden pad in the middle of the floor, the

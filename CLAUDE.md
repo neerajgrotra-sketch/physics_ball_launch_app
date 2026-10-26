@@ -105,7 +105,7 @@ reference/    prototype.html, the behaviour and look to match
 - **Dead hits:** when a shot hits a dead surface, mark the spot with a small red ×.
 - **Win:** the ball has to settle inside the glass for 0.35 s. Show "In the glass in N tries", then
   unlock the next level and save progress locally.
-  After a win, Launch becomes "Watch again ▶": it replays the winning shot exactly (bars restored to where
+  After a win, Launch becomes "Replay ▶": it replays the winning shot exactly (bars restored to where
   they were, same angle and power) without resetting or counting a try. The card's left button is
   "Start over" (or "Try it yourself" after Solve), which resets the level. Any edit after a win (touching the board, a
   bar chip, a slider or rotation) or the card's ✕ closes the card and goes back to normal play, keeping bars,
