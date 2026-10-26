@@ -38,7 +38,8 @@
       "b": {
         "x": 340,
         "y": 425
-      }
+      },
+      "oneWay": true
     }
   ],
   "hint": "The glass is shut in a box. Blue and orange are a portal: go in the blue one and you come out of the orange one, still moving the same way. Send the ball down into the blue end, using both bars.",
@@ -57,6 +58,6 @@
       }
     ],
     "angle": 41.4,
-    "power": 78.9
+    "power": 78.6
   }
 }

@@ -333,7 +333,7 @@ describe('portals', () => {
     const s = level.solution!;
     const r = simulate(buildWorld(level, solutionPieces(level)), s.angle, s.power);
     expect(r.success).toBe(true);
-    expect(r.portalsUsed.every(Boolean)).toBe(true);
+    expect(r.jumps).toHaveLength(1); // in once, and the exit is one-way: no wandering back out
     expect(r.jumps.length).toBeGreaterThanOrEqual(1);
   });
 

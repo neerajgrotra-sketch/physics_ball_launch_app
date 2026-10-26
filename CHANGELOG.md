@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.14.1
+
+- Portals can have a one-way exit (`oneWay`): the orange end only lets the ball out, and shows a solid dot. Wormhole uses it, so the
+  ball goes in once, drops into the glass and can no longer wander back out through the orange end (its answer went round twice before).
+
 ## 0.14.0
 
 - Portals: linked pairs (`Level.portals`, blue and orange rings). A ball whose centre enters one end comes out of the other with its

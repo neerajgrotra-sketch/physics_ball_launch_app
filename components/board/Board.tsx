@@ -266,7 +266,7 @@ export function Board(props: BoardProps) {
                 {(level.portals ?? []).map((pr, n) => (
                   <Group key={`portal${n}`}>
                     <PortalRing x={pr.a.x} y={pr.a.y} color="#2f9bff" />
-                    <PortalRing x={pr.b.x} y={pr.b.y} color="#ff7a1a" />
+                    <PortalRing x={pr.b.x} y={pr.b.y} color="#ff7a1a" exit={pr.oneWay} />
                   </Group>
                 ))}
                 {kick && <KickRing t={kick.t} x={kick.x} y={kick.y} />}
@@ -384,7 +384,7 @@ function Ball({ x, y, c }: { x: number; y: number; c: Palette }) {
 
 /** The ball during playback: its position comes from shared values, so moving it never re-renders React. */
 /** One end of a portal: a glowing ring with a dark centre, breathing slowly. */
-function PortalRing({ x, y, color }: { x: number; y: number; color: string }) {
+function PortalRing({ x, y, color, exit }: { x: number; y: number; color: string; exit?: boolean }) {
   const pulse = useSharedValue(0);
   useEffect(() => {
     pulse.value = withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.quad) }), -1, true);
@@ -398,6 +398,7 @@ function PortalRing({ x, y, color }: { x: number; y: number; color: string }) {
       <Circle cx={x} cy={y} r={PORTAL_RADIUS} color="#14202e" />
       <Circle cx={x} cy={y} r={PORTAL_RADIUS - 1.5} color={color} style="stroke" strokeWidth={3.5} />
       <Circle cx={x} cy={y} r={inner} color={color} style="stroke" strokeWidth={1.6} opacity={0.8} />
+      {exit && <Circle cx={x} cy={y} r={3} color={color} />}
     </Group>
   );
 }

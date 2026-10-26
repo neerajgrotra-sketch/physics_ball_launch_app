@@ -72,7 +72,8 @@ export function hazardReach(b: Block): Block {
 /** `base` is the y of the glass floor; it defaults to WORLD.ground. */
 export interface Glass { x: number; w: number; h: number; base?: number }
 /** A piece the player places: `restitution` above 1 makes it a spring bar (see isSpring). */
-export interface Portal { a: { x: number; y: number }; b: { x: number; y: number }; turn?: number }
+/** `oneWay`: end b is an exit only; a ball that touches it just carries on (no way back through to a). */
+export interface Portal { a: { x: number; y: number }; b: { x: number; y: number }; turn?: number; oneWay?: boolean }
 export interface PieceSpec { len: number; restitution?: number }
 /** A piece or pad with restitution above 1 is a spring: it throws the ball back harder, with the pad kick. */
 export const isSpring = (restitution?: number): boolean => (restitution ?? 0) > 1;
@@ -309,7 +310,7 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
       for (let n = 0; n < world.portals.length; n++) {
         const pr = world.portals[n];
         const enterA = Math.hypot(x - pr.a.x, y - pr.a.y) < PORTAL_RADIUS;
-        const enterB = !enterA && Math.hypot(x - pr.b.x, y - pr.b.y) < PORTAL_RADIUS;
+        const enterB = !enterA && !pr.oneWay && Math.hypot(x - pr.b.x, y - pr.b.y) < PORTAL_RADIUS;
         if (!enterA && !enterB) continue;
         const out = enterA ? pr.b : pr.a;
         const turn = ((enterA ? 1 : -1) * (pr.turn ?? 0) * Math.PI) / 180;
