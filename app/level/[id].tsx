@@ -378,7 +378,8 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
       return;
     }
     primeAudio();
-    setSelected(null);
+    // The bar being adjusted stays selected through the shot, so its rotation slider is still under the finger afterwards
+    // (the aim sliders come back with Done, or by touching the dotted aim line).
     fire(slots, angle, power);
   };
 

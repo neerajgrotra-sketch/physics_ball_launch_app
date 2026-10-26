@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.15.2
+
+- Launching no longer deselects the bar being adjusted: its rotation slider stays up through and after the shot, instead of the aim sliders
+  taking its place (players kept dragging them thinking they were still turning the bar). Done, or a touch on the dotted aim line,
+  brings the aim sliders back.
+
 ## 0.15.1
 
 - The live bounce counter no longer covers the level: it takes whichever top corner (left, centre or right) has the least of the puzzle
