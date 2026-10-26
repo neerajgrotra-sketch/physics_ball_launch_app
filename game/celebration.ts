@@ -5,9 +5,19 @@ import type { Vec } from '../physics';
 // stays cheap and Vitest can check it. Pure: no UI imports.
 
 /** How long the whole thing runs (ms): the fuse takes the first 60%, the burst the rest. */
-export const CELEBRATION_MS = 1700;
+export const CELEBRATION_MS = 2000;
+/** The win card waits this long after the celebration ends, so the last confetti has settled before it appears. */
+export const CARD_PAUSE_MS = 250;
 /** The share of the time the spark spends travelling. */
 export const FUSE_SHARE = 0.6;
+
+/**
+ * Where the win card goes so it doesn't cover the glass (where the burst happens): at the top of the board, as before, unless the glass is
+ * in the top half, then at the bottom. `rim` is the glass rim's y and `height` the board's, in board units.
+ */
+export function cardPlace(rim: number, height: number): 'top' | 'bottom' {
+  return rim < height / 2 ? 'bottom' : 'top';
+}
 
 /** The burst for a win: confetti pieces and whether there is a second ring. A hint or Solve win gets a small one. */
 export function burstFor(stars: number, assisted: boolean): { confetti: number; rings: number } {

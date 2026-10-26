@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.21.1
+
+- The win card no longer cuts the celebration short: it now waits until the spark and the burst have fully played (2 s, then a short pause),
+  and fades in. It also moves out of the way of the glass: at the top of the board as before, but at the bottom when the glass is in the
+  top half, so the burst is never hidden.
+
 ## 0.21.0
 
 - New level "Relay", the Portals world's finale: two portal pairs in a row. The first pair carries the ball up to the top right, the second drops

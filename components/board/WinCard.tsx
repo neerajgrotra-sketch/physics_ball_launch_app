@@ -7,8 +7,11 @@ import { FONTS, useColors } from '../../theme/colors';
  * The prototype's #win card. It sits at the top of the board so the winning path stays visible.
  * ✕ (or any edit to the board) closes it and goes back to playing (onClose).
  */
-export function WinCard({ text, onAgain, onGo, onClose, onStar }: { text: WinText; onAgain: () => void; onGo: () => void; onClose: () => void; onStar?: (k: number) => void }) {
+export function WinCard({ text, onAgain, onGo, onClose, onStar, place = 'top' }: { text: WinText; onAgain: () => void; onGo: () => void; onClose: () => void; onStar?: (k: number) => void; place?: 'top' | 'bottom' }) {
   const c = useColors();
+  // It fades and slides in, from the side of the board it sits on.
+  const enter = useRef(new Animated.Value(0)).current;
+  useEffect(() => { Animated.timing(enter, { toValue: 1, duration: 220, useNativeDriver: true }).start(); }, [enter]);
   // Each earned star pops in, one after the other (with a note each); the unearned ones are simply there.
   const pops = useRef([0, 1, 2].map(() => new Animated.Value(0))).current;
   useEffect(() => {
@@ -24,10 +27,13 @@ export function WinCard({ text, onAgain, onGo, onClose, onStar }: { text: WinTex
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <View
+    <Animated.View
       accessibilityRole="alert"
       accessibilityLiveRegion="polite"
-      style={[styles.card, { backgroundColor: c.paper, borderColor: c.red }]}
+      style={[
+        styles.card, place === 'bottom' ? styles.cardBottom : styles.cardTop, { backgroundColor: c.paper, borderColor: c.red },
+        { opacity: enter, transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [place === 'bottom' ? 14 : -14, 0] }) }] },
+      ]}
     >
       <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Keep playing" hitSlop={10} style={styles.close}>
         <Text style={[styles.closeText, { color: c.muted }]}>✕</Text>
@@ -54,7 +60,7 @@ export function WinCard({ text, onAgain, onGo, onClose, onStar }: { text: WinTex
         </Pressable>
       </View>
       <Text style={[styles.more, { color: c.muted }]}>Move a bar or aim to keep playing</Text>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -62,8 +68,10 @@ const styles = StyleSheet.create({
   close: { position: 'absolute', top: 6, right: 10, padding: 4, zIndex: 1 },
   closeText: { fontSize: 18, fontFamily: FONTS.bodySemi },
   more: { marginTop: 8, fontSize: 12, fontFamily: FONTS.body },
+  cardTop: { top: 10 },
+  cardBottom: { bottom: 26 },
   card: {
-    position: 'absolute', top: 10, left: 22, right: 22,
+    position: 'absolute', left: 22, right: 22,
     paddingVertical: 12, paddingHorizontal: 14, borderWidth: 2, borderRadius: 10, alignItems: 'center',
     boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
   },

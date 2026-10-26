@@ -28,7 +28,7 @@ import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
   hintSlots, leverEnd, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
-import { CELEBRATION_MS, burstFor } from '../../game/celebration';
+import { CARD_PAUSE_MS, CELEBRATION_MS, burstFor, cardPlace } from '../../game/celebration';
 import { counterSpot } from '../../game/counter';
 import { emptyHistory, record, undo as undoHistory, type History } from '../../game/history';
 import { skipNotice, winText } from '../../game/progress';
@@ -36,7 +36,7 @@ import { bestOf, goalText, starsFor } from '../../game/score';
 import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
 import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
-import { WORLD, buildWorld, simulate, type Hit, type Vec } from '../../physics';
+import { WORLD, buildWorld, glassBox, simulate, type Hit, type Vec } from '../../physics';
 import { FONTS, useColors } from '../../theme/colors';
 
 const MAX_TRAILS = 4;
@@ -195,8 +195,8 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     celeT.value = withTiming(1, { duration: CELEBRATION_MS, easing: Easing.linear });
     celeTimers.current = [
       setTimeout(() => feedback.burst(), CELEBRATION_MS * 0.6),
-      setTimeout(() => setCardReady(true), CELEBRATION_MS * 0.66),
-      setTimeout(() => setCele(null), CELEBRATION_MS + 100),
+      // The card only comes once the whole celebration has played out (players found it cut the burst short).
+      setTimeout(() => { setCele(null); setCardReady(true); }, CELEBRATION_MS + CARD_PAUSE_MS),
     ];
   };
   useEffect(() => () => celeTimers.current.forEach(clearTimeout), []);
@@ -698,6 +698,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         )}
         {done && !flying && cardReady && (
           <WinCard
+            place={cardPlace(glassBox(level.glass).rim, WORLD.height)}
             onStar={(k) => feedback.star(k)}
             text={winText({ assisted: solved ? 'solve' : helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last })}
             onAgain={() => onReplay(false)}

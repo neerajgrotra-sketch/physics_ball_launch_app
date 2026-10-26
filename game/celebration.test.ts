@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { burstFor, confettiPieces, fuseGeometry } from './celebration';
+import { burstFor, cardPlace, confettiPieces, fuseGeometry } from './celebration';
 
 describe('celebration', () => {
+  it('puts the win card away from the glass', () => {
+    expect(cardPlace(484, 560)).toBe('top');    // glass on the floor: card at the top
+    expect(cardPlace(114, 560)).toBe('bottom'); // glass up high: card at the bottom
+  });
+
   it('bursts bigger for a better result, and small after a hint or Solve', () => {
     expect(burstFor(3, false).confetti).toBeGreaterThan(burstFor(2, false).confetti);
     expect(burstFor(2, false).confetti).toBeGreaterThan(burstFor(1, false).confetti);
