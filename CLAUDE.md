@@ -221,7 +221,8 @@ Barlow and Barlow Condensed type. Use the colour tokens from `reference/prototyp
   e.g. in parallel.
 - `npx tsc --noEmit`: typecheck.
 - `npm run play`: build the static web site and serve it at http://localhost:8090 (stable, fast, deep links work).
-- Deployed on Vercel from GitHub (`vercel.json`): every push to `main` rebuilds the site. `public/index.html`
+- Deployed on Vercel from GitHub (`vercel.json`): every push to `main` rebuilds the site. Commits must be authored as the owner
+  (`neerajgrotra-sketch <neerajgrotra@gmail.com>`): Vercel silently skips deploying a commit whose author isn't on the team. `public/index.html`
   is the web page template (phone fit, no zoom, Add to Home Screen); `scripts/make-icons.mjs` draws the icons.
 - `npm run web`: Expo dev server for working on the web build. `npm run build:web` exports a static site to `dist/`.
   Both first copy `canvaskit.wasm` into `public/`. On web, `index.web.js` loads CanvasKit before the app,
