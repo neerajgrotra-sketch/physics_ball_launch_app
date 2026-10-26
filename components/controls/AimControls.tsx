@@ -1,6 +1,7 @@
 import Slider from '@react-native-community/slider';
 import { useEffect, useRef, useState, type ComponentRef, type Ref } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import {
   ANGLE_MAX, ANGLE_MIN, POWER_MAX, POWER_MIN, nudgeAngle, nudgePower, toGrid,
 } from '../../game/aim';
@@ -67,7 +68,7 @@ interface RotateProps {
 
 /**
  * Shown in place of the aim rows while a bar is selected, at the same height so the board doesn't jump:
- * which bar and Remove (kept clear of the −/+ buttons), then a rotation slider with −/+ 1° nudges (hold to keep turning).
+ * which bar and a small trash can to remove it (kept clear of the −/+ buttons), then a rotation slider with −/+ 1° nudges (hold to keep turning).
  */
 export function RotateControls({ bar, angle, onAngle, onNudge, onRemove, disabled }: RotateProps) {
   const c = useColors();
@@ -76,9 +77,11 @@ export function RotateControls({ bar, angle, onAngle, onNudge, onRemove, disable
       <View style={styles.row}>
         <Text style={[styles.title, { color: c.pencil }]}>Bar {bar}</Text>
         <View style={styles.spacer} />
-        <Pill label="Remove" onPress={onRemove} color={c.red} border={c.line} tight />
-        {/* the same width as the readout below, so it sits over that and not over the + button */}
-        <View style={styles.readoutGap} />
+        <Pressable onPress={onRemove} accessibilityRole="button" accessibilityLabel="Remove this bar" style={styles.trash}>
+          <Svg width={18} height={18} viewBox="0 0 24 24">
+            <Path d="M4 7 H20 M9 7 V4.5 H15 V7 M6.5 7 L7.5 20 H16.5 L17.5 7 M10 11 V16 M14 11 V16" stroke={c.red} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          </Svg>
+        </Pressable>
       </View>
       <Row
         label="Rotate" value={angle} readout={`${angle}°`}
@@ -215,7 +218,8 @@ function Pill({ label, onPress, color, border, tight }: { label: string; onPress
 
 const styles = StyleSheet.create({
   rows: { gap: 10 },
-  readoutGap: { width: 2 },
+  // A small trash can at the far right, over the angle readout: well away from the + button and the slider.
+  trash: { width: 28, height: 28, marginRight: 14, alignItems: 'center', justifyContent: 'center', opacity: 0.75 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   label: { width: 52, fontSize: 15, fontFamily: FONTS.condensed },
   nudge: { width: 30, height: 28, borderRadius: 8, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },

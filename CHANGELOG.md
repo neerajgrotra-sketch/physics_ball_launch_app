@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.17.1
+
+- The Remove button is now a small trash can at the far right of the bar's title row (over the angle readout), well clear of the + nudge button and
+  the slider, so it is not hit by accident. A removed bar can be brought back with undo.
+
 ## 0.17.0
 
 - Undo: an undo button just before Launch steps the bars back one change at a time (place, move, turn, remove, a snap back; a drag or
