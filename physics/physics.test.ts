@@ -124,7 +124,7 @@ describe('bounce count', () => {
       const res = simulate(w, s.angle, s.power);
       for (const h of res.hits) {
         const [x, y] = res.path[Math.min(h.i, res.path.length - 1)];
-        if (h.counts) expect(x > w.glass.l + 1 && x < w.glass.r - 1 && y > w.glass.rim + 4).toBe(false);
+        if (h.counts) expect(x > w.glass.l + 1 && x < w.glass.r - 1 && y > w.glass.rim + 4 && y < w.glass.base).toBe(false);
       }
     }
   });

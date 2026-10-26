@@ -108,6 +108,15 @@ const designs: Omit<Level, 'solution' | 'par'>[] = [
     blocks: [{ x: 325, y: 380, w: 150, h: 20 }, { x: 262, y: 460, w: 20, h: 160 }],
     portals: [{ a: { x: 150, y: 240 }, b: { x: 340, y: 425 }, oneWay: true }],
     hint: 'The glass is shut in a box. Blue and orange are a portal: go in the blue one and you come out of the orange one, still moving the same way. Send the ball down into the blue end, using both bars.' },
+  // Slingshot: portal with a turn plus a spring bar. The glass is on a tower in the top left, under a spiked roof, and a low ceiling over the
+  // cannon keeps the ball from going straight up to it. The blue portal on the right turns whatever goes in a quarter turn anticlockwise
+  // (an upward ball comes out heading left, one-way exit), and Bar 3 is a spring bar to throw the ball up into it.
+  { id: '22-slingshot', name: 'Slingshot', glass: { x: 60, w: 36, h: 56, base: 170 }, fixed: [],
+    pieces: [{ len: 90 }, { len: 80 }, { len: 70, restitution: 1.3 }],
+    blocks: [{ x: 90, y: 330, w: 170, h: 20 }, { x: 60, y: 245, w: 44, h: 150 }],
+    hazards: [{ x: 60, y: 70, w: 120, h: 12 }, { x: 310, y: 528, w: 150, h: 24 }],
+    portals: [{ a: { x: 320, y: 330 }, b: { x: 235, y: 115 }, turn: -90, oneWay: true }],
+    hint: 'Blue is a portal that turns the ball a quarter turn as it comes out of the orange end. Bar 3 is a golden spring. Send the ball into the blue portal from below and let it fly across to the glass.' },
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],

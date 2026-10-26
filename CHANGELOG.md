@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.15.0
+
+- New level 23, "Slingshot": a portal that turns the ball a quarter turn on the way out (one-way exit) and a spring bar (Bar 3). The glass
+  is on a tower in the top left under a spiked roof, with a low ceiling over the cannon. Par 3, 48/49 forgiving; it fails with the spring
+  as a plain bar and with the portal turn removed.
+- Scoring fix: a bounce directly below a raised glass (in its column, under the plate) wasn't counted, because the "inside the glass" test
+  had no lower limit. It is now only between the rim and the plate. Stilts (par 3) and Springboard (par 4) were re-solved.
+
 ## 0.14.1
 
 - Portals can have a one-way exit (`oneWay`): the orange end only lets the ball out, and shows a solid dot. Wormhole uses it, so the

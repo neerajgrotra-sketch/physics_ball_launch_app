@@ -284,7 +284,7 @@ export function simulate(world: World, angleDeg: number, power: number, recordEv
       if (vn < 0) {
         const pad = s.kind === 'pad' || s.spring === true;
         const e = !pad && -vn < RESTING_CONTACT_SPEED ? 0 : s.e;
-        const counts = e > 0 && !bouncedThisStep && !(x > cup.l && x < cup.r && y > cup.rim);
+        const counts = e > 0 && !bouncedThisStep && !(x > cup.l && x < cup.r && y > cup.rim && y < cup.base);
         if (counts) { bounces++; bouncedThisStep = true; }
         if (e && recordHits) hits.push({ i: path.length, kind: s.kind as Hit['kind'], speed: -vn, piece: s.piece, spring: s.spring, counts });
         if (pad) {

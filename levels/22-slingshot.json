@@ -1,0 +1,88 @@
+{
+  "id": "22-slingshot",
+  "name": "Slingshot",
+  "glass": {
+    "x": 60,
+    "w": 36,
+    "h": 56,
+    "base": 170
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    },
+    {
+      "len": 70,
+      "restitution": 1.3
+    }
+  ],
+  "blocks": [
+    {
+      "x": 90,
+      "y": 330,
+      "w": 170,
+      "h": 20
+    },
+    {
+      "x": 60,
+      "y": 245,
+      "w": 44,
+      "h": 150
+    }
+  ],
+  "hazards": [
+    {
+      "x": 60,
+      "y": 70,
+      "w": 120,
+      "h": 12
+    },
+    {
+      "x": 310,
+      "y": 528,
+      "w": 150,
+      "h": 24
+    }
+  ],
+  "portals": [
+    {
+      "a": {
+        "x": 320,
+        "y": 330
+      },
+      "b": {
+        "x": 235,
+        "y": 115
+      },
+      "turn": -90,
+      "oneWay": true
+    }
+  ],
+  "hint": "Blue is a portal that turns the ball a quarter turn as it comes out of the orange end. Bar 3 is a golden spring. Send the ball into the blue portal from below and let it fly across to the glass.",
+  "par": 3,
+  "solution": {
+    "pieces": [
+      {
+        "x": 51,
+        "y": 400,
+        "deg": 131
+      },
+      {
+        "x": 178,
+        "y": 451,
+        "deg": 166
+      },
+      {
+        "x": 281,
+        "y": 439,
+        "deg": 0
+      }
+    ],
+    "angle": 90,
+    "power": 32.5
+  }
+}
