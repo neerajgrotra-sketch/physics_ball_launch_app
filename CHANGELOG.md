@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.18.0
+
+- Levels are in worlds, one per new idea: 1 Bars, 2 Blocks, 3 Hazards, 4 Springs, 5 Portals (`game/worlds.ts`). Inside a world the toughness
+  now rises (Four millimetres before High ground and Crossfire, Slalom before Roadblock, Cushion after Spikes), and the level list has a
+  header at the start of each world. Levels were rated with tools/assess-levels.ts first.
+- Saved wins and stars are kept (they are saved by level name). The saved "furthest level" is worked out again from the levels already won.
+
 ## 0.17.1
 
 - The Remove button is now a small trash can at the far right of the bar's title row (over the angle readout), well clear of the + nudge button and

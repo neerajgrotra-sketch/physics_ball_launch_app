@@ -135,6 +135,10 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
 
 ## Screens and navigation
 
+- **Worlds** (`game/worlds.ts`): the levels are grouped by the new idea they bring (Bars, Blocks, Hazards, Springs, Portals), the level list
+  shows a header at each world's first level, and the order in `levels/index.ts` must match (a test checks it). Inside a world the toughness rises
+  and the first level is a gentle introduction; a new level goes at its place in its world.
+
 - **Tutorial** (`levels/00-tutorial.json`, "Learn the ropes": a real level with three bars, level 1 in the
   list; `game/coach.ts`, `game/tutorial.ts`): a new player goes straight into it from the levels screen (and tapping its card, or ⚙ "Replay the tutorial",
   starts the guide again; Start over / Try it yourself afterwards gives the plain level), and

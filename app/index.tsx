@@ -1,5 +1,5 @@
 import { Link, useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { Fragment, useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ShotThumbnail } from '../components/levels/ShotThumbnail';
@@ -8,6 +8,7 @@ import { useProgress } from '../components/progress/ProgressProvider';
 import { TUTORIAL_ID } from '../game/coach';
 import { VERSION_LABEL } from '../components/version';
 import { totalScore } from '../game/score';
+import { WORLDS, worldStartingAt } from '../game/worlds';
 import { LEVELS } from '../levels';
 import { FONTS, useColors } from '../theme/colors';
 
@@ -116,11 +117,20 @@ export default function LevelSelect() {
               <Text style={styles.replayText}>Replay ▶︎</Text>
             </Pressable>
           );
+          const world = worldStartingAt(level.id);
           return (
-            <View key={level.id}>
-              {locked ? body : <Link href={{ pathname: '/level/[id]', params: { id: level.id } }} asChild>{body}</Link>}
-              {replay}
-            </View>
+            <Fragment key={level.id}>
+              {world && (
+                <View style={styles.world}>
+                  <Text style={[styles.worldName, { color: c.ink }]}>World {WORLDS.indexOf(world) + 1} · {world.name}</Text>
+                  <Text style={[styles.worldBlurb, { color: c.muted }]}>{world.blurb}</Text>
+                </View>
+              )}
+              <View>
+                {locked ? body : <Link href={{ pathname: '/level/[id]', params: { id: level.id } }} asChild>{body}</Link>}
+                {replay}
+              </View>
+            </Fragment>
           );
         })}
       </View>
@@ -134,6 +144,9 @@ const styles = StyleSheet.create({
   header: { alignItems: 'center', gap: 2 },
   heading: { fontSize: 34, fontFamily: FONTS.condensedBold },
   total: { fontSize: 15, fontFamily: FONTS.bodyMedium, textAlign: 'center' },
+  world: { width: '100%', marginTop: 8, gap: 1 },
+  worldName: { fontSize: 22, fontFamily: FONTS.condensedBold },
+  worldBlurb: { fontSize: 14, fontFamily: FONTS.bodyMedium },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP },
   tile: { borderRadius: 16, borderWidth: 2, padding: 6, gap: 6 },
   thumb: { borderRadius: 10, borderWidth: 1, overflow: 'hidden', alignItems: 'center' },

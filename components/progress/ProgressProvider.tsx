@@ -6,6 +6,10 @@ import { BEST_KEY, better, parseBest, type Best, type BestByLevel } from '../../
 import { SHOTS_KEY, parseShots, type Shot, type ShotsByLevel } from '../../game/shots';
 import { LEVELS } from '../../levels';
 
+/** Marks that the saved unlock was worked out for the levels in worlds (0.18.0). */
+const ORDER_KEY = 'bank-shot/order';
+const ORDER_VERSION = 'worlds-1';
+
 interface Progress {
   /** Index of the furthest level the player can open. */
   unlocked: number;
@@ -38,14 +42,23 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       AsyncStorage.getItem(UNLOCKED_KEY).catch(() => null),
       AsyncStorage.getItem(BEST_KEY).catch(() => null),
       AsyncStorage.getItem(SHOTS_KEY).catch(() => null),
-    ]).then(([u, b, s]) => {
+      AsyncStorage.getItem(ORDER_KEY).catch(() => null),
+    ]).then(([u, b, s, order]) => {
       if (!live) return;
       // The tutorial doesn't score; drop any result an earlier version saved for it.
       const saved = parseBest(b);
       delete saved[TUTORIAL_ID];
       setBest(saved);
       setShots(parseShots(s));
-      setUnlocked(parseUnlocked(u, LEVELS.length));
+      let open = parseUnlocked(u, LEVELS.length);
+      if (order !== ORDER_VERSION) {
+        // The levels were put in worlds (0.18.0): the saved "furthest level" counted the old order, so work it out again from the results.
+        const won = LEVELS.map((l, i) => (saved[l.id] || parseShots(s)[l.id] ? i : -1));
+        open = Math.min(LEVELS.length - 1, Math.max(-1, ...won) + 1);
+        AsyncStorage.setItem(UNLOCKED_KEY, String(open)).catch(() => {});
+        AsyncStorage.setItem(ORDER_KEY, ORDER_VERSION).catch(() => {});
+      }
+      setUnlocked(open);
     });
     return () => { live = false; };
   }, []);
