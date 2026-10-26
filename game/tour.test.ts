@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LEVELS } from '../levels';
 import { BALL_RADIUS, WORLD, buildWorld, simulate, solutionPieces, type Level, type PlacedPiece } from '../physics';
-import { TOUR, TOUR_SCENES, TOUR_VIEW_TOP, withName } from './tour';
+import { PIECE_DEMOS, TOUR, TOUR_SCENES, TOUR_VIEW_TOP, withName } from './tour';
 
 describe('guided tour', () => {
   it('starts with what the game is and ends by handing over to the tutorial', () => {
@@ -71,6 +71,19 @@ describe('tour scenes', () => {
       if (scene === TOUR_SCENES.bars) expect(shot(level, [{ ...goal, deg: scene.turnTo }, ...rest]).success).toBe(true);
       // where the bar is dropped, its handles and lever stay in view
       expect(scene.drop.y - 72).toBeGreaterThan(TOUR_VIEW_TOP);
+    }
+  });
+
+  it('shows each world\'s piece doing its thing on the pieces page', () => {
+    for (const d of PIECE_DEMOS) {
+      const res = simulate(buildWorld(d.level, []), d.angle, d.power);
+      expect(inView(res.path), d.note).toBe(true);
+      if (d.shows === 'dead') expect(res.end, d.note).toBe('dead');
+      else {
+        expect(res.success, d.note).toBe(true);
+        if (d.shows === 'portal') expect(res.jumps.length).toBe(1);
+        else expect(res.hits[0]?.kind, d.note).toBe(d.shows);
+      }
     }
   });
 });

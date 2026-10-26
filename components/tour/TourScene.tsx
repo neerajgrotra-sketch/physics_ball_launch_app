@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
 import { LAUNCHER, WORLD, buildWorld, simulate, type Hit, type Level, type PlacedPiece, type SimResult } from '../../physics';
 import { LEVELS } from '../../levels';
 import { TOUR_VIEW, type TourPicture } from '../../game/tour';
@@ -34,6 +35,8 @@ export interface SceneState {
   note: { text: string; color: 'ink' | 'red' | 'pencil' } | null;
   /** The stars popping in: each 0 (hidden) to 1 (shown). */
   stars: number[];
+  /** A board other than the scene's level (the pieces page shows one small board per piece). */
+  board?: Level;
 }
 
 /** What a scene's script can do. Every wait rejects once the scene has gone, which ends the script. */
@@ -55,10 +58,10 @@ export interface Ctx {
 
 const CANCELLED = Symbol('scene gone');
 const smooth = (k: number) => k * k * (3 - 2 * k);
-export const levelById = (id: string): Level => LEVELS.find((l) => l.id === id)!;
+export const levelById = (id: string | Level): Level => (typeof id === 'string' ? LEVELS.find((l) => l.id === id)! : id);
 
 export function freshState(level: Level): SceneState {
-  const s = level.solution!;
+  const s = level.solution ?? { angle: 45, power: 50 };
   return {
     pieces: [], numbers: [], selected: null, lever: 2, ghosts: [], trails: [], angle: s.angle, power: s.power, done: false,
     finger: { x: LAUNCHER.x + 120, y: LAUNCHER.y - 60, down: false, shown: false },
@@ -71,7 +74,7 @@ export function freshState(level: Level): SceneState {
  * over, with real shots from simulate() and their sounds, and a ghost finger acting out the controls. It never takes touches, so the
  * tour's swipe still works over it.
  */
-export function TourScene({ kind, width }: { kind: Exclude<TourPicture, 'pieces'>; width: number }) {
+export function TourScene({ kind, width }: { kind: TourPicture; width: number }) {
   const c = useColors();
   const scene = SCENES[kind];
   const level = useMemo(() => levelById(scene.level), [scene.level]);
@@ -81,6 +84,16 @@ export function TourScene({ kind, width }: { kind: Exclude<TourPicture, 'pieces'
   const { flight, play } = usePlayback();
   const playRef = useRef(play);
   playRef.current = play;
+  // A spring pad's kick (the pad flashes, a ring bursts, the ball glows) and a portal's ring where the ball comes out, as in a level.
+  const charge = useSharedValue(0);
+  const kick = { t: useSharedValue(1), x: useSharedValue(0), y: useSharedValue(0) };
+  const warp = { t: useSharedValue(1), x: useSharedValue(0), y: useSharedValue(0) };
+  const ring = (r: typeof kick, at: [number, number], ms: number) => {
+    r.x.value = at[0];
+    r.y.value = at[1];
+    r.t.value = 0;
+    r.t.value = withTiming(1, { duration: ms, easing: Easing.out(Easing.cubic) });
+  };
 
   useEffect(() => {
     let alive = true;
@@ -121,19 +134,33 @@ export function TourScene({ kind, width }: { kind: Exclude<TourPicture, 'pieces'
       },
       shoot(onHit) {
         const s = live.current;
-        const res = simulate(buildWorld(level, s.pieces), s.angle, s.power);
+        const res = simulate(buildWorld(s.board ?? level, s.pieces), s.angle, s.power);
         set({ done: false });
+        charge.value = 0;
         feedback.launched();
+        // Everything the ball meets, in order: bounces, and trips through a portal (no hit).
+        const events = [...res.hits.map((h) => ({ i: h.i, h })), ...res.jumps.map((i) => ({ i, h: undefined as Hit | undefined }))]
+          .sort((a, b) => a.i - b.i);
+        const at = (i: number) => res.path[Math.min(i, res.path.length - 1)];
         return new Promise((resolve, reject) => {
           playRef.current(res.path, () => {
             if (!alive) { reject(CANCELLED); return; }
+            charge.value = withTiming(0, { duration: 500 });
             set((t) => ({ trails: [...t.trails, { path: res.path, ok: res.success, end: res.end, jumps: res.jumps }].slice(-4), done: res.success }));
             if (res.success) feedback.landed();
+            if (res.end === 'dead') feedback.died();
             resolve(res);
-          }, res.hits.map((h) => h.i), (k) => {
+          }, events.map((e) => e.i), (k) => {
             if (!alive) return;
-            feedback.hit(res.hits[k]);
-            onHit?.(res.hits[k]);
+            const { i, h } = events[k];
+            if (!h) { ring(warp, at(i), 600); feedback.warped(); return; }
+            feedback.hit(h);
+            if (h.kind === 'pad' || h.spring) {
+              ring(kick, at(i), 650);
+              charge.value = 1;
+              charge.value = withTiming(0.55, { duration: 1400, easing: Easing.out(Easing.quad) });
+            }
+            onHit?.(h);
           }, res.jumps);
         });
       },
@@ -165,8 +192,9 @@ export function TourScene({ kind, width }: { kind: Exclude<TourPicture, 'pieces'
     <View style={{ width, height: TOUR_VIEW.height * sc, overflow: 'hidden' }} pointerEvents="none">
       <View style={{ position: 'absolute', left: 0, top: -TOUR_VIEW.top * sc, width, height: WORLD.height * sc }}>
         <Board
-          level={level} pieces={state.pieces} numbers={state.numbers} selected={state.selected} lever={state.lever} ghosts={state.ghosts}
+          level={state.board ?? level} pieces={state.pieces} numbers={state.numbers} selected={state.selected} lever={state.lever} ghosts={state.ghosts}
           trails={state.trails} angle={state.angle} power={state.power} tries={0} flight={flight} done={state.done && !flight}
+          charge={charge} kick={kick} warp={warp}
         />
       </View>
 

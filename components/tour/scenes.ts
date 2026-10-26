@@ -1,14 +1,14 @@
 import { LAUNCHER, solutionPieces, type Level, type PlacedPiece } from '../../physics';
 import { toGrid } from '../../game/aim';
 import { leverEnd, leverLine, moveArms } from '../../game/pieces';
-import { TOUR_SCENES, type TourPicture } from '../../game/tour';
+import { PIECE_DEMOS, TOUR_SCENES, type TourPicture } from '../../game/tour';
 import type { Ctx, SceneButton, SceneState } from './TourScene';
 
 // The tour's scenes (components/tour/TourScene.tsx plays them on a loop). Each one sets up a real level (game/tour.ts TOUR_SCENES)
 // and acts out a page: the ghost finger drags the aim and the bars exactly as a player would, through the game's own mappings (aimAt's
 // drag distance, the move arms, the turn lever), and every shot is simulate() played back with its sounds.
 
-export interface Scene { level: string; setup: (s: SceneState, level: Level) => SceneState; run: (ctx: Ctx) => Promise<void> }
+export interface Scene { level: string | Level; setup: (s: SceneState, level: Level) => SceneState; run: (ctx: Ctx) => Promise<void> }
 
 const LAUNCH: SceneButton = { id: 'launch', label: 'Launch', x: 344, y: 230, w: 84, kind: 'primary' };
 const REPLAY: SceneButton = { id: 'launch', label: 'Replay ▶', x: 344, y: 230, w: 84, kind: 'primary' };
@@ -109,7 +109,7 @@ async function turn(ctx: Ctx, deg: number) {
 
 const missed = (touched: boolean[]) => touched.map((t, i) => (t ? 0 : i + 1)).filter(Boolean);
 
-export const SCENES: Record<Exclude<TourPicture, 'pieces'>, Scene> = {
+export const SCENES: Record<TourPicture, Scene> = {
   // A three-bar chain into the glass, then the same shot again: the second path lies exactly on the first.
   welcome: {
     level: TOUR_SCENES.welcome.level,
@@ -190,6 +190,20 @@ export const SCENES: Record<Exclude<TourPicture, 'pieces'>, Scene> = {
       const res = await launch(ctx);
       if (res.success) say(ctx, 'Off the bar and in', 'red');
       await ctx.wait(1000);
+    },
+  },
+
+  // One small board per world's piece, each with a real shot that shows what it does.
+  pieces: {
+    level: PIECE_DEMOS[0].level,
+    setup: (s) => s,
+    async run(ctx) {
+      for (const d of PIECE_DEMOS) {
+        ctx.set({ board: d.level, trails: [], done: false, angle: d.angle, power: d.power, note: { text: d.note, color: d.shows === 'dead' ? 'red' : 'pencil' } });
+        await ctx.wait(800);
+        await ctx.shoot();
+        await ctx.wait(1300);
+      }
     },
   },
 

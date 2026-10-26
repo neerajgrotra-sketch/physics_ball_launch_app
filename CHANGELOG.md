@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.26.0
+
+- The tour's pieces page is a live scene too: four small boards in turn, each with a real shot and its sounds. The ball banks off a grey
+  block into the glass, lobs onto red spikes and bursts, lands on a gold spring and is thrown into the glass (with the pad's flash and
+  glow), and goes into a blue portal and out of the orange one into the glass (`PIECE_DEMOS` in `game/tour.ts`; a test checks each shot
+  does what its page says). Every tour page is now a live scene.
+
 ## 0.25.0
 
 - The tour's pictures are now live scenes on the real board instead of drawings (the drawn shots didn't leave the cannon and the

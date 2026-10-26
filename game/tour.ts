@@ -1,9 +1,9 @@
 // The guided tour: a few screens between the intro and the first level that explain what the game is, how to win, how the controls work,
 // what the board pieces are, and where to get help, ending with a hand-off to the tutorial level. Pure content: no UI imports, so a test
 // can check it. Each page's picture is a short scene played on the real board (components/tour/TourScene.tsx, scripts in scenes.ts):
-// real levels, real simulate() shots and their sounds, with a ghost finger doing the dragging. Only 'pieces' is a still drawing.
+// real levels, real simulate() shots and their sounds, with a ghost finger doing the dragging.
 
-import { WORLD } from '../physics';
+import { WORLD, type Level } from '../physics';
 
 export type TourPicture = 'welcome' | 'goal' | 'aim' | 'bars' | 'stars' | 'pieces' | 'help' | 'ready';
 
@@ -87,3 +87,23 @@ export const TOUR_SCENES = {
   /** The tutorial's guide: Bar 1 is dragged onto its dashed outline and turned to match (-40° is the same line as the answer's 140°). */
   ready: { level: '00-tutorial', drop: { x: 230, y: 320 }, turnTo: -40 },
 } as const;
+
+const demo = (id: string, extra: Partial<Level>, glassX: number): Level =>
+  ({ id: `tour-${id}`, name: id, hint: '', fixed: [], pieces: [], glass: { x: glassX, w: 46, h: 54 }, ...extra });
+
+/**
+ * The pieces page: one small board per world's piece, each with a shot (found by a search for forgiving inputs, checked by a test) that
+ * shows what the piece does: bank off a block into the glass, die on spikes, get thrown by a spring, go through a portal.
+ */
+export const PIECE_DEMOS: { note: string; level: Level; angle: number; power: number; shows: 'block' | 'dead' | 'pad' | 'portal' }[] = [
+  { note: 'Blocks: bank off them', shows: 'block', angle: 51, power: 30, level: demo('blocks', { blocks: [{ x: 250, y: 430, w: 30, h: 220 }] }, 150) },
+  {
+    note: 'Spikes: they destroy the ball', shows: 'dead', angle: 80.5, power: 53.5,
+    level: demo('spikes', { blocks: [{ x: 200, y: 500, w: 60, h: 80 }], hazards: [{ x: 200, y: 456, w: 60, h: 8 }] }, 330),
+  },
+  { note: 'Springs: they throw it back harder', shows: 'pad', angle: 23, power: 11.5, level: demo('springs', { pads: [{ x: 170, y: 534, w: 80, h: 12 }] }, 330) },
+  {
+    note: 'Portals: in the blue, out of the orange', shows: 'portal', angle: 75.5, power: 31.5,
+    level: demo('portals', { portals: [{ a: { x: 160, y: 380 }, b: { x: 260, y: 300 } }] }, 340),
+  },
+];
