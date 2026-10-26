@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.22.0
+
+- New level "Bounce house", the gentle first level of the Springs world (before Springboard): one golden pad in the middle of the floor, the
+  glass on a raised plate, two bars and nothing else. The answer drops the ball on the pad and fails if the pad is a plain block. Par 4,
+  49/49 forgiving, toughness about 0.5 (the easiest way into springs).
+
 ## 0.21.1
 
 - The win card no longer cuts the celebration short: it now waits until the spark and the burst have fully played (2 s, then a short pause),

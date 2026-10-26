@@ -24,7 +24,7 @@ export const WORLDS: World[] = [
   },
   {
     name: 'Springs', blurb: 'Gold pads and bars throw the ball back harder.',
-    ids: ['18-springboard', '19-pinball', '20-trampoline'],
+    ids: ['25-bounce-house', '18-springboard', '19-pinball', '20-trampoline'],
   },
   {
     name: 'Portals', blurb: 'In one end, out the other.',

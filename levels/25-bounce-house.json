@@ -1,0 +1,45 @@
+{
+  "id": "25-bounce-house",
+  "name": "Bounce house",
+  "glass": {
+    "x": 310,
+    "w": 40,
+    "h": 54,
+    "base": 380
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "pads": [
+    {
+      "x": 190,
+      "y": 530,
+      "w": 90,
+      "h": 12
+    }
+  ],
+  "hint": "The golden pad is a spring: the ball comes off it faster than it lands. Drop the ball on the pad and let it throw the ball up to the glass, off both bars.",
+  "par": 4,
+  "solution": {
+    "pieces": [
+      {
+        "x": 312,
+        "y": 164,
+        "deg": 2
+      },
+      {
+        "x": 124,
+        "y": 451,
+        "deg": 106
+      }
+    ],
+    "angle": 35.9,
+    "power": 62.1
+  }
+}

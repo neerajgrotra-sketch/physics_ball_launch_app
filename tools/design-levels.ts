@@ -136,6 +136,11 @@ const designs: Omit<Level, 'solution' | 'par'>[] = [
       { a: { x: 330, y: 230 }, b: { x: 200, y: 446 }, oneWay: true },
     ],
     hint: 'Two portals in a row. The blue ring at the left takes the ball up to the top right; the blue ring below that drops it into the shut box over the glass. Use the three bars to steer it from one to the next.' },
+  // Bounce house: the gentle opener of the Springs world. One golden pad in the middle of the floor, the glass on a raised plate to its right,
+  // two bars and nothing else, so the new idea (a pad throws the ball back harder) is all there is to learn.
+  { id: '25-bounce-house', name: 'Bounce house', glass: { x: 310, w: 40, h: 54, base: 380 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }],
+    pads: [{ x: 190, y: 530, w: 90, h: 12 }],
+    hint: 'The golden pad is a spring: the ball comes off it faster than it lands. Drop the ball on the pad and let it throw the ball up to the glass, off both bars.' },
   { id: '01-first-bounce', name: 'First bounce', glass: { x: 300, w: 40, h: 50 }, fixed: [], pieces: [{ len: 90 }],
     hint: 'Place the bar, then aim. The ball has to bounce off the bar on its way into the glass.' },
   { id: '02-two-step', name: 'Two step', glass: { x: 130, w: 36, h: 52 }, fixed: [], pieces: [{ len: 90 }, { len: 90 }],
