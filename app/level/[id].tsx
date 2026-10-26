@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
 import { usePlayback } from '../../components/board/usePlayback';
 import { HelpCard } from '../../components/board/HelpCard';
+import { aimHintNotice, aimHintValue, aimHints, type AimHint } from '../../game/help';
 import { NoticeCard } from '../../components/board/NoticeCard';
 import { useRewardedAd } from '../../components/ads/RewardedAds';
 import { SettingsSheet } from '../../components/settings/SettingsSheet';
@@ -138,7 +139,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   const ads = useRewardedAd();
   const par = level.par ?? level.pieces.length;
   /** Shown in place of the hint after a shot that needs explaining. */
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | { title: string; text: string } | null>(null);
   const { flight, flying, play, skip } = usePlayback();
   const feedback = useFeedback();
   const { musicOn } = useSoundSettings();
@@ -465,6 +466,18 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     setSlots(h.slots);
     select(h.k, h.slots);
   };
+  // The aim hints: the answer's launch angle, or its launch power, each behind its own ad. The aim controls come back (no bar
+  // selected) so the player sees the value change; the board says what was set.
+  const aimHint = async (which: AimHint) => {
+    setHelp(false);
+    if (!(await ads.show(which))) return;
+    const v = aimHintValue(level, which);
+    if (v == null) return;
+    setHelped(true);
+    setSelected(null);
+    if (which === 'angle') setAngle(v); else setPower(v);
+    setNotice({ title: 'Your hint', text: aimHintNotice(which, v, level.pieces.length) });
+  };
   const fullSolution = async () => {
     setHelp(false);
     if (await ads.show('solve')) solve();
@@ -685,7 +698,10 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           onTouch={onTouch}
         />
         {notice && !done && !flying && (
-          <NoticeCard title="So close!" message={notice} onClose={() => setNotice(null)} />
+          <NoticeCard
+            title={typeof notice === 'string' ? 'So close!' : notice.title} message={typeof notice === 'string' ? notice : notice.text}
+            onClose={() => setNotice(null)}
+          />
         )}
         {bounces != null && !done && (
           <View style={[styles.counterRow, { justifyContent: spot === 'left' ? 'flex-start' : spot === 'right' ? 'flex-end' : 'center' }]} pointerEvents="none">
@@ -698,6 +714,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         {help && !flying && (
           <HelpCard
             hintBar={(() => { const h = hintSlots(level, slots); return h ? h.k + 1 : null; })()}
+            aim={aimHints(level, angle, power)} onAim={aimHint}
             onHint={hint} onSolve={fullSolution} onClose={() => setHelp(false)}
           />
         )}

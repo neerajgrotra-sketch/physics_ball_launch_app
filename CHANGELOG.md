@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.27.0
+
+- Two more hints on the Solve card: "Hint: angle" and "Hint: power", each behind its own rewarded ad (the 5-second placeholder for now).
+  Each sets that one value to the stored answer's, shows the aim sliders so the change is seen, and says what it set ("Angle set to 37.6°,
+  as in the answer…", under a "Your hint" heading). A hint already matched by the aim isn't offered. Like the bar hint, using one marks
+  the round as helped: the win opens the next level but earns no stars or score (`game/help.ts`, new ad placements `angle` and `power`).
+
 ## 0.26.0
 
 - The tour's pieces page is a live scene too: four small boards in turn, each with a real shot and its sounds. The ball banks off a grey

@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { FONTS, useColors } from '../../theme/colors';
 
-// Rewarded ads: the player chooses to watch one to unlock help (a hint, or the full solution). Everything
+// Rewarded ads: the player chooses to watch one to unlock help (a bar hint, the launch angle, the launch power, or the full solution). Everything
 // that shows an ad goes through useRewardedAd().show(placement), so swapping this placeholder for a real
 // ad network (Google AdMob, via react-native-google-mobile-ads in a development/store build; it can't run
 // in Expo Go or on the web) only changes this file.
@@ -12,7 +12,7 @@ import { FONTS, useColors } from '../../theme/colors';
 // the same short wait, so a stuck player is never blocked.
 
 /** Where an ad is shown. Each placement gets its own ad unit when real ads are wired up. */
-export type Placement = 'hint' | 'solve';
+export type Placement = 'hint' | 'angle' | 'power' | 'solve';
 
 const PLACEHOLDER_SECONDS = 5;
 
@@ -23,7 +23,10 @@ interface Ads {
 
 const AdsContext = createContext<Ads>({ show: async () => true });
 
-const TITLES: Record<Placement, string> = { hint: 'Your hint is next', solve: 'The full solution is next' };
+const TITLES: Record<Placement, string> = {
+  hint: 'Your hint is next', angle: 'The launch angle is next', power: 'The launch power is next', solve: 'The full solution is next',
+};
+const CLAIM: Record<Placement, string> = { hint: 'Show my hint', angle: 'Show the angle', power: 'Show the power', solve: 'Show the solution' };
 
 export function RewardedAdsProvider({ children }: { children: ReactNode }) {
   const [showing, setShowing] = useState<Placement | null>(null);
@@ -84,7 +87,7 @@ function PlaceholderAd({ placement, onClose }: { placement: Placement; onClose: 
             onPress={() => done && onClose(true)} disabled={!done} accessibilityRole="button"
             style={[styles.claim, { backgroundColor: done ? c.red : '#444' }]}
           >
-            <Text style={styles.claimText}>{done ? (placement === 'hint' ? 'Show my hint' : 'Show the solution') : 'Watching…'}</Text>
+            <Text style={styles.claimText}>{done ? CLAIM[placement] : 'Watching…'}</Text>
           </Pressable>
         </View>
       </View>
