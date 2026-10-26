@@ -4,7 +4,6 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ShotThumbnail } from '../components/levels/ShotThumbnail';
 import { SettingsSheet } from '../components/settings/SettingsSheet';
-import { Tour } from '../components/tour/Tour';
 import { useTips } from '../components/coach/Tips';
 import { useProgress, useUnlocked } from '../components/progress/ProgressProvider';
 import { TUTORIAL_ID } from '../game/coach';
@@ -26,9 +25,8 @@ export default function LevelSelect() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { tipsOn, tutorialDone, restartTutorial, tourSeen, finishTour, restartTour } = useTips();
-  // The guided tour shows once, before anything else; Settings can show it again.
-  const [touring, setTouring] = useState(!tourSeen);
+  const { tipsOn, tutorialDone, restartTutorial, tourSeen, restartTour } = useTips();
+  // The guided tour (components/tour/TourGate, in the root layout) shows once, before anything else; Settings can show it again.
   const openTutorial = () => router.push({ pathname: '/level/[id]', params: { id: TUTORIAL_ID } });
   const { best, shots } = useProgress();
   const unlocked = useUnlocked();
@@ -51,7 +49,7 @@ export default function LevelSelect() {
       <SettingsSheet
         visible={settings} onClose={() => setSettings(false)}
         onReplayTutorial={() => { setSettings(false); restartTutorial(); openTutorial(); }}
-        onShowTour={() => { setSettings(false); restartTour(); setTouring(true); }}
+        onShowTour={() => { setSettings(false); restartTour(); }}
       />
       <View style={styles.header}>
         <Pressable onPress={() => setSettings(true)} accessibilityRole="button" accessibilityLabel="Settings" style={[styles.settings, { borderColor: c.line }]}>
@@ -149,12 +147,6 @@ export default function LevelSelect() {
       </View>
       <Text style={[styles.version, { color: c.muted }]}>{VERSION_LABEL}</Text>
     </ScrollView>
-    {touring && (
-      <Tour
-        onStartTutorial={() => { finishTour(); setTouring(false); restartTutorial(); openTutorial(); }}
-        onSkip={() => { finishTour(); setTouring(false); }}
-      />
-    )}
     </View>
   );
 }

@@ -15,6 +15,7 @@ import { TipsProvider } from '../components/coach/Tips';
 import { SoundSettingsProvider } from '../components/feedback/SoundSettings';
 import { ProgressProvider } from '../components/progress/ProgressProvider';
 import { Intro } from '../components/splash/Intro';
+import { TourGate } from '../components/tour/TourGate';
 import { FONTS, useColors } from '../theme/colors';
 
 // The launch screen (app.json, expo-splash-screen) stays up until the intro, which starts on the same
@@ -54,6 +55,7 @@ export default function RootLayout() {
               <Stack.Screen name="index" options={{ title: 'Bank Shot', headerShown: false }} />
               <Stack.Screen name="level/[id]" options={{ title: '' }} />
             </Stack>
+            <TourGate hidden={intro} />
               </TipsProvider>
             </RewardedAdsProvider>
           </SoundSettingsProvider>

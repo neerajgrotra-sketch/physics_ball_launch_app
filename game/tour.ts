@@ -16,7 +16,7 @@ export interface TourPage {
 
 export const TOUR: TourPage[] = [
   {
-    picture: 'welcome', kicker: 'Welcome to Bank Shot', title: 'A game of precision',
+    picture: 'welcome', kicker: 'Welcome to Bank Shot{, name}', title: 'A game of precision',
     body: 'Every bounce is real physics. Set the shot just right and the ball does exactly the same thing every time, so each try teaches you the next.',
   },
   {
@@ -45,12 +45,21 @@ export const TOUR: TourPage[] = [
     points: ['Grey blocks: walls to bank off', 'Red spikes: they destroy the ball', 'Gold springs: they throw the ball back harder', 'Portals: in the blue, out of the orange'],
   },
   {
-    picture: 'help', kicker: 'Stuck?', title: 'Help is one tap away',
+    picture: 'help', kicker: 'Stuck{, name}?', title: 'Help is one tap away',
     body: 'Tap Solve for a hint, which places the next bar for you, or for the whole answer. A win with help still opens the next level.',
     points: ['Replay shows your winning shot again', 'Clear wipes the old trails'],
   },
   {
-    picture: 'ready', kicker: 'Ready?', title: 'Learn the ropes',
+    picture: 'ready', kicker: 'Ready{, name}?', title: 'Learn the ropes',
     body: 'The next level is a guided one: a hand shows you each control, step by step, and waits for you to do it. Then the real levels begin.',
   },
 ];
+
+/**
+ * Put the player's name into a tour line: `{, name}` becomes `, Sam` (or nothing when there is no name), and `{name}` becomes the name
+ * (or `there`). Only the first name is used, at most 20 characters, so a line never overflows.
+ */
+export function withName(text: string, name: string): string {
+  const n = (name.trim().split(/\s+/)[0] ?? '').slice(0, 20); // first name only: it is a greeting
+  return text.replace('{, name}', n ? `, ${n}` : '').replace('{name}', n || 'there');
+}

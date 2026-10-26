@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TOUR } from './tour';
+import { TOUR, withName } from './tour';
 
 describe('guided tour', () => {
   it('starts with what the game is and ends by handing over to the tutorial', () => {
@@ -21,5 +21,19 @@ describe('guided tour', () => {
       expect(p.body.length).toBeLessThanOrEqual(200);
       expect((p.points ?? []).length).toBeLessThanOrEqual(4);
     }
+  });
+});
+
+describe('tour personalisation', () => {
+  it('puts the name in, or leaves it out neatly', () => {
+    expect(withName('Welcome to Bank Shot{, name}', 'Sam')).toBe('Welcome to Bank Shot, Sam');
+    expect(withName('Welcome to Bank Shot{, name}', '  ')).toBe('Welcome to Bank Shot');
+    expect(withName('Hi {name}!', '')).toBe('Hi there!');
+    expect(withName('Ready{, name}?', 'Alexandria-Rose Montgomery')).toBe('Ready, Alexandria-Rose?');
+  });
+
+  it('greets the player by name at the start and at the hand-off', () => {
+    expect(withName(TOUR[0].kicker, 'Sam')).toContain('Sam');
+    expect(withName(TOUR[TOUR.length - 1].kicker, 'Sam')).toContain('Sam');
   });
 });

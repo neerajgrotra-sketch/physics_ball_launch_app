@@ -1,7 +1,9 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, PanResponder, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, PanResponder, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TOUR } from '../../game/tour';
+import { PROFILE_KEY, parseProfile } from '../../game/profile';
+import { TOUR, withName } from '../../game/tour';
 import { FONTS, useColors } from '../../theme/colors';
 import { TourPicture } from './TourPicture';
 
@@ -16,6 +18,27 @@ export function Tour({ onStartTutorial, onSkip }: { onStartTutorial: () => void;
   const [page, setPage] = useState(0);
   const last = page === TOUR.length - 1;
   const p = TOUR[page];
+
+  // First the tour asks what to call the player (unless Settings already has a name), and uses it from then on. The name is saved in
+  // the "About you" profile (game/profile.ts), on this device only.
+  const [name, setName] = useState('');
+  const [asking, setAsking] = useState<boolean | null>(null);
+  useEffect(() => {
+    AsyncStorage.getItem(PROFILE_KEY).then((raw) => {
+      const saved = parseProfile(raw).name;
+      setName(saved);
+      setAsking(!saved);
+    }).catch(() => setAsking(true));
+  }, []);
+  const keepName = async (given: string) => {
+    const clean = given.trim().slice(0, 40);
+    setName(clean);
+    setAsking(false);
+    if (!clean) return;
+    const raw = await AsyncStorage.getItem(PROFILE_KEY).catch(() => null);
+    AsyncStorage.setItem(PROFILE_KEY, JSON.stringify({ ...parseProfile(raw), name: clean })).catch(() => {});
+  };
+  const say = (text: string) => withName(text, name);
 
   // Each page fades and slides in from the side it came from.
   const shown = useRef(new Animated.Value(1)).current;
@@ -40,6 +63,8 @@ export function Tour({ onStartTutorial, onSkip }: { onStartTutorial: () => void;
   })).current;
 
   const picW = Math.min(width - 40, 460);
+  if (asking === null) return <View style={[styles.wrap, { backgroundColor: c.panel }]} />;
+  if (asking) return <NameStep onDone={keepName} onSkip={onSkip} />;
   return (
     <View style={[styles.wrap, { backgroundColor: c.panel, paddingTop: insets.top + 10, paddingBottom: insets.bottom + 14 }]} {...swipe.panHandlers}>
       <View style={styles.top}>
@@ -65,9 +90,9 @@ export function Tour({ onStartTutorial, onSkip }: { onStartTutorial: () => void;
           <View style={[styles.picture, { borderColor: c.line, width: picW }]}>
             <TourPicture kind={p.picture} width={picW - 4} />
           </View>
-          <Text style={[styles.kicker, { color: c.red }]}>{p.kicker.toUpperCase()}</Text>
-          <Text style={[styles.title, { color: c.ink }]}>{p.title}</Text>
-          <Text style={[styles.body, { color: c.ink }]}>{p.body}</Text>
+          <Text style={[styles.kicker, { color: c.red }]}>{say(p.kicker).toUpperCase()}</Text>
+          <Text style={[styles.title, { color: c.ink }]}>{say(p.title)}</Text>
+          <Text style={[styles.body, { color: c.ink }]}>{say(p.body)}</Text>
           {p.points && (
             <View style={styles.points}>
               {p.points.map((pt) => (
@@ -107,7 +132,53 @@ export function Tour({ onStartTutorial, onSkip }: { onStartTutorial: () => void;
   );
 }
 
+/** The tour's first step: "What should we call you?". The name is optional; Skip leaves the tour altogether, like Skip on any page. */
+function NameStep({ onDone, onSkip }: { onDone: (name: string) => void; onSkip: () => void }) {
+  const c = useColors();
+  const insets = useSafeAreaInsets();
+  const [text, setText] = useState('');
+  const ready = text.trim().length > 0;
+  return (
+    <View style={[styles.wrap, { backgroundColor: c.panel, paddingTop: insets.top + 10, paddingBottom: insets.bottom + 14 }]}>
+      <View style={[styles.top, { justifyContent: 'flex-end' }]}>
+        <Pressable onPress={onSkip} accessibilityRole="button" hitSlop={10}>
+          <Text style={[styles.skip, { color: c.muted }]}>Skip</Text>
+        </Pressable>
+      </View>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <View style={styles.page}>
+          <Text style={[styles.kicker, { color: c.red }]}>HELLO!</Text>
+          <Text style={[styles.title, { color: c.ink }]}>What should we call you?</Text>
+          <Text style={[styles.body, { color: c.muted }]}>Just a first name or a nickname. It stays on this phone.</Text>
+          <TextInput
+            value={text} onChangeText={(t) => setText(t.slice(0, 40))}
+            placeholder="Your name" placeholderTextColor={c.muted} autoFocus autoCapitalize="words" autoCorrect={false}
+            returnKeyType="next" onSubmitEditing={() => ready && onDone(text)}
+            style={[styles.nameInput, { borderColor: c.pencil, color: c.ink, backgroundColor: c.paper }]}
+            accessibilityLabel="Your name"
+          />
+        </View>
+      </ScrollView>
+      <View style={styles.finish}>
+        <Pressable
+          onPress={() => onDone(text)} disabled={!ready} accessibilityRole="button"
+          style={[styles.primary, { backgroundColor: c.pencil, opacity: ready ? 1 : 0.4 }]}
+        >
+          <Text style={styles.primaryText}>{ready ? `Nice to meet you, ${text.trim().split(/\s+/)[0]} ›` : 'Continue ›'}</Text>
+        </Pressable>
+        <Pressable onPress={() => onDone('')} accessibilityRole="button" hitSlop={8}>
+          <Text style={[styles.secondary, { color: c.muted }]}>Continue without a name</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  nameInput: {
+    alignSelf: 'stretch', maxWidth: 460, width: '100%', height: 56, borderWidth: 2, borderRadius: 14, paddingHorizontal: 16, marginTop: 14,
+    fontSize: 22, fontFamily: FONTS.bodySemi, textAlign: 'center',
+  },
   wrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20, paddingHorizontal: 20 },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 36 },
   dots: { flexDirection: 'row', gap: 6, alignItems: 'center' },

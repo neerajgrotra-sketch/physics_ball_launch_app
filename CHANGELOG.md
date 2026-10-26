@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.24.1
+
+- The tour now shows whichever screen the app opens on (it only appeared on the level list, so reloading on a level skipped it). It lives in
+  the root layout (`components/tour/TourGate.tsx`) and appears after the intro.
+- It starts by asking "What should we call you?" and greets the player by first name through the tour ("Welcome to Bank Shot, Sam",
+  "Ready, Sam?"). The name is saved in the About you profile on the device; "Continue without a name" and Skip work as before. A name
+  already set in Settings skips the question.
+
 ## 0.24.0
 
 - A guided tour before the first level: after "Let's go" a new player gets eight short screens with pictures drawn in the game's own style:
