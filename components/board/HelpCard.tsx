@@ -1,14 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { AimHint } from '../../game/help';
 import { FONTS, useColors } from '../../theme/colors';
 
 /**
- * What Solve opens: a hint (the next bar placed where the solution has it), the answer's launch angle, its launch power, or the full
- * solution, each behind a rewarded ad (components/ads). `hintBar` is the bar number the hint would place, or null when every bar is
- * already in place; `aim` says which of the angle and power hints are left (game/help.ts aimHints: not once the aim already matches).
+ * What Solve opens: a hint (the answer's next step: each bar in turn, then the launch angle, then the launch power; game/help.ts) or
+ * the full solution, each behind a rewarded ad (components/ads). `hint` is the Hint button's label, or null when every step already
+ * matches the answer and only the full solution is left.
  */
-export function HelpCard({ hintBar, aim, onHint, onAim, onSolve, onClose }: {
-  hintBar: number | null; aim: Record<AimHint, boolean>; onHint: () => void; onAim: (which: AimHint) => void; onSolve: () => void; onClose: () => void;
+export function HelpCard({ hint, onHint, onSolve, onClose }: {
+  hint: string | null; onHint: () => void; onSolve: () => void; onClose: () => void;
 }) {
   const c = useColors();
   return (
@@ -17,21 +16,11 @@ export function HelpCard({ hintBar, aim, onHint, onAim, onSolve, onClose }: {
         <Text style={[styles.closeText, { color: c.muted }]}>✕</Text>
       </Pressable>
       <Text style={[styles.title, { color: c.pencil }]}>Stuck?</Text>
-      {hintBar != null && (
+      {hint != null && (
         <Pressable onPress={onHint} accessibilityRole="button" style={[styles.btn, { backgroundColor: c.pencil }]}>
-          <Text style={[styles.btnText, { color: '#fff' }]}>Hint: place Bar {hintBar}</Text>
+          <Text style={[styles.btnText, { color: '#fff' }]}>{hint}</Text>
           <Text style={[styles.ad, { color: '#fff' }]}>▶︎ Ad</Text>
         </Pressable>
-      )}
-      {(aim.angle || aim.power) && (
-        <View style={styles.row}>
-          {(['angle', 'power'] as const).filter((w) => aim[w]).map((w) => (
-            <Pressable key={w} onPress={() => onAim(w)} accessibilityRole="button" style={[styles.btn, styles.half, styles.outline, { borderColor: c.pencil }]}>
-              <Text style={[styles.btnText, { color: c.pencil }]}>{w === 'angle' ? 'Hint: angle' : 'Hint: power'}</Text>
-              <Text style={[styles.ad, { color: c.pencil }]}>▶︎ Ad</Text>
-            </Pressable>
-          ))}
-        </View>
       )}
       <Pressable onPress={onSolve} accessibilityRole="button" style={[styles.btn, styles.outline, { borderColor: c.red }]}>
         <Text style={[styles.btnText, { color: c.red }]}>Show the full solution</Text>
@@ -55,8 +44,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, lineHeight: 28, fontFamily: FONTS.condensedBold, textAlign: 'center' },
   btn: { height: 48, borderRadius: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 16 },
   outline: { borderWidth: 2 },
-  row: { flexDirection: 'row', gap: 10 },
-  half: { flex: 1, paddingHorizontal: 8, gap: 6 },
   btnText: { fontSize: 18, fontFamily: FONTS.condensedBold },
   ad: { fontSize: 13, fontFamily: FONTS.bodySemi, opacity: 0.85 },
   note: { fontSize: 13, lineHeight: 18, fontFamily: FONTS.body, textAlign: 'center' },

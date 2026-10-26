@@ -1,28 +1,29 @@
 import { describe, expect, it } from 'vitest';
 import { LEVELS } from '../levels';
-import { aimHintNotice, aimHintValue, aimHints } from './help';
+import { aimHintNotice, hintLabel, nextHint } from './help';
 
-describe('aim hints', () => {
-  const level = LEVELS[1];
+describe('the hint sequence', () => {
+  const level = LEVELS[2];
   const s = level.solution!;
 
-  it('offers the angle and the power until the aim matches the answer', () => {
-    expect(aimHints(level, 52, 45)).toEqual({ angle: true, power: true });
-    expect(aimHints(level, s.angle, 45)).toEqual({ angle: false, power: true });
-    expect(aimHints(level, s.angle, s.power)).toEqual({ angle: false, power: false });
-    expect(aimHints({ ...level, solution: undefined }, 52, 45)).toEqual({ angle: false, power: false });
+  it('gives the bars first, in order', () => {
+    expect(nextHint(level, 0, 52, 45)).toEqual({ kind: 'bar', bar: 1 });
+    expect(nextHint(level, 1, s.angle, s.power)).toEqual({ kind: 'bar', bar: 2 });
   });
 
-  it('gives the stored answer\'s values, which every level has', () => {
-    for (const l of LEVELS) {
-      expect(aimHintValue(l, 'angle')).toBe(l.solution!.angle);
-      expect(aimHintValue(l, 'power')).toBe(l.solution!.power);
-    }
+  it('then the angle, then the power, skipping what already matches', () => {
+    expect(nextHint(level, null, 52, 45)).toEqual({ kind: 'angle', value: s.angle });
+    expect(nextHint(level, null, s.angle, 45)).toEqual({ kind: 'power', value: s.power });
+    expect(nextHint(level, null, 52, s.power)).toEqual({ kind: 'angle', value: s.angle });
+    expect(nextHint(level, null, s.angle, s.power)).toBeNull();
+    expect(nextHint({ ...level, solution: undefined }, 0, 52, 45)).toBeNull();
   });
 
-  it('says what was set', () => {
-    expect(aimHintNotice('angle', 35.8, 3)).toMatch(/^Angle set to 35\.8°.*all 3 bars/);
-    expect(aimHintNotice('angle', 37.6, 2)).toContain('with both bars where the answer puts them');
-    expect(aimHintNotice('power', 24, 1)).toMatch(/^Power set to 24\.0, as in the answer\. It lands with the bar/);
+  it('labels the button and says what an aim hint set', () => {
+    expect(hintLabel({ kind: 'bar', bar: 2 })).toBe('Hint: place Bar 2');
+    expect(hintLabel({ kind: 'angle', value: 37.6 })).toBe('Hint: launch angle');
+    expect(hintLabel({ kind: 'power', value: 55.1 })).toBe('Hint: launch power');
+    expect(aimHintNotice({ kind: 'angle', value: 37.6 })).toBe('Angle set to 37.6°, as in the answer.');
+    expect(aimHintNotice({ kind: 'bar', bar: 1 })).toBeNull();
   });
 });

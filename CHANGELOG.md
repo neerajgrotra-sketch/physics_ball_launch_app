@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.27.1
+
+- The Solve card is back to one Hint button, and the hint now carries on past the bars: each tap (after its ad) gives the answer's next
+  step in order: Bar 1, Bar 2, Bar 3, then the launch angle, then the launch power. The button says which is next ("Hint: place Bar 2",
+  "Hint: launch angle", "Hint: launch power"), skips anything already matching the answer, and goes once every step matches, leaving
+  "Show the full solution". The angle and power hints set the slider and say what they set (`game/help.ts` `nextHint`). This replaces
+  0.27.0's separate angle and power buttons.
+
 ## 0.27.0
 
 - Two more hints on the Solve card: "Hint: angle" and "Hint: power", each behind its own rewarded ad (the 5-second placeholder for now).

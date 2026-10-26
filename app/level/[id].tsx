@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
 import { usePlayback } from '../../components/board/usePlayback';
 import { HelpCard } from '../../components/board/HelpCard';
-import { aimHintNotice, aimHintValue, aimHints, type AimHint } from '../../game/help';
+import { aimHintNotice, hintLabel, nextHint } from '../../game/help';
 import { NoticeCard } from '../../components/board/NoticeCard';
 import { useRewardedAd } from '../../components/ads/RewardedAds';
 import { SettingsSheet } from '../../components/settings/SettingsSheet';
@@ -457,26 +457,25 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     if (practice) { solve(); return; }
     setHelp(true);
   };
+  // The answer's next step, a hint at a time (game/help.ts): each bar in turn, then the launch angle, then the launch power.
+  const barHint = () => { const h = hintSlots(level, slots); return h ? h.k : null; };
   const hint = async () => {
     setHelp(false);
     if (!(await ads.show('hint'))) return;
-    const h = hintSlots(level, slots);
-    if (!h) return;
+    const next = nextHint(level, barHint(), angle, power);
+    if (!next) return;
     setHelped(true);
-    setSlots(h.slots);
-    select(h.k, h.slots);
-  };
-  // The aim hints: the answer's launch angle, or its launch power, each behind its own ad. The aim controls come back (no bar
-  // selected) so the player sees the value change; the board says what was set.
-  const aimHint = async (which: AimHint) => {
-    setHelp(false);
-    if (!(await ads.show(which))) return;
-    const v = aimHintValue(level, which);
-    if (v == null) return;
-    setHelped(true);
+    if (next.kind === 'bar') {
+      const h = hintSlots(level, slots);
+      if (!h) return;
+      setSlots(h.slots);
+      select(h.k, h.slots);
+      return;
+    }
+    // The aim sliders come back (no bar selected) so the value is seen to change; the board says what was set.
     setSelected(null);
-    if (which === 'angle') setAngle(v); else setPower(v);
-    setNotice({ title: 'Your hint', text: aimHintNotice(which, v, level.pieces.length) });
+    if (next.kind === 'angle') setAngle(next.value); else setPower(next.value);
+    setNotice({ title: 'Your hint', text: aimHintNotice(next) ?? '' });
   };
   const fullSolution = async () => {
     setHelp(false);
@@ -713,8 +712,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         )}
         {help && !flying && (
           <HelpCard
-            hintBar={(() => { const h = hintSlots(level, slots); return h ? h.k + 1 : null; })()}
-            aim={aimHints(level, angle, power)} onAim={aimHint}
+            hint={(() => { const h = nextHint(level, barHint(), angle, power); return h ? hintLabel(h) : null; })()}
             onHint={hint} onSolve={fullSolution} onClose={() => setHelp(false)}
           />
         )}

@@ -117,9 +117,9 @@ reference/    prototype.html, the behaviour and look to match
   within two) and points (`game/score.ts`); each level's best is saved and the level list shows stars and a
   total. Wins with a hint or Solve unlock the next level but earn no stars or score (kept clean for a
   future verified leaderboard: physics is deterministic, so a server can re-run a submitted shot).
-- **Help (the Solve button):** opens a card offering a hint (places the next bar where the stored solution
-  has it; clashing bars go back to the tray), the answer's launch angle, its launch power (`game/help.ts`: each sets just that value,
-  and isn't offered once the aim already matches), or the full solution. Each sits behind a rewarded ad
+- **Help (the Solve button):** opens a card offering a hint or the full solution. The one Hint button gives the stored answer's
+  next step in order (`game/help.ts` `nextHint`): each bar in turn (placed where the answer has it; clashing bars go back to the
+  tray), then the launch angle, then the launch power, skipping any step that already matches. Each sits behind a rewarded ad
   (`components/ads/RewardedAds.tsx`; a 5-second placeholder until AdMob is wired into a store build).
   Using either marks the round as helped until Start over.
 - **Solve:** places the stored solution's pieces (unused pieces go back to the tray), sets angle and power,

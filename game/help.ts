@@ -1,25 +1,31 @@
 import type { Level } from '../physics';
 
-// The aim hints on the Solve card (components/board/HelpCard.tsx): besides placing the next bar, the player can watch an ad for the
-// stored answer's launch angle, or its launch power, each on its own. Pure: no UI imports, so Vitest covers it.
+// The Solve card's one Hint button (components/board/HelpCard.tsx) gives the stored answer a step at a time, in order: each bar in
+// turn (game/pieces.ts hintSlots), then the launch angle, then the launch power. Pure: no UI imports, so Vitest covers it.
 
-export type AimHint = 'angle' | 'power';
+export type NextHint = { kind: 'bar'; bar: number } | { kind: 'angle'; value: number } | { kind: 'power'; value: number };
 
-/** Which aim hints are still worth offering: one is left out once the aim already matches the answer's (or there is no answer). */
-export function aimHints(level: Level, angle: number, power: number): Record<AimHint, boolean> {
+/**
+ * The next hint: the first bar not yet where the answer has it (`nextBar`, its index, or null when every bar is in place), then the
+ * answer's angle, then its power, each skipped once the board already matches it. Null when there is nothing left to hint.
+ */
+export function nextHint(level: Level, nextBar: number | null, angle: number, power: number): NextHint | null {
   const s = level.solution;
-  return { angle: !!s && angle !== s.angle, power: !!s && power !== s.power };
+  if (!s) return null;
+  if (nextBar != null) return { kind: 'bar', bar: nextBar + 1 };
+  if (angle !== s.angle) return { kind: 'angle', value: s.angle };
+  if (power !== s.power) return { kind: 'power', value: s.power };
+  return null;
 }
 
-/** The value an aim hint sets, from the stored answer. */
-export function aimHintValue(level: Level, which: AimHint): number | null {
-  const s = level.solution;
-  return s ? (which === 'angle' ? s.angle : s.power) : null;
+/** The Hint button's label. */
+export function hintLabel(h: NextHint): string {
+  return h.kind === 'bar' ? `Hint: place Bar ${h.bar}` : h.kind === 'angle' ? 'Hint: launch angle' : 'Hint: launch power';
 }
 
-/** What the board says once an aim hint is used. The answer's aim only lands with the answer's bars, so it says so. */
-export function aimHintNotice(which: AimHint, value: number, bars: number): string {
-  const set = which === 'angle' ? `Angle set to ${value.toFixed(1)}°` : `Power set to ${value.toFixed(1)}`;
-  const barsText = bars === 1 ? 'the bar' : bars === 2 ? 'both bars' : `all ${bars} bars`;
-  return `${set}, as in the answer. It lands with ${barsText} where the answer puts ${bars === 1 ? 'it' : 'them'}.`;
+/** What the board says after an angle or power hint. */
+export function aimHintNotice(h: NextHint): string | null {
+  if (h.kind === 'angle') return `Angle set to ${h.value.toFixed(1)}°, as in the answer.`;
+  if (h.kind === 'power') return `Power set to ${h.value.toFixed(1)}, as in the answer. Launch!`;
+  return null;
 }
