@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
-const TIPS_KEY = 'bank-shot/tips';
+export const TIPS_KEY = 'bank-shot/tips';
 
 interface Tips {
   /** Whether the ghost finger may appear at all. On unless the player stopped it. */

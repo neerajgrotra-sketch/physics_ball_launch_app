@@ -1,10 +1,11 @@
 import { Link, useRouter } from 'expo-router';
-import { Fragment, useEffect } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ShotThumbnail } from '../components/levels/ShotThumbnail';
+import { SettingsSheet } from '../components/settings/SettingsSheet';
 import { useTips } from '../components/coach/Tips';
-import { useProgress } from '../components/progress/ProgressProvider';
+import { useProgress, useUnlocked } from '../components/progress/ProgressProvider';
 import { TUTORIAL_ID } from '../game/coach';
 import { VERSION_LABEL } from '../components/version';
 import { totalScore } from '../game/score';
@@ -18,16 +19,17 @@ const GAP = 12;
 // Level select: a grid of level cards, two across, each with its number and name. Levels the player has
 // won, and the next one to play (highlighted), show a drawing of the level: launcher, glass and, once
 // won, the player's last winning shot with a Replay button that reopens the level with that shot set up
-// and plays it. Levels further on show a lock instead. While LOCK_LEVELS is off
-// (levels being tested) that lock is only a look and the card still opens; with it on they're disabled.
+// and plays it. Levels further on show a lock and can't be opened (LOCK_LEVELS), unless the Testing switch in Settings opens them all.
 export default function LevelSelect() {
   const c = useColors();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { tipsOn, tutorialDone } = useTips();
-  const { unlocked, best, shots } = useProgress();
+  const { tipsOn, tutorialDone, restartTutorial } = useTips();
+  const { best, shots } = useProgress();
+  const unlocked = useUnlocked();
   const total = totalScore(best);
+  const [settings, setSettings] = useState(false);
   const tile = Math.floor((Math.min(width, 560) - 2 * 18 - (COLUMNS - 1) * GAP) / COLUMNS);
   // The next level to play: the first without a result (the tutorial has none once it's been done).
   const nextUp = LEVELS.findIndex((l) => !best[l.id] && !(l.id === TUTORIAL_ID && tutorialDone));
@@ -43,7 +45,14 @@ export default function LevelSelect() {
 
   return (
     <ScrollView contentContainerStyle={[styles.page, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18 }]}>
+      <SettingsSheet
+        visible={settings} onClose={() => setSettings(false)}
+        onReplayTutorial={() => { setSettings(false); restartTutorial(); router.push({ pathname: '/level/[id]', params: { id: TUTORIAL_ID } }); }}
+      />
       <View style={styles.header}>
+        <Pressable onPress={() => setSettings(true)} accessibilityRole="button" accessibilityLabel="Settings" style={[styles.settings, { borderColor: c.line }]}>
+          <Text style={[styles.settingsText, { color: c.ink }]}>Settings</Text>
+        </Pressable>
         <Text style={[styles.heading, { color: c.ink }]}>Levels</Text>
         <Text style={[styles.total, { color: c.muted }]}>
           {total > 0 ? `Score ${total.toLocaleString()}` : 'Get each ball in with as few bounces as you can'}
@@ -142,6 +151,8 @@ export default function LevelSelect() {
 const styles = StyleSheet.create({
   page: { padding: 18, gap: 18 },
   header: { alignItems: 'center', gap: 2 },
+  settings: { position: 'absolute', right: 0, top: 4, height: 32, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1.5, justifyContent: 'center', zIndex: 1 },
+  settingsText: { fontSize: 14, fontFamily: FONTS.bodySemi },
   heading: { fontSize: 34, fontFamily: FONTS.condensedBold },
   total: { fontSize: 15, fontFamily: FONTS.bodyMedium, textAlign: 'center' },
   world: { width: '100%', marginTop: 8, gap: 1 },

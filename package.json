@@ -1,6 +1,6 @@
 {
   "name": "bank-shot",
-  "version": "0.22.1",
+  "version": "0.23.0",
   "private": true,
   "type": "module",
   "main": "index",
@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "report": "tsx tools/report.ts",
     "design-levels": "tsx tools/design-levels.ts",
-    "web:setup": "setup-skia-web public",
+    "web:setup": "setup-skia-web public && node scripts/make-playlist.mjs",
     "build:web": "npm run web:setup && expo export --platform web",
     "serve:web": "expo serve",
     "play": "npm run build:web && node scripts/serve-web.mjs"

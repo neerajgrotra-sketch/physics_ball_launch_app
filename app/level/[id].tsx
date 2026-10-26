@@ -22,7 +22,7 @@ import { Tray } from '../../components/controls/Tray';
 import { useSoundSettings } from '../../components/feedback/SoundSettings';
 import { useFeedback } from '../../components/feedback/useFeedback';
 import { useLevelMusic } from '../../components/feedback/useLevelMusic';
-import { useProgress } from '../../components/progress/ProgressProvider';
+import { useProgress, useUnlocked } from '../../components/progress/ProgressProvider';
 import { aimAt, swingTo } from '../../game/aim';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
@@ -51,7 +51,8 @@ type ViewRef = ComponentRef<typeof View>;
 export default function LevelScreen() {
   const { id, replay } = useLocalSearchParams<{ id: string; replay?: string }>();
   const c = useColors();
-  const { unlocked, shots } = useProgress();
+  const { shots } = useProgress();
+  const unlocked = useUnlocked();
   const [round, setRound] = useState(0);
   // Start over / Try it yourself on the tutorial level gives the plain level; opening it again (from its card,
   // or "Replay the tutorial") gives the guide.
@@ -86,7 +87,8 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   const c = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { unlocked, best, won } = useProgress();
+  const { best, won } = useProgress();
+  const unlocked = useUnlocked();
   const tips = useTips();
   /**
    * The guided tutorial: whenever the tutorial level is opened (the first time automatically, and again

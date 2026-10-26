@@ -4,6 +4,16 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.23.0
+
+- Level locks are on: a level opens once the one before it is won (level 2 opens once the tutorial is finished or skipped). Every device
+  starts fresh once with this version: wins, stars, saved shots and the tutorial are cleared.
+- Settings (now also on the levels screen) has a Testing section: "Unlock all levels" (remembered) and "Reset progress" (tap twice) to
+  start again from level 1 and the tutorial.
+- Settings has an optional "About you": name, age, gender and country, saved on this device only (`game/profile.ts`); nothing is sent anywhere.
+- Music is a session playlist: one track is picked when the app starts and plays on every level. The playlist is every MP3/M4A in
+  assets/music, listed by scripts/make-playlist.mjs before each web build, so adding music is adding a file.
+
 ## 0.22.1
 
 - After a win the Launch button reads "Replay ▶" instead of "Watch again ▶" (players found "Watch again" unclear). It still replays the winning

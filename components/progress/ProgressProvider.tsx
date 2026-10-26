@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { TUTORIAL_ID } from '../../game/coach';
-import { LOCK_LEVELS, UNLOCKED_KEY, parseUnlocked, unlockAfterWin } from '../../game/progress';
+import { FRESH_KEY, FRESH_VERSION, LOCK_LEVELS, UNLOCK_ALL_KEY, UNLOCKED_KEY, parseUnlocked, unlockAfterWin } from '../../game/progress';
 import { BEST_KEY, better, parseBest, type Best, type BestByLevel } from '../../game/score';
 import { SHOTS_KEY, parseShots, type Shot, type ShotsByLevel } from '../../game/shots';
 import { LEVELS } from '../../levels';
+import { TIPS_KEY, useTips } from '../coach/Tips';
 
 /** Marks that the saved unlock was worked out for the levels in worlds (0.18.0). */
 const ORDER_KEY = 'bank-shot/order';
@@ -22,9 +23,18 @@ interface Progress {
    * for assisted wins (a hint or Solve).
    */
   won: (i: number, result?: Best, shot?: Shot) => void;
+  /** Testing only (settings): open every level whatever the player has won. Remembered. */
+  unlockAll: boolean;
+  setUnlockAll: (on: boolean) => void;
+  /** Testing only (settings): forget every win, star and saved shot, and lock everything but level 1 again. */
+  resetProgress: () => void;
 }
 
-const ProgressContext = createContext<Progress>({ unlocked: 0, best: {}, shots: {}, won: () => {} });
+const ProgressContext = createContext<Progress>({
+  unlocked: 0, best: {}, shots: {}, won: () => {}, unlockAll: false, setUnlockAll: () => {}, resetProgress: () => {},
+});
+
+const PROGRESS_KEYS = [UNLOCKED_KEY, BEST_KEY, SHOTS_KEY, ORDER_KEY];
 
 /**
  * Keeps level unlocks and best results in AsyncStorage. Renders nothing until the saved values have
@@ -35,21 +45,33 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const [unlocked, setUnlocked] = useState<number | null>(null);
   const [best, setBest] = useState<BestByLevel>({});
   const [shots, setShots] = useState<ShotsByLevel>({});
+  const [unlockAll, setUnlockAllState] = useState(false);
 
   useEffect(() => {
     let live = true;
-    Promise.all([
-      AsyncStorage.getItem(UNLOCKED_KEY).catch(() => null),
-      AsyncStorage.getItem(BEST_KEY).catch(() => null),
-      AsyncStorage.getItem(SHOTS_KEY).catch(() => null),
-      AsyncStorage.getItem(ORDER_KEY).catch(() => null),
-    ]).then(([u, b, s, order]) => {
+    (async () => {
+      // Locks came on (FRESH_VERSION): every device starts again from level 1 and the tutorial, once. The tips are reset here too,
+      // before the tips provider (a child of this one) reads them.
+      const fresh = await AsyncStorage.getItem(FRESH_KEY).catch(() => null);
+      if (fresh !== FRESH_VERSION) {
+        await AsyncStorage.multiRemove([...PROGRESS_KEYS, TIPS_KEY, UNLOCK_ALL_KEY]).catch(() => {});
+        await AsyncStorage.setItem(ORDER_KEY, ORDER_VERSION).catch(() => {});
+        await AsyncStorage.setItem(FRESH_KEY, FRESH_VERSION).catch(() => {});
+      }
+      const [u, b, s, order, all] = await Promise.all([
+        AsyncStorage.getItem(UNLOCKED_KEY).catch(() => null),
+        AsyncStorage.getItem(BEST_KEY).catch(() => null),
+        AsyncStorage.getItem(SHOTS_KEY).catch(() => null),
+        AsyncStorage.getItem(ORDER_KEY).catch(() => null),
+        AsyncStorage.getItem(UNLOCK_ALL_KEY).catch(() => null),
+      ]);
       if (!live) return;
       // The tutorial doesn't score; drop any result an earlier version saved for it.
       const saved = parseBest(b);
       delete saved[TUTORIAL_ID];
       setBest(saved);
       setShots(parseShots(s));
+      setUnlockAllState(all === '1');
       let open = parseUnlocked(u, LEVELS.length);
       if (order !== ORDER_VERSION) {
         // The levels were put in worlds (0.18.0): the saved "furthest level" counted the old order, so work it out again from the results.
@@ -59,7 +81,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         AsyncStorage.setItem(ORDER_KEY, ORDER_VERSION).catch(() => {});
       }
       setUnlocked(open);
-    });
+    })();
     return () => { live = false; };
   }, []);
 
@@ -83,11 +105,37 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setUnlockAll = useCallback((on: boolean) => {
+    setUnlockAllState(on);
+    AsyncStorage.setItem(UNLOCK_ALL_KEY, on ? '1' : '0').catch(() => {});
+  }, []);
+
+  const resetProgress = useCallback(() => {
+    AsyncStorage.multiRemove([UNLOCKED_KEY, BEST_KEY, SHOTS_KEY]).catch(() => {});
+    setUnlocked(0);
+    setBest({});
+    setShots({});
+  }, []);
+
   if (unlocked === null) return null;
-  const open = LOCK_LEVELS ? unlocked : LEVELS.length - 1;
-  return <ProgressContext.Provider value={{ unlocked: open, best, shots, won }}>{children}</ProgressContext.Provider>;
+  const open = LOCK_LEVELS && !unlockAll ? unlocked : LEVELS.length - 1;
+  return (
+    <ProgressContext.Provider value={{ unlocked: open, best, shots, won, unlockAll, setUnlockAll, resetProgress }}>
+      {children}
+    </ProgressContext.Provider>
+  );
 }
 
 export function useProgress(): Progress {
   return useContext(ProgressContext);
+}
+
+/**
+ * The furthest level the player can open: what they have won, and level 2 once the tutorial is finished or skipped (skipping it must not
+ * leave a new player stuck on level 1).
+ */
+export function useUnlocked(): number {
+  const { unlocked } = useProgress();
+  const { tutorialDone } = useTips();
+  return Math.max(unlocked, tutorialDone ? Math.min(1, LEVELS.length - 1) : 0);
 }

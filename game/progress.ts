@@ -2,10 +2,15 @@
 import { golfName, nextStarsText, scoreFor, starsFor } from './score';
 
 /**
- * Level locks: off while the levels are being tested, so every level can be opened. Wins still record
- * unlocks, so turning this on later picks up each player's real progress.
+ * Level locks: on. A level opens once the one before it is won (settings has a testing switch to open them all).
  */
-export const LOCK_LEVELS = false;
+export const LOCK_LEVELS = true;
+
+/** Turning locks on (0.23.0) started every device again from level 1, once: this marks that it has happened. */
+export const FRESH_KEY = 'bank-shot/fresh';
+export const FRESH_VERSION = 'locks-1';
+/** Testing switch in settings: open every level. */
+export const UNLOCK_ALL_KEY = 'bank-shot/unlock-all';
 
 /** Storage key for the index of the furthest unlocked level. */
 export const UNLOCKED_KEY = 'bank-shot/unlocked';
