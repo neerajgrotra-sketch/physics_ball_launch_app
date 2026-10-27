@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.29.1
+
+- The Solve button shows the hints left next to its name ("Solve 💡12"), so the balance is always in sight. Not on the tutorial,
+  whose Solve is free.
+
 ## 0.29.0
 
 - Hints are paid from a balance (💡) instead of an ad each time, so a new player sees no ads early on. Everyone starts with 15,

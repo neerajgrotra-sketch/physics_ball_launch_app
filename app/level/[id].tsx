@@ -785,7 +785,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         </View>
         <View style={styles.actions}>
           <View style={flying && styles.busy} pointerEvents={flying ? 'none' : 'auto'}>
-            <Ghost label="Solve" onPress={openHelp} big shake={solvedTaps} />
+            <Ghost label="Solve" badge={practice ? undefined : `💡${wallet.hints}`} onPress={openHelp} big shake={solvedTaps} />
           </View>
           <Ghost label="Clear" onPress={clearTrails} big />
           <UndoButton enabled={canUndo && !flying && !done} onPress={undoMove} />
@@ -866,8 +866,11 @@ function UndoButton({ enabled, onPress }: { enabled: boolean; onPress: () => voi
   );
 }
 
-/** A quiet outlined button. Each change of `shake` (after the first) shakes it side to side and lights it red for a moment. */
-function Ghost({ label, onPress, big, shake = 0 }: { label: string; onPress: () => void; big?: boolean; shake?: number }) {
+/**
+ * A quiet outlined button. Each change of `shake` (after the first) shakes it side to side and lights it red for a moment. `badge` is a
+ * small count after the label (Solve shows the player's hints, 💡12).
+ */
+function Ghost({ label, badge, onPress, big, shake = 0 }: { label: string; badge?: string; onPress: () => void; big?: boolean; shake?: number }) {
   const c = useColors();
   const x = useSharedValue(0);
   const [red, setRed] = useState(false);
@@ -885,9 +888,11 @@ function Ghost({ label, onPress, big, shake = 0 }: { label: string; onPress: () 
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
-        style={[styles.ghost, big && styles.ghostBig, { borderColor: red ? c.red : c.line }]}
+        accessibilityLabel={badge ? `${label}, ${badge.replace('💡', '')} hints left` : label}
+        style={[styles.ghost, big && styles.ghostBig, badge != null && styles.ghostBadged, { borderColor: red ? c.red : c.line }]}
       >
         <Text style={[styles.ghostText, big && styles.ghostTextBig, { color: red ? c.red : c.muted }]}>{label}</Text>
+        {badge != null && <Text style={[styles.badge, { color: red ? c.red : c.pencil }]}>{badge}</Text>}
       </Pressable>
     </Animated.View>
   );
@@ -924,6 +929,8 @@ const styles = StyleSheet.create({
   undo: { width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   ghost: { height: 34, paddingHorizontal: 12, borderRadius: 17, borderWidth: 1.5, justifyContent: 'center' },
   ghostBig: { height: 44, paddingHorizontal: 20, borderRadius: 22 },
+  ghostBadged: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14 },
+  badge: { fontSize: 14, fontFamily: FONTS.condensedBold },
   ghostText: { fontSize: 14, fontFamily: FONTS.bodyMedium },
   ghostTextBig: { fontSize: 15 },
   launch: { flex: 1, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
