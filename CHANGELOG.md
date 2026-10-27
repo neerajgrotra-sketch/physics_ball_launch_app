@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.32.1
+
+- Fix: the fading messages (hints given, "+3 💡", "Copied!", the Solve nudge) left an empty outlined box behind on iPhone Safari.
+  The message is now removed once it has faded, instead of staying on screen fully transparent.
+
 ## 0.32.0
 
 - Share every win: a level's win card has "📣 Challenge a friend", and the daily's Share uses the same message. It opens with a hook

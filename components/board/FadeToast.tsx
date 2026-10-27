@@ -1,24 +1,28 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 import { FONTS, useColors } from '../../theme/colors';
 
 /**
  * A short message over the middle of whatever it's placed in: each change of `trigger` (after the first) fades it in, holds it, and
  * fades it away. It floats over everything, so nothing on screen moves, and never takes a touch. `tone` red for "no", pencil for news.
+ * Once faded it is removed, not left at zero opacity: iPhone Safari can keep painting a transparent box's border and shadow.
  */
 export function FadeToast({ trigger, text, tone = 'red' }: { trigger: number; text: string; tone?: 'red' | 'pencil' }) {
   const c = useColors();
   const shown = useSharedValue(0);
+  const [live, setLive] = useState(false);
   useEffect(() => {
     if (!trigger) return;
+    setLive(true);
     shown.value = withSequence(
       withTiming(1, { duration: 180 }),
-      withDelay(1900, withTiming(0, { duration: 500, easing: Easing.in(Easing.quad) })),
+      // A newer message cancels this fade (finished is false), so only the last one's end removes the toast.
+      withDelay(1900, withTiming(0, { duration: 500, easing: Easing.in(Easing.quad) }, (finished) => { if (finished) runOnJS(setLive)(false); })),
     );
   }, [trigger, shown]);
   const style = useAnimatedStyle(() => ({ opacity: shown.value, transform: [{ scale: 0.96 + 0.04 * shown.value }] }));
-  if (!trigger) return null;
+  if (!trigger || !live) return null;
   const color = tone === 'red' ? c.red : c.pencil;
   return (
     <View style={styles.wrap} pointerEvents="none">
