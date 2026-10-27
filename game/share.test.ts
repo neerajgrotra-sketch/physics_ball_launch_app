@@ -36,12 +36,16 @@ describe('share message', () => {
   });
 });
 
-describe('share picture banner', () => {
-  it('reads like a level complete screen', () => {
-    expect(shareCard(level, { bounces: 4, stars: 2, tries: 8, helped: false }, 2))
-      .toEqual({ title: 'LEVEL 7 COMPLETE!', stars: 2, line: '“Four millimetres” · Double bogey · 4 bounces (par 2) · 8 tries' });
-    expect(shareCard(level, { bounces: 2, stars: 3, tries: 1, helped: false }, 2).line).toBe('“Four millimetres” · 2 bounces (par 2) · first try');
-    expect(shareCard({ kind: 'daily', number: 2, name: 'Ricochet', streak: 1 }, { bounces: 1, stars: 3, tries: 1, helped: true }, 1))
-      .toEqual({ title: 'DAILY #2 COMPLETE!', stars: null, line: '“Ricochet” · 1 bounce (par 1) · first try' });
+describe('share picture words', () => {
+  it('reads like a level complete screen, with the result stamped and a dare', () => {
+    expect(shareCard(level, { bounces: 4, stars: 2, tries: 8, helped: false }, 2)).toEqual({
+      title: 'LEVEL 7 COMPLETE!', stars: 2, line: '“Four millimetres” · 4 bounces (par 2) · 8 tries', stamp: 'DOUBLE BOGEY', dare: 'CAN YOU BEAT 4 BOUNCES?',
+    });
+    expect(shareCard(level, { bounces: 2, stars: 3, tries: 1, helped: false }, 2).stamp).toBe('PAR!');
+    expect(shareCard(level, { bounces: 1, stars: 3, tries: 1, helped: false }, 2)).toMatchObject({ stamp: 'BIRDIE!', dare: "BET YOU CAN'T MATCH IT" });
+    expect(shareCard(level, { bounces: 9, stars: 1, tries: 1, helped: false }, 2).stamp).toBe('IN!');
+    expect(shareCard({ kind: 'daily', number: 2, name: 'Ricochet', streak: 1 }, { bounces: 1, stars: 3, tries: 1, helped: true }, 1)).toEqual({
+      title: 'DAILY #2 COMPLETE!', stars: null, line: '“Ricochet” · 1 bounce (par 1) · first try', stamp: 'SOLVED!', dare: 'CAN YOU DO IT WITHOUT HELP?',
+    });
   });
 });

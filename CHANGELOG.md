@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.38.0
+
+- The shared picture is now a poster instead of a screenshot of a mostly empty board: the board is zoomed in on where the round
+  happened, the winning shot is drawn bold in red with rings where it bounced (misses in blue), a tilted rubber stamp says the
+  result with the stars ("PAR! ★★★", "BIRDIE!", "SOLVED!"), and a dare runs along the bottom ("CAN YOU BEAT 2 BOUNCES?"), all
+  in the board theme's colours. 1080×1350, the shape chat apps show biggest.
+
 ## 0.37.0
 
 - Touching the gun no longer drops the aim: it used to jump the aim to the finger, right at the gun (0° and no power). Now a

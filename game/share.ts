@@ -60,11 +60,17 @@ export function shareMessage(what: ShareWhat, r: ShareResult, par: number): stri
   ].join('\n');
 }
 
-/** The banner on the shared picture (components/board/shareCard.ts): it reads like the game's own "level complete" screen. */
-export function shareCard(what: ShareWhat, r: ShareResult, par: number): { title: string; stars: number | null; line: string } {
+/** The words on the shared picture (components/board/shareCard.ts): it reads like the game's own "level complete" screen. */
+export function shareCard(what: ShareWhat, r: ShareResult, par: number): { title: string; stars: number | null; line: string; stamp: string; dare: string } {
   const title = what.kind === 'daily' ? `DAILY #${what.number} COMPLETE!` : `LEVEL ${what.number} COMPLETE!`;
-  // The golf name only when it isn't plain par ("Par · 2 bounces (par 2)" says it twice).
-  const name = r.helped || r.bounces === par ? '' : `${golfName(r.bounces, par).replace(/^\+(\d+)$/, '+$1 over par')} · `;
   const tries = r.tries === 1 ? 'first try' : `${r.tries} tries`;
-  return { title, stars: r.helped ? null : r.stars, line: `“${what.name}” · ${name}${r.bounces} ${r.bounces === 1 ? 'bounce' : 'bounces'} (par ${par}) · ${tries}` };
+  const bounces = `${r.bounces} ${r.bounces === 1 ? 'bounce' : 'bounces'}`;
+  // The stamp names the result the way the win card does; far over par it just says it went in.
+  const golf = golfName(r.bounces, par);
+  const stamp = r.helped ? 'SOLVED!' : golf.startsWith('+') ? 'IN!' : golf === 'Bogey' || golf === 'Double bogey' ? golf.toUpperCase() : `${golf.toUpperCase()}!`;
+  const dare = r.helped ? 'CAN YOU DO IT WITHOUT HELP?'
+    : what.kind === 'daily' ? `TODAY'S PUZZLE: BEAT ${r.bounces} ${r.bounces === 1 ? 'BOUNCE' : 'BOUNCES'}?`
+    : r.stars === 3 && r.bounces < par ? 'BET YOU CAN\'T MATCH IT'
+    : `CAN YOU BEAT ${r.bounces} ${r.bounces === 1 ? 'BOUNCE' : 'BOUNCES'}?`;
+  return { title, stars: r.helped ? null : r.stars, line: `“${what.name}” · ${bounces} (par ${par}) · ${tries}`, stamp, dare };
 }
