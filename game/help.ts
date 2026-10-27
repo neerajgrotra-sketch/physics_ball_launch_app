@@ -34,3 +34,10 @@ export function aimHintNotice(h: NextHint): string | null {
 export function solvedNudge(won: boolean): string {
   return won ? 'That was the answer. Tap Replay ▶ to watch it again.' : 'The answer is already set up: every bar, the angle and the power. Just launch!';
 }
+
+/** How many steps of the answer are still missing: bars not where the answer has them, then the angle and the power if they differ. */
+export function stepsLeft(level: Level, barsLeft: number, angle: number, power: number): number {
+  const s = level.solution;
+  if (!s) return 0;
+  return barsLeft + (angle !== s.angle ? 1 : 0) + (power !== s.power ? 1 : 0);
+}

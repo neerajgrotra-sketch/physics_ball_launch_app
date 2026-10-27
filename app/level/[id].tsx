@@ -6,9 +6,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
 import { usePlayback } from '../../components/board/usePlayback';
 import { HelpCard } from '../../components/board/HelpCard';
-import { aimHintNotice, solvedNudge, hintLabel, nextHint } from '../../game/help';
+import { FadeToast } from '../../components/board/FadeToast';
+import { aimHintNotice, solvedNudge, hintLabel, nextHint, stepsLeft } from '../../game/help';
+import { STAR_REWARD, WORLD_REWARD, solutionCost } from '../../game/wallet';
+import { WORLDS } from '../../game/worlds';
 import { NoticeCard } from '../../components/board/NoticeCard';
-import { useRewardedAd } from '../../components/ads/RewardedAds';
+import { useHintWallet } from '../../components/hints/HintWallet';
 import { SettingsSheet } from '../../components/settings/SettingsSheet';
 import { GhostFinger, type Demo } from '../../components/coach/GhostFinger';
 import { useTips } from '../../components/coach/Tips';
@@ -27,7 +30,7 @@ import { useProgress, useUnlocked } from '../../components/progress/ProgressProv
 import { aimAt, swingTo } from '../../game/aim';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
-  hintSlots, leverEnd, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
+  atSolution, hintSlots, leverEnd, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
 import { CARD_PAUSE_MS, CELEBRATION_MS, burstFor, cardPlace } from '../../game/celebration';
 import { counterSpot } from '../../game/counter';
@@ -138,7 +141,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   const [bounces, setBounces] = useState<number | null>(null);
   /** The winning shot exactly as fired (bars, angle, power), so Replay can play it again. */
   const [winShot, setWinShot] = useState<{ angle: number; power: number; slots: Slot[]; bounces: number }>({ angle: 0, power: 0, slots: [], bounces: 0 });
-  const ads = useRewardedAd();
+  const wallet = useHintWallet();
   const par = level.par ?? level.pieces.length;
   /** Shown in place of the hint after a shot that needs explaining. */
   const [notice, setNotice] = useState<string | { title: string; text: string } | null>(null);
@@ -281,6 +284,14 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         if (practice) won(index, undefined, saved);
         else if (assisted) won(index);
         else won(index, bestOf({ bounces: res.bounces, par, tries: tryNo }), saved);
+        // Hint rewards, said once the celebration is over: a level's first three-star win, and a world's last level won.
+        if (!practice) {
+          const notes: string[] = [];
+          if (!assisted && starsFor(res.bounces, par) === 3 && wallet.rewardStars(level.id)) notes.push(`+${STAR_REWARD} 💡 for three stars`);
+          const world = WORLDS.find((w) => w.ids[w.ids.length - 1] === level.id);
+          if (world && wallet.rewardWorld(world.name)) notes.push(`+${WORLD_REWARD} 💡: ${world.name} world complete!`);
+          if (notes.length) setTimeout(() => wallet.announce(notes.join('\n')), CELEBRATION_MS + 600);
+        }
       }
     };
     launched();
@@ -464,11 +475,13 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   };
   // The answer's next step, a hint at a time (game/help.ts): each bar in turn, then the launch angle, then the launch power.
   const barHint = () => { const h = hintSlots(level, slots); return h ? h.k : null; };
-  const hint = async () => {
-    setHelp(false);
-    if (!(await ads.show('hint'))) return;
+  // Each hint costs 1 from the player's hints, the full solution one less than hinting every missing step (game/wallet.ts).
+  const fullCost = () => solutionCost(stepsLeft(level, level.pieces.filter((_, i) => !atSolution(level, slots, i)).length, angle, power));
+  const hint = () => {
     const next = nextHint(level, barHint(), angle, power);
     if (!next) return;
+    if (!wallet.spend(1)) { wallet.openShop(); return; }
+    setHelp(false);
     setHelped(true);
     if (next.kind === 'bar') {
       const h = hintSlots(level, slots);
@@ -482,9 +495,10 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     if (next.kind === 'angle') setAngle(next.value); else setPower(next.value);
     setNotice({ title: 'Your hint', text: aimHintNotice(next) ?? '' });
   };
-  const fullSolution = async () => {
+  const fullSolution = () => {
+    if (!wallet.spend(fullCost())) { wallet.openShop(); return; }
     setHelp(false);
-    if (await ads.show('solve')) solve();
+    solve();
   };
 
   // Places the stored solution's pieces (unused ones go back to the tray), sets angle and power, launches.
@@ -718,8 +732,9 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         )}
         {help && !flying && (
           <HelpCard
-            hint={(() => { const h = nextHint(level, barHint(), angle, power); return h ? hintLabel(h) : null; })()}
-            onHint={hint} onSolve={fullSolution} onClose={() => setHelp(false)}
+            hint={(() => { const h = nextHint(level, barHint(), angle, power); return h ? { label: hintLabel(h), cost: 1 } : null; })()}
+            solutionCost={fullCost()} hints={wallet.hints}
+            onHint={hint} onSolve={fullSolution} onAd={() => { wallet.watchAd(); }} onShop={wallet.openShop} onClose={() => setHelp(false)}
           />
         )}
         {done && !flying && cardReady && (
@@ -851,31 +866,6 @@ function UndoButton({ enabled, onPress }: { enabled: boolean; onPress: () => voi
   );
 }
 
-/**
- * A short message over the middle of the board: each change of `trigger` (after the first) fades it in, holds it, and fades it away.
- * It floats over everything, so nothing on screen moves, and never takes a touch.
- */
-function FadeToast({ trigger, text }: { trigger: number; text: string }) {
-  const c = useColors();
-  const shown = useSharedValue(0);
-  useEffect(() => {
-    if (!trigger) return;
-    shown.value = withSequence(
-      withTiming(1, { duration: 180 }),
-      withDelay(1900, withTiming(0, { duration: 500, easing: Easing.in(Easing.quad) })),
-    );
-  }, [trigger, shown]);
-  const style = useAnimatedStyle(() => ({ opacity: shown.value, transform: [{ scale: 0.96 + 0.04 * shown.value }] }));
-  if (!trigger) return null;
-  return (
-    <View style={styles.toastWrap} pointerEvents="none">
-      <Animated.View style={[styles.toast, { backgroundColor: c.paper, borderColor: c.red }, style]}>
-        <Text accessibilityLiveRegion="polite" style={[styles.toastText, { color: c.red }]}>{text}</Text>
-      </Animated.View>
-    </View>
-  );
-}
-
 /** A quiet outlined button. Each change of `shake` (after the first) shakes it side to side and lights it red for a moment. */
 function Ghost({ label, onPress, big, shake = 0 }: { label: string; onPress: () => void; big?: boolean; shake?: number }) {
   const c = useColors();
@@ -930,12 +920,6 @@ const styles = StyleSheet.create({
   bottom: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tray: { flex: 1 },
   actions: { flexDirection: 'row', gap: 8 },
-  toastWrap: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 10 },
-  toast: {
-    maxWidth: 300, marginHorizontal: 24, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 14, borderWidth: 2,
-    boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-  },
-  toastText: { textAlign: 'center', fontSize: 16, lineHeight: 21, fontFamily: FONTS.bodySemi },
   busy: { opacity: 0.5 },
   undo: { width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   ghost: { height: 34, paddingHorizontal: 12, borderRadius: 17, borderWidth: 1.5, justifyContent: 'center' },

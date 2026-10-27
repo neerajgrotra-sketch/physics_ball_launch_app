@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LEVELS } from '../levels';
-import { aimHintNotice, hintLabel, nextHint, solvedNudge } from './help';
+import { aimHintNotice, hintLabel, nextHint, solvedNudge, stepsLeft } from './help';
 
 describe('the hint sequence', () => {
   const level = LEVELS[2];
@@ -30,5 +30,11 @@ describe('the hint sequence', () => {
   it('says the answer is already there instead of offering more help', () => {
     expect(solvedNudge(false)).toMatch(/already set up.*launch/i);
     expect(solvedNudge(true)).toMatch(/Replay/);
+  });
+
+  it('counts the steps still missing', () => {
+    expect(stepsLeft(level, 2, 52, 45)).toBe(4);
+    expect(stepsLeft(level, 0, s.angle, 45)).toBe(1);
+    expect(stepsLeft(level, 0, s.angle, s.power)).toBe(0);
   });
 });

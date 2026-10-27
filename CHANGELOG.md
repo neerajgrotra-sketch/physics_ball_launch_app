@@ -4,6 +4,17 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.29.0
+
+- Hints are paid from a balance (💡) instead of an ad each time, so a new player sees no ads early on. Everyone starts with 15,
+  enough to be helped through the first few levels. A hint costs 1; the full solution costs one less than hinting every missing
+  step. The Solve card shows the balance and each cost; when there aren't enough, it offers an ad for +3 and the shop.
+- Free hints: a daily gift of +2 (from the second day), +1 for each level's first unassisted three-star win, +5 for winning a world's
+  last level. A short message fades in when hints are given.
+- A hint shop (from the Solve card and from Settings): watch an ad for +3, or packs of 30, 80 and 200 for CA$1.99, CA$3.99 and
+  CA$7.99. Real payments need the store apps, so for now a pack is a marked test purchase that just adds the hints.
+- Settings shows the balance; Reset progress also resets the hints (`game/wallet.ts`, `components/hints`).
+
 ## 0.28.0
 
 - Ball skins: Settings has a "Your ball" picker with 17 balls. Colours and finishes: Steel (the default), Chrome, Gold, Copper, Ruby,

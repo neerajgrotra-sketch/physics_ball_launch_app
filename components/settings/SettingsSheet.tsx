@@ -8,6 +8,7 @@ import { useSoundSettings } from '../feedback/SoundSettings';
 import { useProgress } from '../progress/ProgressProvider';
 import { VERSION_LABEL } from '../version';
 import { BallPicker } from './BallPicker';
+import { useHintWallet } from '../hints/HintWallet';
 
 /**
  * The ⚙ sheet: music, tips, the tutorial, the ball's look (BallPicker), "About you" (optional details kept on this device, game/profile.ts) and a Testing section
@@ -20,6 +21,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
   const { musicOn, toggleMusic } = useSoundSettings();
   const { tipsOn, setTipsOn, restartTutorial, restartTour } = useTips();
   const { unlockAll, setUnlockAll, resetProgress } = useProgress();
+  const wallet = useHintWallet();
   const [confirmReset, setConfirmReset] = useState(false);
   useEffect(() => { if (!visible) setConfirmReset(false); }, [visible]);
 
@@ -57,6 +59,16 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
               </Pressable>
             )}
 
+            <View style={[styles.row, { borderColor: c.line }]}>
+              <View style={styles.labelBox}>
+                <Text style={[styles.label, { color: c.ink }]}>Hints: {wallet.hints} 💡</Text>
+                <Text style={[styles.note, { color: c.muted }]}>For Solve's hints and solutions.</Text>
+              </View>
+              <Pressable onPress={() => { onClose(); setTimeout(wallet.openShop, 350); }} accessibilityRole="button" style={[styles.small, { borderColor: c.pencil }]}>
+                <Text style={[styles.smallText, { color: c.pencil }]}>Get more</Text>
+              </Pressable>
+            </View>
+
             <BallPicker />
 
             <AboutYou />
@@ -76,6 +88,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
               onPress={() => {
                 if (!confirmReset) { setConfirmReset(true); return; }
                 resetProgress();
+                wallet.reset();
                 restartTutorial();
                 restartTour();
                 setConfirmReset(false);
@@ -167,6 +180,8 @@ const styles = StyleSheet.create({
   labelBox: { flex: 1, gap: 2 },
   label: { fontSize: 18, fontFamily: FONTS.bodySemi },
   note: { fontSize: 13, fontFamily: FONTS.body },
+  small: { height: 36, paddingHorizontal: 14, borderRadius: 18, borderWidth: 2, justifyContent: 'center' },
+  smallText: { fontSize: 15, fontFamily: FONTS.condensedBold },
   outline: { height: 44, borderRadius: 22, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   outlineText: { fontSize: 17, fontFamily: FONTS.condensedBold },
   about: { gap: 8 },

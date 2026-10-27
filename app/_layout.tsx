@@ -14,6 +14,7 @@ import { RewardedAdsProvider } from '../components/ads/RewardedAds';
 import { TipsProvider } from '../components/coach/Tips';
 import { SoundSettingsProvider } from '../components/feedback/SoundSettings';
 import { BallSkinProvider } from '../components/settings/BallSkin';
+import { HintWalletProvider } from '../components/hints/HintWallet';
 import { ProgressProvider } from '../components/progress/ProgressProvider';
 import { Intro } from '../components/splash/Intro';
 import { TourGate } from '../components/tour/TourGate';
@@ -43,6 +44,7 @@ export default function RootLayout() {
         <ProgressProvider>
           <SoundSettingsProvider>
             <RewardedAdsProvider>
+              <HintWalletProvider ready={!intro}>
               <TipsProvider>
             <StatusBar style="auto" />
             <Stack
@@ -59,6 +61,7 @@ export default function RootLayout() {
             </Stack>
             <TourGate hidden={intro} />
               </TipsProvider>
+              </HintWalletProvider>
             </RewardedAdsProvider>
           </SoundSettingsProvider>
         </ProgressProvider>

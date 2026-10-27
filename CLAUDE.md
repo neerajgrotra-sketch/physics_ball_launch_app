@@ -119,8 +119,11 @@ reference/    prototype.html, the behaviour and look to match
   future verified leaderboard: physics is deterministic, so a server can re-run a submitted shot).
 - **Help (the Solve button):** opens a card offering a hint or the full solution. The one Hint button gives the stored answer's
   next step in order (`game/help.ts` `nextHint`): each bar in turn (placed where the answer has it; clashing bars go back to the
-  tray), then the launch angle, then the launch power, skipping any step that already matches. Each sits behind a rewarded ad
-  (`components/ads/RewardedAds.tsx`; a 5-second placeholder until AdMob is wired into a store build).
+  tray), then the launch angle, then the launch power, skipping any step that already matches. Both are paid from the player's
+  hints (💡, `game/wallet.ts`, `components/hints/HintWallet.tsx`): 15 to start, a hint costs 1, the full solution one less than
+  the missing steps; a daily gift, a level's first three-star win and a world's last level give more. Short of hints, the card offers
+  a rewarded ad for +3 (`components/ads/RewardedAds.tsx`; a 5-second placeholder until AdMob is wired into a store build) and the
+  shop (`components/hints/Shop.tsx`: packs are test purchases until in-app purchases are wired up, see BACKLOG.md).
   Using either marks the round as helped until Start over. Once the board already matches the answer in every step, Solve opens no card and
   no ad: the button shakes red and a card over the middle of the board says the answer is already
   set up, then fades away without moving anything (`solvedNudge`, `FadeToast`).

@@ -77,8 +77,10 @@ the ceiling of this layout; the sensible next step for variety is a *different* 
 
 ## Scoring, rewards and money
 
-- **Bulb currency.** Earn bulbs from stars, badges and watching ads; spend them on hints. Shown in the
-  header and on the levels screen.
+- **Hints (💡), done in 0.29.0:** a balance (`game/wallet.ts`) with 15 to start, a daily gift, star and world rewards, +3 per ad,
+  and a test shop. Still to do: **real in-app purchases** for the packs (RevenueCat in a development/store build; products
+  `hints_30`, `hints_80`, `hints_200` in App Store Connect and Play Console; the shop's `give` call becomes the purchase), and
+  showing the balance on the levels screen. Later: hints from badges.
 - **Badges:** Hole in One, Birdie, Eagle, Perfect World (all levels at par), 7-day Daily streak, Trick Shot.
 - **Hint power-ups** (assisted, no score): longer aim preview, reveal one piece, extra undo.
 - **Real ads:** AdMob rewarded ads in a development/store build (`components/ads/RewardedAds.tsx` is the
