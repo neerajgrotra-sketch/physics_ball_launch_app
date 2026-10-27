@@ -84,23 +84,24 @@ describe('pressAt', () => {
     expect(leverEnd({ len: 90, x: WORLD.width - 50, y: 300, deg: 0 })).toBe(1);
   });
 
-  it('aims near the launcher only when allowed, and empty board deselects', () => {
+  it('aims near the launcher only when allowed, and empty board deselects (and aims once the finger moves)', () => {
     const p = { x: LAUNCHER.x + 30, y: LAUNCHER.y - 30 };
     expect(pressAt(placed, 0, p, true)).toEqual({ drag: { mode: 'aim' }, selected: null }); // touching the cannon switches to aiming
     expect(pressAt(placed, 0, p, false)).toEqual({ drag: null, selected: null });
-    expect(pressAt(placed, 0, { x: 350, y: 100 }, true)).toEqual({ drag: null, selected: null });
+    expect(pressAt(placed, 0, { x: 350, y: 100 }, true)).toEqual({ drag: { mode: 'open', x: 350, y: 100 }, selected: null });
+    expect(pressAt(placed, 0, { x: 350, y: 100 }, false)).toEqual({ drag: null, selected: null });
   });
 
   it('grabs the dotted aim line to swing the aim, but bars come first', () => {
     const far = { x: LAUNCHER.x + 200, y: LAUNCHER.y - 200 }; // on the line at 45°, power 100
     expect(pressAt([], null, far, true, { angle: 45, power: 100 }).drag?.mode).toBe('swing');
     expect(pressAt([], null, far, false, { angle: 45, power: 100 }).drag).toBeNull();
-    expect(pressAt([], null, far, true, { angle: 10, power: 100 }).drag).toBeNull();
+    expect(pressAt([], null, far, true, { angle: 10, power: 100 }).drag?.mode).toBe('open');
   });
 
   it('ignores pieces in the tray', () => {
     const tray = [{ ...placed[0], onBoard: false }];
-    expect(pressAt(tray, null, { x: 200, y: 300 }, true).drag).toBeNull();
+    expect(pressAt(tray, null, { x: 200, y: 300 }, true).drag?.mode).toBe('open');
   });
 });
 

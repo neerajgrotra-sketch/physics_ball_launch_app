@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.35.0
+
+- Swipe anywhere to aim: a drag on empty board now aims the gun at the finger straight away (direction is the angle, distance
+  from the gun the power), the same as dragging from the gun. Players swiped around the board expecting the gun to follow and
+  thought the screen had frozen. A tap on empty board still only deselects a bar; aiming starts once the finger moves.
+
 ## 0.34.1
 
 - The web page (every route, e.g. /level/08-switchback) is now served with `Cache-Control: no-cache`, so a phone always checks
