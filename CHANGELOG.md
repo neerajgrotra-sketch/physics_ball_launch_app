@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.30.3
+
+- During a shot, tapping a bar chip, the cannon chip, Solve, Clear, Undo or the bar's rotation controls skips to the end of the shot
+  and then does what it does, in the same tap: Bar 1 is selected, the cannon chip brings the aim sliders back, Solve opens its card
+  (on the tutorial it plays the answer). In 0.30.2 the tap only skipped and had to be repeated.
+
 ## 0.30.2
 
 - During a shot, tapping a bar chip, the cannon chip, Solve, Clear or Undo (or the bar's rotation controls) now skips to the end of

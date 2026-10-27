@@ -431,9 +431,9 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     playShot(res, () => { if (res.success) feedback.landed(); }, false);
   };
 
-  // Put the bars back the way they were before the last change. Not while a shot is playing.
+  // Put the bars back the way they were before the last change. During a shot, it first skips to the shot's end.
   const undoMove = () => {
-    if (flying) { skip(); return; }
+    if (flying) skip();
     const step = undoHistory(history.current);
     if (!step) return;
     history.current = step.history;
@@ -462,13 +462,14 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
 
   // Solve opens the help card: a hint or the full solution, each after a rewarded ad (components/ads).
   const openHelp = () => {
-    if (flying) { skip(); return; }
+    const skipped = flying;
+    if (flying) skip();
     if (!level.solution) return;
     primeAudio();
     keepPlaying();
     setSelected(null);
     // The tutorial level is practice: Solve just solves it, with no ad and no hint-or-solution card.
-    if (practice) { solve(); return; }
+    if (practice) { solve(skipped); return; }
     // Every bar, the angle and the power already match the answer: there's nothing left to give, so no card and no ad. The button
     // shakes red and a line says so instead.
     if (!nextHint(level, barHint(), angle, power)) { setSolvedTaps((n) => n + 1); return; }
@@ -503,9 +504,10 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   };
 
   // Places the stored solution's pieces (unused ones go back to the tray), sets angle and power, launches.
-  const solve = () => {
+  /** `skipped`: the caller has just skipped the shot in flight, so this render's `flying` is out of date. */
+  const solve = (skipped = false) => {
     const s = level.solution;
-    if (flying || !s) return;
+    if ((flying && !skipped) || !s) return;
     primeAudio();
     const next = solutionSlots(level);
     setSlots(next);
@@ -533,16 +535,15 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     setSolved(false);
   };
 
-  // A touch on the rotation or aim controls during a shot skips to its end, like Skip ›, without taking the touch. Those controls
-  // are back on by the time that finger lifts, so the touch is remembered and anything it would do is ignored (`justSkipped`).
-  const skippedAt = useRef(0);
+  // During a shot, touching a control first skips to the shot's end (like Skip ›), then the control does what it does: a bar chip
+  // selects its bar, the cannon chip goes back to aiming, Solve opens its card, and so on. The rotation and aim controls skip as the
+  // finger lands, without taking the touch, so the same touch then turns the bar or moves the slider.
   const skipOnTouch = () => {
-    if (flying) { skippedAt.current = Date.now(); skip(); }
+    if (flying) skip();
     return false;
   };
-  const justSkipped = () => Date.now() - skippedAt.current < 800;
   const clearTrails = () => {
-    if (flying) { skip(); return; }
+    if (flying) skip();
     setTrails([]);
   };
 
@@ -637,13 +638,13 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   // The selected bar (if it's on the board) gets rotation controls in place of the aim rows.
   const selectedBar = selected != null && slots[selected]?.onBoard ? selected : null;
   const rotate = (next: (s: Slot[]) => Slot[]) => {
-    if (flying || justSkipped()) return;
+    if (flying) skip();
     keepPlaying();
     setSlots(next);
   };
 
   const onChip = (k: number) => {
-    if (flying) { skip(); return; }
+    if (flying) skip();
     primeAudio();
     keepPlaying();
     const r = tapChip(slots, selected, k, level);
@@ -772,7 +773,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
               return ok;
             }}
             onNudge={(by) => rotate((s) => rotateLegal(level, s, selectedBar, by))}
-            onRemove={() => { if (!flying && !justSkipped()) { const r = removeBar(slots, selectedBar); setSlots(r.slots); setSelected(r.selected); } }}
+            onRemove={() => { if (flying) skip(); const r = removeBar(slots, selectedBar); setSlots(r.slots); setSelected(r.selected); }}
             disabled={flying}
           />
           </View>
@@ -792,7 +793,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         )}
         <View style={styles.bottom}>
           <View ref={trayRef} style={styles.tray}>
-            <Tray slots={slots} selected={selected} onTap={onChip} onAim={() => { if (flying) { skip(); return; } setSelected(null); }} aiming={selectedBar == null} onChipLayout={(k, l) => { chips.current[k] = l; }} />
+            <Tray slots={slots} selected={selected} onTap={onChip} onAim={() => { if (flying) skip(); setSelected(null); }} aiming={selectedBar == null} onChipLayout={(k, l) => { chips.current[k] = l; }} />
           </View>
         </View>
         <View style={styles.actions}>
