@@ -90,15 +90,19 @@ export function useFeedback() {
   };
 }
 
-/** Restart a short effect from the top, so quick repeats retrigger instead of being dropped. */
+/**
+ * Restart a short effect from the top, so quick repeats retrigger instead of being dropped. The pitch goes through
+ * setPlaybackRate(): on iOS `playbackRate` is read-only, and assigning it threw before play() ran, which silenced every effect.
+ */
 function play(player: AudioPlayer, volume: number, rate = 1) {
   try {
     player.volume = volume;
-    player.shouldCorrectPitch = false;
-    player.playbackRate = rate;
+    player.shouldCorrectPitch = false; // varispeed: a faster rate also raises the pitch, for the arpeggio
+    player.setPlaybackRate(rate);
     player.seekTo(0).catch(() => {});
     player.play();
-  } catch {
-    // Audio is a nicety: never let it break a shot.
+  } catch (e) {
+    // Audio is a nicety: never let it break a shot. Say so in development, so a silent failure can't hide again.
+    if (__DEV__) console.warn('Sound failed to play', e);
   }
 }

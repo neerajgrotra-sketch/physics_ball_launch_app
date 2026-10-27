@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.38.2
+
+- Fix: no sound effects on iPhone (Expo Go and the app): the launch, bounces, glass, win and the intro's shot were all silent.
+  Each effect set its pitch by assigning `playbackRate`, which is read-only on iOS; that threw before `play()`, and the error was
+  swallowed. It now uses `setPlaybackRate()`, and a failed sound is logged in development. The web build was unaffected.
+
 ## 0.38.1
 
 - The share poster always uses the game's standard graph-paper colours (blue frame, paper board), whatever board theme is picked
