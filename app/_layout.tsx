@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RewardedAdsProvider } from '../components/ads/RewardedAds';
 import { TipsProvider } from '../components/coach/Tips';
 import { SoundSettingsProvider } from '../components/feedback/SoundSettings';
+import { BallSkinProvider } from '../components/settings/BallSkin';
 import { ProgressProvider } from '../components/progress/ProgressProvider';
 import { Intro } from '../components/splash/Intro';
 import { TourGate } from '../components/tour/TourGate';
@@ -36,6 +37,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={[styles.root, { backgroundColor: c.panel }]}>
+      <BallSkinProvider>
       {/* On wide screens (web, iPad) the game keeps the prototype's 560px column. */}
       <View style={styles.column}>
         <ProgressProvider>
@@ -62,6 +64,7 @@ export default function RootLayout() {
         </ProgressProvider>
       </View>
       {intro && <Intro onDone={() => setIntro(false)} onShown={() => SplashScreen.hideAsync().catch(() => {})} />}
+      </BallSkinProvider>
     </GestureHandlerRootView>
   );
 }

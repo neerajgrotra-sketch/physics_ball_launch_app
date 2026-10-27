@@ -7,9 +7,10 @@ import { useTips } from '../coach/Tips';
 import { useSoundSettings } from '../feedback/SoundSettings';
 import { useProgress } from '../progress/ProgressProvider';
 import { VERSION_LABEL } from '../version';
+import { BallPicker } from './BallPicker';
 
 /**
- * The ⚙ sheet: music, tips, the tutorial, "About you" (optional details kept on this device, game/profile.ts) and a Testing section
+ * The ⚙ sheet: music, tips, the tutorial, the ball's look (BallPicker), "About you" (optional details kept on this device, game/profile.ts) and a Testing section
  * (open every level, or start over from level 1). The full settings screen is in BACKLOG.md.
  */
 export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, onShowTour }: {
@@ -55,6 +56,8 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
                 <Text style={[styles.outlineText, { color: c.pencil }]}>How to play (the tour)</Text>
               </Pressable>
             )}
+
+            <BallPicker />
 
             <AboutYou />
 

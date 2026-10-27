@@ -1,4 +1,4 @@
-import { Canvas, Circle, DashPathEffect, Group, Path, Rect, Text, useCanvasRef, useFont, type SkPath } from '@shopify/react-native-skia';
+import { Canvas, Circle, DashPathEffect, Group, Path, Rect, Text, useCanvasRef, useFont, type SkPath, type Transforms3d } from '@shopify/react-native-skia';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
@@ -12,6 +12,9 @@ import {
   blockPath, padChevrons, crossPath, hazardPaths, deadPaths, gridPaths, handleArcPath, moveIconPath, launcherPath, linePath, polyPath,
 } from './paths';
 import type { Flight } from './usePlayback';
+import { BallArt } from './BallArt';
+import { spinAlong, type BallSkin } from '../../game/skins';
+import { useBallSkin } from '../settings/BallSkin';
 import { leverLine, moveArms, type End } from '../../game/pieces';
 import { aimPreview } from '../../game/aim';
 import { FUSE_SHARE, confettiPieces, fuseGeometry } from '../../game/celebration';
@@ -79,7 +82,7 @@ function Spark({ t, x, y, k, color }: { t: SharedValue<number>; x: number; y: nu
 
 /**
  * The game board, drawn in Skia in world units (WORLD, 400 × 560) and scaled uniformly to fit its container.
- * Pure rendering: everything it shows comes from props. Matches draw() in reference/prototype.html.
+ * Pure rendering: everything it shows comes from props (and the player's ball skin, from Settings). Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
   const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, flight = null, charge, dropZone = 'off', celebrate = null, kick, warp, done = false, onTouch } = props;
@@ -176,6 +179,9 @@ export function Board(props: BoardProps) {
   // At rest the ball sits on the launcher, or where it settled after a win. In flight it moves on the UI thread.
   let ball: Vec = [L.x, L.y];
   if (done && last) ball = last.path[last.path.length - 1];
+  // The player's ball skin; after a win the ball keeps the turn it rolled to, so a design doesn't snap back upright.
+  const { skin } = useBallSkin();
+  const restTurn = useMemo(() => (done && last ? spinAlong(last.path, R).at(-1) ?? 0 : 0), [done, last]);
 
   const sel = selected != null ? pieces[selected] : null;
   const selColor = selected != null && illegal[selected] ? c.red : c.pencil;
@@ -366,7 +372,9 @@ export function Board(props: BoardProps) {
                 )}
 
                 {/* ball */}
-                {flight ? <FlyingBall x={flight.x} y={flight.y} c={c} charge={charge} /> : <Ball x={ball[0]} y={ball[1]} c={c} />}
+                {flight
+                  ? <FlyingBall flight={flight} skin={skin} c={c} charge={charge} />
+                  : <Ball x={ball[0]} y={ball[1]} turn={restTurn} skin={skin} c={c} />}
 
                 {celebrate && <Celebration cele={celebrate} glass={g} c={c} />}
 
@@ -386,14 +394,9 @@ export function Board(props: BoardProps) {
   );
 }
 
-function Ball({ x, y, c }: { x: number; y: number; c: Palette }) {
-  return (
-    <Group>
-      <Circle cx={x} cy={y} r={R} color={c.steel} />
-      <Circle cx={x} cy={y} r={R} color={c.ink} style="stroke" strokeWidth={1.2} />
-      <Circle cx={x - 2.6} cy={y - 2.6} r={2.4} color="rgba(255,255,255,0.75)" />
-    </Group>
-  );
+/** The ball at rest, in the player's skin (game/skins.ts), turned as far as it rolled. */
+function Ball({ x, y, turn, skin, c }: { x: number; y: number; turn: number; skin: BallSkin; c: Palette }) {
+  return <BallArt skin={skin} c={c} at={[{ translateX: x }, { translateY: y }]} spun={[{ translateX: x }, { translateY: y }, { rotate: turn }]} />;
 }
 
 /** The ball during playback: its position comes from shared values, so moving it never re-renders React. */
@@ -500,10 +503,32 @@ function KickSpark({ t, x, y, k }: { t: SharedValue<number>; x: SharedValue<numb
   return <Circle cx={cx} cy={cy} r={r} color={k % 2 ? '#ffb020' : '#ffe9a8'} opacity={o} />;
 }
 
-function FlyingBall({ x, y, c, charge }: { x: SharedValue<number>; y: SharedValue<number>; c: Palette; charge?: SharedValue<number> }) {
-  const hx = useDerivedValue(() => x.value - 2.6);
-  const hy = useDerivedValue(() => y.value - 2.6);
-  // Energised: a warm glow that breathes while the charge lasts, and a hot ring round the steel.
+/**
+ * The ball in flight, in the player's skin, rolling with its travel (game/skins.ts spinAlong): playback says how far along the path's
+ * length it is (`end`), which is looked up in the path's own lengths to find the turn at that point.
+ */
+function FlyingBall({ flight, skin, c, charge }: { flight: Flight; skin: BallSkin; c: Palette; charge?: SharedValue<number> }) {
+  const { x, y, end } = flight;
+  const { frac, turn } = useMemo(() => {
+    const p = flight.path;
+    const lengths = [0];
+    for (let i = 1; i < p.length; i++) {
+      lengths.push(lengths[i - 1] + (flight.jumps.includes(i) ? 0 : Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1])));
+    }
+    const total = lengths[lengths.length - 1] || 1;
+    return { frac: lengths.map((l) => l / total), turn: spinAlong(p, R) };
+  }, [flight.path, flight.jumps]);
+  const at = useDerivedValue<Transforms3d>(() => [{ translateX: x.value }, { translateY: y.value }]);
+  const spun = useDerivedValue<Transforms3d>(() => {
+    // The last path point whose share of the length is at or before `end`.
+    let lo = 0, hi = frac.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (frac[mid] <= end.value) lo = mid; else hi = mid - 1;
+    }
+    return [{ translateX: x.value }, { translateY: y.value }, { rotate: turn[lo] ?? 0 }];
+  });
+  // Energised: a warm glow that breathes while the charge lasts, and a hot ring round the ball.
   const glowR = useDerivedValue(() => R + 5 + 7 * (charge?.value ?? 0) + 1.5 * Math.sin(Date.now() / 60));
   const glowO = useDerivedValue(() => 0.5 * (charge?.value ?? 0));
   const haloR = useDerivedValue(() => R + 14 + 8 * (charge?.value ?? 0));
@@ -513,10 +538,8 @@ function FlyingBall({ x, y, c, charge }: { x: SharedValue<number>; y: SharedValu
     <Group>
       <Circle cx={x} cy={y} r={haloR} color="#ffb020" opacity={haloO} />
       <Circle cx={x} cy={y} r={glowR} color="#ffcf4a" opacity={glowO} />
-      <Circle cx={x} cy={y} r={R} color={c.steel} />
-      <Circle cx={x} cy={y} r={R} color={c.ink} style="stroke" strokeWidth={1.2} />
+      <BallArt skin={skin} c={c} at={at} spun={spun} />
       <Circle cx={x} cy={y} r={R + 1} color="#ff9a00" style="stroke" strokeWidth={2} opacity={ringO} />
-      <Circle cx={hx} cy={hy} r={2.4} color="rgba(255,255,255,0.75)" />
     </Group>
   );
 }

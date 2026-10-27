@@ -2,7 +2,9 @@ import { Fragment, useMemo } from 'react';
 import Svg, { Circle, Line, Polygon, Polyline, Rect } from 'react-native-svg';
 import { BALL_RADIUS, PORTAL_RADIUS, blockCorners, hazardReach, glassBox, LAUNCHER, PLATE_OVERHANG, WORLD, buildWorld, pieceEnds, simulate, type Level } from '../../physics';
 import { thin, type Shot } from '../../game/shots';
+import { skinFill } from '../../game/skins';
 import { useColors } from '../../theme/colors';
+import { useBallSkin } from '../settings/BallSkin';
 
 /**
  * A small drawing of a level for the level list, drawn like the board: floor, launcher and glass, plus
@@ -13,6 +15,7 @@ import { useColors } from '../../theme/colors';
  */
 export function ShotThumbnail({ level, shot, width, height }: { level: Level; shot?: Shot; width: number; height: number }) {
   const c = useColors();
+  const { skin } = useBallSkin();
   const path = useMemo(() => {
     if (!shot) return null;
     const res = simulate(buildWorld(level, shot.pieces), shot.angle, shot.power);
@@ -72,7 +75,7 @@ export function ShotThumbnail({ level, shot, width, height }: { level: Level; sh
         x1={LAUNCHER.x} y1={LAUNCHER.y} x2={LAUNCHER.x + Math.cos(ang) * 26} y2={LAUNCHER.y - Math.sin(ang) * 26}
         stroke={c.ink} strokeWidth={6} strokeLinecap="round"
       />
-      <Circle cx={ball[0]} cy={ball[1]} r={BALL_RADIUS + 1} fill={c.steel} stroke={c.ink} strokeWidth={2} />
+      <Circle cx={ball[0]} cy={ball[1]} r={BALL_RADIUS + 1} fill={skinFill(skin, c.steel)} stroke={c.ink} strokeWidth={2} />
     </Svg>
   );
 }

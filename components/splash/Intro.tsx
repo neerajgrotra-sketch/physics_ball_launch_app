@@ -3,7 +3,9 @@ import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'r
 import Animated, {
   Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue,
 } from 'react-native-reanimated';
+import { skinFill } from '../../game/skins';
 import { FONTS, useColors } from '../../theme/colors';
+import { useBallSkin } from '../settings/BallSkin';
 import { useFeedback } from '../feedback/useFeedback';
 import { VERSION_LABEL } from '../version';
 import { BALL, BAR, CONTACT, FLOOR, GLASS, GO_BUTTON, INTRO_MS, LAUNCHER, TITLE, TRAIL, backOut, ballAt, clamp01, quadOut } from './introPath';
@@ -19,6 +21,7 @@ import { BALL, BAR, CONTACT, FLOOR, GLASS, GO_BUTTON, INTRO_MS, LAUNCHER, TITLE,
  */
 export function Intro({ onDone, onShown }: { onDone: () => void; onShown: () => void }) {
   const c = useColors();
+  const { skin } = useBallSkin();
   const { width, height } = useWindowDimensions();
   const reduced = useReducedMotion();
   const t = useSharedValue(0);
@@ -135,7 +138,7 @@ export function Intro({ onDone, onShown }: { onDone: () => void; onShown: () => 
             </Animated.View>
             <Animated.View style={[styles.abs, ball, {
               left: -BALL.r * S, top: -BALL.r * S, width: BALL.r * 2 * S, height: BALL.r * 2 * S, borderRadius: BALL.r * S,
-              backgroundColor: c.steel, borderWidth: 2.5, borderColor: c.ink,
+              backgroundColor: skinFill(skin, c.steel), borderWidth: 2.5, borderColor: c.ink,
             }]} />
             {/* A faint imprint of the ball where it struck the bar, so the finished picture shows the contact. */}
             <Imprint t={t} x={CONTACT[0] * S} y={CONTACT[1] * S} r={BALL.r * S} color={c.ink} />

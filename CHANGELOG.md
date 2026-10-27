@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.28.0
+
+- Ball skins: Settings has a "Your ball" picker with 17 balls. Colours and finishes: Steel (the default), Chrome, Gold, Copper, Ruby,
+  Mint, Onyx, Glass, Neon (it glows) and Rainbow. Designs: Beach ball, 8-ball, Smiley, Planet, Basketball, Star and Cube. The choice is
+  saved on the device and shows on the board, in the tour, on the level cards and in the intro. Designs roll with the ball's travel as
+  it flies (and stay at the turn they ended on). Purely a look: the physics ball is unchanged, so every ball bounces exactly the same
+  and no level or answer changes (`game/skins.ts`, `components/board/BallArt.tsx`, `components/settings/BallPicker.tsx`).
+
 ## 0.27.3
 
 - The "answer is already set up" message no longer pushes the controls up: it floats over the middle of the board in a small card,

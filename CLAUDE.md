@@ -177,7 +177,8 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   on the left, level name in the middle, ‹ › on the right. No back arrow.
 - Level locks are on (`LOCK_LEVELS`): a level opens when the one before is won, and level 2 once the tutorial is finished or skipped
   (`useUnlocked`). Settings (⚙ in a level, "Settings" on the levels screen) has a Testing section: "Unlock all levels" and "Reset progress".
-  It also has an optional "About you" (name, age, gender, country; `game/profile.ts`), stored on the device only. Planned work is in `BACKLOG.md`.
+  It has a "Your ball" picker: ball skins (`game/skins.ts`, drawn by `components/board/BallArt.tsx`), a look only, never the physics ball's
+  size or bounce; designs roll as they fly (`spinAlong`). It also has an optional "About you" (name, age, gender, country; `game/profile.ts`), stored on the device only. Planned work is in `BACKLOG.md`.
 
 ## Visual identity
 
