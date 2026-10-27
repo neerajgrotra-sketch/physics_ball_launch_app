@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.27.2
+
+- Once the board already matches the answer in every step (all bars, the angle and the power, e.g. after the hints or the full solution),
+  Solve no longer opens the card or offers another ad: there's nothing left to give. The button shakes and flashes red, and a line over
+  the buttons says "The answer is already set up: every bar, the angle and the power. Just launch!" (`solvedNudge` in `game/help.ts`).
+
 ## 0.27.1
 
 - The Solve card is back to one Hint button, and the hint now carries on past the bars: each tap (after its ad) gives the answer's next

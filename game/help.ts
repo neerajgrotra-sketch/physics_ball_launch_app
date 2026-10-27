@@ -29,3 +29,8 @@ export function aimHintNotice(h: NextHint): string | null {
   if (h.kind === 'power') return `Power set to ${h.value.toFixed(1)}, as in the answer. Launch!`;
   return null;
 }
+
+/** What Solve says, instead of opening the card, once the board already matches the answer in every step (`won`: after the win). */
+export function solvedNudge(won: boolean): string {
+  return won ? 'That was the answer. Tap Replay ▶ to watch it again.' : 'The answer is already set up: every bar, the angle and the power. Just launch!';
+}

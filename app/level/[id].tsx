@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
 import { usePlayback } from '../../components/board/usePlayback';
 import { HelpCard } from '../../components/board/HelpCard';
-import { aimHintNotice, hintLabel, nextHint } from '../../game/help';
+import { aimHintNotice, solvedNudge, hintLabel, nextHint } from '../../game/help';
 import { NoticeCard } from '../../components/board/NoticeCard';
 import { useRewardedAd } from '../../components/ads/RewardedAds';
 import { SettingsSheet } from '../../components/settings/SettingsSheet';
@@ -36,7 +36,7 @@ import { skipNotice, winText } from '../../game/progress';
 import { bestOf, goalText, starsFor } from '../../game/score';
 import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
-import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { WORLD, buildWorld, glassBox, simulate, type Hit, type Vec } from '../../physics';
 import { FONTS, useColors } from '../../theme/colors';
 
@@ -130,6 +130,15 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   const [solved, setSolved] = useState(false);
   /** A hint or Solve was used this round: wins earn no stars or score until Start over. */
   const [helped, setHelped] = useState(false);
+  /** Bumped when Solve is tapped with the answer already on the board: the button shakes and solvedNudge's line shows. */
+  const [solvedTaps, setSolvedTaps] = useState(0);
+  const [nudgeShown, setNudgeShown] = useState(false);
+  useEffect(() => {
+    if (!solvedTaps) return;
+    setNudgeShown(true);
+    const t = setTimeout(() => setNudgeShown(false), 2600);
+    return () => clearTimeout(t);
+  }, [solvedTaps]);
   /** The Solve button's help card (hint or full solution) is open. */
   const [help, setHelp] = useState(false);
   /** Scored bounces of the shot in flight (ticking up live) or the last shot; null before the first. */
@@ -455,6 +464,9 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     setSelected(null);
     // The tutorial level is practice: Solve just solves it, with no ad and no hint-or-solution card.
     if (practice) { solve(); return; }
+    // Every bar, the angle and the power already match the answer: there's nothing left to give, so no card and no ad. The button
+    // shakes red and a line says so instead.
+    if (!nextHint(level, barHint(), angle, power)) { setSolvedTaps((n) => n + 1); return; }
     setHelp(true);
   };
   // The answer's next step, a hint at a time (game/help.ts): each bar in turn, then the launch angle, then the launch power.
@@ -762,9 +774,12 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
             <Tray slots={slots} selected={selected} onTap={onChip} onAim={() => { if (!flying) setSelected(null); }} aiming={selectedBar == null} disabled={flying} onChipLayout={(k, l) => { chips.current[k] = l; }} />
           </View>
         </View>
+        {nudgeShown && (
+          <Text accessibilityLiveRegion="polite" style={[styles.nudge, { color: c.red }]} pointerEvents="none">{solvedNudge(done)}</Text>
+        )}
         <View style={styles.actions}>
           <View style={flying && styles.busy} pointerEvents={flying ? 'none' : 'auto'}>
-            <Ghost label="Solve" onPress={openHelp} big />
+            <Ghost label="Solve" onPress={openHelp} big shake={solvedTaps} />
           </View>
           <Ghost label="Clear" onPress={clearTrails} big />
           <UndoButton enabled={canUndo && !flying && !done} onPress={undoMove} />
@@ -845,16 +860,30 @@ function UndoButton({ enabled, onPress }: { enabled: boolean; onPress: () => voi
   );
 }
 
-function Ghost({ label, onPress, big }: { label: string; onPress: () => void; big?: boolean }) {
+/** A quiet outlined button. Each change of `shake` (after the first) shakes it side to side and lights it red for a moment. */
+function Ghost({ label, onPress, big, shake = 0 }: { label: string; onPress: () => void; big?: boolean; shake?: number }) {
   const c = useColors();
+  const x = useSharedValue(0);
+  const [red, setRed] = useState(false);
+  useEffect(() => {
+    if (!shake) return;
+    const step = (to: number) => withTiming(to, { duration: 55 });
+    x.value = withSequence(step(-9), step(9), step(-7), step(7), step(-4), step(4), step(0));
+    setRed(true);
+    const t = setTimeout(() => setRed(false), 900);
+    return () => clearTimeout(t);
+  }, [shake, x]);
+  const moved = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      style={[styles.ghost, big && styles.ghostBig, { borderColor: c.line }]}
-    >
-      <Text style={[styles.ghostText, big && styles.ghostTextBig, { color: c.muted }]}>{label}</Text>
-    </Pressable>
+    <Animated.View style={moved}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        style={[styles.ghost, big && styles.ghostBig, { borderColor: red ? c.red : c.line }]}
+      >
+        <Text style={[styles.ghostText, big && styles.ghostTextBig, { color: red ? c.red : c.muted }]}>{label}</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -885,6 +914,7 @@ const styles = StyleSheet.create({
   bottom: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tray: { flex: 1 },
   actions: { flexDirection: 'row', gap: 8 },
+  nudge: { textAlign: 'center', fontSize: 14, lineHeight: 18, fontFamily: FONTS.bodySemi, marginBottom: 6 },
   busy: { opacity: 0.5 },
   undo: { width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   ghost: { height: 34, paddingHorizontal: 12, borderRadius: 17, borderWidth: 1.5, justifyContent: 'center' },

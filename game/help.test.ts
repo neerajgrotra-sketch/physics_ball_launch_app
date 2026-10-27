@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LEVELS } from '../levels';
-import { aimHintNotice, hintLabel, nextHint } from './help';
+import { aimHintNotice, hintLabel, nextHint, solvedNudge } from './help';
 
 describe('the hint sequence', () => {
   const level = LEVELS[2];
@@ -25,5 +25,10 @@ describe('the hint sequence', () => {
     expect(hintLabel({ kind: 'power', value: 55.1 })).toBe('Hint: launch power');
     expect(aimHintNotice({ kind: 'angle', value: 37.6 })).toBe('Angle set to 37.6°, as in the answer.');
     expect(aimHintNotice({ kind: 'bar', bar: 1 })).toBeNull();
+  });
+
+  it('says the answer is already there instead of offering more help', () => {
+    expect(solvedNudge(false)).toMatch(/already set up.*launch/i);
+    expect(solvedNudge(true)).toMatch(/Replay/);
   });
 });

@@ -121,7 +121,8 @@ reference/    prototype.html, the behaviour and look to match
   next step in order (`game/help.ts` `nextHint`): each bar in turn (placed where the answer has it; clashing bars go back to the
   tray), then the launch angle, then the launch power, skipping any step that already matches. Each sits behind a rewarded ad
   (`components/ads/RewardedAds.tsx`; a 5-second placeholder until AdMob is wired into a store build).
-  Using either marks the round as helped until Start over.
+  Using either marks the round as helped until Start over. Once the board already matches the answer in every step, Solve opens no card and
+  no ad: the button shakes red and a line says the answer is already set up (`solvedNudge`).
 - **Solve:** places the stored solution's pieces (unused pieces go back to the tray), sets angle and power,
   and launches. The win card then reads "Here's one way in", with "Try it yourself" (resets the level) and
   "Next level". The card sits at the top of the board so the solution path stays visible.
