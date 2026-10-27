@@ -74,6 +74,11 @@ the ceiling of this layout; the sensible next step for variety is a *different* 
 - **Level locks.** Built but switched off while levels are being tested (`LOCK_LEVELS` in
   `game/progress.ts`): winning a level opens the next, locked cards show a lock. Turn on before release.
 - **Level list paging** (1–100, 101–200…) once there are many levels.
+- **Reset the level (proposed, not built).** One tap back to the starting point mid-puzzle: every bar back in the tray, the aim back
+  to 52° / power 45, trails cleared, any selected bar or card closed. Keeps the tries count and the "used help" mark (so it can't hide
+  failed tries or dodge the hint rules) and doesn't touch hints. Undoable as one Undo step, with a short "Board reset · Undo" message,
+  so no confirmation pop-up. Proposed place: the Clear button becomes Reset (trails already fade and Reset clears them), keeping the
+  bottom row at Solve · Reset · Undo · Launch. About an hour, with a test and a small-phone check.
 
 ## Scoring, rewards and money
 
