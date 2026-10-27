@@ -1,17 +1,8 @@
+import { createContext, useContext } from 'react';
 import { useColorScheme } from 'react-native';
+import { AUTO_THEME, resolveTheme, type Palette, type Theme } from './palettes';
 
-// Colour tokens from reference/prototype.html: graph paper in light mode, blueprint in dark mode.
-export const LIGHT = {
-  paper: '#e9eee3', grid: '#cfdacb', ink: '#2c3133', pencil: '#2d5c9e', red: '#b5352a',
-  muted: '#78837d', steel: '#a7aeb3', panel: '#dfe5d8', line: '#c3ccbe',
-};
-
-export const DARK: Palette = {
-  paper: '#143562', grid: '#24497a', ink: '#e6edf6', pencil: '#9ccbff', red: '#ff8574',
-  muted: '#8fa6c4', steel: '#c9d3de', panel: '#0f2b52', line: '#2a4f80',
-};
-
-export type Palette = typeof LIGHT;
+export { AUTO_THEME, DARK, LIGHT, THEMES, resolveTheme, type Palette, type Theme } from './palettes';
 
 /** Font family names, as registered by useFonts in app/_layout.tsx. */
 export const FONTS = {
@@ -22,7 +13,15 @@ export const FONTS = {
   condensedBold: 'BarlowCondensed_700Bold',
 } as const;
 
-/** Follows the system appearance setting. */
+/** The player's theme choice (components/settings/Theme.tsx provides it; 'auto' when nothing is chosen). */
+export const ThemeChoice = createContext<string>(AUTO_THEME);
+
+/** The current theme: the player's choice, or the phone's light or dark setting for Auto. */
+export function useTheme(): Theme {
+  return resolveTheme(useContext(ThemeChoice), useColorScheme() === 'dark');
+}
+
+/** The current palette (see useTheme). */
 export function useColors(): Palette {
-  return useColorScheme() === 'dark' ? DARK : LIGHT;
+  return useTheme().palette;
 }

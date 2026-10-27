@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.30.0
+
+- Board themes: Settings has a "Board theme" picker with Auto (the default: graph paper or blueprint, following the phone's light or
+  dark setting) and six themes: Graph paper, Blueprint, Chalkboard, Notebook, Night and Sand. Each recolours the whole game (board,
+  buttons, cards, tour) and is saved on the device. A test checks every theme keeps the walls, bars, glass, text and springs readable
+  (`theme/palettes.ts`, `components/settings/Theme.tsx`, `ThemePicker.tsx`).
+
 ## 0.29.1
 
 - The Solve button shows the hints left next to its name ("Solve 💡12"), so the balance is always in sight. Not on the tutorial,

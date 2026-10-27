@@ -18,14 +18,25 @@ import { HintWalletProvider } from '../components/hints/HintWallet';
 import { ProgressProvider } from '../components/progress/ProgressProvider';
 import { Intro } from '../components/splash/Intro';
 import { TourGate } from '../components/tour/TourGate';
-import { FONTS, useColors } from '../theme/colors';
+import { FONTS, useTheme } from '../theme/colors';
+import { ThemeProvider } from '../components/settings/Theme';
 
 // The launch screen (app.json, expo-splash-screen) stays up until the intro, which starts on the same
 // picture, is on screen to take over.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
+/** The player's board theme (Settings) wraps everything, so every screen's useColors() sees it. */
 export default function RootLayout() {
-  const c = useColors();
+  return (
+    <ThemeProvider>
+      <AppRoot />
+    </ThemeProvider>
+  );
+}
+
+function AppRoot() {
+  const theme = useTheme();
+  const c = theme.palette;
   const [intro, setIntro] = useState(true);
   const [fontsLoaded, fontError] = useFonts({
     Barlow_400Regular, Barlow_500Medium, Barlow_600SemiBold,
@@ -46,7 +57,7 @@ export default function RootLayout() {
             <RewardedAdsProvider>
               <HintWalletProvider ready={!intro}>
               <TipsProvider>
-            <StatusBar style="auto" />
+            <StatusBar style={theme.dark ? 'light' : 'dark'} />
             <Stack
               screenOptions={{
                 headerStyle: { backgroundColor: c.panel },

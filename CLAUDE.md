@@ -187,7 +187,9 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
 
 The look is engineering graph paper in light mode and a blueprint in dark mode, with
 Barlow and Barlow Condensed type. Use the colour tokens from `reference/prototype.html` (`--paper`,
-`--grid`, `--ink`, `--pencil`, `--red`, `--muted`, `--steel`) and follow the system appearance setting.
+`--grid`, `--ink`, `--pencil`, `--red`, `--muted`, `--steel`) and follow the system appearance setting. Players can pick another board
+theme in Settings (`theme/palettes.ts` THEMES: Chalkboard, Notebook, Night, Sand; Auto is the default). Every colour comes from
+`useColors()`, never a fixed hex, so a theme recolours everything; `game/themes.test.ts` checks each theme's contrast.
 
 ## Launch and intro
 
