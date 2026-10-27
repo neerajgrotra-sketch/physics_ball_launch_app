@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.36.0
+
+- Undo now steps back aim changes too, not only the bars: a swipe, a drag of the gun or its dotted line, a slider or the −/+
+  buttons that changed the angle or power is one undo step (a drag or a held slider counts as one), in order with the bar changes.
+
 ## 0.35.1
 
 - Swiping on empty board now moves the aim along with the finger from where it already is, instead of jumping to point at the

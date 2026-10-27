@@ -114,20 +114,6 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   const [guided, setGuided] = useState(false);
 
   const [slots, setSlots] = useState<Slot[]>(() => (shot ? shotSlots(level, shot) : emptySlots(level)));
-  // Undo: every change to the bars is remembered (a drag or held slider counts as one step), see game/history.
-  const history = useRef<History<Slot[]>>(emptyHistory());
-  const lastSlots = useRef(slots);
-  const undoing = useRef(false);
-  const [canUndo, setCanUndo] = useState(false);
-  useEffect(() => {
-    if (slots === lastSlots.current) return;
-    if (!undoing.current) {
-      history.current = record(history.current, lastSlots.current, Date.now());
-      setCanUndo(history.current.past.length > 0);
-    }
-    undoing.current = false;
-    lastSlots.current = slots;
-  }, [slots]);
   const [selected, setSelected] = useState<number | null>(null);
   /** Which end of the selected bar has the rotate lever; picked when a bar is selected, moved by tapping the other end. */
   const [lever, setLever] = useState<End>(2);
@@ -138,6 +124,21 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   const [trails, setTrails] = useState<Trail[]>([]);
   const [angle, setAngle] = useState(shot?.angle ?? 52);
   const [power, setPower] = useState(shot?.power ?? 45);
+  // Undo: every change to the bars or the aim is remembered (a drag or held slider counts as one step), see game/history.
+  const history = useRef<History<{ slots: Slot[]; angle: number; power: number }>>(emptyHistory());
+  const lastSetup = useRef({ slots, angle, power });
+  const undoing = useRef(false);
+  const [canUndo, setCanUndo] = useState(false);
+  useEffect(() => {
+    const was = lastSetup.current;
+    if (slots === was.slots && angle === was.angle && power === was.power) return;
+    if (!undoing.current) {
+      history.current = record(history.current, was, Date.now());
+      setCanUndo(history.current.past.length > 0);
+    }
+    undoing.current = false;
+    lastSetup.current = { slots, angle, power };
+  }, [slots, angle, power]);
   const [tries, setTries] = useState(0);
   const [done, setDone] = useState(false);
   /** The Solve button took the winning shot, which changes the win card's wording. */
@@ -453,7 +454,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
     playShot(res, () => { if (res.success) feedback.landed(); }, false);
   };
 
-  // Put the bars back the way they were before the last change. During a shot, it first skips to the shot's end.
+  // Put the bars and the aim back the way they were before the last change. During a shot, it first skips to the shot's end.
   const undoMove = () => {
     if (flying) skip();
     const step = undoHistory(history.current);
@@ -462,8 +463,10 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
     setCanUndo(step.history.past.length > 0);
     undoing.current = true;
     keepPlaying();
-    setSlots(step.state);
-    if (selected != null && !step.state[selected]?.onBoard) setSelected(null);
+    setSlots(step.state.slots);
+    setAngle(step.state.angle);
+    setPower(step.state.power);
+    if (selected != null && !step.state.slots[selected]?.onBoard) setSelected(null);
     setNotice(null);
   };
 
@@ -903,7 +906,7 @@ function UndoButton({ enabled, onPress }: { enabled: boolean; onPress: () => voi
       onPress={onPress}
       disabled={!enabled}
       accessibilityRole="button"
-      accessibilityLabel="Undo the last bar move"
+      accessibilityLabel="Undo the last change"
       accessibilityState={{ disabled: !enabled }}
       style={[styles.undo, { borderColor: c.line, opacity: enabled ? 1 : 0.35 }]}
     >

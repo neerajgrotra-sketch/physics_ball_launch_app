@@ -1,5 +1,5 @@
-// Undo for the player's bar edits. Every change to the bars (place, move, turn, remove, a snap back) is one step; a drag or a
-// slider that keeps changing things is grouped into a single step by time. Pure: no UI imports, so Vitest covers it.
+// Undo for the player's edits. Every change to the bars (place, move, turn, remove, a snap back) or the aim (angle, power) is one
+// step; a drag or a slider that keeps changing things is grouped into a single step by time. Pure: no UI imports, so Vitest covers it.
 
 export const HISTORY_LIMIT = 30;
 /** Changes closer together than this belong to one gesture (a drag, a slider being held) and make one undo step. */

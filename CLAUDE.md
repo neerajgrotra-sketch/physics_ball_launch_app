@@ -92,7 +92,7 @@ reference/    prototype.html, the behaviour and look to match
   controls: a 0–179° slider, −/+ 1° nudges (hold to repeat) and a small Remove button (a bar can also be dragged down past
   the floor to remove it). A cannon chip beside the bar chips switches back to the aim sliders (so does touching the cannon or its
   aim line); tapping the selected chip deselects it. Launching keeps the selected bar selected. An undo button before
-  Launch steps the bars back (game/history.ts: each change is a step, a drag or held slider is one, 30 deep; not during a shot). Bars must keep a ball's width (18) from the glass, walls, launcher and each other
+  Launch steps the bars and the aim back (game/history.ts: each change is a step, a drag or held slider is one, 30 deep; not during a shot). Bars must keep a ball's width (18) from the glass, walls, launcher and each other
   (`game/placement.ts`, the same rule the level generator uses): a bar dragged somewhere it isn't allowed
   turns red and snaps back to its last allowed spot on release; rotation skips clipping angles; a new bar
   lands on the nearest allowed spot. Pieces can't be edited mid-flight. (The prototype removed a bar by re-tapping its chip.)
