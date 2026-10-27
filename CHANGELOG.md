@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.38.3
+
+- Fix: on iPhone a sound could stay silent and then play twice on the next shot (a launch with no sound, then a double one).
+  Each effect rewound its player just before playing, and the rewind was still pending when play() ran. Now each player rewinds
+  as soon as it finishes, so a sound always starts cleanly from the top, and each sound has a few players (three for bounces,
+  walls, glass and stars) so fast repeats don't cut each other off. One set is shared by the whole app.
+
 ## 0.38.2
 
 - Fix: no sound effects on iPhone (Expo Go and the app): the launch, bounces, glass, win and the intro's shot were all silent.
