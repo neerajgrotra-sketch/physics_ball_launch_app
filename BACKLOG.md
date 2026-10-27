@@ -106,6 +106,7 @@ the ceiling of this layout; the sensible next step for variety is a *different* 
   deterministic physics and computes the score (Supabase edge function running `physics/`).
 - **Daily Shot:** done in 0.31.0 (daily puzzle, streak, hint rewards, share). Still to do: a ranking (server re-runs the shot),
   more puzzles before the 28-day pool repeats (from 2026-11-23), and a reminder notification.
+- **Share link:** `SHARE_LINK` in `game/share.ts` is a placeholder; set it to the App Store page (or a smart link) at launch.
 - Game Center and Google Play Games leaderboards.
 
 ## Content

@@ -7,7 +7,10 @@ import { FONTS, useColors } from '../../theme/colors';
  * The prototype's #win card. It sits at the top of the board so the winning path stays visible.
  * ✕ (or any edit to the board) closes it and goes back to playing (onClose).
  */
-export function WinCard({ text, onAgain, onGo, onClose, onStar, place = 'top' }: { text: WinText; onAgain: () => void; onGo: () => void; onClose: () => void; onStar?: (k: number) => void; place?: 'top' | 'bottom' }) {
+/** `onShare` adds a "Challenge a friend" button under the others (a level's win; the daily's main button already shares). */
+export function WinCard({ text, onAgain, onGo, onClose, onStar, onShare, place = 'top' }: {
+  text: WinText; onAgain: () => void; onGo: () => void; onClose: () => void; onStar?: (k: number) => void; onShare?: () => void; place?: 'top' | 'bottom';
+}) {
   const c = useColors();
   // It fades and slides in, from the side of the board it sits on.
   const enter = useRef(new Animated.Value(0)).current;
@@ -59,6 +62,11 @@ export function WinCard({ text, onAgain, onGo, onClose, onStar, place = 'top' }:
           <Text style={styles.goText}>{text.go}</Text>
         </Pressable>
       </View>
+      {onShare && (
+        <Pressable onPress={onShare} accessibilityRole="button" accessibilityLabel="Share your result" hitSlop={6} style={[styles.share, { borderColor: c.pencil }]}>
+          <Text style={[styles.shareText, { color: c.pencil }]}>📣 Challenge a friend</Text>
+        </Pressable>
+      )}
       <Text style={[styles.more, { color: c.muted }]}>Move a bar or aim to keep playing</Text>
     </Animated.View>
   );
@@ -67,6 +75,8 @@ export function WinCard({ text, onAgain, onGo, onClose, onStar, place = 'top' }:
 const styles = StyleSheet.create({
   close: { position: 'absolute', top: 6, right: 10, padding: 4, zIndex: 1 },
   closeText: { fontSize: 18, fontFamily: FONTS.bodySemi },
+  share: { marginTop: 8, height: 34, paddingHorizontal: 16, borderRadius: 17, borderWidth: 1.5, justifyContent: 'center' },
+  shareText: { fontSize: 16, fontFamily: FONTS.condensedBold },
   more: { marginTop: 8, fontSize: 12, fontFamily: FONTS.body },
   cardTop: { top: 10 },
   cardBottom: { bottom: 26 },

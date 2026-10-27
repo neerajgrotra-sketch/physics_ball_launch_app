@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DAILY_EPOCH, DAILY_HELPED_WIN, DAILY_THREE_STARS, DAILY_TIERS, DAILY_WIN, dailyFor, dayBefore, daysBetween, emptyDaily, parseDaily,
-  shareText, streak, untilTomorrow, winDaily, type DailyState,
+  streak, untilTomorrow, winDaily, type DailyState,
 } from './daily';
 
 const win = { bounces: 3, stars: 3, tries: 2, helped: false };
@@ -64,8 +64,4 @@ describe('daily puzzle: words', () => {
     expect(untilTomorrow(new Date(2026, 9, 27, 23, 50))).toBe('10m');
   });
 
-  it('shares the result without spoilers', () => {
-    expect(shareText(2, win, 3, 5)).toBe('Bank Shot Daily #2\n★★★ · 3 bounces (par 3) · 2 tries\n🔥 5-day streak');
-    expect(shareText(2, { ...win, tries: 1, helped: true }, 3, 1)).toBe('Bank Shot Daily #2\nsolved with help · 3 bounces (par 3) · 1 try');
-  });
 });

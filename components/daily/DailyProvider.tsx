@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Platform, Share } from 'react-native';
 import { CELEBRATION_MS } from '../../game/celebration';
-import { DAILY_KEY, dailyFor, emptyDaily, parseDaily, shareText, streak, winDaily, type DailyResult, type DailyState } from '../../game/daily';
+import { DAILY_KEY, dailyFor, emptyDaily, parseDaily, streak, winDaily, type DailyResult, type DailyState } from '../../game/daily';
 import { dayOf } from '../../game/wallet';
 import { DAILIES, type DailyLevel } from '../../levels/daily';
 import { useHintWallet } from '../hints/HintWallet';
+import { shareMessage } from '../../game/share';
+import { shareText } from '../share';
 
 interface Daily {
   state: DailyState;
@@ -56,13 +57,8 @@ export function DailyProvider({ children }: { children: ReactNode }) {
       const result = live.current.days[day];
       if (!result) return;
       const { number, index } = dailyFor(day, DAILIES.length);
-      const text = shareText(number, result, DAILIES[index].par ?? 0, streak(live.current, day));
-      const nav = Platform.OS === 'web' && typeof navigator !== 'undefined' ? navigator : undefined;
-      if (nav && !nav.share) {
-        nav.clipboard?.writeText(text).then(() => wallet.announce('Result copied: paste it anywhere'), () => {});
-        return;
-      }
-      Share.share({ message: text }).catch(() => {});
+      const level = DAILIES[index];
+      shareText(shareMessage({ kind: 'daily', number, name: level.name, streak: streak(live.current, day) }, result, level.par ?? 0), wallet.announce);
     },
     reset: () => save(emptyDaily()),
   };

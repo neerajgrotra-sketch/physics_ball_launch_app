@@ -106,11 +106,3 @@ export function untilTomorrow(now: Date): string {
   const h = Math.floor(mins / 60), m = mins % 60;
   return h ? `${h}h ${m}m` : `${m}m`;
 }
-
-/** The text to share after a win, Wordle-style: no spoilers, just the result. */
-export function shareText(number: number, result: DailyResult, par: number, run: number): string {
-  const stars = result.helped ? 'solved with help' : '★'.repeat(result.stars) + '☆'.repeat(3 - result.stars);
-  const tries = `${result.tries} ${result.tries === 1 ? 'try' : 'tries'}`;
-  const streakLine = run > 1 ? `\n🔥 ${run}-day streak` : '';
-  return `Bank Shot Daily #${number}\n${stars} · ${result.bounces} bounces (par ${par}) · ${tries}${streakLine}`;
-}

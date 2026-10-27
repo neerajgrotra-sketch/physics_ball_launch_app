@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.32.0
+
+- Share every win: a level's win card has "📣 Challenge a friend", and the daily's Share uses the same message. It opens with a hook
+  that fits the shot (first-try brag, birdie, "Don't ask how", owning up to a hint), names the level, gives the stars, bounces, par and
+  tries (never where the bars went), dares a friend and ends with the game's link (a placeholder until the store link is ready:
+  `SHARE_LINK` in `game/share.ts`). On a browser without a share sheet it's copied instead.
+
 ## 0.31.0
 
 - Daily puzzle: a card at the top of the levels screen opens one puzzle a day, the same for everyone, gentle on Monday and toughest

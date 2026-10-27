@@ -42,6 +42,8 @@ import { LEVELS } from '../../levels';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 import { WORLD, buildWorld, glassBox, simulate, type Hit, type Level, type Vec } from '../../physics';
 import type { DailyResult } from '../../game/daily';
+import { shareMessage } from '../../game/share';
+import { shareText } from '../../components/share';
 import { FONTS, useColors } from '../../theme/colors';
 
 const MAX_TRAILS = 4;
@@ -421,6 +423,13 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
     else router.setParams({ id: TUTORIAL_ID });
   };
 
+  // Share a level's win (game/share.ts): the level, stars, bounces and tries, never where the bars went.
+  const shareWin = () => {
+    const assisted = solved || helped || guided || practice;
+    const r = { bounces: winShot.bounces, stars: assisted ? 0 : starsFor(winShot.bounces, par), tries, helped: assisted };
+    shareText(shareMessage({ kind: 'level', number: index + 1, name: level.name }, r, par), wallet.announce);
+  };
+
   const goTo = (i: number) => {
     if (!flying) router.setParams({ id: LEVELS[i].id });
   };
@@ -766,6 +775,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
             onAgain={() => onReplay(false)}
             onClose={keepPlaying}
             onGo={() => (daily ? daily.onShare() : last ? onReplay(false) : goTo(index + 1))}
+            onShare={daily ? undefined : shareWin}
           />
         )}
       </View>
