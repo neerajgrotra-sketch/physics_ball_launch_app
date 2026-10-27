@@ -433,7 +433,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
 
   // Put the bars back the way they were before the last change. Not while a shot is playing.
   const undoMove = () => {
-    if (flying) return;
+    if (flying) { skip(); return; }
     const step = undoHistory(history.current);
     if (!step) return;
     history.current = step.history;
@@ -462,7 +462,8 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
 
   // Solve opens the help card: a hint or the full solution, each after a rewarded ad (components/ads).
   const openHelp = () => {
-    if (flying || !level.solution) return;
+    if (flying) { skip(); return; }
+    if (!level.solution) return;
     primeAudio();
     keepPlaying();
     setSelected(null);
@@ -532,8 +533,17 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     setSolved(false);
   };
 
+  // A touch on the rotation or aim controls during a shot skips to its end, like Skip ›, without taking the touch. Those controls
+  // are back on by the time that finger lifts, so the touch is remembered and anything it would do is ignored (`justSkipped`).
+  const skippedAt = useRef(0);
+  const skipOnTouch = () => {
+    if (flying) { skippedAt.current = Date.now(); skip(); }
+    return false;
+  };
+  const justSkipped = () => Date.now() - skippedAt.current < 800;
   const clearTrails = () => {
-    if (!flying) setTrails([]);
+    if (flying) { skip(); return; }
+    setTrails([]);
   };
 
   const setAim = (a: number, p: number) => {
@@ -627,13 +637,13 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   // The selected bar (if it's on the board) gets rotation controls in place of the aim rows.
   const selectedBar = selected != null && slots[selected]?.onBoard ? selected : null;
   const rotate = (next: (s: Slot[]) => Slot[]) => {
-    if (flying) return;
+    if (flying || justSkipped()) return;
     keepPlaying();
     setSlots(next);
   };
 
   const onChip = (k: number) => {
-    if (flying) return;
+    if (flying) { skip(); return; }
     primeAudio();
     keepPlaying();
     const r = tapChip(slots, selected, k, level);
@@ -751,6 +761,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
       <Text style={[styles.goal, { color: c.ink }]} numberOfLines={2}>{goalText(level.pieces.length, level.par, (level.pads ?? []).length, (level.portals ?? []).length)}</Text>
       <View style={styles.controls}>
         {selectedBar != null ? (
+          <View onStartShouldSetResponderCapture={skipOnTouch}>
           <RotateControls
             bar={selectedBar + 1}
             angle={shownAngle(slots[selectedBar].deg)}
@@ -761,12 +772,13 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
               return ok;
             }}
             onNudge={(by) => rotate((s) => rotateLegal(level, s, selectedBar, by))}
-            onRemove={() => { if (!flying) { const r = removeBar(slots, selectedBar); setSlots(r.slots); setSelected(r.selected); } }}
+            onRemove={() => { if (!flying && !justSkipped()) { const r = removeBar(slots, selectedBar); setSlots(r.slots); setSelected(r.selected); } }}
             disabled={flying}
           />
+          </View>
         ) : (
           // Touching the angle or power controls while a shot is playing skips it, like a tap on the board.
-          <View onStartShouldSetResponderCapture={() => { if (flying) skip(); return false; }}>
+          <View onStartShouldSetResponderCapture={skipOnTouch}>
           <AimControls
             angle={angle} power={power}
             onAngle={(v) => { if (flying) skip(); keepPlaying(); setAngle(v); }}
@@ -780,15 +792,14 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         )}
         <View style={styles.bottom}>
           <View ref={trayRef} style={styles.tray}>
-            <Tray slots={slots} selected={selected} onTap={onChip} onAim={() => { if (!flying) setSelected(null); }} aiming={selectedBar == null} disabled={flying} onChipLayout={(k, l) => { chips.current[k] = l; }} />
+            <Tray slots={slots} selected={selected} onTap={onChip} onAim={() => { if (flying) { skip(); return; } setSelected(null); }} aiming={selectedBar == null} onChipLayout={(k, l) => { chips.current[k] = l; }} />
           </View>
         </View>
         <View style={styles.actions}>
-          <View style={flying && styles.busy} pointerEvents={flying ? 'none' : 'auto'}>
-            <Ghost label="Solve" badge={practice ? undefined : `💡${wallet.hints}`} onPress={openHelp} big shake={solvedTaps} />
-          </View>
+          {/* During a shot, Solve, Clear and Undo (like the bar and cannon chips) only skip to its end, like Skip ›. */}
+          <Ghost label="Solve" badge={practice ? undefined : `💡${wallet.hints}`} onPress={openHelp} big shake={solvedTaps} />
           <Ghost label="Clear" onPress={clearTrails} big />
-          <UndoButton enabled={canUndo && !flying && !done} onPress={undoMove} />
+          <UndoButton enabled={flying || (canUndo && !done)} onPress={undoMove} />
           {/* Launch; during a flight, Skip (jump to the end of the shot); after a win, Replay. */}
           <Pressable
             ref={launchRef}
@@ -870,7 +881,7 @@ function UndoButton({ enabled, onPress }: { enabled: boolean; onPress: () => voi
  * A quiet outlined button. Each change of `shake` (after the first) shakes it side to side and lights it red for a moment. `badge` is a
  * small count after the label (Solve shows the player's hints, 💡12).
  */
-function Ghost({ label, badge, onPress, big, shake = 0 }: { label: string; badge?: string; onPress: () => void; big?: boolean; shake?: number }) {
+function Ghost({ label, badge, onPress, big, shake = 0, disabled }: { label: string; badge?: string; onPress: () => void; big?: boolean; shake?: number; disabled?: boolean }) {
   const c = useColors();
   const x = useSharedValue(0);
   const [red, setRed] = useState(false);
@@ -887,6 +898,7 @@ function Ghost({ label, badge, onPress, big, shake = 0 }: { label: string; badge
     <Animated.View style={moved}>
       <Pressable
         onPress={onPress}
+        disabled={disabled}
         accessibilityRole="button"
         accessibilityLabel={badge ? `${label}, ${badge.replace('💡', '')} hints left` : label}
         style={[styles.ghost, big && styles.ghostBig, badge != null && styles.ghostBadged, { borderColor: red ? c.red : c.line }]}
@@ -925,7 +937,6 @@ const styles = StyleSheet.create({
   bottom: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tray: { flex: 1 },
   actions: { flexDirection: 'row', gap: 8 },
-  busy: { opacity: 0.5 },
   undo: { width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   ghost: { height: 34, paddingHorizontal: 12, borderRadius: 17, borderWidth: 1.5, justifyContent: 'center' },
   ghostBig: { height: 44, paddingHorizontal: 20, borderRadius: 22 },

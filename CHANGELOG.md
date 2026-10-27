@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.30.2
+
+- During a shot, tapping a bar chip, the cannon chip, Solve, Clear or Undo (or the bar's rotation controls) now skips to the end of
+  the shot, like Skip ›, instead of doing nothing. The tap only skips: it doesn't also place a bar, open the Solve card, clear the
+  trails or undo.
+
 ## 0.30.1
 
 - The hint shop's packs no longer add hints as a test: tapping one says "Purchases not activated yet" (buying comes with the App
