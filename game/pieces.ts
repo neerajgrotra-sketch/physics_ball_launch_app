@@ -129,11 +129,10 @@ export function removeBar(slots: Slot[], k: number): { slots: Slot[]; selected: 
 export type Drag =
   | { mode: 'rotate'; k: number; end?: End; offset?: number }
   | { mode: 'move'; k: number; ox: number; oy: number; axis?: Axis }
-  | { mode: 'aim' }
   | { mode: 'swing'; grab: LineGrab }
-  /** Empty board: a tap deselects; once the finger has moved OPEN_DRAG it becomes a 'pan'. */
+  /** The gun, or empty board before any bar is placed: a tap only deselects; once the finger has moved OPEN_DRAG it's a 'pan'. */
   | { mode: 'open'; x: number; y: number }
-  /** A swipe on empty board moving the aim with the finger (game/aim aimBy): the finger's last point and the aim there. */
+  /** A drag moving the aim with the finger from where it was (game/aim aimBy), never a jump: the finger's last point and the aim. */
   | { mode: 'pan'; x: number; y: number; angle: number; power: number };
 
 /** How far (world units) a finger on empty board must move before it aims, so a tap that only deselects never nudges the aim. */
@@ -141,9 +140,10 @@ export const OPEN_DRAG = 8;
 
 /**
  * A finger lands on the board. In order: the selected piece's lever (on `lever`, its current end) or its
- * other end (which moves the lever there, returned as `lever`), any piece, the launcher (when aiming is
- * allowed), the dotted aim line, otherwise empty board, which deselects and, if the finger then moves, aims (players swipe
- * anywhere expecting the gun to follow).
+ * other end (which moves the lever there, returned as `lever`), any piece, the gun (when aiming is allowed), the dotted aim
+ * line, otherwise empty board, which deselects. Dragging from the gun moves the aim from where it was (touching it changes
+ * nothing: it used to jump to the finger, right at the gun, so 0° and no power). Empty board aims the same way, but only while no
+ * bar is on the board (players swipe a fresh level expecting the gun to follow; once bars are placed, stray swipes moved the aim).
  */
 export function pressAt(
   slots: Slot[], selected: number | null, p: { x: number; y: number }, canAim: boolean,
@@ -171,10 +171,11 @@ export function pressAt(
     const s = slots[hit];
     return { drag: { mode: 'move', k: hit, ox: p.x - s.x, oy: p.y - s.y }, selected: hit };
   }
-  if (canAim && nearLauncher(p)) return { drag: { mode: 'aim' }, selected: null };
+  if (canAim && nearLauncher(p)) return { drag: { mode: 'open', x: p.x, y: p.y }, selected: null };
   const grab = canAim && aim ? grabAimLine(p, aim.angle, aim.power) : null;
   if (grab) return { drag: { mode: 'swing', grab }, selected: null };
-  return { drag: canAim ? { mode: 'open', x: p.x, y: p.y } : null, selected: null };
+  const fresh = !slots.some((s) => s.onBoard);
+  return { drag: canAim && fresh ? { mode: 'open', x: p.x, y: p.y } : null, selected: null };
 }
 
 /** A move or rotate drag follows the finger. Aim drags are handled by game/aim. */

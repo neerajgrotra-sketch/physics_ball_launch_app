@@ -84,12 +84,18 @@ describe('pressAt', () => {
     expect(leverEnd({ len: 90, x: WORLD.width - 50, y: 300, deg: 0 })).toBe(1);
   });
 
-  it('aims near the launcher only when allowed, and empty board deselects (and aims once the finger moves)', () => {
+  it('aims from the gun only when allowed (no jump: the drag starts where the finger is), and empty board deselects', () => {
     const p = { x: LAUNCHER.x + 30, y: LAUNCHER.y - 30 };
-    expect(pressAt(placed, 0, p, true)).toEqual({ drag: { mode: 'aim' }, selected: null }); // touching the cannon switches to aiming
+    expect(pressAt(placed, 0, p, true)).toEqual({ drag: { mode: 'open', ...p }, selected: null }); // touching the cannon switches to aiming
     expect(pressAt(placed, 0, p, false)).toEqual({ drag: null, selected: null });
-    expect(pressAt(placed, 0, { x: 350, y: 100 }, true)).toEqual({ drag: { mode: 'open', x: 350, y: 100 }, selected: null });
-    expect(pressAt(placed, 0, { x: 350, y: 100 }, false)).toEqual({ drag: null, selected: null });
+    // with a bar on the board, a swipe on empty board doesn't move the gun
+    expect(pressAt(placed, 0, { x: 350, y: 100 }, true)).toEqual({ drag: null, selected: null });
+  });
+
+  it('a fresh board (no bars placed) aims from a swipe anywhere', () => {
+    const tray = [{ ...placed[0], onBoard: false }];
+    expect(pressAt(tray, null, { x: 350, y: 100 }, true)).toEqual({ drag: { mode: 'open', x: 350, y: 100 }, selected: null });
+    expect(pressAt(tray, null, { x: 350, y: 100 }, false)).toEqual({ drag: null, selected: null });
   });
 
   it('grabs the dotted aim line to swing the aim, but bars come first', () => {

@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.37.0
+
+- Touching the gun no longer drops the aim: it used to jump the aim to the finger, right at the gun (0° and no power). Now a
+  touch changes nothing and a drag from the gun moves the aim along with the finger from where it was.
+- Swipe-to-aim on empty board now only works while no bar is on the board (a level just opened). Once bars are placed, touches
+  on empty board never move the gun, so placing and moving bars can't knock the aim. Aim then with the gun, its dotted line or
+  the sliders.
+
 ## 0.36.0
 
 - Undo now steps back aim changes too, not only the bars: a swipe, a drag of the gun or its dotted line, a slider or the −/+

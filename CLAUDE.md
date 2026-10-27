@@ -73,9 +73,10 @@ reference/    prototype.html, the behaviour and look to match
 
 ## Gameplay behaviour to match the prototype
 
-- **Aim:** drag out from the launcher (direction sets the angle and distance sets the power), or swipe anywhere on empty board
-  (`pressAt`'s 'open' drag, a 'pan' once the finger has moved `OPEN_DRAG`; a plain tap there only deselects): the aim moves along
-  with the finger from where it was, no jump (`aimBy`): away from the gun is more power, towards it less, round it turns the gun. Grabbing the
+- **Aim:** drag from the gun, or, while no bar is on the board yet, swipe anywhere on empty board (`pressAt`'s 'open' drag, a 'pan'
+  once the finger has moved `OPEN_DRAG`): the aim moves along with the finger from where it was, never jumping to it (`aimBy`):
+  away from the gun is more power, towards it less, round it turns the gun. Touching the gun changes nothing (it used to jump to the
+  finger, right at the gun: 0° and no power). Once a bar is placed, empty board never moves the aim (stray swipes did). Grabbing the
   dotted aim line is a rubber band: the dot you took stays under your finger, so round the launcher sets
   the angle, in or out sets the power, and nothing else drifts (`grabAimLine`/`swingTo` invert the
   launch velocity from the dot's position).
