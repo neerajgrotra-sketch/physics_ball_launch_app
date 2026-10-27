@@ -1,6 +1,7 @@
 // Background music: a playlist of looping tracks, and one of them is picked when the app starts and plays for the whole session, on every
 // level. So each visit can sound a little different, and new music is just a new file. To add a track, put it in assets/music (MP3 or
-// M4A, ideally a seamless loop under ~1 MB): scripts/make-playlist.mjs lists every file there in playlist.ts before each web build.
+// M4A, ideally a seamless loop under ~1 MB): scripts/make-playlist.mjs lists every file there in playlist.ts before each web build, and
+// makes the phones' seamless WAV copies (playlist.native.ts).
 import { PLAYLIST } from './playlist';
 
 /** This session's track: chosen once, when the app starts (music is UI, not physics, so Math.random is fine here). */

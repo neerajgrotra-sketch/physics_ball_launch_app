@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.38.4
+
+- Fix: on iPhone the music hiccuped every time it looped. The track is an MP3, which has a few milliseconds of encoder silence at
+  each end that iOS plays. Phones now play a seamless WAV copy (`assets/music/loops`, made by `scripts/make-playlist.mjs` with
+  ffmpeg, listed in `playlist.native.ts`); the web keeps the smaller MP3, which it already looped cleanly.
+
 ## 0.38.3
 
 - Fix: on iPhone a sound could stay silent and then play twice on the next shot (a launch with no sound, then a double one).
