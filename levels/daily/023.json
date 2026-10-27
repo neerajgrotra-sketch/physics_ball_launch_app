@@ -1,0 +1,38 @@
+{
+  "id": "daily-023",
+  "name": "Skipping stone",
+  "hint": "Two bars, and the ball has to bounce off both.",
+  "glass": {
+    "x": 264,
+    "w": 37,
+    "h": 50,
+    "base": 371
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "tier": 2,
+  "par": 2,
+  "solution": {
+    "pieces": [
+      {
+        "x": 169,
+        "y": 416,
+        "deg": 126
+      },
+      {
+        "x": 329,
+        "y": 157,
+        "deg": 66
+      }
+    ],
+    "angle": 42.5,
+    "power": 66.7
+  }
+}

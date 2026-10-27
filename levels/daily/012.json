@@ -1,0 +1,51 @@
+{
+  "id": "daily-012",
+  "name": "Drop shot",
+  "hint": "Walls in the way. Use every bar to get round them.",
+  "glass": {
+    "x": 306,
+    "w": 39,
+    "h": 55
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 146,
+      "y": 424,
+      "w": 25,
+      "h": 232
+    },
+    {
+      "x": 220,
+      "y": 442,
+      "w": 30,
+      "h": 196
+    }
+  ],
+  "tier": 3,
+  "par": 5,
+  "solution": {
+    "pieces": [
+      {
+        "x": 271,
+        "y": 430,
+        "deg": 93
+      },
+      {
+        "x": 360,
+        "y": 439,
+        "deg": 114
+      }
+    ],
+    "angle": 49.6,
+    "power": 82
+  }
+}

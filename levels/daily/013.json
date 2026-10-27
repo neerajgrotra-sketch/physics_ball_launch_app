@@ -1,0 +1,60 @@
+{
+  "id": "daily-013",
+  "name": "Backspin",
+  "hint": "Three bars and some obstacles. Plan the whole route.",
+  "glass": {
+    "x": 258,
+    "w": 36,
+    "h": 55,
+    "base": 405
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 180,
+      "y": 106,
+      "w": 29,
+      "h": 212
+    },
+    {
+      "x": 345,
+      "y": 422.5,
+      "w": 26,
+      "h": 235
+    }
+  ],
+  "tier": 4,
+  "par": 3,
+  "solution": {
+    "pieces": [
+      {
+        "x": 229,
+        "y": 475,
+        "deg": 10
+      },
+      {
+        "x": 121,
+        "y": 482,
+        "deg": 128
+      },
+      {
+        "x": 242,
+        "y": 295,
+        "deg": 78
+      }
+    ],
+    "angle": 37.7,
+    "power": 46
+  }
+}

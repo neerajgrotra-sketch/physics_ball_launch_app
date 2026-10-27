@@ -1,0 +1,38 @@
+{
+  "id": "daily-010",
+  "name": "Over the top",
+  "hint": "Two bars, and the ball has to bounce off both.",
+  "glass": {
+    "x": 241,
+    "w": 43,
+    "h": 55,
+    "base": 365
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "tier": 2,
+  "par": 2,
+  "solution": {
+    "pieces": [
+      {
+        "x": 111,
+        "y": 233,
+        "deg": 23
+      },
+      {
+        "x": 146,
+        "y": 399,
+        "deg": 8
+      }
+    ],
+    "angle": 79.3,
+    "power": 50.8
+  }
+}

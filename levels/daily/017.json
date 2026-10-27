@@ -1,0 +1,37 @@
+{
+  "id": "daily-017",
+  "name": "Billiard",
+  "hint": "Two bars, and the ball has to bounce off both.",
+  "glass": {
+    "x": 229,
+    "w": 43,
+    "h": 56
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "tier": 2,
+  "par": 2,
+  "solution": {
+    "pieces": [
+      {
+        "x": 107,
+        "y": 426,
+        "deg": 165
+      },
+      {
+        "x": 156,
+        "y": 474,
+        "deg": 166
+      }
+    ],
+    "angle": 64.5,
+    "power": 19.1
+  }
+}

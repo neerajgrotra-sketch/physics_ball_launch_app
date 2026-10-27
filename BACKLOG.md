@@ -104,7 +104,8 @@ the ceiling of this layout; the sensible next step for variety is a *different* 
 
 - Accounts and a verified online leaderboard: the app submits a shot's inputs, the server re-runs the
   deterministic physics and computes the score (Supabase edge function running `physics/`).
-- **Daily Shot:** one level for everyone each day, ranked, with a shareable result.
+- **Daily Shot:** done in 0.31.0 (daily puzzle, streak, hint rewards, share). Still to do: a ranking (server re-runs the shot),
+  more puzzles before the 28-day pool repeats (from 2026-11-23), and a reminder notification.
 - Game Center and Google Play Games leaderboards.
 
 ## Content

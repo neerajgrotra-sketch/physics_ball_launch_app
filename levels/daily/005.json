@@ -1,0 +1,46 @@
+{
+  "id": "daily-005",
+  "name": "Ping",
+  "hint": "Walls in the way. Use every bar to get round them.",
+  "glass": {
+    "x": 318,
+    "w": 39,
+    "h": 54,
+    "base": 432
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 227,
+      "y": 448.5,
+      "w": 27,
+      "h": 183
+    }
+  ],
+  "tier": 3,
+  "par": 2,
+  "solution": {
+    "pieces": [
+      {
+        "x": 99,
+        "y": 319,
+        "deg": 91
+      },
+      {
+        "x": 134,
+        "y": 473,
+        "deg": 106
+      }
+    ],
+    "angle": 43.1,
+    "power": 60.8
+  }
+}

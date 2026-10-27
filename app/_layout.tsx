@@ -15,6 +15,7 @@ import { TipsProvider } from '../components/coach/Tips';
 import { SoundSettingsProvider } from '../components/feedback/SoundSettings';
 import { BallSkinProvider } from '../components/settings/BallSkin';
 import { HintWalletProvider } from '../components/hints/HintWallet';
+import { DailyProvider } from '../components/daily/DailyProvider';
 import { ProgressProvider } from '../components/progress/ProgressProvider';
 import { Intro } from '../components/splash/Intro';
 import { TourGate } from '../components/tour/TourGate';
@@ -56,6 +57,7 @@ function AppRoot() {
           <SoundSettingsProvider>
             <RewardedAdsProvider>
               <HintWalletProvider ready={!intro}>
+              <DailyProvider>
               <TipsProvider>
             <StatusBar style={theme.dark ? 'light' : 'dark'} />
             <Stack
@@ -69,9 +71,11 @@ function AppRoot() {
             >
               <Stack.Screen name="index" options={{ title: 'Bank Shot', headerShown: false }} />
               <Stack.Screen name="level/[id]" options={{ title: '' }} />
+              <Stack.Screen name="daily" options={{ title: '' }} />
             </Stack>
             <TourGate hidden={intro} />
               </TipsProvider>
+              </DailyProvider>
               </HintWalletProvider>
             </RewardedAdsProvider>
           </SoundSettingsProvider>

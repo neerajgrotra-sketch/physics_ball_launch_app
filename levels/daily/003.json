@@ -1,0 +1,38 @@
+{
+  "id": "daily-003",
+  "name": "Kiss shot",
+  "hint": "Two bars, and the ball has to bounce off both.",
+  "glass": {
+    "x": 252,
+    "w": 44,
+    "h": 54,
+    "base": 438
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "tier": 2,
+  "par": 2,
+  "solution": {
+    "pieces": [
+      {
+        "x": 337,
+        "y": 102,
+        "deg": 97
+      },
+      {
+        "x": 170,
+        "y": 407,
+        "deg": 12
+      }
+    ],
+    "angle": 74.2,
+    "power": 74.6
+  }
+}

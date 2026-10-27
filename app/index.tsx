@@ -2,6 +2,7 @@ import { Link, useRouter } from 'expo-router';
 import { Fragment, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DailyCard } from '../components/daily/DailyCard';
 import { ShotThumbnail } from '../components/levels/ShotThumbnail';
 import { SettingsSheet } from '../components/settings/SettingsSheet';
 import { useTips } from '../components/coach/Tips';
@@ -60,6 +61,7 @@ export default function LevelSelect() {
           {total > 0 ? `Score ${total.toLocaleString()}` : 'Get each ball in with as few bounces as you can'}
         </Text>
       </View>
+      <DailyCard width={tile * COLUMNS + GAP * (COLUMNS - 1)} />
       <View style={styles.grid}>
         {LEVELS.map((level, index) => {
           const locked = index > unlocked;

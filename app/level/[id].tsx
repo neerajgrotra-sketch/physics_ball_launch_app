@@ -40,7 +40,8 @@ import { bestOf, goalText, starsFor } from '../../game/score';
 import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
-import { WORLD, buildWorld, glassBox, simulate, type Hit, type Vec } from '../../physics';
+import { WORLD, buildWorld, glassBox, simulate, type Hit, type Level, type Vec } from '../../physics';
+import type { DailyResult } from '../../game/daily';
 import { FONTS, useColors } from '../../theme/colors';
 
 const MAX_TRAILS = 4;
@@ -77,16 +78,23 @@ export default function LevelScreen() {
   const shot = replay === '1' && round === 0 ? shots[id] : undefined;
   return (
     <LevelGame
-      key={`${id}:${round}:${shot ? 'replay' : ''}`} index={index} shot={shot} guide={!unguided}
+      key={`${id}:${round}:${shot ? 'replay' : ''}`} level={LEVELS[index]} index={index} shot={shot} guide={!unguided}
       onReplay={(guide) => { setUnguided(guide !== true); setRound((r) => r + 1); }}
     />
   );
 }
 
+/**
+ * The daily puzzle (app/daily.tsx) plays in the same game: no level list position, progress or level rewards; a win is recorded
+ * for its day instead (components/daily), and the win card's right button shares the result.
+ */
+export interface DailyMode { number: number; tier: string; onWin: (result: DailyResult) => void; onShare: () => void }
+
 // Laid out like the prototype: board, hint, aim controls, tray, then Solve and Launch.
 // Each launch runs simulate() once and plays the path back.
-function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Shot; guide: boolean; onReplay: (guide?: boolean) => void }) {
-  const level = LEVELS[index];
+export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
+  level: Level; index: number; daily?: DailyMode; shot?: Shot; guide: boolean; onReplay: (guide?: boolean) => void;
+}) {
   const last = index === LEVELS.length - 1;
   const c = useColors();
   const insets = useSafeAreaInsets();
@@ -281,11 +289,12 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
         // The winning shot is kept for the level card's drawing and Replay, but only unassisted wins (and the
         // tutorial's guided one, which has no score) save it.
         const saved = { pieces: placed.map(({ x, y, deg, len }) => ({ x, y, deg, len })), angle: a, power: p };
-        if (practice) won(index, undefined, saved);
+        if (daily) daily.onWin({ bounces: res.bounces, stars: assisted ? 0 : starsFor(res.bounces, par), tries: tryNo, helped: assisted });
+        else if (practice) won(index, undefined, saved);
         else if (assisted) won(index);
         else won(index, bestOf({ bounces: res.bounces, par, tries: tryNo }), saved);
         // Hint rewards, said once the celebration is over: a level's first three-star win, and a world's last level won.
-        if (!practice) {
+        if (!practice && !daily) {
           const notes: string[] = [];
           if (!assisted && starsFor(res.bounces, par) === 3 && wallet.rewardStars(level.id)) notes.push(`+${STAR_REWARD} 💡 for three stars`);
           const world = WORLDS.find((w) => w.ids[w.ids.length - 1] === level.id);
@@ -408,6 +417,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
     tips.restartTutorial();
     setSettings(false);
     if (level.id === TUTORIAL_ID) onReplay(true);
+    else if (daily) router.push({ pathname: '/level/[id]', params: { id: TUTORIAL_ID } });
     else router.setParams({ id: TUTORIAL_ID });
   };
 
@@ -692,10 +702,10 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           headerTitle: () => (
             <View style={styles.titleBox}>
               <Text style={[styles.title, { color: c.ink }]} numberOfLines={1} adjustsFontSizeToFit>{level.name}</Text>
-              <Text style={[styles.sub, { color: c.muted }]}>Level {index + 1} of {LEVELS.length}</Text>
+              <Text style={[styles.sub, { color: c.muted }]}>{daily ? `Daily #${daily.number} · ${daily.tier}` : `Level ${index + 1} of ${LEVELS.length}`}</Text>
             </View>
           ),
-          headerRight: () => (
+          headerRight: () => daily ? <View style={styles.nav} /> : (
             <View style={styles.nav}>
               <IconButton label="‹" a11y="Previous level" disabled={index === 0} onPress={() => goTo(index - 1)} />
               <IconButton label="›" a11y="Next level" disabled={index >= unlocked} onPress={() => goTo(index + 1)} />
@@ -752,10 +762,10 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
           <WinCard
             place={cardPlace(glassBox(level.glass).rim, WORLD.height)}
             onStar={(k) => feedback.star(k)}
-            text={winText({ assisted: solved ? 'solve' : helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last })}
+            text={{ ...winText({ assisted: solved ? 'solve' : helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last }), ...(daily ? { go: 'Share' } : {}) }}
             onAgain={() => onReplay(false)}
             onClose={keepPlaying}
-            onGo={() => (last ? onReplay(false) : goTo(index + 1))}
+            onGo={() => (daily ? daily.onShare() : last ? onReplay(false) : goTo(index + 1))}
           />
         )}
       </View>

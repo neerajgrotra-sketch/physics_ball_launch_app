@@ -1,0 +1,29 @@
+{
+  "id": "daily-001",
+  "name": "Carom",
+  "hint": "One bar: bounce the ball off it into the glass.",
+  "glass": {
+    "x": 290,
+    "w": 44,
+    "h": 53
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    }
+  ],
+  "tier": 1,
+  "par": 1,
+  "solution": {
+    "pieces": [
+      {
+        "x": 182,
+        "y": 438,
+        "deg": 0
+      }
+    ],
+    "angle": 73.9,
+    "power": 28.3
+  }
+}

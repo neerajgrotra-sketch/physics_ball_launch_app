@@ -9,6 +9,7 @@ import { useProgress } from '../progress/ProgressProvider';
 import { VERSION_LABEL } from '../version';
 import { BallPicker } from './BallPicker';
 import { ThemePicker } from './ThemePicker';
+import { useDaily } from '../daily/DailyProvider';
 import { useHintWallet } from '../hints/HintWallet';
 
 /**
@@ -23,6 +24,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
   const { tipsOn, setTipsOn, restartTutorial, restartTour } = useTips();
   const { unlockAll, setUnlockAll, resetProgress } = useProgress();
   const wallet = useHintWallet();
+  const daily = useDaily();
   const [confirmReset, setConfirmReset] = useState(false);
   useEffect(() => { if (!visible) setConfirmReset(false); }, [visible]);
 
@@ -92,6 +94,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
                 if (!confirmReset) { setConfirmReset(true); return; }
                 resetProgress();
                 wallet.reset();
+                daily.reset();
                 restartTutorial();
                 restartTour();
                 setConfirmReset(false);

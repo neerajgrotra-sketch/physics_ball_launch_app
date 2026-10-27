@@ -1,0 +1,45 @@
+{
+  "id": "daily-019",
+  "name": "Hook",
+  "hint": "Walls in the way. Use every bar to get round them.",
+  "glass": {
+    "x": 294,
+    "w": 38,
+    "h": 56
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 148,
+      "y": 472,
+      "w": 25,
+      "h": 136
+    }
+  ],
+  "tier": 3,
+  "par": 3,
+  "solution": {
+    "pieces": [
+      {
+        "x": 216,
+        "y": 330,
+        "deg": 135
+      },
+      {
+        "x": 81,
+        "y": 375,
+        "deg": 122
+      }
+    ],
+    "angle": 76.6,
+    "power": 51.6
+  }
+}

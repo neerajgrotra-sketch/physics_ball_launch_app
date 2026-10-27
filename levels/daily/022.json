@@ -1,0 +1,29 @@
+{
+  "id": "daily-022",
+  "name": "Glance",
+  "hint": "One bar: bounce the ball off it into the glass.",
+  "glass": {
+    "x": 312,
+    "w": 42,
+    "h": 52
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    }
+  ],
+  "tier": 1,
+  "par": 1,
+  "solution": {
+    "pieces": [
+      {
+        "x": 205,
+        "y": 439,
+        "deg": 24
+      }
+    ],
+    "angle": 58.3,
+    "power": 26.8
+  }
+}

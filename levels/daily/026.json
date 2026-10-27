@@ -1,0 +1,46 @@
+{
+  "id": "daily-026",
+  "name": "Boomerang",
+  "hint": "Walls in the way. Use every bar to get round them.",
+  "glass": {
+    "x": 282,
+    "w": 38,
+    "h": 51,
+    "base": 411
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 183,
+      "y": 435,
+      "w": 26,
+      "h": 210
+    }
+  ],
+  "tier": 3,
+  "par": 2,
+  "solution": {
+    "pieces": [
+      {
+        "x": 57,
+        "y": 278,
+        "deg": 131
+      },
+      {
+        "x": 100,
+        "y": 466,
+        "deg": 108
+      }
+    ],
+    "angle": 47.9,
+    "power": 68.9
+  }
+}

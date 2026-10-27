@@ -1,0 +1,59 @@
+{
+  "id": "daily-007",
+  "name": "Doglegs",
+  "hint": "Sunday's toughest: three bars, walls and spikes.",
+  "glass": {
+    "x": 223,
+    "w": 42,
+    "h": 55
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 70
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 296,
+      "y": 104,
+      "w": 28,
+      "h": 208
+    },
+    {
+      "x": 151,
+      "y": 112,
+      "w": 27,
+      "h": 224
+    }
+  ],
+  "tier": 5,
+  "par": 4,
+  "solution": {
+    "pieces": [
+      {
+        "x": 127,
+        "y": 354,
+        "deg": 176
+      },
+      {
+        "x": 190,
+        "y": 462,
+        "deg": 168
+      },
+      {
+        "x": 290,
+        "y": 427,
+        "deg": 110
+      }
+    ],
+    "angle": 69.3,
+    "power": 37.9
+  }
+}

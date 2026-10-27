@@ -1,0 +1,61 @@
+{
+  "id": "daily-006",
+  "name": "Long way round",
+  "hint": "Three bars and some obstacles. Plan the whole route.",
+  "glass": {
+    "x": 270,
+    "w": 37,
+    "h": 55
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 190,
+      "y": 102,
+      "w": 29,
+      "h": 204
+    }
+  ],
+  "hazards": [
+    {
+      "x": 288,
+      "y": 22,
+      "w": 199,
+      "h": 24
+    }
+  ],
+  "tier": 4,
+  "par": 3,
+  "solution": {
+    "pieces": [
+      {
+        "x": 181,
+        "y": 322,
+        "deg": 13
+      },
+      {
+        "x": 255,
+        "y": 436,
+        "deg": 21
+      },
+      {
+        "x": 359,
+        "y": 401,
+        "deg": 78
+      }
+    ],
+    "angle": 61.2,
+    "power": 45.9
+  }
+}

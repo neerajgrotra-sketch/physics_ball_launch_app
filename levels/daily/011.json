@@ -1,0 +1,53 @@
+{
+  "id": "daily-011",
+  "name": "Two-step",
+  "hint": "Walls in the way. Use every bar to get round them.",
+  "glass": {
+    "x": 193,
+    "w": 41,
+    "h": 55
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 312,
+      "y": 426,
+      "w": 27,
+      "h": 228
+    }
+  ],
+  "hazards": [
+    {
+      "x": 237,
+      "y": 22,
+      "w": 212,
+      "h": 24
+    }
+  ],
+  "tier": 3,
+  "par": 2,
+  "solution": {
+    "pieces": [
+      {
+        "x": 170,
+        "y": 303,
+        "deg": 28
+      },
+      {
+        "x": 110,
+        "y": 458,
+        "deg": 52
+      }
+    ],
+    "angle": 72,
+    "power": 51.1
+  }
+}

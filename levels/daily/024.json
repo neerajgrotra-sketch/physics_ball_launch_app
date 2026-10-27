@@ -1,0 +1,37 @@
+{
+  "id": "daily-024",
+  "name": "Zigzag",
+  "hint": "Two bars, and the ball has to bounce off both.",
+  "glass": {
+    "x": 217,
+    "w": 43,
+    "h": 50
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "tier": 2,
+  "par": 2,
+  "solution": {
+    "pieces": [
+      {
+        "x": 338,
+        "y": 385,
+        "deg": 158
+      },
+      {
+        "x": 210,
+        "y": 458,
+        "deg": 82
+      }
+    ],
+    "angle": 43.7,
+    "power": 47.4
+  }
+}

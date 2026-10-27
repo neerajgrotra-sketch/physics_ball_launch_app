@@ -1,0 +1,68 @@
+{
+  "id": "daily-021",
+  "name": "Trick shot",
+  "hint": "Sunday's toughest: three bars, walls and spikes.",
+  "glass": {
+    "x": 199,
+    "w": 42,
+    "h": 50,
+    "base": 378
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 70
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 125,
+      "y": 73,
+      "w": 27,
+      "h": 146
+    },
+    {
+      "x": 333,
+      "y": 116.5,
+      "w": 24,
+      "h": 233
+    }
+  ],
+  "hazards": [
+    {
+      "x": 270,
+      "y": 22,
+      "w": 172,
+      "h": 24
+    }
+  ],
+  "tier": 5,
+  "par": 3,
+  "solution": {
+    "pieces": [
+      {
+        "x": 139,
+        "y": 200,
+        "deg": 166
+      },
+      {
+        "x": 165,
+        "y": 273,
+        "deg": 175
+      },
+      {
+        "x": 274,
+        "y": 181,
+        "deg": 58
+      }
+    ],
+    "angle": 79.7,
+    "power": 71.7
+  }
+}

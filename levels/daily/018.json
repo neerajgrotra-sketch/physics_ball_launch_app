@@ -1,0 +1,46 @@
+{
+  "id": "daily-018",
+  "name": "Sidewinder",
+  "hint": "Walls in the way. Use every bar to get round them.",
+  "glass": {
+    "x": 341,
+    "w": 41,
+    "h": 56,
+    "base": 438
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 211,
+      "y": 449.5,
+      "w": 24,
+      "h": 181
+    }
+  ],
+  "tier": 3,
+  "par": 2,
+  "solution": {
+    "pieces": [
+      {
+        "x": 190,
+        "y": 188,
+        "deg": 106
+      },
+      {
+        "x": 137,
+        "y": 442,
+        "deg": 6
+      }
+    ],
+    "angle": 72.3,
+    "power": 67.7
+  }
+}

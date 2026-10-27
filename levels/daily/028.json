@@ -1,0 +1,60 @@
+{
+  "id": "daily-028",
+  "name": "Undercut",
+  "hint": "Sunday's toughest: three bars, walls and spikes.",
+  "glass": {
+    "x": 347,
+    "w": 41,
+    "h": 51,
+    "base": 404
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 70
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 253,
+      "y": 89.5,
+      "w": 27,
+      "h": 179
+    },
+    {
+      "x": 162,
+      "y": 467.5,
+      "w": 25,
+      "h": 145
+    }
+  ],
+  "tier": 5,
+  "par": 4,
+  "solution": {
+    "pieces": [
+      {
+        "x": 44,
+        "y": 391,
+        "deg": 69
+      },
+      {
+        "x": 171,
+        "y": 308,
+        "deg": 169
+      },
+      {
+        "x": 263,
+        "y": 463,
+        "deg": 0
+      }
+    ],
+    "angle": 34.3,
+    "power": 72.2
+  }
+}

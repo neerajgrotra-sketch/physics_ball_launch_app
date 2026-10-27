@@ -1,0 +1,45 @@
+{
+  "id": "daily-004",
+  "name": "Rebound",
+  "hint": "Walls in the way. Use every bar to get round them.",
+  "glass": {
+    "x": 205,
+    "w": 41,
+    "h": 54
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 293,
+      "y": 443,
+      "w": 27,
+      "h": 194
+    }
+  ],
+  "tier": 3,
+  "par": 3,
+  "solution": {
+    "pieces": [
+      {
+        "x": 102,
+        "y": 379,
+        "deg": 177
+      },
+      {
+        "x": 203,
+        "y": 455,
+        "deg": 0
+      }
+    ],
+    "angle": 76.1,
+    "power": 28.7
+  }
+}

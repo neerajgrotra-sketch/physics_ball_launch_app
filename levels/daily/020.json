@@ -1,0 +1,59 @@
+{
+  "id": "daily-020",
+  "name": "Bank job",
+  "hint": "Three bars and some obstacles. Plan the whole route.",
+  "glass": {
+    "x": 247,
+    "w": 44,
+    "h": 56
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 320,
+      "y": 70.5,
+      "w": 29,
+      "h": 141
+    },
+    {
+      "x": 141,
+      "y": 85,
+      "w": 27,
+      "h": 170
+    }
+  ],
+  "tier": 4,
+  "par": 3,
+  "solution": {
+    "pieces": [
+      {
+        "x": 282,
+        "y": 126,
+        "deg": 91
+      },
+      {
+        "x": 160,
+        "y": 511,
+        "deg": 11
+      },
+      {
+        "x": 179,
+        "y": 296,
+        "deg": 84
+      }
+    ],
+    "angle": 76.1,
+    "power": 69
+  }
+}

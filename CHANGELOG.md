@@ -4,6 +4,15 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.31.0
+
+- Daily puzzle: a card at the top of the levels screen opens one puzzle a day, the same for everyone, gentle on Monday and toughest
+  on Sunday. 28 puzzles made by a generator (`tools/make-dailies.ts`), each with a stored answer that uses every bar and a par.
+- Daily streak: days in a row won (missing a whole day resets it). A win gives +2 💡 (+1 more for three stars, +1 only with a hint
+  or Solve), and a 7, 30 and 100-day streak give +5, +15 and +50. Only the day's first win counts.
+- Share: the win card's right button, and the card on the levels screen, share the result without spoilers (stars, bounces, par,
+  tries, streak). On a browser without a share sheet it's copied instead. The card counts down to the next puzzle.
+
 ## 0.30.3
 
 - During a shot, tapping a bar chip, the cannon chip, Solve, Clear, Undo or the bar's rotation controls skips to the end of the shot

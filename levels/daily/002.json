@@ -1,0 +1,46 @@
+{
+  "id": "daily-002",
+  "name": "Ricochet",
+  "hint": "Two bars, and the ball has to bounce off both.",
+  "glass": {
+    "x": 300,
+    "w": 38,
+    "h": 54,
+    "base": 392
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 185,
+      "y": 126.5,
+      "w": 27,
+      "h": 253
+    }
+  ],
+  "tier": 2,
+  "par": 2,
+  "solution": {
+    "pieces": [
+      {
+        "x": 186,
+        "y": 390,
+        "deg": 125
+      },
+      {
+        "x": 315,
+        "y": 221,
+        "deg": 74
+      }
+    ],
+    "angle": 45.1,
+    "power": 57.7
+  }
+}

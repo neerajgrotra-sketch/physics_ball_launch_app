@@ -1,0 +1,38 @@
+{
+  "id": "daily-016",
+  "name": "Tin can",
+  "hint": "Two bars, and the ball has to bounce off both.",
+  "glass": {
+    "x": 276,
+    "w": 37,
+    "h": 56,
+    "base": 444
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "tier": 2,
+  "par": 2,
+  "solution": {
+    "pieces": [
+      {
+        "x": 287,
+        "y": 214,
+        "deg": 110
+      },
+      {
+        "x": 187,
+        "y": 262,
+        "deg": 26
+      }
+    ],
+    "angle": 75.9,
+    "power": 64.9
+  }
+}

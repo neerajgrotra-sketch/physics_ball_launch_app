@@ -1,0 +1,29 @@
+{
+  "id": "daily-015",
+  "name": "Rattle",
+  "hint": "One bar: bounce the ball off it into the glass.",
+  "glass": {
+    "x": 198,
+    "w": 43,
+    "h": 53
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    }
+  ],
+  "tier": 1,
+  "par": 1,
+  "solution": {
+    "pieces": [
+      {
+        "x": 246,
+        "y": 403,
+        "deg": 2
+      }
+    ],
+    "angle": 47.6,
+    "power": 39.5
+  }
+}

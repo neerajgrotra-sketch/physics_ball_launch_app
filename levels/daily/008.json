@@ -1,0 +1,29 @@
+{
+  "id": "daily-008",
+  "name": "Pinball wizard",
+  "hint": "One bar: bounce the ball off it into the glass.",
+  "glass": {
+    "x": 244,
+    "w": 43,
+    "h": 53
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    }
+  ],
+  "tier": 1,
+  "par": 1,
+  "solution": {
+    "pieces": [
+      {
+        "x": 169,
+        "y": 461,
+        "deg": 0
+      }
+    ],
+    "angle": 63.3,
+    "power": 16.6
+  }
+}

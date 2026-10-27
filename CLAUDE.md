@@ -177,6 +177,12 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   a big number and a lock (only a look while `LOCK_LEVELS` is off). The next level is highlighted.
   A won card has a Replay button: it opens the level with that shot's bars and aim set up
   (`/level/[id]?replay=1`, `shotSlots`) and plays it once, unscored, then the player carries on from there. Header total score.
+- **Daily puzzle** (`game/daily.ts`, `components/daily/`, `app/daily.tsx`): a card at the top of the levels screen opens today's
+  puzzle (the player's own date; puzzle #1 is `DAILY_EPOCH`, a Monday, and the pool repeats). It plays in the normal level game in
+  daily mode (`LevelGame`'s `daily`): no level nav, progress or level rewards; the day's first win is recorded (`winDaily`) for the
+  streak and hints, and the win card's right button is Share (`shareText`, no spoilers). Toughness follows the weekday
+  (`DAILY_TIERS`, Monday gentle, Sunday toughest). Puzzles are generated, never hand-edited: `npx tsx tools/make-dailies.ts <first>
+  <count>` writes `levels/daily/NNN.json` and its index; the pool stays a multiple of 7 (`tools/dailies.test.ts` checks each answer).
 - **Level header:** ⚙ (settings sheet: music, version) and ••• (back to the levels, also from a deep link)
   on the left, level name in the middle, ‹ › on the right. No back arrow.
 - Level locks are on (`LOCK_LEVELS`): a level opens when the one before is won, and level 2 once the tutorial is finished or skipped
@@ -229,6 +235,7 @@ theme in Settings (`theme/palettes.ts` THEMES: Chalkboard, Notebook, Night, Sand
   the answer is, hazard deaths, and "found": random bar-chains the solver finds per 10,000 tries, lower = harder to stumble
   on). Run it after adding a level and keep the curve rising (see BACKLOG.md). Pass a level index to run one level alone,
   e.g. in parallel.
+- `npx tsx tools/make-dailies.ts <first> <count> [samples]`: generate daily puzzles (skips numbers already made).
 - `npx tsc --noEmit`: typecheck.
 - `npm run play`: build the static web site and serve it at http://localhost:8090 (stable, fast, deep links work).
 - Deployed on Vercel from GitHub (`vercel.json`): every push to `main` rebuilds the site. Commits must be authored as the owner
@@ -259,5 +266,4 @@ level or physics change.
 - Make Solve cost something, such as only the first piece's position, then the full answer.
 - Levels that need both bars. Extend `findSolution` to reject answers that use fewer pieces than required.
 - New piece types: bouncy pad (restitution > 1), short wedge, moving bar.
-- Daily puzzle with a shareable result.
 - A level editor that runs the solver live while you design.

@@ -1,0 +1,45 @@
+{
+  "id": "daily-025",
+  "name": "Echo",
+  "hint": "Walls in the way. Use every bar to get round them.",
+  "glass": {
+    "x": 330,
+    "w": 40,
+    "h": 50
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 218,
+      "y": 457.5,
+      "w": 26,
+      "h": 165
+    }
+  ],
+  "tier": 3,
+  "par": 3,
+  "solution": {
+    "pieces": [
+      {
+        "x": 276,
+        "y": 173,
+        "deg": 126
+      },
+      {
+        "x": 180,
+        "y": 319,
+        "deg": 10
+      }
+    ],
+    "angle": 73.2,
+    "power": 61.4
+  }
+}

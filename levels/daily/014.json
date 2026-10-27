@@ -1,0 +1,53 @@
+{
+  "id": "daily-014",
+  "name": "Lob",
+  "hint": "Sunday's toughest: three bars, walls and spikes.",
+  "glass": {
+    "x": 211,
+    "w": 42,
+    "h": 55
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 70
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 313,
+      "y": 102.5,
+      "w": 29,
+      "h": 205
+    }
+  ],
+  "tier": 5,
+  "par": 4,
+  "solution": {
+    "pieces": [
+      {
+        "x": 163,
+        "y": 363,
+        "deg": 32
+      },
+      {
+        "x": 151,
+        "y": 453,
+        "deg": 110
+      },
+      {
+        "x": 112,
+        "y": 476,
+        "deg": 98
+      }
+    ],
+    "angle": 71.5,
+    "power": 33.2
+  }
+}
