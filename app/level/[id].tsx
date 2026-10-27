@@ -36,7 +36,7 @@ import { skipNotice, winText } from '../../game/progress';
 import { bestOf, goalText, starsFor } from '../../game/score';
 import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 import { WORLD, buildWorld, glassBox, simulate, type Hit, type Vec } from '../../physics';
 import { FONTS, useColors } from '../../theme/colors';
 
@@ -130,15 +130,8 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
   const [solved, setSolved] = useState(false);
   /** A hint or Solve was used this round: wins earn no stars or score until Start over. */
   const [helped, setHelped] = useState(false);
-  /** Bumped when Solve is tapped with the answer already on the board: the button shakes and solvedNudge's line shows. */
+  /** Bumped when Solve is tapped with the answer already on the board: the button shakes and solvedNudge's line fades in over the board. */
   const [solvedTaps, setSolvedTaps] = useState(0);
-  const [nudgeShown, setNudgeShown] = useState(false);
-  useEffect(() => {
-    if (!solvedTaps) return;
-    setNudgeShown(true);
-    const t = setTimeout(() => setNudgeShown(false), 2600);
-    return () => clearTimeout(t);
-  }, [solvedTaps]);
   /** The Solve button's help card (hint or full solution) is open. */
   const [help, setHelp] = useState(false);
   /** Scored bounces of the shot in flight (ticking up live) or the last shot; null before the first. */
@@ -687,6 +680,7 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
       />
       <SettingsSheet visible={settings} onClose={() => setSettings(false)} onMusicTap={primeAudio} onReplayTutorial={replayTutorial} />
       <View ref={stageRef} style={styles.stage}>
+        <FadeToast trigger={solvedTaps} text={solvedNudge(done)} />
         <Board
           level={level}
           pieces={boardPieces(slots)}
@@ -774,9 +768,6 @@ function LevelGame({ index, shot, guide, onReplay }: { index: number; shot?: Sho
             <Tray slots={slots} selected={selected} onTap={onChip} onAim={() => { if (!flying) setSelected(null); }} aiming={selectedBar == null} disabled={flying} onChipLayout={(k, l) => { chips.current[k] = l; }} />
           </View>
         </View>
-        {nudgeShown && (
-          <Text accessibilityLiveRegion="polite" style={[styles.nudge, { color: c.red }]} pointerEvents="none">{solvedNudge(done)}</Text>
-        )}
         <View style={styles.actions}>
           <View style={flying && styles.busy} pointerEvents={flying ? 'none' : 'auto'}>
             <Ghost label="Solve" onPress={openHelp} big shake={solvedTaps} />
@@ -860,6 +851,31 @@ function UndoButton({ enabled, onPress }: { enabled: boolean; onPress: () => voi
   );
 }
 
+/**
+ * A short message over the middle of the board: each change of `trigger` (after the first) fades it in, holds it, and fades it away.
+ * It floats over everything, so nothing on screen moves, and never takes a touch.
+ */
+function FadeToast({ trigger, text }: { trigger: number; text: string }) {
+  const c = useColors();
+  const shown = useSharedValue(0);
+  useEffect(() => {
+    if (!trigger) return;
+    shown.value = withSequence(
+      withTiming(1, { duration: 180 }),
+      withDelay(1900, withTiming(0, { duration: 500, easing: Easing.in(Easing.quad) })),
+    );
+  }, [trigger, shown]);
+  const style = useAnimatedStyle(() => ({ opacity: shown.value, transform: [{ scale: 0.96 + 0.04 * shown.value }] }));
+  if (!trigger) return null;
+  return (
+    <View style={styles.toastWrap} pointerEvents="none">
+      <Animated.View style={[styles.toast, { backgroundColor: c.paper, borderColor: c.red }, style]}>
+        <Text accessibilityLiveRegion="polite" style={[styles.toastText, { color: c.red }]}>{text}</Text>
+      </Animated.View>
+    </View>
+  );
+}
+
 /** A quiet outlined button. Each change of `shake` (after the first) shakes it side to side and lights it red for a moment. */
 function Ghost({ label, onPress, big, shake = 0 }: { label: string; onPress: () => void; big?: boolean; shake?: number }) {
   const c = useColors();
@@ -914,7 +930,12 @@ const styles = StyleSheet.create({
   bottom: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tray: { flex: 1 },
   actions: { flexDirection: 'row', gap: 8 },
-  nudge: { textAlign: 'center', fontSize: 14, lineHeight: 18, fontFamily: FONTS.bodySemi, marginBottom: 6 },
+  toastWrap: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 10 },
+  toast: {
+    maxWidth: 300, marginHorizontal: 24, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 14, borderWidth: 2,
+    boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+  },
+  toastText: { textAlign: 'center', fontSize: 16, lineHeight: 21, fontFamily: FONTS.bodySemi },
   busy: { opacity: 0.5 },
   undo: { width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   ghost: { height: 34, paddingHorizontal: 12, borderRadius: 17, borderWidth: 1.5, justifyContent: 'center' },

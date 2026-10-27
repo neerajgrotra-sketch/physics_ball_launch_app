@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.27.3
+
+- The "answer is already set up" message no longer pushes the controls up: it floats over the middle of the board in a small card,
+  stays about 2 seconds and fades away, and never takes a touch (`FadeToast` in the level screen). The Solve button still shakes red.
+
 ## 0.27.2
 
 - Once the board already matches the answer in every step (all bars, the angle and the power, e.g. after the hints or the full solution),
