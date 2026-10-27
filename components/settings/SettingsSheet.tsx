@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { GENDERS, PROFILE_KEY, emptyProfile, parseAge, parseProfile, type Profile } from '../../game/profile';
 import { FONTS, useColors } from '../../theme/colors';
 import { useTips } from '../coach/Tips';
@@ -20,7 +20,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
   visible: boolean; onClose: () => void; onMusicTap?: () => void; onReplayTutorial?: () => void; onShowTour?: () => void;
 }) {
   const c = useColors();
-  const { musicOn, toggleMusic } = useSoundSettings();
+  const { musicOn, toggleMusic, effectsOn, toggleEffects, hapticsOn, toggleHaptics } = useSoundSettings();
   const { tipsOn, setTipsOn, restartTutorial, restartTour } = useTips();
   const { unlockAll, setUnlockAll, resetProgress } = useProgress();
   const wallet = useHintWallet();
@@ -43,6 +43,23 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
                 accessibilityLabel="Music"
               />
             </View>
+            <View style={[styles.row, { borderColor: c.line }]}>
+              <Text style={[styles.label, { color: c.ink }]}>Sound effects</Text>
+              <Switch
+                value={effectsOn} onValueChange={() => { onMusicTap?.(); toggleEffects(); }}
+                trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Sound effects"
+              />
+            </View>
+            {Platform.OS !== 'web' && (
+              // A web page can't vibrate an iPhone, so the switch only shows in the app.
+              <View style={[styles.row, { borderColor: c.line }]}>
+                <Text style={[styles.label, { color: c.ink }]}>Vibration</Text>
+                <Switch
+                  value={hapticsOn} onValueChange={toggleHaptics}
+                  trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Vibration"
+                />
+              </View>
+            )}
             <View style={[styles.row, { borderColor: c.line }]}>
               <Text style={[styles.label, { color: c.ink }]}>Tips (ghost finger)</Text>
               <Switch

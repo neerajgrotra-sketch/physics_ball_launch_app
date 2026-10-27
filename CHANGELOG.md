@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.39.0
+
+- Settings has separate switches for Music, Sound effects and Vibration (Vibration only in the app: a web page can't vibrate a
+  phone). Each is remembered.
+- The music no longer breaks off when moving to another level: each level screen used to start its own player. There's now one
+  for the whole app, which carries on across levels and pauses only when you leave the levels (on the phone and the web).
+
 ## 0.38.4
 
 - Fix: on iPhone the music hiccuped every time it looped. The track is an MP3, which has a few milliseconds of encoder silence at

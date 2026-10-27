@@ -2,6 +2,7 @@ import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-aud
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef } from 'react';
 import type { Hit } from '../../physics';
+import { feedbackPrefs } from './SoundSettings';
 
 // Sounds come from scripts/make-sounds.mjs. Re-run it to change them.
 const SOUNDS = {
@@ -93,7 +94,7 @@ export function useFeedback() {
     prime() {},
     launched() {
       barHits.current = 0;
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);
       play('launch', 0.8);
     },
     hit(h: Hit) {
@@ -101,30 +102,30 @@ export function useFeedback() {
       const style = h.kind === 'piece' && strength > 0.6
         ? Haptics.ImpactFeedbackStyle.Medium
         : Haptics.ImpactFeedbackStyle.Light;
-      Haptics.impactAsync(h.kind === 'pad' || h.spring ? Haptics.ImpactFeedbackStyle.Heavy : style).catch(() => {});
+      buzz(Haptics.impactAsync, h.kind === 'pad' || h.spring ? Haptics.ImpactFeedbackStyle.Heavy : style);
       if (h.kind === 'pad' || h.spring) play('boing', Math.max(0.7, strength));
       else if (h.kind === 'glass') play('glass', strength);
       else if (h.kind === 'wall' || h.kind === 'block') play('wall', strength * (h.kind === 'block' ? 0.8 : 0.6));
       else play('bounce', Math.max(0.6, strength), pitch(barHits.current++));
     },
     landed() {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      buzz(Haptics.notificationAsync, Haptics.NotificationFeedbackType.Success);
       play('land', 1);
     },
     star(k: number) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);
       play('star', 0.8, 2 ** (([0, 4, 7][k] ?? 7) / 12));
     },
     burst() {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Medium);
       play('burst', 0.85);
     },
     warped() {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);
       play('warp', 0.8);
     },
     died() {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft).catch(() => {});
+      buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Soft);
       play('dead', 0.7);
     },
   };
@@ -135,10 +136,16 @@ export function useFeedback() {
  * before play() ran, which silenced every effect.
  */
 function play(name: SoundName, volume: number, rate = 1) {
+  if (!feedbackPrefs.effects) return;
   try {
     sounds()[name].play(volume, rate);
   } catch (e) {
     // Audio is a nicety: never let it break a shot. Say so in development, so a silent failure can't hide again.
     if (__DEV__) console.warn('Sound failed to play', e);
   }
+}
+
+/** A vibration, unless the player turned vibration off in Settings. */
+function buzz<T>(fn: (style: T) => Promise<void>, style: T) {
+  if (feedbackPrefs.haptics) fn(style).catch(() => {});
 }

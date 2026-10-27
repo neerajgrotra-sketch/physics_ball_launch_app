@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { Hit } from '../../physics';
+import { feedbackPrefs } from './SoundSettings';
 import { buffer, play as playBuffer, resume } from './webAudio';
 
 // Web version of useFeedback.ts. Sounds play through the shared Web Audio context (webAudio.ts) from
@@ -41,7 +42,7 @@ function load() {
 
 function play(name: Sound, volume: number, rate = 1) {
   const b = decoded[name];
-  if (b) playBuffer(b, volume, false, rate);
+  if (b && feedbackPrefs.effects) playBuffer(b, volume, false, rate);
 }
 
 export function useFeedback() {
