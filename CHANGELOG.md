@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.34.1
+
+- The web page (every route, e.g. /level/08-switchback) is now served with `Cache-Control: no-cache`, so a phone always checks
+  for the newest build instead of showing a level page from an older one (the 0.32.2 trash-can move looked like it only reached
+  the daily puzzle). The game's code files keep their long cache: their names change with every build.
+
 ## 0.34.0
 
 - The shared picture now reads like a finished level: a banner over the board with BANK SHOT, "LEVEL 3 COMPLETE!" (or "DAILY #2
