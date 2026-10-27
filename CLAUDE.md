@@ -185,7 +185,8 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   <count>` writes `levels/daily/NNN.json` and its index; the pool stays a multiple of 7 (`tools/dailies.test.ts` checks each answer).
 - **Sharing** (`game/share.ts` `shareMessage`, `components/share.ts`): a level's win card has "📣 Challenge a friend" and the daily's
   Share uses the same message: a hook picked by how the shot went (seeded, so a win always shares the same words), the level, stars,
-  bounces, par and tries, never where the bars went, a dare, and `SHARE_LINK` (a placeholder until the store link exists).
+  bounces, par and tries, a dare, and `SHARE_LINK` (a placeholder until the store link exists). A picture of the board goes with it
+  (`Board`'s `snapshot`: the canvas as drawn, every trail of the round), so the text itself never says where the bars went.
 - **Level header:** ⚙ (settings sheet: music, version) and ••• (back to the levels, also from a deep link)
   on the left, level name in the middle, ‹ › on the right. No back arrow.
 - Level locks are on (`LOCK_LEVELS`): a level opens when the one before is won, and level 2 once the tutorial is finished or skipped

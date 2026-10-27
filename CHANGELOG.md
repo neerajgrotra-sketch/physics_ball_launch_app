@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.33.0
+
+- Challenge a friend (and the daily's Share) now sends a picture of the board with the message: every trail of the round, the
+  misses and the winning shot in red, as it is on screen. On iPhone Safari and the iOS app the picture goes with the text; a browser
+  that can't share pictures shares the text alone.
+- The message ends "I'm playing the coolest game… you should try it!", and the 🎱 is now 🏀 (a ball from the game's own designs).
+
 ## 0.32.2
 
 - The selected bar's trash can now sits right beside its name ("Bar 1 🗑") above the rotation slider, so it reads as removing that

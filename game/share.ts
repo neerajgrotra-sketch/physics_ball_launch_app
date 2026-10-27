@@ -26,7 +26,7 @@ function hook(r: ShareResult, par: number, seed: string): string {
   if (under === 1) return pick(['🐦 Birdie! One under par 😎', '🐦 Birdie! Better than the puzzle-maker 😎'], seed);
   if (r.stars === 3 && r.tries === 1) return pick(['🎯 First try. No big deal 😎', '🎯 Nailed it on the FIRST try!'], seed);
   if (r.stars === 3) return pick(['🔥 Wow, I did it!', '🔥 Three stars. Perfect bank shot!', '🔥 Called it. Off every bar and in!'], seed);
-  if (r.stars === 2) return pick(['😅 Wow, I did it… eventually!', '🎱 In the glass! Not pretty, but in!'], seed);
+  if (r.stars === 2) return pick(['😅 Wow, I did it… eventually!', '🏀 In the glass! Not pretty, but in!'], seed);
   return pick(["🙈 It went in. Don't ask how.", '🫣 Ugly? Yes. In the glass? ALSO yes.'], seed);
 }
 
@@ -56,6 +56,6 @@ export function shareMessage(what: ShareWhat, r: ShareResult, par: number): stri
     ...(what.kind === 'daily' && what.streak > 1 ? [`🔥 ${what.streak}-day streak`] : []),
     '',
     dare(r, what, seed),
-    `Check this game out 👉 Bank Shot ${SHARE_LINK}`,
+    `I'm playing the coolest game… you should try it! 👉 Bank Shot ${SHARE_LINK}`,
   ].join('\n');
 }

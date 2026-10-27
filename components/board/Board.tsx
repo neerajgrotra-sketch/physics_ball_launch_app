@@ -1,5 +1,5 @@
 import { Canvas, Circle, DashPathEffect, Group, Path, Rect, Text, useCanvasRef, useFont, type SkPath, type Transforms3d } from '@shopify/react-native-skia';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import {
@@ -61,6 +61,8 @@ export interface BoardProps {
   done?: boolean;
   /** Touches on the board, in world units. One drag is a 'down', any number of 'move's, then an 'up'. */
   onTouch?: (phase: TouchPhase, p: { x: number; y: number }) => void;
+  /** Filled with a function that returns a PNG of the board as drawn now (base64), for sharing a win with its trails. */
+  snapshot?: MutableRefObject<(() => string | null) | null>;
 }
 
 export type TouchPhase = 'down' | 'move' | 'up';
@@ -85,7 +87,7 @@ function Spark({ t, x, y, k, color }: { t: SharedValue<number>; x: number; y: nu
  * Pure rendering: everything it shows comes from props (and the player's ball skin, from Settings). Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, flight = null, charge, dropZone = 'off', celebrate = null, kick, warp, done = false, onTouch } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, flight = null, charge, dropZone = 'off', celebrate = null, kick, warp, done = false, onTouch, snapshot } = props;
   const c = useColors();
   const [box, setBox] = useState({ w: 0, h: 0 });
   const hudFont = useFont(condensed600, 15);
@@ -108,6 +110,11 @@ export function Board(props: BoardProps) {
   // just after the board appears.
   const canvasRef = useCanvasRef();
   const shown = scale > 0;
+  if (snapshot) {
+    snapshot.current = () => {
+      try { return canvasRef.current?.makeImageSnapshot()?.encodeToBase64() ?? null; } catch { return null; }
+    };
+  }
 
   // Safari can also drop the frame right after a change (a skipped shot kept showing the ball mid-air;
   // a snapped-back bar stayed where it was dropped). Skia's redraw() didn't help, but a second React

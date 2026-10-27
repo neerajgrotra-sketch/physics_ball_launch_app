@@ -90,7 +90,7 @@ export default function LevelScreen() {
  * The daily puzzle (app/daily.tsx) plays in the same game: no level list position, progress or level rewards; a win is recorded
  * for its day instead (components/daily), and the win card's right button shares the result.
  */
-export interface DailyMode { number: number; tier: string; onWin: (result: DailyResult) => void; onShare: () => void }
+export interface DailyMode { number: number; tier: string; onWin: (result: DailyResult) => void; onShare: (image?: string | null) => void }
 
 // Laid out like the prototype: board, hint, aim controls, tray, then Solve and Launch.
 // Each launch runs simulate() once and plays the path back.
@@ -423,11 +423,12 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
     else router.setParams({ id: TUTORIAL_ID });
   };
 
-  // Share a level's win (game/share.ts): the level, stars, bounces and tries, never where the bars went.
+  // Share a level's win (game/share.ts): the message, with a picture of the board as it is, every trail of the round on it.
+  const snapshot = useRef<(() => string | null) | null>(null);
   const shareWin = () => {
     const assisted = solved || helped || guided || practice;
     const r = { bounces: winShot.bounces, stars: assisted ? 0 : starsFor(winShot.bounces, par), tries, helped: assisted };
-    shareText(shareMessage({ kind: 'level', number: index + 1, name: level.name }, r, par), wallet.announce);
+    shareText(shareMessage({ kind: 'level', number: index + 1, name: level.name }, r, par), wallet.announce, snapshot.current?.());
   };
 
   const goTo = (i: number) => {
@@ -745,6 +746,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
           kick={{ t: kick, x: kickX, y: kickY }}
           done={done}
           onTouch={onTouch}
+          snapshot={snapshot}
         />
         {notice && !done && !flying && (
           <NoticeCard
@@ -774,7 +776,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
             text={{ ...winText({ assisted: solved ? 'solve' : helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last }), ...(daily ? { go: 'Share' } : {}) }}
             onAgain={() => onReplay(false)}
             onClose={keepPlaying}
-            onGo={() => (daily ? daily.onShare() : last ? onReplay(false) : goTo(index + 1))}
+            onGo={() => (daily ? daily.onShare(snapshot.current?.()) : last ? onReplay(false) : goTo(index + 1))}
             onShare={daily ? undefined : shareWin}
           />
         )}

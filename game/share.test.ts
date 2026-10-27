@@ -9,6 +9,8 @@ describe('share message', () => {
     expect(m).toContain('Level 7 · “Four millimetres” in Bank Shot');
     expect(m).toContain('★★☆ · 4 bounces (par 2) · 8 tries');
     expect(m).toContain(SHARE_LINK);
+    expect(m).toContain("I'm playing the coolest game");
+    expect(m).not.toContain('🎱'); // no cue ball: it isn't one of the game's balls
     expect(m.split('\n')[0]).toMatch(/eventually|not pretty/i);
   });
 

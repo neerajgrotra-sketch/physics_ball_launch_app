@@ -14,7 +14,7 @@ export default function DailyScreen() {
   return (
     <LevelGame
       key={round} level={level} index={-1} guide={false} onReplay={() => setRound((r) => r + 1)}
-      daily={{ number, tier: TIER_NAMES[level.tier], onWin: (r) => daily.won(day, r), onShare: () => daily.share(day) }}
+      daily={{ number, tier: TIER_NAMES[level.tier], onWin: (r) => daily.won(day, r), onShare: (image) => daily.share(day, image) }}
     />
   );
 }
