@@ -248,6 +248,13 @@ theme in Settings (`theme/palettes.ts` THEMES: Chalkboard, Notebook, Night, Sand
 - Deployed on Vercel from GitHub (`vercel.json`): every push to `main` rebuilds the site. Commits must be authored as the owner
   (`neerajgrotra-sketch <neerajgrotra@gmail.com>`): Vercel silently skips deploying a commit whose author isn't on the team. `public/index.html`
   is the web page template (phone fit, no zoom, Add to Home Screen); `scripts/make-icons.mjs` draws the icons.
+- **Testing in Expo Go (the owner's Windows PC):** when asked to start Expo Go, give these steps (a cloud session can't open a
+  tunnel itself). In **Command Prompt** (not PowerShell, whose `npx` makes `expo login` non-interactive; not as administrator,
+  which starts in system32), one line at a time:
+  `cd %USERPROFILE%\physics_ball_launch_app`, then `git pull` and `npm install`, then
+  `npx expo login --username ngrotra --password <their Expo password>` (the one-line form is what worked: the prompt and browser
+  logins failed), then `npx expo start` and scan the QR code with the iPhone Camera (`c` shows it again; `--tunnel` if the phone
+  can't reach the PC). Expo Go is signed in as ngrotra, so the CLI must be too, or Expo Go refuses the project.
 - `npm run web`: Expo dev server for working on the web build. `npm run build:web` exports a static site to `dist/`.
   Both first copy `canvaskit.wasm` into `public/`. On web, `index.web.js` loads CanvasKit before the app,
   because Skia binds to it when first imported. Pass style objects, not arrays, to `<Link asChild>` children.
