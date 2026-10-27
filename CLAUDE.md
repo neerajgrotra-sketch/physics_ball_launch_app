@@ -190,7 +190,7 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   Share uses the same message: a hook picked by how the shot went (seeded, so a win always shares the same words), the level, stars,
   bounces, par and tries, a dare, and `SHARE_LINK` (a placeholder until the store link exists). A poster goes with it (`Board`'s
   `snapshot`, drawn by `components/board/shareCard.ts` from the level, bars and trails, not a screenshot; words from `game/share.ts`
-  `shareCard`): 1080×1350 in the theme's pencil colour, "LEVEL N COMPLETE!" and the result line on top, the board zoomed in on where
+  `shareCard`): 1080×1350, always in the standard graph-paper colours (`LIGHT`, whatever board theme is picked), "LEVEL N COMPLETE!" and the result line on top, the board zoomed in on where
   the round happened (winner bold red with rings at its bounces, misses blue), a tilted rubber stamp with the result and stars
   placed where it covers the fewest shots, and a dare ("CAN YOU BEAT 2 BOUNCES?") at the bottom. The text never says where the bars went.
 - **Level header:** ⚙ (settings sheet: music, version) and ••• (back to the levels, also from a deep link)

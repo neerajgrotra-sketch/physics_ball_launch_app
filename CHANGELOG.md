@@ -4,12 +4,17 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.38.1
+
+- The share poster always uses the game's standard graph-paper colours (blue frame, paper board), whatever board theme is picked
+  in Settings; 0.38.0 recoloured it to match the theme (neon in Night).
+
 ## 0.38.0
 
 - The shared picture is now a poster instead of a screenshot of a mostly empty board: the board is zoomed in on where the round
   happened, the winning shot is drawn bold in red with rings where it bounced (misses in blue), a tilted rubber stamp says the
-  result with the stars ("PAR! ★★★", "BIRDIE!", "SOLVED!"), and a dare runs along the bottom ("CAN YOU BEAT 2 BOUNCES?"), all
-  in the board theme's colours. 1080×1350, the shape chat apps show biggest.
+  result with the stars ("PAR! ★★★", "BIRDIE!", "SOLVED!"), and a dare runs along the bottom ("CAN YOU BEAT 2 BOUNCES?").
+  1080×1350, the shape chat apps show biggest.
 
 ## 0.37.0
 

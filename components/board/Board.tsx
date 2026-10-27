@@ -9,6 +9,7 @@ import {
 import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useColors, type Palette } from '../../theme/colors';
 import { composeShareCard, type ShareCard } from './shareCard';
+import { LIGHT } from '../../theme/palettes';
 import {
   blockPath, padChevrons, crossPath, hazardPaths, deadPaths, gridPaths, handleArcPath, moveIconPath, launcherPath, linePath, polyPath,
 } from './paths';
@@ -115,7 +116,8 @@ export function Board(props: BoardProps) {
     snapshot.current = (card) => {
       try {
         if (!hudFont || !subFont) return null;
-        return composeShareCard(level, pieces, trails, card, hudFont, subFont, c);
+        // Always the game's own graph-paper look, whatever board theme the player picked: it's the game's calling card.
+        return composeShareCard(level, pieces, trails, card, hudFont, subFont, LIGHT);
       } catch { return null; }
     };
   }
