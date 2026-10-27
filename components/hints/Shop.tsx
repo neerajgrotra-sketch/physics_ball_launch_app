@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AD_REWARD, PACKS } from '../../game/wallet';
 import { FONTS, useColors } from '../../theme/colors';
@@ -5,12 +6,20 @@ import { useHintWallet } from './HintWallet';
 
 /**
  * The hint shop: the balance, a free "watch an ad" offer, and three packs. Real payments need the App Store and Play Store builds
- * (in-app purchases through RevenueCat, see BACKLOG.md); until then a pack is a clearly marked test that just adds the hints, so the
- * whole flow can be tried.
+ * (in-app purchases through RevenueCat, see BACKLOG.md); until then tapping a pack only says purchases aren't active yet, and gives
+ * nothing.
  */
 export function Shop({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const c = useColors();
-  const { hints, watchAd, give } = useHintWallet();
+  const { hints, watchAd } = useHintWallet();
+  // "Purchases aren't active yet", shown in the shop (a message over the game would sit behind it) for a few seconds after a pack tap.
+  const [notActive, setNotActive] = useState(0);
+  useEffect(() => {
+    if (!notActive) return;
+    const t = setTimeout(() => setNotActive(0), 3500);
+    return () => clearTimeout(t);
+  }, [notActive]);
+  useEffect(() => { if (!visible) setNotActive(0); }, [visible]);
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close the shop">
@@ -23,6 +32,12 @@ export function Shop({ visible, onClose }: { visible: boolean; onClose: () => vo
             <View style={[styles.balance, { borderColor: c.pencil }]}>
               <Text style={[styles.balanceText, { color: c.pencil }]}>You have {hints} 💡</Text>
             </View>
+            {notActive > 0 && (
+              <View accessibilityRole="alert" accessibilityLiveRegion="polite" style={[styles.notice, { borderColor: c.red }]}>
+                <Text style={[styles.noticeTitle, { color: c.red }]}>Purchases not activated yet</Text>
+                <Text style={[styles.noticeText, { color: c.ink }]}>Buying hints comes with the App Store and Play Store apps. Watch an ad for free hints for now.</Text>
+              </View>
+            )}
 
             <Pressable
               onPress={() => { onClose(); watchAd(); }} accessibilityRole="button"
@@ -36,7 +51,7 @@ export function Shop({ visible, onClose }: { visible: boolean; onClose: () => vo
 
             {PACKS.map((p) => (
               <Pressable
-                key={p.id} onPress={() => give(p.hints, `+${p.hints} 💡 (test purchase)`)} accessibilityRole="button"
+                key={p.id} onPress={() => setNotActive((n) => n + 1)} accessibilityRole="button"
                 accessibilityLabel={`${p.hints} hints for ${p.price}`}
                 style={[styles.card, { borderColor: p.tag ? c.red : c.line }]}
               >
@@ -50,9 +65,6 @@ export function Shop({ visible, onClose }: { visible: boolean; onClose: () => vo
               </Pressable>
             ))}
 
-            <Text style={[styles.note, { color: c.muted }]}>
-              Test shop: real payments come with the App Store and Play Store apps. For now a tap just adds the hints.
-            </Text>
             <Text style={[styles.note, { color: c.muted }]}>
               Free hints too: a daily gift, +1 for each level's first three-star win, and +5 for finishing a world.
             </Text>
@@ -79,5 +91,8 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 24, fontFamily: FONTS.condensedBold },
   buy: { height: 40, paddingHorizontal: 16, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   buyText: { color: '#fff', fontSize: 17, fontFamily: FONTS.condensedBold },
+  notice: { borderWidth: 2, borderRadius: 12, padding: 12, gap: 4 },
+  noticeTitle: { fontSize: 18, fontFamily: FONTS.condensedBold, textAlign: 'center' },
+  noticeText: { fontSize: 14, lineHeight: 19, fontFamily: FONTS.body, textAlign: 'center' },
   note: { fontSize: 13, lineHeight: 18, fontFamily: FONTS.body, textAlign: 'center' },
 });

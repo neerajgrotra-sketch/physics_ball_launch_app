@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.30.1
+
+- The hint shop's packs no longer add hints as a test: tapping one says "Purchases not activated yet" (buying comes with the App
+  Store and Play Store apps) and gives nothing. Watching an ad for +3 still works.
+
 ## 0.30.0
 
 - Board themes: Settings has a "Board theme" picker with Auto (the default: graph paper or blueprint, following the phone's light or

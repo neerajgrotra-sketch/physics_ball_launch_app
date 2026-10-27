@@ -123,7 +123,7 @@ reference/    prototype.html, the behaviour and look to match
   hints (💡, `game/wallet.ts`, `components/hints/HintWallet.tsx`): 15 to start, a hint costs 1, the full solution one less than
   the missing steps; a daily gift, a level's first three-star win and a world's last level give more. Short of hints, the card offers
   a rewarded ad for +3 (`components/ads/RewardedAds.tsx`; a 5-second placeholder until AdMob is wired into a store build) and the
-  shop (`components/hints/Shop.tsx`: packs are test purchases until in-app purchases are wired up, see BACKLOG.md).
+  shop (`components/hints/Shop.tsx`: a pack only says "Purchases not activated yet" until in-app purchases are wired up, see BACKLOG.md).
   Using either marks the round as helped until Start over. Once the board already matches the answer in every step, Solve opens no card and
   no ad: the button shakes red and a card over the middle of the board says the answer is already
   set up, then fades away without moving anything (`solvedNudge`, `FadeToast`).

@@ -78,7 +78,7 @@ the ceiling of this layout; the sensible next step for variety is a *different* 
 ## Scoring, rewards and money
 
 - **Hints (💡), done in 0.29.0:** a balance (`game/wallet.ts`) with 15 to start, a daily gift, star and world rewards, +3 per ad,
-  and a test shop. Still to do: **real in-app purchases** for the packs (RevenueCat in a development/store build; products
+  and a shop whose packs say "Purchases not activated yet" (0.30.1). Still to do: **real in-app purchases** for the packs (RevenueCat in a development/store build; products
   `hints_30`, `hints_80`, `hints_200` in App Store Connect and Play Console; the shop's `give` call becomes the purchase), and
   showing the balance on the levels screen. Later: hints from badges.
 - **Stars for helped wins (proposed, not built).** Today a win with a hint or Solve earns no stars or score, but Start over clears
