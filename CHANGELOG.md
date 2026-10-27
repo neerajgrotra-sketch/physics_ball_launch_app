@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.39.1
+
+- Fix: on a first launch, "Let's go" showed the level list for a moment and then jumped to "What should we call you?". The tour
+  only went up once the intro had finished fading, so the fade revealed the levels first. It now goes up as the fade starts, so the
+  intro fades straight into the name question. Returning players are unchanged.
+
 ## 0.39.0
 
 - Settings has separate switches for Music, Sound effects and Vibration (Vibration only in the app: a web page can't vibrate a

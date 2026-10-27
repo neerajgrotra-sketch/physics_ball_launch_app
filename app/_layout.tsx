@@ -39,6 +39,9 @@ function AppRoot() {
   const theme = useTheme();
   const c = theme.palette;
   const [intro, setIntro] = useState(true);
+  // The intro is fading out: a new player's tour goes up under it now, so the fade reveals the tour instead of flashing the level
+  // list first (it used to appear only once the fade was over, and the screen jumped from the levels to "What should we call you?").
+  const [leaving, setLeaving] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
     Barlow_400Regular, Barlow_500Medium, Barlow_600SemiBold,
     BarlowCondensed_600SemiBold, BarlowCondensed_700Bold,
@@ -73,7 +76,7 @@ function AppRoot() {
               <Stack.Screen name="level/[id]" options={{ title: '' }} />
               <Stack.Screen name="daily" options={{ title: '' }} />
             </Stack>
-            <TourGate hidden={intro} />
+            <TourGate hidden={intro && !leaving} />
               </TipsProvider>
               </DailyProvider>
               </HintWalletProvider>
@@ -81,7 +84,7 @@ function AppRoot() {
           </SoundSettingsProvider>
         </ProgressProvider>
       </View>
-      {intro && <Intro onDone={() => setIntro(false)} onShown={() => SplashScreen.hideAsync().catch(() => {})} />}
+      {intro && <Intro onDone={() => setIntro(false)} onLeaving={() => setLeaving(true)} onShown={() => SplashScreen.hideAsync().catch(() => {})} />}
       </BallSkinProvider>
     </GestureHandlerRootView>
   );

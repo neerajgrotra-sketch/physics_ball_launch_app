@@ -19,7 +19,8 @@ import { BALL, BAR, CONTACT, FLOOR, GLASS, GO_BUTTON, INTRO_MS, LAUNCHER, TITLE,
  * bar and drops into the glass, and the title lands. Reduced motion: icon, title, fade.
  * Every frame is a function of one clock (`t`, in ms), timeline in introPath.ts.
  */
-export function Intro({ onDone, onShown }: { onDone: () => void; onShown: () => void }) {
+/** `onLeaving` fires as the fade-out starts, so what comes next (the tour, for a new player) is already there for it to reveal. */
+export function Intro({ onDone, onShown, onLeaving }: { onDone: () => void; onShown: () => void; onLeaving?: () => void }) {
   const c = useColors();
   const { skin } = useBallSkin();
   const { width, height } = useWindowDimensions();
@@ -34,6 +35,7 @@ export function Intro({ onDone, onShown }: { onDone: () => void; onShown: () => 
   const leave = () => {
     if (leaving) return;
     setLeaving(true);
+    onLeaving?.();
     fade.value = withTiming(0, { duration: 320, easing: Easing.out(Easing.quad) });
     setTimeout(onDone, 330);
   };
