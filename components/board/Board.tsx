@@ -8,6 +8,7 @@ import {
 } from '../../physics';
 import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useColors, type Palette } from '../../theme/colors';
+import { composeShareCard, type ShareCard } from './shareCard';
 import {
   blockPath, padChevrons, crossPath, hazardPaths, deadPaths, gridPaths, handleArcPath, moveIconPath, launcherPath, linePath, polyPath,
 } from './paths';
@@ -61,8 +62,8 @@ export interface BoardProps {
   done?: boolean;
   /** Touches on the board, in world units. One drag is a 'down', any number of 'move's, then an 'up'. */
   onTouch?: (phase: TouchPhase, p: { x: number; y: number }) => void;
-  /** Filled with a function that returns a PNG of the board as drawn now (base64), for sharing a win with its trails. */
-  snapshot?: MutableRefObject<(() => string | null) | null>;
+  /** Filled with a function that returns a PNG (base64) of the board as drawn now, under a "level complete" banner, for sharing a win. */
+  snapshot?: MutableRefObject<((card: ShareCard) => string | null) | null>;
 }
 
 export type TouchPhase = 'down' | 'move' | 'up';
@@ -111,8 +112,12 @@ export function Board(props: BoardProps) {
   const canvasRef = useCanvasRef();
   const shown = scale > 0;
   if (snapshot) {
-    snapshot.current = () => {
-      try { return canvasRef.current?.makeImageSnapshot()?.encodeToBase64() ?? null; } catch { return null; }
+    snapshot.current = (card) => {
+      try {
+        const img = canvasRef.current?.makeImageSnapshot();
+        if (!img || !hudFont || !subFont) return null;
+        return composeShareCard(img, card, hudFont, subFont, c);
+      } catch { return null; }
     };
   }
 

@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.34.0
+
+- The shared picture now reads like a finished level: a banner over the board with BANK SHOT, "LEVEL 3 COMPLETE!" (or "DAILY #2
+  COMPLETE!"), the stars won (or "Solved with a hint") and the result line (name, golf score unless plain par, bounces, par, tries).
+
 ## 0.33.0
 
 - Challenge a friend (and the daily's Share) now sends a picture of the board with the message: every trail of the round, the

@@ -59,3 +59,12 @@ export function shareMessage(what: ShareWhat, r: ShareResult, par: number): stri
     `I'm playing the coolest game… you should try it! 👉 Bank Shot ${SHARE_LINK}`,
   ].join('\n');
 }
+
+/** The banner on the shared picture (components/board/shareCard.ts): it reads like the game's own "level complete" screen. */
+export function shareCard(what: ShareWhat, r: ShareResult, par: number): { title: string; stars: number | null; line: string } {
+  const title = what.kind === 'daily' ? `DAILY #${what.number} COMPLETE!` : `LEVEL ${what.number} COMPLETE!`;
+  // The golf name only when it isn't plain par ("Par · 2 bounces (par 2)" says it twice).
+  const name = r.helped || r.bounces === par ? '' : `${golfName(r.bounces, par).replace(/^\+(\d+)$/, '+$1 over par')} · `;
+  const tries = r.tries === 1 ? 'first try' : `${r.tries} tries`;
+  return { title, stars: r.helped ? null : r.stars, line: `“${what.name}” · ${name}${r.bounces} ${r.bounces === 1 ? 'bounce' : 'bounces'} (par ${par}) · ${tries}` };
+}
