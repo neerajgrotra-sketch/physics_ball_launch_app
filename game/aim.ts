@@ -29,6 +29,21 @@ export function aimAt(p: { x: number; y: number }): { angle: number; power: numb
   return { angle: toGrid(a), power: toGrid(pw) };
 }
 
+/** The point a drag from the launcher would need to reach for this angle and power (the inverse of aimAt). */
+export function aimPoint(angle: number, power: number): { x: number; y: number } {
+  const r = 20 + 2.6 * power, a = (angle * Math.PI) / 180;
+  return { x: LAUNCHER.x + Math.cos(a) * r, y: LAUNCHER.y - Math.sin(a) * r };
+}
+
+/**
+ * A swipe on empty board moves the aim along with the finger, from wherever it is (no jump on touch): the finger's movement
+ * (dx, dy, world units) moves the aim point. Away from the gun is more power, towards it less, round it turns the gun.
+ */
+export function aimBy(angle: number, power: number, dx: number, dy: number): { angle: number; power: number } {
+  const at = aimPoint(angle, power);
+  return aimAt({ x: at.x + dx, y: at.y + dy });
+}
+
 /**
  * The dotted aim preview: the first 0.3 s of free flight only (never bounces), oldest dot first, `a` its
  * opacity, `t` its time since launch. Same gravity as the board draws it with.

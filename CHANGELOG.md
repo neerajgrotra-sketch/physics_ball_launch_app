@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.35.1
+
+- Swiping on empty board now moves the aim along with the finger from where it already is, instead of jumping to point at the
+  finger: move away from the gun for more power, towards it for less, round it to turn the gun. Touching the board without moving
+  changes nothing, slow drags still register, and after pushing past full power (or 0°/90°) coming back responds at once.
+
 ## 0.35.0
 
 - Swipe anywhere to aim: a drag on empty board now aims the gun at the finger straight away (direction is the angle, distance

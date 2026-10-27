@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LAUNCHER } from '../physics';
-import { aimAt, aimPreview, grabAimLine, nearLauncher, nudgeAngle, nudgePower, swingTo, toGrid } from './aim';
+import { aimAt, aimBy, aimPoint, aimPreview, grabAimLine, nearLauncher, nudgeAngle, nudgePower, swingTo, toGrid } from './aim';
 
 const at = (dx: number, dy: number) => ({ x: LAUNCHER.x + dx, y: LAUNCHER.y - dy });
 
@@ -93,5 +93,21 @@ describe('dragging the dotted aim line', () => {
     expect(swingTo(at(-100, -50), g).angle).toBe(0);
     expect(swingTo(at(2000, 0), g).power).toBe(100);
     expect(swingTo(at(1, 0), g).power).toBe(0);
+  });
+});
+
+describe('aimBy (swipe anywhere)', () => {
+  it('is the inverse of aimAt, so a still finger changes nothing', () => {
+    expect(aimAt(aimPoint(52, 45))).toEqual({ angle: 52, power: 45 });
+    expect(aimBy(52, 45, 0, 0)).toEqual({ angle: 52, power: 45 });
+  });
+
+  it('away from the gun is more power, towards it less, round it turns the gun', () => {
+    const a = (52 * Math.PI) / 180, out = { dx: Math.cos(a) * 26, dy: -Math.sin(a) * 26 }; // 26 units = 10 power
+    expect(aimBy(52, 45, out.dx, out.dy)).toEqual({ angle: 52, power: 55 });
+    expect(aimBy(52, 45, -out.dx, -out.dy)).toEqual({ angle: 52, power: 35 });
+    expect(aimBy(52, 45, 0, -20).angle).toBeGreaterThan(52); // up: steeper
+    expect(aimBy(52, 45, 20, 0).angle).toBeLessThan(52); // right: flatter
+    expect(aimBy(52, 100, out.dx * 5, out.dy * 5).power).toBe(100); // stays in range
   });
 });

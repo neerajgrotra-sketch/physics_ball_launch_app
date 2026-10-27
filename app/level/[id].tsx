@@ -27,7 +27,7 @@ import { useSoundSettings } from '../../components/feedback/SoundSettings';
 import { useFeedback } from '../../components/feedback/useFeedback';
 import { useLevelMusic } from '../../components/feedback/useLevelMusic';
 import { useProgress, useUnlocked } from '../../components/progress/ProgressProvider';
-import { aimAt, swingTo } from '../../game/aim';
+import { aimAt, aimBy, swingTo } from '../../game/aim';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
   OPEN_DRAG, atSolution, hintSlots, leverEnd, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
@@ -586,7 +586,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   };
 
   // One finger on the board: rotate the selected piece by its end handle, move a piece, or aim (from the
-  // launcher, the dotted line, or a swipe anywhere on empty board: the gun points at the finger). A tap during a flight skips to the end of the shot (the whole path is drawn and the
+  // launcher, the dotted line, or a swipe anywhere on empty board, which moves the aim along with the finger). A tap during a flight skips to the end of the shot (the whole path is drawn and the
   // result counts), and does nothing else. There's no aiming once the level is won.
   // A bar dragged somewhere it isn't allowed (game/placement) shows red, and snaps back to the last
   // allowed spot when the finger lifts.
@@ -613,11 +613,18 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
     } else if (phase === 'move') {
       const d = drag.current;
       if (!d) return;
-      if (d.mode === 'open') {
-        // A swipe on empty board: once it's clearly a drag, the gun follows the finger.
-        if (Math.hypot(p.x - d.x, p.y - d.y) < OPEN_DRAG) return;
-        drag.current = { mode: 'aim' };
-        aimTo(p);
+      if (d.mode === 'open' || d.mode === 'pan') {
+        // A swipe on empty board: once it's clearly a drag, the aim moves along with the finger from where it was (more power
+        // away from the gun, less towards it, round it turns). Step by step from the last point, so after hitting a limit the
+        // finger coming back responds at once.
+        if (d.mode === 'open' && Math.hypot(p.x - d.x, p.y - d.y) < OPEN_DRAG) return;
+        const from = d.mode === 'pan' ? d : { angle, power };
+        const a = aimBy(from.angle, from.power, p.x - d.x, p.y - d.y);
+        // A slow finger's tiny steps can round to no change (0.1 steps): keep the old point until they add up to one. (A bigger
+        // move with no change is pushing past a limit: that one moves the point, so coming back responds at once.)
+        if (d.mode === 'pan' && a.angle === d.angle && a.power === d.power && Math.hypot(p.x - d.x, p.y - d.y) < 3) return;
+        drag.current = { mode: 'pan', x: p.x, y: p.y, ...a };
+        setAim(a.angle, a.power);
       }
       else if (d.mode === 'aim') aimTo(p);
       else if (d.mode === 'swing') {
@@ -647,7 +654,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
         setSelected(null);
         return;
       }
-      if (tutorial && (d?.mode === 'aim' || d?.mode === 'swing')) {
+      if (tutorial && (d?.mode === 'aim' || d?.mode === 'swing' || d?.mode === 'pan')) {
         const t = snapAim(level, angle, power);
         setAim(t.angle, t.power);
       }

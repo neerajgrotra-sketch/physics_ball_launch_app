@@ -131,8 +131,10 @@ export type Drag =
   | { mode: 'move'; k: number; ox: number; oy: number; axis?: Axis }
   | { mode: 'aim' }
   | { mode: 'swing'; grab: LineGrab }
-  /** Empty board: a tap deselects; once the finger has moved OPEN_DRAG it aims the gun at the finger (becomes an 'aim' drag). */
-  | { mode: 'open'; x: number; y: number };
+  /** Empty board: a tap deselects; once the finger has moved OPEN_DRAG it becomes a 'pan'. */
+  | { mode: 'open'; x: number; y: number }
+  /** A swipe on empty board moving the aim with the finger (game/aim aimBy): the finger's last point and the aim there. */
+  | { mode: 'pan'; x: number; y: number; angle: number; power: number };
 
 /** How far (world units) a finger on empty board must move before it aims, so a tap that only deselects never nudges the aim. */
 export const OPEN_DRAG = 8;
