@@ -74,6 +74,15 @@ the ceiling of this layout; the sensible next step for variety is a *different* 
 - **Level locks.** Built but switched off while levels are being tested (`LOCK_LEVELS` in
   `game/progress.ts`): winning a level opens the next, locked cards show a lock. Turn on before release.
 - **Level list paging** (1–100, 101–200…) once there are many levels.
+- **Languages (proposed, not built).** Settings → Language: Auto (the phone's language) plus English, Français, Español, remembered
+  like the board theme. What to translate: about 320 short UI strings (buttons, win and help cards, settings, shop, notices, goal
+  line, counter), the tour and tutorial captions, the 26 level names and hints, the 28 daily names, and the share hooks (written to
+  sound natural, not word for word; golf names like Birdie usually stay English). Work: move every string into one table with keys
+  and a `t()` lookup (the bulk, about a day; later languages are then a few hours each), plurals and number/date formats per
+  language, a small-phone check for French/Spanish running 20–30% longer, and a test that fails if a language misses a key. Barlow
+  already covers French, Spanish, Portuguese, German and Italian; Japanese, Chinese, Korean, Arabic (also right-to-left) or Hindi
+  need extra fonts, so later. A native speaker should read each language once before launch. The App Store listing is translated
+  separately, with the store build.
 - **Reset the level (proposed, not built).** One tap back to the starting point mid-puzzle: every bar back in the tray, the aim back
   to 52° / power 45, trails cleared, any selected bar or card closed. Keeps the tries count and the "used help" mark (so it can't hide
   failed tries or dodge the hint rules) and doesn't touch hints. Undoable as one Undo step, with a short "Board reset · Undo" message,
