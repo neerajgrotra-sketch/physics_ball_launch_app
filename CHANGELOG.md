@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.32.2
+
+- The selected bar's trash can now sits right beside its name ("Bar 1 🗑") above the rotation slider, so it reads as removing that
+  bar, instead of at the far right of the row.
+
 ## 0.32.1
 
 - Fix: the fading messages (hints given, "+3 💡", "Copied!", the Solve nudge) left an empty outlined box behind on iPhone Safari.
