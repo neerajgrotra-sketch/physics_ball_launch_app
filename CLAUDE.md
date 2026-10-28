@@ -202,7 +202,10 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
 - Level locks are on (`LOCK_LEVELS`): a level opens when the one before is won, and level 2 once the tutorial is finished or skipped
   (`useUnlocked`). Settings (⚙ in a level, "Settings" on the levels screen) has a Testing section: "Unlock all levels" and "Reset progress".
   It has a "Your ball" picker: ball skins (`game/skins.ts`, drawn by `components/board/BallArt.tsx`), a look only, never the physics ball's
-  size or bounce; designs roll as they fly (`spinAlong`). It also has an optional "About you" (name, age, gender, country; `game/profile.ts`), stored on the device only. Planned work is in `BACKLOG.md`.
+  size or bounce; designs roll as they fly (`spinAlong`). And a "Your gun" picker (`game/guns.ts` GUNS: Classic, Brass cannon, Pirate cannon, Blaster,
+  Slingshot, Pool cue; `components/settings/GunPicker.tsx`), also a look only: the ball always leaves from LAUNCHER. Each design is a
+  list of shapes from `gunShapes(gun, angle, power)` that every drawing uses: the board (`GunArt`), the level cards (SVG), the share
+  poster (`drawGun`) and the picker. The slingshot's band and the cue pull back with power. The intro keeps the classic gun. It also has an optional "About you" (name, age, gender, country; `game/profile.ts`), stored on the device only. Planned work is in `BACKLOG.md`.
 
 ## Visual identity
 

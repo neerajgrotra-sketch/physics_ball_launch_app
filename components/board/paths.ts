@@ -141,3 +141,11 @@ export function handleArcPath(x: number, y: number): SkPath {
   p.addArc({ x: x - 5, y: y - 5, width: 10, height: 10 }, start, sweep);
   return p.detach();
 }
+
+/** A closed polygon through `points` (a gun part, game/guns.ts). */
+export function polygonPath(points: [number, number][]): SkPath {
+  const p = Skia.PathBuilder.Make();
+  points.forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y)));
+  p.close();
+  return p.detach();
+}

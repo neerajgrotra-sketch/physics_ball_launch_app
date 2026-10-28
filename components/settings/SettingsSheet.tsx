@@ -8,12 +8,13 @@ import { useSoundSettings } from '../feedback/SoundSettings';
 import { useProgress } from '../progress/ProgressProvider';
 import { VERSION_LABEL } from '../version';
 import { BallPicker } from './BallPicker';
+import { GunPicker } from './GunPicker';
 import { ThemePicker } from './ThemePicker';
 import { useDaily } from '../daily/DailyProvider';
 import { useHintWallet } from '../hints/HintWallet';
 
 /**
- * The ⚙ sheet: music, tips, the tutorial, the ball's look (BallPicker), the board theme (ThemePicker), "About you" (optional details kept on this device, game/profile.ts) and a Testing section
+ * The ⚙ sheet: music, tips, the tutorial, the ball's look (BallPicker), the gun's (GunPicker), the board theme (ThemePicker), "About you" (optional details kept on this device, game/profile.ts) and a Testing section
  * (open every level, or start over from level 1). The full settings screen is in BACKLOG.md.
  */
 export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, onShowTour }: {
@@ -90,6 +91,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
             </View>
 
             <BallPicker />
+            <GunPicker />
 
             <ThemePicker />
 

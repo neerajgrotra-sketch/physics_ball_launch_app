@@ -11,10 +11,11 @@ import { useColors, type Palette } from '../../theme/colors';
 import { composeShareCard, type ShareCard } from './shareCard';
 import { LIGHT } from '../../theme/palettes';
 import {
-  blockPath, padChevrons, crossPath, hazardPaths, deadPaths, gridPaths, handleArcPath, moveIconPath, launcherPath, linePath, polyPath,
+  blockPath, padChevrons, crossPath, hazardPaths, deadPaths, gridPaths, handleArcPath, moveIconPath, linePath, polyPath,
 } from './paths';
 import type { Flight } from './usePlayback';
 import { BallArt } from './BallArt';
+import { GunArt } from './GunArt';
 import { spinAlong, type BallSkin } from '../../game/skins';
 import { useBallSkin } from '../settings/BallSkin';
 import { leverLine, moveArms, type End } from '../../game/pieces';
@@ -102,7 +103,6 @@ export function Board(props: BoardProps) {
   const pads = useMemo(() => (level.pads ?? []).map((b) => ({ body: blockPath(blockCorners(b)), chevrons: padChevrons(b) })), [level]);
   const blocks = useMemo(() => (level.blocks ?? []).map((b) => blockPath(blockCorners(b))), [level]);
   const trailPaths = useMemo(() => trails.map((t) => polyPath(t.path, t.path.length, t.jumps)), [trails]);
-  const launcher = useMemo(() => launcherPath(L.x, L.y), []);
   const flightPath = useMemo(() => (flight ? polyPath(flight.path, flight.path.length, flight.jumps) : null), [flight?.path]);
 
   const scale = box.w && box.h ? Math.min(box.w / W, box.h / H) : 0;
@@ -133,7 +133,7 @@ export function Board(props: BoardProps) {
       try {
         if (!hudFont || !subFont) return null;
         // Always the game's own graph-paper look, whatever board theme the player picked: it's the game's calling card.
-        return composeShareCard(level, pieces, trails, card, hudFont, subFont, LIGHT);
+        return composeShareCard(level, pieces, trails, card, hudFont, subFont, LIGHT, gun, power);
       } catch { return null; }
     };
   }
@@ -201,7 +201,6 @@ export function Board(props: BoardProps) {
   const ringO = useDerivedValue(() => 0.9 * (1 - burst.value));
   const [bx, by] = deadEnd ?? [0, 0];
 
-  const ang = (angle * Math.PI) / 180;
   // Aim preview: the first 0.3 s of free flight only. Never preview bounces.
   const aimDots = !flight && !done ? aimPreview(angle, power) : [];
 
@@ -209,7 +208,7 @@ export function Board(props: BoardProps) {
   let ball: Vec = [L.x, L.y];
   if (done && last) ball = last.path[last.path.length - 1];
   // The player's ball skin; after a win the ball keeps the turn it rolled to, so a design doesn't snap back upright.
-  const { skin } = useBallSkin();
+  const { skin, gun } = useBallSkin();
   const restTurn = useMemo(() => (done && last ? spinAlong(last.path, R).at(-1) ?? 0 : 0), [done, last]);
 
   const sel = selected != null ? pieces[selected] : null;
@@ -381,12 +380,8 @@ export function Board(props: BoardProps) {
                   <Text key={`n${i}`} x={l.x} y={l.y} text={l.text} font={labelFont} color={illegal[i] ? c.red : c.pencil} />
                 ))}
 
-                {/* launcher */}
-                <Path path={launcher} color={c.muted} />
-                <Path
-                  path={line(L.x, L.y, L.x + Math.cos(ang) * 26, L.y - Math.sin(ang) * 26)}
-                  color={c.ink} style="stroke" strokeWidth={6} strokeCap="round"
-                />
+                {/* launcher: the player's gun (game/guns.ts), aimed */}
+                <GunArt gun={gun} angle={angle} power={power} c={c} />
                 {aimDots.map((d, i) => (
                   <Circle key={i} cx={d.x} cy={d.y} r={2} color={c.ink} opacity={d.a} />
                 ))}

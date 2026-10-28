@@ -3,7 +3,9 @@ import {
   BALL_RADIUS, LAUNCHER, PORTAL_RADIUS, SPIKE_LENGTH, WORLD, blockCorners, glassBox, pieceEnds, type Level, type PlacedPiece, type Vec,
 } from '../../physics';
 import type { Palette } from '../../theme/colors';
-import { blockPath, deadPaths, gridPaths, hazardPaths, launcherPath, linePath, polyPath } from './paths';
+import { DEFAULT_GUN, gunShapes, type GunSkin } from '../../game/guns';
+import { drawGun } from './GunArt';
+import { blockPath, deadPaths, gridPaths, hazardPaths, linePath, polyPath } from './paths';
 
 /**
  * What the shared picture says (game/share.ts shareCard): the title ("LEVEL 3 COMPLETE!"), the stars (null: won with help), the
@@ -74,6 +76,7 @@ function bounceSpots(path: Vec[]): Vec[] {
  */
 export function composeShareCard(
   level: Level, pieces: PlacedPiece[], trails: ShareTrail[], card: ShareCard, bold: SkFont, medium: SkFont, c: Palette,
+  gun: GunSkin = DEFAULT_GUN, power = 45,
 ): string | null {
   const surface = Skia.Surface.Make(CW, CH);
   if (!surface) return null;
@@ -138,11 +141,15 @@ export function composeShareCard(
   cv.drawPath(linePath(g.l - 8, g.base, g.r + 8, g.base), stroke(c.red, 3));
   for (const p of pieces) { const [x1, y1, x2, y2] = pieceEnds(p); cv.drawPath(linePath(x1, y1, x2, y2), stroke(c.pencil, 6)); }
   // The gun, pointing the way the winning shot left, and the ball resting where it ended.
+  // The player's gun (game/guns.ts), pointing the way the winning shot left; then the ball resting where it ended.
   const win = trails.find((t) => t.ok) ?? trails[trails.length - 1];
+  let aim = 52;
   if (win && win.path.length > 3) {
     const [ax, ay] = win.path[0], [bx, by] = win.path[3];
-    const a = Math.atan2(by - ay, bx - ax);
-    cv.drawPath(linePath(LAUNCHER.x, LAUNCHER.y, LAUNCHER.x + Math.cos(a) * 22, LAUNCHER.y + Math.sin(a) * 22), stroke(c.ink, 6));
+    aim = (Math.atan2(ay - by, bx - ax) * 180) / Math.PI;
+  }
+  drawGun(cv, gunShapes(gun, aim, power, c));
+  if (win && win.path.length > 3) {
     if (win.ok) {
       for (const [x, y] of bounceSpots(win.path)) {
         if (x > g.l - 4 && x < g.r + 4 && y > g.rim - 4) continue; // not the rattle down inside the glass
@@ -150,7 +157,6 @@ export function composeShareCard(
       }
     }
   }
-  cv.drawPath(launcherPath(LAUNCHER.x, LAUNCHER.y), fill(c.muted));
   if (win) {
     const [ex, ey] = win.path[win.path.length - 1];
     cv.drawCircle(ex, ey, BALL_RADIUS, fill(c.steel));

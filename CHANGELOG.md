@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.40.0
+
+- Your gun: Settings has a "Your gun" picker under "Your ball", with six designs: Classic, Brass cannon (on a wooden wheel),
+  Pirate cannon (on a cart), Blaster (glowing tip), Slingshot (the band stretches back with the power) and Pool cue (draws back
+  with the power). A look only: every gun fires exactly the same shot. The chosen gun shows on the board, on the level cards and on
+  the share poster, and is remembered. The intro keeps the classic gun.
+
 ## 0.39.3
 
 - Fix: on the phone the music could play twice, and the Music switch didn't stop it. Since 0.39.0 the one music player was made
