@@ -15,7 +15,7 @@ const GRACE_MS = 700;
 function playerFor(track: number): AudioPlayer {
   if (!shared || shared.track !== track) {
     try { shared?.player.remove(); } catch { /* already gone */ }
-    shared = { player: createAudioPlayer(track), track };
+    shared = { player: createAudioPlayer(track, { keepAudioSessionActive: true }), track }; // pausing doesn't shut the audio session down
     shared.player.loop = true;
   }
   return shared.player;

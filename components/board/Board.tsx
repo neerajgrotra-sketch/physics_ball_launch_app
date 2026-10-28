@@ -107,6 +107,22 @@ export function Board(props: BoardProps) {
 
   const scale = box.w && box.h ? Math.min(box.w / W, box.h / H) : 0;
 
+  // Shapes are kept and reused across redraws: the board redraws on every finger movement during a drag, and building ~15 new
+  // Skia paths each time (floor, glass, every bar, the handles, the gun) piled up native memory the JS garbage collector doesn't
+  // see, so on a phone dragging got slower the longer you played. Now only what actually moved is built again.
+  const shapes = useRef(new Map<string, SkPath>());
+  const shape = (key: string, make: () => SkPath) => {
+    const kept = shapes.current;
+    let path = kept.get(key);
+    if (!path) {
+      if (kept.size > 240) kept.clear(); // a drag leaves a trail of old positions: drop them now and then
+      path = make();
+      kept.set(key, path);
+    }
+    return path;
+  };
+  const line = (x1: number, y1: number, x2: number, y2: number) => shape(`l${x1},${y1},${x2},${y2}`, () => linePath(x1, y1, x2, y2));
+
   // On web, Safari can draw Skia's first frame before its WebGL surface is ready, and Skia only draws
   // again on its next update, so the board stayed blank until the first touch. Ask for a few more frames
   // just after the board appears.
@@ -256,7 +272,7 @@ export function Board(props: BoardProps) {
 
                 {/* floor and board edges bounce: solid ink. Fixed obstacles are dead: grey and hatched. */}
                 <Rect x={1.5} y={1.5} width={W - 3} height={GROUND - 1.5} color={c.ink} style="stroke" strokeWidth={3} />
-                <Path path={linePath(0, GROUND, W, GROUND)} color={c.ink} style="stroke" strokeWidth={4} strokeCap="round" />
+                <Path path={line(0, GROUND, W, GROUND)} color={c.ink} style="stroke" strokeWidth={4} strokeCap="round" />
                 {/* Hazards first, then blocks over them: a thin hazard laid along a block's edge shows spikes on the outside only. */}
                 {hazards.map((h, i) => (
                   <Group key={`hz${i}`}>
@@ -284,7 +300,7 @@ export function Board(props: BoardProps) {
 
                 {/* where the last shot died */}
                 {deadEnd && (
-                  <Path path={crossPath(deadEnd[0], deadEnd[1])} color={c.red} style="stroke" strokeWidth={2} strokeCap="round" />
+                  <Path path={shape(`x${deadEnd[0]},${deadEnd[1]}`, () => crossPath(deadEnd[0], deadEnd[1]))} color={c.red} style="stroke" strokeWidth={2} strokeCap="round" />
                 )}
 
                 {(level.portals ?? []).map((pr, n) => (
@@ -304,9 +320,9 @@ export function Board(props: BoardProps) {
 
                 {/* glass */}
                 <Rect x={g.l} y={g.rim} width={g.r - g.l} height={g.base - g.rim} color={c.red} opacity={0.1} />
-                <Path path={linePath(g.l, g.rim, g.l, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
-                <Path path={linePath(g.r, g.rim, g.r, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
-                <Path path={linePath(g.l - 8, g.base, g.r + 8, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
+                <Path path={line(g.l, g.rim, g.l, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
+                <Path path={line(g.r, g.rim, g.r, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
+                <Path path={line(g.l - 8, g.base, g.r + 8, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
 
                 {dropZone !== 'off' && (
                   <Group>
@@ -320,8 +336,8 @@ export function Board(props: BoardProps) {
                   const [x1, y1, x2, y2] = pieceEnds(p);
                   return (
                     <Group key={i}>
-                      {(p.restitution ?? 0) > 1 && <Path path={linePath(x1, y1, x2, y2)} color={c.ink} style="stroke" strokeWidth={10} strokeCap="round" />}
-                      <Path path={linePath(x1, y1, x2, y2)} color={illegal[i] ? c.red : (p.restitution ?? 0) > 1 ? '#ffb020' : c.pencil} style="stroke" strokeWidth={6} strokeCap="round" />
+                      {(p.restitution ?? 0) > 1 && <Path path={line(x1, y1, x2, y2)} color={c.ink} style="stroke" strokeWidth={10} strokeCap="round" />}
+                      <Path path={line(x1, y1, x2, y2)} color={illegal[i] ? c.red : (p.restitution ?? 0) > 1 ? '#ffb020' : c.pencil} style="stroke" strokeWidth={6} strokeCap="round" />
                     </Group>
                   );
                 })}
@@ -329,8 +345,8 @@ export function Board(props: BoardProps) {
                   const [x1, y1, x2, y2] = pieceEnds(g);
                   return (
                     <Group key={`gh${i}`}>
-                      <Path path={linePath(x1, y1, x2, y2)} color={c.red} style="stroke" strokeWidth={16} strokeCap="round" opacity={0.14} />
-                      <Path path={linePath(x1, y1, x2, y2)} color={c.red} style="stroke" strokeWidth={9} strokeCap="round" opacity={0.85}>
+                      <Path path={line(x1, y1, x2, y2)} color={c.red} style="stroke" strokeWidth={16} strokeCap="round" opacity={0.14} />
+                      <Path path={line(x1, y1, x2, y2)} color={c.red} style="stroke" strokeWidth={9} strokeCap="round" opacity={0.85}>
                         <DashPathEffect intervals={[10, 8]} />
                       </Path>
                     </Group>
@@ -339,7 +355,7 @@ export function Board(props: BoardProps) {
                 {sel && selEnds && (
                   <Group>
                     <Path
-                      path={linePath(selEnds[0], selEnds[1], selEnds[2], selEnds[3])}
+                      path={line(selEnds[0], selEnds[1], selEnds[2], selEnds[3])}
                       color={selColor} style="stroke" strokeWidth={22} strokeCap="round" opacity={0.25}
                     />
                     {leverDots.map((d, i) => <Circle key={`lv${i}`} cx={d.x} cy={d.y} r={2.6} color={selColor} />)}
@@ -348,7 +364,7 @@ export function Board(props: BoardProps) {
                       <Group key={`grip${j}`}>
                         <Circle cx={tx} cy={ty} r={11} color={c.paper} />
                         <Circle cx={tx} cy={ty} r={11} color={selColor} style="stroke" strokeWidth={2.5} />
-                        <Path path={moveIconPath(tx, ty, j === 0)} color={selColor} style="stroke" strokeWidth={1.8} strokeCap="round" strokeJoin="round" />
+                        <Path path={shape(`m${tx},${ty},${j}`, () => moveIconPath(tx, ty, j === 0))} color={selColor} style="stroke" strokeWidth={1.8} strokeCap="round" strokeJoin="round" />
                       </Group>
                     ))}
                     {otherEnd && <Circle cx={otherEnd[0]} cy={otherEnd[1]} r={6} color={selColor} style="stroke" strokeWidth={1.5} opacity={0.6} />}
@@ -356,7 +372,7 @@ export function Board(props: BoardProps) {
                       <Group>
                         <Circle cx={leverAt[2]} cy={leverAt[3]} r={11} color={c.paper} />
                         <Circle cx={leverAt[2]} cy={leverAt[3]} r={11} color={selColor} style="stroke" strokeWidth={2.5} />
-                        <Path path={handleArcPath(leverAt[2], leverAt[3])} color={selColor} style="stroke" strokeWidth={2.5} strokeCap="round" />
+                        <Path path={shape(`h${leverAt[2]},${leverAt[3]}`, () => handleArcPath(leverAt[2], leverAt[3]))} color={selColor} style="stroke" strokeWidth={2.5} strokeCap="round" />
                       </Group>
                     )}
                   </Group>
@@ -368,7 +384,7 @@ export function Board(props: BoardProps) {
                 {/* launcher */}
                 <Path path={launcher} color={c.muted} />
                 <Path
-                  path={linePath(L.x, L.y, L.x + Math.cos(ang) * 26, L.y - Math.sin(ang) * 26)}
+                  path={line(L.x, L.y, L.x + Math.cos(ang) * 26, L.y - Math.sin(ang) * 26)}
                   color={c.ink} style="stroke" strokeWidth={6} strokeCap="round"
                 />
                 {aimDots.map((d, i) => (

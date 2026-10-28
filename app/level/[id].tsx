@@ -593,7 +593,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   // Dragging a bar down past the floor takes it off the board: a red strip shows where, and letting go there removes it.
   const armedRef = useRef(false);
   const [dropZone, setDropZone] = useState<'off' | 'hint' | 'armed'>('off');
-  const onTouch = (phase: TouchPhase, p: { x: number; y: number }) => {
+  const handleTouch = (phase: TouchPhase, p: { x: number; y: number }) => {
     touching.current = phase !== 'up';
     if (phase === 'up') poke();
     if (phase === 'down') {
@@ -668,6 +668,31 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
       }
     }
   };
+
+  // Finger movements are handled at most once per screen frame, using the latest position: a phone sends them up to 120 times a
+  // second, and when each redraw takes longer than that they queued up and the bar or the gun trailed further and further behind the
+  // finger. Down and up go straight through (a pending movement first, so nothing is lost).
+  const handleTouchRef = useRef(handleTouch);
+  handleTouchRef.current = handleTouch;
+  const pendingMove = useRef<{ x: number; y: number } | null>(null);
+  const moveFrame = useRef<number | null>(null);
+  const flushMove = () => {
+    if (moveFrame.current != null) cancelAnimationFrame(moveFrame.current);
+    moveFrame.current = null;
+    const q = pendingMove.current;
+    pendingMove.current = null;
+    if (q) handleTouchRef.current('move', q);
+  };
+  const onTouch = (phase: TouchPhase, p: { x: number; y: number }) => {
+    if (phase === 'move') {
+      pendingMove.current = p;
+      if (moveFrame.current == null) moveFrame.current = requestAnimationFrame(flushMove);
+      return;
+    }
+    flushMove();
+    handleTouchRef.current(phase, p);
+  };
+  useEffect(() => () => { if (moveFrame.current != null) cancelAnimationFrame(moveFrame.current); }, []);
 
   // The selected bar (if it's on the board) gets rotation controls in place of the aim rows.
   const selectedBar = selected != null && slots[selected]?.onBoard ? selected : null;

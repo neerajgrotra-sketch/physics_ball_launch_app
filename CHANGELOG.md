@@ -4,6 +4,16 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.39.2
+
+- Smoother bar and gun dragging on phones, and no more slowing down the longer you play:
+  - Finger movements are handled at most once per screen frame, using the latest position. iPhones send them up to 120 times a
+    second; when a redraw took longer than that they queued up, and the bar or gun trailed further and further behind the finger.
+  - The board reuses its shapes across redraws instead of building about 15 new ones per finger movement (floor, glass, each bar,
+    the handles, the gun). They lived in native memory the JS garbage collector doesn't count, so they piled up during play.
+  - The sound and music players keep the iPhone's audio session open: every pause used to shut it down and the next play start it up.
+- (The sliders always felt fine because their knob is moved by the phone itself, not by the game's code.)
+
 ## 0.39.1
 
 - Fix: on a first launch, "Let's go" showed the level list for a moment and then jumped to "What should we call you?". The tour

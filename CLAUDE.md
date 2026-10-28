@@ -173,6 +173,10 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   re-measure on a window resize, so `AimControls` sends that resize at the start of each touch on a slider
   (it was reading touches from the wrong place when first laid out mid-screen-transition).
 - Moving a bar so its turn handle's tip would hang off the board puts the handle on the bar's other end.
+- **Smooth drags on phones:** board finger movements are handled at most once per frame with the latest position (`onTouch` in the
+  level screen coalesces them; a queue of 120 Hz moves made bars and the gun trail the finger), and the board reuses its Skia paths
+  across redraws (`shape`/`line` in `Board.tsx`: building ~15 new paths per redraw piled up native memory and got slower the longer
+  you played). Don't build Skia paths inline in the board's JSX; go through `shape()`.
 
 - **Levels screen** (`app/index.tsx`): two-column cards (a finished tutorial shows "Tutorial ✓" and its winning shot, not a lock). Won levels and the next one to play show a drawing
   of the level (launcher, glass and, once won, the player's last unassisted winning shot (`components/levels/ShotThumbnail.tsx`, SVG, re-simulated from the stored

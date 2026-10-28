@@ -43,7 +43,9 @@ class Pool {
   private voices: Voice[];
   constructor(source: number, size: number) {
     this.voices = Array.from({ length: size }, () => {
-      const player = createAudioPlayer(source);
+      // keepAudioSessionActive: by default every pause() also shuts the iPhone's audio session down (and the next play() starts it
+      // up again), and these pause after every sound.
+      const player = createAudioPlayer(source, { keepAudioSessionActive: true });
       const voice: Voice = { player, busy: false, started: 0 };
       player.addListener('playbackStatusUpdate', (st) => {
         if (!st.didJustFinish) return;
