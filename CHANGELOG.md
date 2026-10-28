@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.39.3
+
+- Fix: on the phone the music could play twice, and the Music switch didn't stop it. Since 0.39.0 the one music player was made
+  with `createAudioPlayer` and kept in a module variable; a reload of the app's code (in Expo Go, after a git pull) left that
+  player playing on its own, out of reach, and the next level started a second. The music player now lives in one component in
+  the root layout (`MusicHost`, `useAudioPlayer`), which React releases on any reload, and the level screens only say when they
+  want music (`musicDemand.ts`). It still carries on across levels. The web keeps its own player, now also safe across reloads.
+
 ## 0.39.2
 
 - Smoother bar and gun dragging on phones, and no more slowing down the longer you play:
