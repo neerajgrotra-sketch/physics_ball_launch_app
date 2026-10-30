@@ -1,5 +1,7 @@
 import { useAudioPlayer } from 'expo-audio';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { localSound, setAudioModeOnce, sourceOf } from './localAudio';
+import { warmSounds } from './useFeedback';
 import { MUSIC_DUCKED, MUSIC_VOLUME, trackFor } from './music';
 import { musicDemand, onMusicDemand } from './musicDemand';
 
@@ -11,7 +13,22 @@ import { musicDemand, onMusicDemand } from './musicDemand';
  * Renders nothing. Web plays music through Web Audio instead (MusicHost.web.tsx, useLevelMusic.web.ts).
  */
 export function MusicHost() {
-  const player = useAudioPlayer(trackFor(''), { keepAudioSessionActive: true });
+  // The track is played from a file on the phone (localAudio.ts): in Expo Go the bundled one is a stream from the PC, which stalled.
+  // No player exists until that file is ready; the music simply starts a moment later. The effects are got ready at the same time.
+  const [track, setTrack] = useState<string | number | null>(null);
+  useEffect(() => {
+    let live = true;
+    setAudioModeOnce();
+    warmSounds().catch(() => {});
+    localSound(trackFor('')).then((f) => { if (live) setTrack(f); });
+    return () => { live = false; };
+  }, []);
+  return track == null ? null : <MusicPlayer source={sourceOf(track)} />;
+}
+
+/** The player itself, made once the track is a file on the phone. */
+function MusicPlayer({ source }: { source: number | { uri: string } }) {
+  const player = useAudioPlayer(source, { keepAudioSessionActive: true });
 
   useEffect(() => {
     const apply = () => {

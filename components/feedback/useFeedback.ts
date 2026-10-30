@@ -1,8 +1,9 @@
-import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
+import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef } from 'react';
 import type { Hit } from '../../physics';
 import { feedbackPrefs } from './SoundSettings';
+import { localSound, setAudioModeOnce, sourceOf } from './localAudio';
 
 // Sounds come from scripts/make-sounds.mjs. Re-run it to change them.
 const SOUNDS = {
@@ -41,7 +42,7 @@ type SoundName = keyof typeof SOUNDS;
 interface Voice { player: AudioPlayer; busy: boolean; started: number }
 class Pool {
   private voices: Voice[];
-  constructor(source: number, size: number) {
+  constructor(source: number | { uri: string }, size: number) {
     this.voices = Array.from({ length: size }, () => {
       // keepAudioSessionActive: by default every pause() also shuts the iPhone's audio session down (and the next play() starts it
       // up again), and these pause after every sound.
@@ -71,24 +72,37 @@ class Pool {
   }
 }
 
-/** One set of players for the whole app (every screen shares them), made the first time a sound is needed. */
+/**
+ * One set of players for the whole app (every screen shares them). warmSounds() makes them at app start from files on the phone
+ * (localAudio.ts), before any music plays, so ~25 players aren't being created mid-level; a sound needed before that is ready uses
+ * the bundled source as before.
+ */
 let pools: Record<SoundName, Pool> | null = null;
 const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 3, wall: 3, glass: 3, star: 3 };
+const makePools = (src: (name: SoundName) => number | { uri: string }) => Object.fromEntries(
+  (Object.keys(SOUNDS) as SoundName[]).map((name) => [name, new Pool(src(name), POOL_SIZE[name] ?? 2)]),
+) as Record<SoundName, Pool>;
 function sounds(): Record<SoundName, Pool> {
-  if (!pools) {
-    pools = Object.fromEntries(
-      (Object.keys(SOUNDS) as SoundName[]).map((name) => [name, new Pool(SOUNDS[name], POOL_SIZE[name] ?? 2)]),
-    ) as Record<SoundName, Pool>;
-  }
+  if (!pools) pools = makePools((name) => SOUNDS[name]);
   return pools;
+}
+let warming: Promise<void> | null = null;
+export function warmSounds(): Promise<void> {
+  warming ??= (async () => {
+    setAudioModeOnce();
+    const names = Object.keys(SOUNDS) as SoundName[];
+    const files = await Promise.all(names.map((n) => localSound(SOUNDS[n])));
+    if (!pools) pools = makePools((name) => sourceOf(files[names.indexOf(name)]));
+  })();
+  return warming;
 }
 
 export function useFeedback() {
   const barHits = useRef(0);
 
   useEffect(() => {
-    // Play even with the silent switch on (it muted every sound), still mixing with other audio.
-    setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => {});
+    // Play even with the silent switch on (it muted every sound), still mixing with other audio. Once per app run (localAudio.ts).
+    setAudioModeOnce();
   }, []);
 
   return {

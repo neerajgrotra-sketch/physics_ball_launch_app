@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.44.2
+
+- Phone music no longer stutters as a level starts. In Expo Go every bundled sound came from the PC's dev server, and iOS played
+  the music as a network stream, so it stalled while it buffered (worst on the first loops). Music and effects now play from
+  files on the phone (`components/feedback/localAudio.ts`, downloaded once at app start). The iPhone audio mode is set once
+  per app run instead of each time a level opened (each call re-applied the audio session under the playing music), and the
+  effect players are made at app start, not mid-level on the first bounce.
+
 ## 0.44.1
 
 - The levels screen opens on the level to play next (highlighted, about a third of the way down), not the top of the list,
