@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { DRAFTS_KEY, parseDrafts, type Draft, type DraftsByLevel } from '../../game/drafts';
 import { TUTORIAL_ID } from '../../game/coach';
 import { FRESH_KEY, FRESH_VERSION, LOCK_LEVELS, UNLOCK_ALL_KEY, UNLOCKED_KEY, parseUnlocked, unlockAfterWin } from '../../game/progress';
 import { BEST_KEY, better, parseBest, type Best, type BestByLevel } from '../../game/score';
@@ -28,13 +29,18 @@ interface Progress {
   setUnlockAll: (on: boolean) => void;
   /** Testing only (settings): forget every win, star and saved shot, and lock everything but level 1 again. */
   resetProgress: () => void;
+  /** A level left part-way (game/drafts.ts), keyed by level id or `daily-N`: read when it opens, so the player picks up where they were. */
+  draftFor: (key: string) => Draft | undefined;
+  /** Save (or with null, forget) a level's draft. Kept in memory at once and written to storage shortly after. */
+  saveDraft: (key: string, draft: Draft | null) => void;
 }
 
 const ProgressContext = createContext<Progress>({
   unlocked: 0, best: {}, shots: {}, won: () => {}, unlockAll: false, setUnlockAll: () => {}, resetProgress: () => {},
+  draftFor: () => undefined, saveDraft: () => {},
 });
 
-const PROGRESS_KEYS = [UNLOCKED_KEY, BEST_KEY, SHOTS_KEY, ORDER_KEY];
+const PROGRESS_KEYS = [UNLOCKED_KEY, BEST_KEY, SHOTS_KEY, ORDER_KEY, DRAFTS_KEY];
 
 /**
  * Keeps level unlocks and best results in AsyncStorage. Renders nothing until the saved values have
@@ -46,6 +52,9 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const [best, setBest] = useState<BestByLevel>({});
   const [shots, setShots] = useState<ShotsByLevel>({});
   const [unlockAll, setUnlockAllState] = useState(false);
+  // Drafts change on every drag, so they live in a ref (no re-render of the app) and are written at most every 400 ms.
+  const drafts = useRef<DraftsByLevel>({});
+  const writeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -65,6 +74,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         AsyncStorage.getItem(ORDER_KEY).catch(() => null),
         AsyncStorage.getItem(UNLOCK_ALL_KEY).catch(() => null),
       ]);
+      drafts.current = parseDrafts(await AsyncStorage.getItem(DRAFTS_KEY).catch(() => null));
       if (!live) return;
       // The tutorial doesn't score; drop any result an earlier version saved for it.
       const saved = parseBest(b);
@@ -110,8 +120,24 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(UNLOCK_ALL_KEY, on ? '1' : '0').catch(() => {});
   }, []);
 
+  const draftFor = useCallback((key: string) => drafts.current[key], []);
+  const saveDraft = useCallback((key: string, draft: Draft | null) => {
+    if (!draft && !drafts.current[key]) return;
+    const next = { ...drafts.current };
+    if (draft) next[key] = draft;
+    else delete next[key];
+    drafts.current = next;
+    if (writeTimer.current) clearTimeout(writeTimer.current);
+    writeTimer.current = setTimeout(() => {
+      writeTimer.current = null;
+      AsyncStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts.current)).catch(() => {});
+    }, 400);
+  }, []);
+
   const resetProgress = useCallback(() => {
-    AsyncStorage.multiRemove([UNLOCKED_KEY, BEST_KEY, SHOTS_KEY]).catch(() => {});
+    if (writeTimer.current) clearTimeout(writeTimer.current);
+    drafts.current = {};
+    AsyncStorage.multiRemove([UNLOCKED_KEY, BEST_KEY, SHOTS_KEY, DRAFTS_KEY]).catch(() => {});
     setUnlocked(0);
     setBest({});
     setShots({});
@@ -120,7 +146,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   if (unlocked === null) return null;
   const open = LOCK_LEVELS && !unlockAll ? unlocked : LEVELS.length - 1;
   return (
-    <ProgressContext.Provider value={{ unlocked: open, best, shots, won, unlockAll, setUnlockAll, resetProgress }}>
+    <ProgressContext.Provider value={{ unlocked: open, best, shots, won, unlockAll, setUnlockAll, resetProgress, draftFor, saveDraft }}>
       {children}
     </ProgressContext.Provider>
   );

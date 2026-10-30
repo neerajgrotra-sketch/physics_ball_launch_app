@@ -27,6 +27,7 @@ import { useSoundSettings } from '../../components/feedback/SoundSettings';
 import { useFeedback } from '../../components/feedback/useFeedback';
 import { useLevelMusic } from '../../components/feedback/useLevelMusic';
 import { useProgress, useUnlocked } from '../../components/progress/ProgressProvider';
+import { worthKeeping, type Draft, type DraftShot } from '../../game/drafts';
 import { aimBy, swingTo } from '../../game/aim';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
@@ -102,7 +103,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   const c = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { best, won } = useProgress();
+  const { best, won, draftFor, saveDraft } = useProgress();
   const unlocked = useUnlocked();
   const tips = useTips();
   /**
@@ -113,7 +114,17 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   /** The last win was the guided one (no stars or score), for the win card's wording. */
   const [guided, setGuided] = useState(false);
 
-  const [slots, setSlots] = useState<Slot[]>(() => (shot ? shotSlots(level, shot) : emptySlots(level)));
+  // A level left part-way is picked up where it was (game/drafts.ts): bars, aim, tries, and the trails of its last launches,
+  // re-simulated. Not the tutorial (its guide starts from the empty board) or a replayed saved shot.
+  const draftKey = daily ? `daily-${daily.number}` : level.id;
+  const [draft] = useState<Draft | undefined>(() => (shot || level.id === TUTORIAL_ID ? undefined : draftFor(draftKey)));
+  /** The bars and aim behind each trail on the board, so the draft can save them (looked up by the trail's path). */
+  const trailShots = useRef(new WeakMap<Vec[], DraftShot>());
+  const [slots, setSlots] = useState<Slot[]>(() => {
+    if (shot) return shotSlots(level, shot);
+    const fresh = emptySlots(level);
+    return draft ? fresh.map((sl, k) => (draft.bars[k] ? { ...sl, ...draft.bars[k]!, onBoard: true } : sl)) : fresh;
+  });
   const [selected, setSelected] = useState<number | null>(null);
   /** Which end of the selected bar has the rotate lever; picked when a bar is selected, moved by tapping the other end. */
   const [lever, setLever] = useState<End>(2);
@@ -121,9 +132,13 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
     if (k !== selected && k != null && s[k]?.onBoard) setLever(leverEnd(s[k]));
     setSelected(k);
   };
-  const [trails, setTrails] = useState<Trail[]>([]);
-  const [angle, setAngle] = useState(shot?.angle ?? 52);
-  const [power, setPower] = useState(shot?.power ?? 45);
+  const [trails, setTrails] = useState<Trail[]>(() => (draft?.launches ?? []).map((l) => {
+    const res = simulate(buildWorld(level, l.pieces), l.angle, l.power);
+    trailShots.current.set(res.path, l);
+    return { path: res.path, ok: res.success, end: res.end, jumps: res.jumps };
+  }));
+  const [angle, setAngle] = useState(shot?.angle ?? draft?.angle ?? 52);
+  const [power, setPower] = useState(shot?.power ?? draft?.power ?? 45);
   // Undo: every change to the bars or the aim is remembered (a drag or held slider counts as one step), see game/history.
   const history = useRef<History<{ slots: Slot[]; angle: number; power: number }>>(emptyHistory());
   const lastSetup = useRef({ slots, angle, power });
@@ -139,12 +154,12 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
     undoing.current = false;
     lastSetup.current = { slots, angle, power };
   }, [slots, angle, power]);
-  const [tries, setTries] = useState(0);
+  const [tries, setTries] = useState(draft?.tries ?? 0);
   const [done, setDone] = useState(false);
   /** The Solve button took the winning shot, which changes the win card's wording. */
   const [solved, setSolved] = useState(false);
   /** A hint or Solve was used this round: wins earn no stars or score until Start over. */
-  const [helped, setHelped] = useState(false);
+  const [helped, setHelped] = useState(draft?.helped ?? false);
   /** Bumped when Solve is tapped with the answer already on the board: the button shakes and solvedNudge's line fades in over the board. */
   const [solvedTaps, setSolvedTaps] = useState(0);
   /** The Solve button's help card (hint or full solution) is open. */
@@ -153,6 +168,23 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   const [bounces, setBounces] = useState<number | null>(null);
   /** The winning shot exactly as fired (bars, angle, power), so Replay can play it again. */
   const [winShot, setWinShot] = useState<{ angle: number; power: number; slots: Slot[]; bounces: number }>({ angle: 0, power: 0, slots: [], bounces: 0 });
+  // Save the level as it stands whenever it changes, so leaving and coming back resumes it. A win (or Start over) drops the
+  // draft: the level then reopens fresh, its winning shot kept on its card. The tutorial is never saved.
+  useEffect(() => {
+    if (level.id === TUTORIAL_ID) return;
+    if (done) { saveDraft(draftKey, null); return; }
+    const d: Draft = {
+      bars: slots.map((sl) => (sl.onBoard ? { x: sl.x, y: sl.y, deg: sl.deg } : null)),
+      angle, power, tries, helped,
+      launches: trails.map((t) => trailShots.current.get(t.path)).filter((l): l is DraftShot => !!l),
+    };
+    saveDraft(draftKey, worthKeeping(d, { angle: 52, power: 45 }) ? d : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slots, angle, power, tries, helped, trails, done]);
+  const startOver = (guide?: boolean) => {
+    saveDraft(draftKey, null);
+    onReplay(guide);
+  };
   const wallet = useHintWallet();
   const par = level.par ?? level.pieces.length;
   /** Shown in place of the hint after a shot that needs explaining. */
@@ -280,6 +312,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
     const finished = () => {
       charge.value = withTiming(0, { duration: 500 });
       setBounces(res.bounces);
+      trailShots.current.set(res.path, { pieces: placed, angle: a, power: p });
       setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end, jumps: res.jumps }].slice(-MAX_TRAILS));
       // A destroyed ball needs no card: the board shows the burst and the sound plays.
       setNotice(res.end === 'skipped' ? skipNotice(level.pieces.length, numbers, res.touched, { pads: { total: (level.pads ?? []).length, touched: res.padsTouched }, portals: { total: (level.portals ?? []).length, used: res.portalsUsed } }) : null);
@@ -823,9 +856,9 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
             place={cardPlace(glassBox(level.glass).rim, WORLD.height)}
             onStar={(k) => feedback.star(k)}
             text={{ ...winText({ assisted: solved ? 'solve' : helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last }), ...(daily ? { go: 'Share' } : {}) }}
-            onAgain={() => onReplay(false)}
+            onAgain={() => startOver(false)}
             onClose={keepPlaying}
-            onGo={() => (daily ? daily.onShare(snapshot.current) : last ? onReplay(false) : goTo(index + 1))}
+            onGo={() => (daily ? daily.onShare(snapshot.current) : last ? startOver(false) : goTo(index + 1))}
             onShare={daily ? undefined : shareWin}
           />
         )}

@@ -183,6 +183,9 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   across redraws (`shape`/`line` in `Board.tsx`: building ~15 new paths per redraw piled up native memory and got slower the longer
   you played). Don't build Skia paths inline in the board's JSX; go through `shape()`.
 
+- **Resume:** a level left part-way reopens as it was (`game/drafts.ts`, saved by `LevelGame` through `ProgressProvider`'s
+  `saveDraft`, in memory at once and written 400 ms later): bars, aim, tries, `helped`, and the inputs of the trails on the
+  board, re-simulated on return. A win or Start over drops it; the tutorial and replayed saved shots never restore one.
 - **Levels screen** (`app/index.tsx`): two-column cards (a finished tutorial shows "Tutorial ✓" and its winning shot, not a lock). Won levels and the next one to play show a drawing
   of the level (launcher, glass and, once won, the player's last unassisted winning shot (`components/levels/ShotThumbnail.tsx`, SVG, re-simulated from the stored
   inputs in `game/shots.ts`), the level's number and name, best stars and bounces; levels further on show

@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.43.0
+
+- Leaving a level part-way no longer loses it. The bars, the aim, the tries so far and the last few shots' ghost trails are
+  saved as you play (game/drafts.ts), so going back to the levels, moving to another level, or closing the app and coming
+  back picks up exactly where you were. A win or Start over clears it. Hints and Solve used before leaving still count as
+  help. The tutorial always starts fresh. Daily puzzles resume too.
+
 ## 0.42.0
 
 - Locked levels now show a faded drawing of the level (its walls, spikes, pads, portals and glass) under the lock, and say
