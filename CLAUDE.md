@@ -192,7 +192,7 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   of the level (launcher, glass and, once won, the player's last unassisted winning shot (`components/levels/ShotThumbnail.tsx`, SVG, re-simulated from the stored
   inputs in `game/shots.ts`), the level's number and name, best stars and bounces; levels further on show
   a faded drawing of the level under a lock and what's on it (`levelContents`). Each world header has an ⓘ opening its info card
-  (`components/levels/WorldInfo.tsx`; tagline, pitch, features, tip in `game/worlds.ts`): what's new, drawn, a tip, the world's stars and a peek at its last level. The next level is highlighted, and the list opens scrolled to it (a third of the way down) and follows it after a win.
+  (`components/levels/WorldInfo.tsx`; tagline, pitch, features, tip in `game/worlds.ts`): what's new, drawn, a tip, the world's stars and a peek at its last level. Each card's look comes from the real unlocks (`cardStates`: won, won with help, next, open, locked), never stars alone. The next level is highlighted, and the list opens scrolled to it (a third of the way down) and follows it after a win.
   A won card has a Replay button: it opens the level with that shot's bars and aim set up
   (`/level/[id]?replay=1`, `shotSlots`) and plays it once, unscored, then the player carries on from there. Header total score.
 - **Daily puzzle** (`game/daily.ts`, `components/daily/`, `app/daily.tsx`): a card at the top of the levels screen opens today's

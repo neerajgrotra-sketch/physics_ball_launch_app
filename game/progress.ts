@@ -26,6 +26,23 @@ export function unlockAfterWin(unlocked: number, i: number, count: number): numb
   return i + 1 > unlocked && i + 1 < count ? i + 1 : unlocked;
 }
 
+/**
+ * How each level's card looks on the levels screen, from the real unlock state (not from saved stars alone):
+ * - 'won': won with a score (stars, best); 'helped': won with a hint or Solve, which unlocks the next level but saves no stars;
+ * - 'next': the furthest unlocked level, the one to play (highlighted); 'open': opened only by the Testing switch, not yet played;
+ * - 'locked': can't be opened yet. The tutorial counts as won once it's done.
+ * `frontier` is the furthest level the player has unlocked by playing; `open` the furthest that can be opened (the switch included).
+ */
+export type CardState = 'won' | 'helped' | 'next' | 'open' | 'locked';
+export function cardStates(ids: string[], scored: (id: string) => boolean, frontier: number, open: number, tutorialDone: boolean): CardState[] {
+  return ids.map((id, i) => {
+    if (scored(id) || (i === 0 && tutorialDone)) return 'won';
+    if (i < frontier) return 'helped';
+    if (i === frontier) return 'next';
+    return i <= open ? 'open' : 'locked';
+  });
+}
+
 export interface WinText {
   title: string;
   detail: string;

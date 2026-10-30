@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseUnlocked, skipNotice, unlockAfterWin, winText } from './progress';
+import { parseUnlocked, skipNotice, unlockAfterWin, winText, cardStates } from './progress';
 
 describe('parseUnlocked', () => {
   it('reads a stored index and clamps it to the levels that exist', () => {
@@ -69,5 +69,22 @@ describe('skipNotice with spring pads', () => {
   it('adds the pad to the bar message', () => {
     expect(skipNotice(2, [1, 2], [true, false], { pads: { total: 2, touched: [true, true] } }))
       .toBe('In the glass, but it missed Bar 2. It has to bounce off both bars and both spring pads.');
+  });
+});
+
+describe('cardStates', () => {
+  const ids = ['tut', 'a', 'b', 'c', 'd'];
+  it('shows a level won with help as won, and the level it unlocked as the next to play, not locked', () => {
+    // Tutorial done, a won with stars, b won with Solve (no stars): c is unlocked and next.
+    expect(cardStates(ids, (id) => id === 'a', 3, 3, true)).toEqual(['won', 'won', 'helped', 'next', 'locked']);
+  });
+  it('shows levels opened by the Testing switch as open, not locked', () => {
+    expect(cardStates(ids, (id) => id === 'a', 2, 4, true)).toEqual(['won', 'won', 'next', 'open', 'open']);
+  });
+  it('starts a new player on the tutorial', () => {
+    expect(cardStates(ids, () => false, 0, 0, false)).toEqual(['next', 'locked', 'locked', 'locked', 'locked']);
+  });
+  it('has no next level once the last is won', () => {
+    expect(cardStates(ids, () => true, 4, 4, true)).not.toContain('next');
   });
 });

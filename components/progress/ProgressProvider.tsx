@@ -13,8 +13,10 @@ const ORDER_KEY = 'bank-shot/order';
 const ORDER_VERSION = 'worlds-1';
 
 interface Progress {
-  /** Index of the furthest level the player can open. */
+  /** Index of the furthest level the player can open (every level while the Testing switch is on). */
   unlocked: number;
+  /** Index of the furthest level the player has unlocked by playing, whatever the Testing switch says. */
+  frontier: number;
   /** Each level's best unassisted result (stars, score, bounces). */
   best: BestByLevel;
   /** Each level's last unassisted winning shot, drawn in the level list. */
@@ -36,7 +38,7 @@ interface Progress {
 }
 
 const ProgressContext = createContext<Progress>({
-  unlocked: 0, best: {}, shots: {}, won: () => {}, unlockAll: false, setUnlockAll: () => {}, resetProgress: () => {},
+  unlocked: 0, frontier: 0, best: {}, shots: {}, won: () => {}, unlockAll: false, setUnlockAll: () => {}, resetProgress: () => {},
   draftFor: () => undefined, saveDraft: () => {},
 });
 
@@ -146,7 +148,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   if (unlocked === null) return null;
   const open = LOCK_LEVELS && !unlockAll ? unlocked : LEVELS.length - 1;
   return (
-    <ProgressContext.Provider value={{ unlocked: open, best, shots, won, unlockAll, setUnlockAll, resetProgress, draftFor, saveDraft }}>
+    <ProgressContext.Provider value={{ unlocked: open, frontier: unlocked, best, shots, won, unlockAll, setUnlockAll, resetProgress, draftFor, saveDraft }}>
       {children}
     </ProgressContext.Provider>
   );

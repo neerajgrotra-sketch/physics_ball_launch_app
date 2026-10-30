@@ -11,6 +11,7 @@ import { useProgress, useUnlocked } from '../components/progress/ProgressProvide
 import { TUTORIAL_ID } from '../game/coach';
 import { VERSION_LABEL } from '../components/version';
 import { totalScore } from '../game/score';
+import { cardStates } from '../game/progress';
 import { WORLDS, levelContents, worldStartingAt, type World } from '../game/worlds';
 import { LEVELS } from '../levels';
 import { FONTS, useColors } from '../theme/colors';
@@ -31,14 +32,16 @@ export default function LevelSelect() {
   const { tipsOn, tutorialDone, restartTutorial, tourSeen, restartTour } = useTips();
   // The guided tour (components/tour/TourGate, in the root layout) shows once, before anything else; Settings can show it again.
   const openTutorial = () => router.push({ pathname: '/level/[id]', params: { id: TUTORIAL_ID } });
-  const { best, shots } = useProgress();
+  const { best, shots, frontier } = useProgress();
   const unlocked = useUnlocked();
   const total = totalScore(best);
   const [settings, setSettings] = useState(false);
   const [info, setInfo] = useState<World | null>(null);
   const tile = Math.floor((Math.min(width, 560) - 2 * 18 - (COLUMNS - 1) * GAP) / COLUMNS);
-  // The next level to play: the first without a result (the tutorial has none once it's been done).
-  const nextUp = LEVELS.findIndex((l) => !best[l.id] && !(l.id === TUTORIAL_ID && tutorialDone));
+  // Each card's look comes from the real unlocks (game/progress.ts cardStates), not from saved stars alone: a win with a hint or
+  // Solve saves no stars but does unlock the next level, and the list used to show that level locked (while › opened it).
+  const states = cardStates(LEVELS.map((l) => l.id), (id) => !!best[id], Math.max(frontier, tutorialDone ? Math.min(1, LEVELS.length - 1) : 0), unlocked, tutorialDone);
+  const nextUp = states.indexOf('next');
 
   // Open on the level to play next, not the top of the list: once the grid and that card have been laid out, scroll so the card sits
   // about a third of the way down the screen (the daily card stays one swipe up). Again whenever the next level changes, e.g. after a
@@ -90,7 +93,8 @@ export default function LevelSelect() {
           const next = index === nextUp && !locked;
           const isTut = level.id === TUTORIAL_ID;
           // The tutorial, once done, is a finished level (it has no stars: its win is guided), not a locked one.
-          const looksLocked = !b && !next && !(isTut && tutorialDone);
+          const looksLocked = states[index] === 'locked';
+          const helped = states[index] === 'helped';
           const label = `Level ${index + 1}, ${level.name}${locked ? ', locked' : b ? `, ${b.stars} of 3 stars` : ''}`;
           const body = (
             <Pressable
@@ -128,7 +132,12 @@ export default function LevelSelect() {
               <Text style={[styles.name, { color: next ? c.paper : c.ink }]} numberOfLines={1}>{level.name}</Text>
               {looksLocked ? (
                 <Text style={[styles.best, styles.lockedNote, { color: c.muted }]} numberOfLines={2}>{levelContents(level)} · par {level.par}</Text>
-              ) : isTut && !b ? (
+              ) : helped ? (
+                <View style={styles.meta}>
+                  <Text style={[styles.best, { color: c.muted }]}>Won with help</Text>
+                  <Text style={[styles.best, { color: c.muted }]}>par {level.par}</Text>
+                </View>
+              ) : isTut && !b && tutorialDone ? (
                 <View style={styles.meta}>
                   <Text style={[styles.tutorialDone, { color: c.pencil }]}>Tutorial ✓</Text>
                   <Text style={[styles.best, { color: next ? c.paper : c.muted }]}>par {level.par}</Text>

@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.44.3
+
+- Fixed: the levels screen drew a level as locked when it wasn't, so › in a level opened a "locked" level. A win with a hint
+  or Solve unlocks the next level but saves no stars, and the list judged wins by stars alone: that level still looked unplayed
+  and highlighted, and the one after it locked. Cards now follow the real unlocks (`cardStates` in game/progress.ts): a level
+  won with help says "Won with help", the next level to play is the one actually unlocked, and levels opened by the Testing
+  switch no longer show a lock.
+
 ## 0.44.2
 
 - Phone music no longer stutters as a level starts. In Expo Go every bundled sound came from the PC's dev server, and iOS played
