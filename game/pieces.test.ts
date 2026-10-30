@@ -3,7 +3,7 @@ import { LEVELS } from '../levels';
 import { LAUNCHER, WORLD, pieceEnds, solutionPieces, type Level } from '../physics';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle,
-  ARM_CLEAR, MOVE_ARM, TRASH_GRAB, trashSpot, atSolution, hintSlots, moveArms, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
+  ARM_CLEAR, MOVE_ARM, TRASH_CLEAR, TRASH_GRAB, distToSegment, trashSpot, atSolution, hintSlots, moveArms, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
 } from './pieces';
 
 const level = LEVELS[0];
@@ -270,6 +270,10 @@ describe('move handles', () => {
           const [ax, ay] = leverLine(b, lever).slice(2);
           expect(Math.hypot(tx - ax, ty - ay), `${x},${y} ${deg}° lever ${lever}`).toBeGreaterThan(20);
           for (const [gx, gy] of moveArms(b, lever)) expect(Math.hypot(tx - gx, ty - gy)).toBeGreaterThan(20);
+          // Well clear of the bar itself for a fat finger: TRASH_CLEAR in open board, and never under 30 even in a corner.
+          const fromBar = distToSegment({ x: tx, y: ty }, pieceEnds(b));
+          expect(fromBar, `${x},${y} ${deg}°`).toBeGreaterThanOrEqual(30);
+          if (x > 100 && x < 300 && y > 100 && y < 440) expect(fromBar, `${x},${y} ${deg}°`).toBeGreaterThanOrEqual(TRASH_CLEAR);
         }
       }
     }

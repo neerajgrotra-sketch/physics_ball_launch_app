@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.41.1
+
+- The remove badge sits further out from the bar: 85 units from its centre (was 50), closer only where the board runs out, and
+  at least 40 from the bar itself where there's room. Across every position and angle it's never nearer than 43 to the bar
+  (typically about 80), so a wide finger aiming for it doesn't grab the bar, and the reverse.
+
 ## 0.41.0
 
 - Removing a bar: the selected bar now shows a small red trash badge right beside it on the board, placed in the clearest spot

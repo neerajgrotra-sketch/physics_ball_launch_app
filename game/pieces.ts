@@ -82,12 +82,17 @@ export function moveArms(p: PlacedPiece, lever: End): [[number, number], [number
  * The remove badge: a small red trash can beside the selected bar, tap to take the bar off (Undo brings it back). It used to be a
  * button beside the bar's name above the rotation slider, where players kept hitting it while turning the bar.
  */
-export const TRASH_R = 50;
+export const TRASH_R = 85;
+/** Radii tried, furthest first: a bar near an edge or a corner may only have room a little closer in. */
+const TRASH_RADII = [TRASH_R, 72, 60];
 export const TRASH_GRAB = 16;
+/** The badge keeps at least this much room from the bar itself, where room allows: fingers are wide, and a near miss grabbed the bar. */
+export const TRASH_CLEAR = 40;
 
 /**
- * Where the remove badge sits: TRASH_R from the bar's centre, in whichever direction is furthest from everything else the selected
- * bar shows (the bar, its rotate lever, the other end's ring and both slide arms), and on the board.
+ * Where the remove badge sits: well out from the bar (TRASH_R from its centre, closer only when the board runs out), in whichever
+ * direction is furthest from everything else the selected bar shows (the bar, its rotate lever, the other end's ring and both slide
+ * arms), and on the board.
  */
 export function trashSpot(p: PlacedPiece, lever: End): [number, number] {
   const arms = moveArms(p, lever);
@@ -100,13 +105,20 @@ export function trashSpot(p: PlacedPiece, lever: End): [number, number] {
     ...segments.map((seg) => distToSegment({ x, y }, seg)),
     Math.hypot(x - ring[0], y - ring[1]),
   );
+  // Furthest out first: the first radius with a spot on the board that keeps TRASH_CLEAR from the bar wins, at its clearest
+  // direction; if none does (a bar squeezed into a corner), the clearest spot found anywhere.
   let best: [number, number] = [p.x, p.y + TRASH_R], score = -Infinity;
-  for (let k = 0; k < 16; k++) {
-    const a = (k / 16) * 2 * Math.PI;
-    const x = p.x + Math.cos(a) * TRASH_R, y = p.y + Math.sin(a) * TRASH_R;
-    if (x < 14 || x > WORLD.width - 14 || y < 14 || y > WORLD.ground - 14) continue;
-    const c = clear(x, y);
-    if (c > score) { score = c; best = [x, y]; }
+  for (const r of TRASH_RADII) {
+    let ringBest: [number, number] | null = null, ringScore = -Infinity;
+    for (let k = 0; k < 24; k++) {
+      const a = (k / 24) * 2 * Math.PI;
+      const x = p.x + Math.cos(a) * r, y = p.y + Math.sin(a) * r;
+      if (x < 14 || x > WORLD.width - 14 || y < 14 || y > WORLD.ground - 14) continue;
+      const c = clear(x, y);
+      if (c > ringScore) { ringScore = c; ringBest = [x, y]; }
+    }
+    if (ringBest && ringScore >= TRASH_CLEAR) return ringBest;
+    if (ringBest && ringScore > score) { score = ringScore; best = ringBest; }
   }
   return best;
 }

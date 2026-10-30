@@ -92,7 +92,8 @@ reference/    prototype.html, the behaviour and look to match
   Tapping the other end (small ring) moves the lever there; on selection it goes on whichever end keeps
   its tip on the board (`leverEnd`). While a bar is selected the aim rows become its rotation
   controls: a 0–179° slider and −/+ 1° nudges (hold to repeat). The selected bar shows a red trash badge beside it on the board
-  (`trashSpot`: `TRASH_R` from its centre, in the direction furthest from the bar, its lever and arms; a tap that lifts on it removes
+  (`trashSpot`: `TRASH_R` (85) from its centre, closer only where the board runs out, at least `TRASH_CLEAR` (40) from the bar where
+  there's room (never under ~43 in practice: fingers are wide), in the direction furthest from the bar, its lever and arms; a tap that lifts on it removes
   the bar, Undo brings it back); there's no remove button by the slider any more (players hit it while turning). A bar can also be
   dragged down past the floor to remove it. A cannon chip beside the bar chips switches back to the aim sliders (so does touching the cannon or its
   aim line); tapping the selected chip deselects it. Launching keeps the selected bar selected. An undo button before
