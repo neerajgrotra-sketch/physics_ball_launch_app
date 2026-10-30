@@ -1,5 +1,5 @@
 import { Link, useRouter } from 'expo-router';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DailyCard } from '../components/daily/DailyCard';
@@ -40,6 +40,23 @@ export default function LevelSelect() {
   // The next level to play: the first without a result (the tutorial has none once it's been done).
   const nextUp = LEVELS.findIndex((l) => !best[l.id] && !(l.id === TUTORIAL_ID && tutorialDone));
 
+  // Open on the level to play next, not the top of the list: once the grid and that card have been laid out, scroll so the card sits
+  // about a third of the way down the screen (the daily card stays one swipe up). Again whenever the next level changes, e.g. after a
+  // win, since this screen stays mounted under the level.
+  const { height } = useWindowDimensions();
+  const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
+  const gridY = useRef<number | null>(null);
+  const cardY = useRef<Record<number, number>>({});
+  const scrolledFor = useRef<number | null>(null);
+  const scrollToNext = () => {
+    const y = cardY.current[nextUp];
+    if (gridY.current == null || y == null || scrolledFor.current === nextUp || nextUp <= 1) return;
+    const first = scrolledFor.current == null;
+    scrolledFor.current = nextUp;
+    scroller.current?.scrollTo({ y: Math.max(0, gridY.current + y - height / 3), animated: !first });
+  };
+  useEffect(scrollToNext);
+
   // A brand-new player who has already seen the tour goes straight into the tutorial; one who hasn't gets the tour, which ends there.
   // (On a cold start only: this screen stays mounted underneath the level, so coming back to it doesn't send them in again.)
   useEffect(() => {
@@ -49,7 +66,7 @@ export default function LevelSelect() {
 
   return (
     <View style={styles.screen}>
-    <ScrollView contentContainerStyle={[styles.page, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18 }]}>
+    <ScrollView ref={scroller} contentContainerStyle={[styles.page, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18 }]}>
       <SettingsSheet
         visible={settings} onClose={() => setSettings(false)}
         onReplayTutorial={() => { setSettings(false); restartTutorial(); openTutorial(); }}
@@ -66,7 +83,7 @@ export default function LevelSelect() {
         </Text>
       </View>
       <DailyCard width={tile * COLUMNS + GAP * (COLUMNS - 1)} />
-      <View style={styles.grid}>
+      <View style={styles.grid} onLayout={(e) => { gridY.current = e.nativeEvent.layout.y; scrollToNext(); }}>
         {LEVELS.map((level, index) => {
           const locked = index > unlocked;
           const b = best[level.id];
@@ -158,7 +175,7 @@ export default function LevelSelect() {
                   </View>
                 </Pressable>
               )}
-              <View>
+              <View onLayout={(e) => { cardY.current[index] = e.nativeEvent.layout.y; if (next) scrollToNext(); }}>
                 {locked ? body : <Link href={{ pathname: '/level/[id]', params: { id: level.id } }} asChild>{body}</Link>}
                 {replay}
               </View>

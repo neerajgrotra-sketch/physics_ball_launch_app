@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.44.1
+
+- The levels screen opens on the level to play next (highlighted, about a third of the way down), not the top of the list,
+  and moves to the new one after a win. Further along, the next level was off screen and players had to scroll to find it.
+
 ## 0.44.0
 
 - A level you've already won reopens as you last left it: the winning bars, aim and trail (or whatever you tried after),
