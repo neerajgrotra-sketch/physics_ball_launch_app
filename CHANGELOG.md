@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.42.0
+
+- Locked levels now show a faded drawing of the level (its walls, spikes, pads, portals and glass) under the lock, and say
+  what's on it ("3 bars · 2 blocks · 2 spikes · par 4"), so there's something to look forward to.
+- Each world header has an ⓘ that opens the world's card: a tagline and pitch, a drawing and a line for each new thing it
+  brings (blocks, spikes, spiked walls, spring pads and bars, portals), a pro tip, its levels with the stars won so far, and
+  a peek at its final level.
+
 ## 0.41.2
 
 - The remove badge now finds open space: it keeps clear of the level's walls, spikes, spring pads, portals, the glass, the gun

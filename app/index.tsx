@@ -4,13 +4,14 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DailyCard } from '../components/daily/DailyCard';
 import { ShotThumbnail } from '../components/levels/ShotThumbnail';
+import { WorldInfo } from '../components/levels/WorldInfo';
 import { SettingsSheet } from '../components/settings/SettingsSheet';
 import { useTips } from '../components/coach/Tips';
 import { useProgress, useUnlocked } from '../components/progress/ProgressProvider';
 import { TUTORIAL_ID } from '../game/coach';
 import { VERSION_LABEL } from '../components/version';
 import { totalScore } from '../game/score';
-import { WORLDS, worldStartingAt } from '../game/worlds';
+import { WORLDS, levelContents, worldStartingAt, type World } from '../game/worlds';
 import { LEVELS } from '../levels';
 import { FONTS, useColors } from '../theme/colors';
 
@@ -20,7 +21,8 @@ const GAP = 12;
 // Level select: a grid of level cards, two across, each with its number and name. Levels the player has
 // won, and the next one to play (highlighted), show a drawing of the level: launcher, glass and, once
 // won, the player's last winning shot with a Replay button that reopens the level with that shot set up
-// and plays it. Levels further on show a lock and can't be opened (LOCK_LEVELS), unless the Testing switch in Settings opens them all.
+// and plays it. Levels further on show a faded drawing of the level (a taste of what's coming), a lock and what's on it,
+// and can't be opened (LOCK_LEVELS), unless the Testing switch in Settings opens them all.
 export default function LevelSelect() {
   const c = useColors();
   const { width } = useWindowDimensions();
@@ -33,6 +35,7 @@ export default function LevelSelect() {
   const unlocked = useUnlocked();
   const total = totalScore(best);
   const [settings, setSettings] = useState(false);
+  const [info, setInfo] = useState<World | null>(null);
   const tile = Math.floor((Math.min(width, 560) - 2 * 18 - (COLUMNS - 1) * GAP) / COLUMNS);
   // The next level to play: the first without a result (the tutorial has none once it's been done).
   const nextUp = LEVELS.findIndex((l) => !best[l.id] && !(l.id === TUTORIAL_ID && tutorialDone));
@@ -52,6 +55,7 @@ export default function LevelSelect() {
         onReplayTutorial={() => { setSettings(false); restartTutorial(); openTutorial(); }}
         onShowTour={() => { setSettings(false); restartTour(); }}
       />
+      <WorldInfo world={info} onClose={() => setInfo(null)} />
       <View style={styles.header}>
         <Pressable onPress={() => setSettings(true)} accessibilityRole="button" accessibilityLabel="Settings" style={[styles.settings, { borderColor: c.line }]}>
           <Text style={[styles.settingsText, { color: c.ink }]}>Settings</Text>
@@ -85,9 +89,16 @@ export default function LevelSelect() {
               ])}
             >
               {looksLocked ? (
-                <View style={[styles.thumb, styles.lockedThumb, { height: (tile - 16) * 0.85, borderColor: c.line }]}>
-                  <Text style={[styles.bigNum, { color: c.muted }]}>{index + 1}</Text>
-                  <Text style={styles.lockIcon}>🔒</Text>
+                <View style={[styles.thumb, styles.lockedThumb, { borderColor: c.line, backgroundColor: c.paper }]}>
+                  <View style={styles.faded}>
+                    <ShotThumbnail level={level} width={tile - 16} height={(tile - 16) * 0.85} />
+                  </View>
+                  <View style={[styles.badge, { backgroundColor: c.muted }]}>
+                    <Text style={[styles.badgeText, { color: c.paper }]}>{index + 1}</Text>
+                  </View>
+                  <View style={[styles.lockBadge, { backgroundColor: c.paper, borderColor: c.line }]}>
+                    <Text style={styles.lockIcon}>🔒</Text>
+                  </View>
                 </View>
               ) : (
                 <View style={[styles.thumb, { borderColor: c.line, backgroundColor: c.paper }]}>
@@ -99,7 +110,7 @@ export default function LevelSelect() {
               )}
               <Text style={[styles.name, { color: next ? c.paper : c.ink }]} numberOfLines={1}>{level.name}</Text>
               {looksLocked ? (
-                <Text style={[styles.best, styles.lockedNote, { color: c.muted }]}>Par {level.par}</Text>
+                <Text style={[styles.best, styles.lockedNote, { color: c.muted }]} numberOfLines={2}>{levelContents(level)} · par {level.par}</Text>
               ) : isTut && !b ? (
                 <View style={styles.meta}>
                   <Text style={[styles.tutorialDone, { color: c.pencil }]}>Tutorial ✓</Text>
@@ -134,10 +145,18 @@ export default function LevelSelect() {
           return (
             <Fragment key={level.id}>
               {world && (
-                <View style={styles.world}>
-                  <Text style={[styles.worldName, { color: c.ink }]}>World {WORLDS.indexOf(world) + 1} · {world.name}</Text>
-                  <Text style={[styles.worldBlurb, { color: c.muted }]}>{world.blurb}</Text>
-                </View>
+                <Pressable
+                  onPress={() => setInfo(world)} accessibilityRole="button" accessibilityLabel={`About world ${WORLDS.indexOf(world) + 1}, ${world.name}`}
+                  style={styles.world}
+                >
+                  <View style={styles.worldText}>
+                    <Text style={[styles.worldName, { color: c.ink }]}>World {WORLDS.indexOf(world) + 1} · {world.name}</Text>
+                    <Text style={[styles.worldBlurb, { color: c.muted }]}>{world.blurb}</Text>
+                  </View>
+                  <View style={[styles.info, { borderColor: c.pencil }]}>
+                    <Text style={[styles.infoText, { color: c.pencil }]}>i</Text>
+                  </View>
+                </Pressable>
               )}
               <View>
                 {locked ? body : <Link href={{ pathname: '/level/[id]', params: { id: level.id } }} asChild>{body}</Link>}
@@ -161,7 +180,10 @@ const styles = StyleSheet.create({
   settingsText: { fontSize: 14, fontFamily: FONTS.bodySemi },
   heading: { fontSize: 34, fontFamily: FONTS.condensedBold },
   total: { fontSize: 15, fontFamily: FONTS.bodyMedium, textAlign: 'center' },
-  world: { width: '100%', marginTop: 8, gap: 1 },
+  world: { width: '100%', marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  worldText: { flex: 1, gap: 1 },
+  info: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  infoText: { fontSize: 18, fontFamily: FONTS.condensedBold, fontStyle: 'italic' },
   worldName: { fontSize: 22, fontFamily: FONTS.condensedBold },
   worldBlurb: { fontSize: 14, fontFamily: FONTS.bodyMedium },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP },
@@ -175,9 +197,10 @@ const styles = StyleSheet.create({
   meta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4, paddingBottom: 2 },
   best: { fontSize: 13, fontFamily: FONTS.bodyMedium },
   locked: { borderStyle: 'dashed' },
-  lockedThumb: { alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed' },
-  bigNum: { fontSize: 46, fontFamily: FONTS.condensedBold },
-  lockIcon: { position: 'absolute', bottom: 8, right: 10, fontSize: 18, opacity: 0.7 },
+  lockedThumb: { borderStyle: 'dashed' },
+  faded: { opacity: 0.45 },
+  lockBadge: { position: 'absolute', alignSelf: 'center', top: '50%', marginTop: -20, width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  lockIcon: { fontSize: 18 },
   lockedNote: { paddingHorizontal: 4, paddingBottom: 2 },
   stars: { fontSize: 17, letterSpacing: 1 },
   tutorialDone: { fontSize: 16, fontFamily: FONTS.condensedBold },

@@ -186,7 +186,8 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
 - **Levels screen** (`app/index.tsx`): two-column cards (a finished tutorial shows "Tutorial ✓" and its winning shot, not a lock). Won levels and the next one to play show a drawing
   of the level (launcher, glass and, once won, the player's last unassisted winning shot (`components/levels/ShotThumbnail.tsx`, SVG, re-simulated from the stored
   inputs in `game/shots.ts`), the level's number and name, best stars and bounces; levels further on show
-  a big number and a lock (only a look while `LOCK_LEVELS` is off). The next level is highlighted.
+  a faded drawing of the level under a lock and what's on it (`levelContents`). Each world header has an ⓘ opening its info card
+  (`components/levels/WorldInfo.tsx`; tagline, pitch, features, tip in `game/worlds.ts`): what's new, drawn, a tip, the world's stars and a peek at its last level. The next level is highlighted.
   A won card has a Replay button: it opens the level with that shot's bars and aim set up
   (`/level/[id]?replay=1`, `shotSlots`) and plays it once, unscored, then the player carries on from there. Header total score.
 - **Daily puzzle** (`game/daily.ts`, `components/daily/`, `app/daily.tsx`): a card at the top of the levels screen opens today's
