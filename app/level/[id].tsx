@@ -31,7 +31,7 @@ import { worthKeeping, type Draft, type DraftShot } from '../../game/drafts';
 import { aimBy, swingTo } from '../../game/aim';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
-  OPEN_DRAG, TRASH_GRAB, trashObstacles, atSolution, hintSlots, leverEnd, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
+  OPEN_DRAG, TRASH_GRAB, trashObstacles, atSolution, hintSlots, leverEnd, shotPieces, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
 import { CARD_PAUSE_MS, CELEBRATION_MS, burstFor, cardPlace } from '../../game/celebration';
 import { counterSpot } from '../../game/counter';
@@ -103,7 +103,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   const c = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { best, won, draftFor, saveDraft } = useProgress();
+  const { best, shots, won, draftFor, saveDraft } = useProgress();
   const unlocked = useUnlocked();
   const tips = useTips();
   /**
@@ -117,7 +117,17 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   // A level left part-way is picked up where it was (game/drafts.ts): bars, aim, tries, and the trails of its last launches,
   // re-simulated. Not the tutorial (its guide starts from the empty board) or a replayed saved shot.
   const draftKey = daily ? `daily-${daily.number}` : level.id;
-  const [draft] = useState<Draft | undefined>(() => (shot || level.id === TUTORIAL_ID ? undefined : draftFor(draftKey)));
+  // A level won before drafts existed (0.44.0) has none: it opens on its saved winning shot instead.
+  const [draft] = useState<Draft | undefined>(() => {
+    if (shot || level.id === TUTORIAL_ID) return undefined;
+    const saved = draftFor(draftKey), won = daily ? undefined : shots[level.id];
+    if (saved || !won) return saved;
+    const placed = shotSlots(level, won);
+    return {
+      bars: placed.map((sl) => (sl.onBoard ? { x: sl.x, y: sl.y, deg: sl.deg } : null)), angle: won.angle, power: won.power, tries: 0, helped: false,
+      launches: [{ pieces: shotPieces(level, won), angle: won.angle, power: won.power }],
+    };
+  });
   /** The bars and aim behind each trail on the board, so the draft can save them (looked up by the trail's path). */
   const trailShots = useRef(new WeakMap<Vec[], DraftShot>());
   const [slots, setSlots] = useState<Slot[]>(() => {
@@ -168,21 +178,21 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   const [bounces, setBounces] = useState<number | null>(null);
   /** The winning shot exactly as fired (bars, angle, power), so Replay can play it again. */
   const [winShot, setWinShot] = useState<{ angle: number; power: number; slots: Slot[]; bounces: number }>({ angle: 0, power: 0, slots: [], bounces: 0 });
-  // Save the level as it stands whenever it changes, so leaving and coming back resumes it. A win (or Start over) drops the
-  // draft: the level then reopens fresh, its winning shot kept on its card. The tutorial is never saved.
+  // Save the level as it stands whenever it changes, so leaving and coming back resumes it, won or not (a won level reopens on
+  // its winning board, ready to try for fewer bounces). Only Start over drops it. The tutorial is never saved.
   useEffect(() => {
     if (level.id === TUTORIAL_ID) return;
-    if (done) { saveDraft(draftKey, null); return; }
     const d: Draft = {
       bars: slots.map((sl) => (sl.onBoard ? { x: sl.x, y: sl.y, deg: sl.deg } : null)),
       angle, power, tries, helped,
       launches: trails.map((t) => trailShots.current.get(t.path)).filter((l): l is DraftShot => !!l),
     };
-    saveDraft(draftKey, worthKeeping(d, { angle: 52, power: 45 }) ? d : null);
+    // A won level keeps even an empty draft, or it would reopen on its winning shot after Start over.
+    saveDraft(draftKey, worthKeeping(d, { angle: 52, power: 45 }) || (!daily && shots[level.id]) ? d : null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slots, angle, power, tries, helped, trails, done]);
+  }, [slots, angle, power, tries, helped, trails]);
   const startOver = (guide?: boolean) => {
-    saveDraft(draftKey, null);
+    saveDraft(draftKey, !daily && shots[level.id] ? { bars: level.pieces.map(() => null), angle: 52, power: 45, tries: 0, helped: false, launches: [] } : null);
     onReplay(guide);
   };
   const wallet = useHintWallet();
@@ -349,7 +359,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   useEffect(() => {
     if (!shot) return;
     const timer = setTimeout(() => {
-      const res = simulate(buildWorld(level, shot.pieces), shot.angle, shot.power);
+      const res = simulate(buildWorld(level, shotPieces(level, shot)), shot.angle, shot.power);
       setBounces(0);
       launched();
       playShot(res, () => {

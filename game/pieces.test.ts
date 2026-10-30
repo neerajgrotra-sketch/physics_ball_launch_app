@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { LEVELS } from '../levels';
 import { legalPlacement } from './placement';
-import { LAUNCHER, WORLD, pieceEnds, solutionPieces, type Level } from '../physics';
+import { LAUNCHER, WORLD, buildWorld, isSpring, pieceEnds, simulate, solutionPieces, type Level } from '../physics';
 import {
+  shotPieces,
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle,
   ARM_CLEAR, MOVE_ARM, TRASH_CLEAR, TRASH_GRAB, TRASH_ROOM, distToSegment, trashObstacles, trashSpot, atSolution, hintSlots, moveArms, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
 } from './pieces';
@@ -332,5 +333,20 @@ describe('move handles', () => {
     const r = pressAt(slots, 0, { x: 190, y: 300 }, true, undefined, 2);
     expect(r.drag).toMatchObject({ mode: 'move' });
     expect((r.drag as { axis?: string }).axis).toBeUndefined();
+  });
+});
+
+describe('shotPieces', () => {
+  it('gives a saved winning shot its spring bars back, so it still lands when replayed or drawn', () => {
+    const springy = LEVELS.filter((l) => l.pieces.some((p) => isSpring(p.restitution)));
+    expect(springy.length).toBeGreaterThan(0);
+    for (const level of springy) {
+      const s = level.solution!;
+      // As stored by a win: only where the bars went.
+      const shot = { pieces: s.pieces.map((p, k) => ({ ...p, len: level.pieces[k].len })), angle: s.angle, power: s.power };
+      const pieces = shotPieces(level, shot);
+      expect(pieces.map((p) => p.restitution)).toEqual(level.pieces.map((p) => p.restitution));
+      expect(simulate(buildWorld(level, pieces), s.angle, s.power).success).toBe(true);
+    }
   });
 });

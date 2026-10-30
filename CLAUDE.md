@@ -185,7 +185,9 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
 
 - **Resume:** a level left part-way reopens as it was (`game/drafts.ts`, saved by `LevelGame` through `ProgressProvider`'s
   `saveDraft`, in memory at once and written 400 ms later): bars, aim, tries, `helped`, and the inputs of the trails on the
-  board, re-simulated on return. A win or Start over drops it; the tutorial and replayed saved shots never restore one.
+  board, re-simulated on return. Won levels keep theirs too (they reopen on the last board); a level won before drafts
+  opens on its saved winning shot. Only Start over resets it (to an empty draft on a won level, so it stays empty). The tutorial
+  and replayed saved shots never restore one. Simulate saved shots through `shotPieces` (it restores spring bars' bounce).
 - **Levels screen** (`app/index.tsx`): two-column cards (a finished tutorial shows "Tutorial ✓" and its winning shot, not a lock). Won levels and the next one to play show a drawing
   of the level (launcher, glass and, once won, the player's last unassisted winning shot (`components/levels/ShotThumbnail.tsx`, SVG, re-simulated from the stored
   inputs in `game/shots.ts`), the level's number and name, best stars and bounces; levels further on show

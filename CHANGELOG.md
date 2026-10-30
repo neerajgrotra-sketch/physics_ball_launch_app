@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.44.0
+
+- A level you've already won reopens as you last left it: the winning bars, aim and trail (or whatever you tried after),
+  ready to go for fewer bounces. Levels won before this version open on their saved winning shot. Only Start over (or Try it
+  yourself) gives an empty board, and it stays empty when you come back.
+- Fixed: on Trampoline and Slingshot the saved winning shot forgot its spring bar, so the level card's drawing and the
+  card's Replay showed the shot missing. Saved shots now take each bar's bounce from the level (`shotPieces`).
+
 ## 0.43.0
 
 - Leaving a level part-way no longer loses it. The bars, the aim, the tries so far and the last few shots' ghost trails are

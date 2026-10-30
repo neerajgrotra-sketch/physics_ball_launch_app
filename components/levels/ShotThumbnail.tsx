@@ -2,6 +2,7 @@ import { Fragment, useMemo } from 'react';
 import Svg, { Circle, Line, Polygon, Polyline, Rect } from 'react-native-svg';
 import { BALL_RADIUS, PORTAL_RADIUS, blockCorners, hazardReach, glassBox, LAUNCHER, PLATE_OVERHANG, WORLD, buildWorld, pieceEnds, simulate, type Level } from '../../physics';
 import { thin, type Shot } from '../../game/shots';
+import { shotPieces } from '../../game/pieces';
 import { gunShapes } from '../../game/guns';
 import { skinFill } from '../../game/skins';
 import { useColors } from '../../theme/colors';
@@ -19,7 +20,7 @@ export function ShotThumbnail({ level, shot, width, height }: { level: Level; sh
   const { skin, gun } = useBallSkin();
   const path = useMemo(() => {
     if (!shot) return null;
-    const res = simulate(buildWorld(level, shot.pieces), shot.angle, shot.power);
+    const res = simulate(buildWorld(level, shotPieces(level, shot)), shot.angle, shot.power);
     // One line per stretch between portals, so no line is drawn through one.
     const cuts = [0, ...res.jumps, res.path.length];
     return cuts.slice(0, -1).map((from, k) => thin(res.path.slice(from, cuts[k + 1]), 3)).filter((s) => s.length > 1);

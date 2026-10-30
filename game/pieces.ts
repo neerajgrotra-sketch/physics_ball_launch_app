@@ -391,6 +391,14 @@ export function shotSlots(level: Level, shot: { pieces: { x: number; y: number; 
   });
 }
 
+/**
+ * A saved shot's bars, ready for buildWorld, each with its own bounce from the level (a saved shot keeps only where the bars
+ * went, so a spring bar would otherwise bounce like a plain one).
+ */
+export function shotPieces(level: Level, shot: { pieces: { x: number; y: number; deg: number }[] }): PlacedPiece[] {
+  return boardPieces(shotSlots(level, shot));
+}
+
 /** Whether bar k sits exactly where the stored solution puts it. */
 export function atSolution(level: Level, slots: Slot[], k: number): boolean {
   const p = level.solution?.pieces[k], s = slots[k];
