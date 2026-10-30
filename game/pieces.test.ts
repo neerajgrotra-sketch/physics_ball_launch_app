@@ -4,7 +4,7 @@ import { legalPlacement } from './placement';
 import { LAUNCHER, WORLD, pieceEnds, solutionPieces, type Level } from '../physics';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle,
-  ARM_CLEAR, MOVE_ARM, TRASH_CLEAR, TRASH_GRAB, distToSegment, trashObstacles, trashSpot, atSolution, hintSlots, moveArms, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
+  ARM_CLEAR, MOVE_ARM, TRASH_CLEAR, TRASH_GRAB, TRASH_ROOM, distToSegment, trashObstacles, trashSpot, atSolution, hintSlots, moveArms, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
 } from './pieces';
 
 const level = LEVELS[0];
@@ -298,6 +298,25 @@ describe('move handles', () => {
         for (const poly of obs.polygons) expect(onPoly(tx, ty, poly, 11), `${level.id} ${x},${y} ${deg}°`).toBe(false);
       }
     }
+  });
+
+  it('the remove badge keeps off the other bars on the board', () => {
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+    let boards = 0;
+    for (const level of LEVELS.filter((l) => l.pieces.length > 1)) {
+      for (let t = 0; t < 300; t++) {
+        const bars = level.pieces.map((p) => ({ x: 20 + rnd() * 360, y: 20 + rnd() * 500, deg: Math.round(rnd() * 180), len: p.len }));
+        if (!legalPlacement(level, bars)) continue;
+        boards++;
+        bars.forEach((b, k) => {
+          const others = bars.filter((_, j) => j !== k);
+          const [tx, ty] = trashSpot(b, 2, trashObstacles(level, others));
+          for (const o of others) expect(distToSegment({ x: tx, y: ty }, pieceEnds(o)), level.id).toBeGreaterThanOrEqual(TRASH_ROOM);
+        });
+      }
+    }
+    expect(boards).toBeGreaterThan(100);
   });
 
   it('a tap on the remove badge starts a remove, not a move', () => {
