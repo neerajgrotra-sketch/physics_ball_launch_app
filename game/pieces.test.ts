@@ -3,7 +3,7 @@ import { LEVELS } from '../levels';
 import { LAUNCHER, WORLD, pieceEnds, solutionPieces, type Level } from '../physics';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle,
-  ARM_CLEAR, MOVE_ARM, atSolution, hintSlots, moveArms, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
+  ARM_CLEAR, MOVE_ARM, TRASH_GRAB, trashSpot, atSolution, hintSlots, moveArms, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
 } from './pieces';
 
 const level = LEVELS[0];
@@ -257,6 +257,30 @@ describe('move handles', () => {
     // Across the axis the arm keeps its usual length.
     const [, gyFlat] = moveArms(bar(200, 300, 0), 2);
     expect(Math.abs(gyFlat[1] - 300)).toBe(MOVE_ARM);
+  });
+
+  it('the remove badge sits on the board, clear of the bar and its handles', () => {
+    for (const [x, y] of [[30, 30], [370, 30], [30, 520], [370, 520], [200, 280], [120, 220]]) {
+      for (const deg of [0, 30, 45, 90, 126, 135, -30]) {
+        for (const lever of [1, 2] as const) {
+          const b = bar(x, y, deg);
+          const [tx, ty] = trashSpot(b, lever);
+          expect(tx).toBeGreaterThan(0); expect(tx).toBeLessThan(WORLD.width);
+          expect(ty).toBeGreaterThan(0); expect(ty).toBeLessThan(WORLD.ground);
+          const [ax, ay] = leverLine(b, lever).slice(2);
+          expect(Math.hypot(tx - ax, ty - ay), `${x},${y} ${deg}° lever ${lever}`).toBeGreaterThan(20);
+          for (const [gx, gy] of moveArms(b, lever)) expect(Math.hypot(tx - gx, ty - gy)).toBeGreaterThan(20);
+        }
+      }
+    }
+  });
+
+  it('a tap on the remove badge starts a remove, not a move', () => {
+    const slots = [bar(200, 300, 126)];
+    const [tx, ty] = trashSpot(slots[0], 2);
+    expect(pressAt(slots, 0, { x: tx, y: ty }, true, undefined, 2).drag).toMatchObject({ mode: 'trash', k: 0 });
+    // Not selected: no badge, so the same spot is just board.
+    expect(pressAt(slots, null, { x: tx + TRASH_GRAB * 3, y: ty }, true, undefined, 2).drag?.mode).not.toBe('trash');
   });
 
   it('a touch on the bar itself still moves it freely', () => {

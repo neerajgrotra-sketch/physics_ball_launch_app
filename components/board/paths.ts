@@ -149,3 +149,14 @@ export function polygonPath(points: [number, number][]): SkPath {
   p.close();
   return p.detach();
 }
+
+/** A small trash can centred on (x, y): lid, handle, bin and two ribs, for the selected bar's remove badge. */
+export function trashIconPath(x: number, y: number): SkPath {
+  const p = Skia.PathBuilder.Make();
+  p.moveTo(x - 6, y - 4); p.lineTo(x + 6, y - 4); // lid
+  p.moveTo(x - 2, y - 4); p.lineTo(x - 2, y - 6.5); p.lineTo(x + 2, y - 6.5); p.lineTo(x + 2, y - 4); // handle
+  p.moveTo(x - 4.5, y - 4); p.lineTo(x - 3.5, y + 6); p.lineTo(x + 3.5, y + 6); p.lineTo(x + 4.5, y - 4); // bin
+  p.moveTo(x - 1.4, y - 1); p.lineTo(x - 1.2, y + 3.5);
+  p.moveTo(x + 1.4, y - 1); p.lineTo(x + 1.2, y + 3.5);
+  return p.detach();
+}

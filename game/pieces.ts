@@ -78,6 +78,39 @@ export function moveArms(p: PlacedPiece, lever: End): [[number, number], [number
   return [[p.x + dx * lx, p.y], [p.x, p.y + dy * ly]];
 }
 
+/**
+ * The remove badge: a small red trash can beside the selected bar, tap to take the bar off (Undo brings it back). It used to be a
+ * button beside the bar's name above the rotation slider, where players kept hitting it while turning the bar.
+ */
+export const TRASH_R = 50;
+export const TRASH_GRAB = 16;
+
+/**
+ * Where the remove badge sits: TRASH_R from the bar's centre, in whichever direction is furthest from everything else the selected
+ * bar shows (the bar, its rotate lever, the other end's ring and both slide arms), and on the board.
+ */
+export function trashSpot(p: PlacedPiece, lever: End): [number, number] {
+  const arms = moveArms(p, lever);
+  const segments: [number, number, number, number][] = [
+    pieceEnds(p), leverLine(p, lever),
+    [p.x, p.y, arms[0][0], arms[0][1]], [p.x, p.y, arms[1][0], arms[1][1]],
+  ];
+  const ring = leverLine(p, lever === 2 ? 1 : 2);
+  const clear = (x: number, y: number) => Math.min(
+    ...segments.map((seg) => distToSegment({ x, y }, seg)),
+    Math.hypot(x - ring[0], y - ring[1]),
+  );
+  let best: [number, number] = [p.x, p.y + TRASH_R], score = -Infinity;
+  for (let k = 0; k < 16; k++) {
+    const a = (k / 16) * 2 * Math.PI;
+    const x = p.x + Math.cos(a) * TRASH_R, y = p.y + Math.sin(a) * TRASH_R;
+    if (x < 14 || x > WORLD.width - 14 || y < 14 || y > WORLD.ground - 14) continue;
+    const c = clear(x, y);
+    if (c > score) { score = c; best = [x, y]; }
+  }
+  return best;
+}
+
 const bearing = (p: { x: number; y: number }, c: { x: number; y: number }) => (Math.atan2(p.y - c.y, p.x - c.x) * 180) / Math.PI;
 /** Touch within this distance of a piece picks it up. */
 export const PIECE_GRAB = 16;
@@ -146,7 +179,9 @@ export type Drag =
   /** The gun, or empty board before any bar is placed: a tap only deselects; once the finger has moved OPEN_DRAG it's a 'pan'. */
   | { mode: 'open'; x: number; y: number }
   /** A drag moving the aim with the finger from where it was (game/aim aimBy), never a jump: the finger's last point and the aim. */
-  | { mode: 'pan'; x: number; y: number; angle: number; power: number };
+  | { mode: 'pan'; x: number; y: number; angle: number; power: number }
+  /** A press on the selected bar's remove badge (trashSpot): the bar comes off if the finger lifts still on it. */
+  | { mode: 'trash'; k: number; x: number; y: number };
 
 /** How far (world units) a finger on empty board must move before it aims, so a tap that only deselects never nudges the aim. */
 export const OPEN_DRAG = 8;
@@ -165,6 +200,8 @@ export function pressAt(
   if (selected != null && slots[selected].onBoard) {
     const s = slots[selected];
     const rotate = (end: End): Drag => ({ mode: 'rotate', k: selected, end, offset: s.deg - bearing(p, s) - (end === 1 ? 180 : 0) });
+    const [bx, by] = trashSpot(s, lever);
+    if (Math.hypot(p.x - bx, p.y - by) < TRASH_GRAB) return { drag: { mode: 'trash', k: selected, x: bx, y: by }, selected };
     if (distToSegment(p, leverLine(s, lever)) < ROTATE_GRAB) return { drag: rotate(lever), selected };
     const arms = moveArms(s, lever);
     for (const axis of ['x', 'y'] as const) {

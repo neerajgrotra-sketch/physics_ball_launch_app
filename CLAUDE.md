@@ -91,8 +91,10 @@ reference/    prototype.html, the behaviour and look to match
   that axis from a distance; dragging the bar itself still moves it freely.
   Tapping the other end (small ring) moves the lever there; on selection it goes on whichever end keeps
   its tip on the board (`leverEnd`). While a bar is selected the aim rows become its rotation
-  controls: a 0–179° slider, −/+ 1° nudges (hold to repeat) and a small Remove button (a bar can also be dragged down past
-  the floor to remove it). A cannon chip beside the bar chips switches back to the aim sliders (so does touching the cannon or its
+  controls: a 0–179° slider and −/+ 1° nudges (hold to repeat). The selected bar shows a red trash badge beside it on the board
+  (`trashSpot`: `TRASH_R` from its centre, in the direction furthest from the bar, its lever and arms; a tap that lifts on it removes
+  the bar, Undo brings it back); there's no remove button by the slider any more (players hit it while turning). A bar can also be
+  dragged down past the floor to remove it. A cannon chip beside the bar chips switches back to the aim sliders (so does touching the cannon or its
   aim line); tapping the selected chip deselects it. Launching keeps the selected bar selected. An undo button before
   Launch steps the bars and the aim back (game/history.ts: each change is a step, a drag or held slider is one, 30 deep; not during a shot). Bars must keep a ball's width (18) from the glass, walls, launcher and each other
   (`game/placement.ts`, the same rule the level generator uses): a bar dragged somewhere it isn't allowed

@@ -35,7 +35,7 @@ export const TOUR: TourPage[] = [
   {
     picture: 'bars', kicker: 'Your bars', title: 'Place, slide, turn',
     body: 'Tap a bar chip to put that bar on the board, then make the ball bounce where you want.',
-    points: ['Drag a bar, or its arrow grips, to move it', 'Drag the round handle to turn it', 'Undo puts a bar back; drag it below the floor to remove it'],
+    points: ['Drag a bar, or its arrow grips, to move it', 'Drag the round handle to turn it', 'Tap the red bin to remove a bar; Undo puts it back'],
   },
   {
     picture: 'stars', kicker: 'Scoring', title: 'Fewer bounces, more stars',

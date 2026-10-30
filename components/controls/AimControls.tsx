@@ -1,7 +1,6 @@
 import Slider from '@react-native-community/slider';
 import { useEffect, useRef, useState, type ComponentRef, type Ref } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import {
   ANGLE_MAX, ANGLE_MIN, POWER_MAX, POWER_MIN, nudgeAngle, nudgePower, toGrid,
 } from '../../game/aim';
@@ -62,25 +61,19 @@ interface RotateProps {
   /** Returns false when the bar can't go to that angle (the slider then pulls back and shakes). */
   onAngle: (shown: number) => boolean;
   onNudge: (by: 1 | -1) => void;
-  onRemove: () => void;
   disabled?: boolean;
 }
 
 /**
  * Shown in place of the aim rows while a bar is selected, at the same height so the board doesn't jump:
- * which bar with a small trash can right beside its name (so it reads as removing that bar), then a rotation slider with −/+ 1° nudges (hold to keep turning).
+ * which bar (it's removed with the red trash badge beside it on the board, or by dragging it below the floor), then a rotation slider with −/+ 1° nudges (hold to keep turning).
  */
-export function RotateControls({ bar, angle, onAngle, onNudge, onRemove, disabled }: RotateProps) {
+export function RotateControls({ bar, angle, onAngle, onNudge, disabled }: RotateProps) {
   const c = useColors();
   return (
     <View style={[styles.rows, disabled && styles.disabled]} pointerEvents={disabled ? 'none' : 'auto'}>
       <View style={styles.row}>
         <Text style={[styles.title, { color: c.pencil }]}>Bar {bar}</Text>
-        <Pressable onPress={onRemove} accessibilityRole="button" accessibilityLabel={`Remove Bar ${bar}`} hitSlop={8} style={styles.trash}>
-          <Svg width={18} height={18} viewBox="0 0 24 24">
-            <Path d="M4 7 H20 M9 7 V4.5 H15 V7 M6.5 7 L7.5 20 H16.5 L17.5 7 M10 11 V16 M14 11 V16" stroke={c.red} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          </Svg>
-        </Pressable>
         <View style={styles.spacer} />
       </View>
       <Row
@@ -218,8 +211,6 @@ function Pill({ label, onPress, color, border, tight }: { label: string; onPress
 
 const styles = StyleSheet.create({
   rows: { gap: 10 },
-  // A small trash can at the far right, over the angle readout: well away from the + button and the slider.
-  trash: { width: 28, height: 28, marginLeft: 8, alignItems: 'center', justifyContent: 'center', opacity: 0.75 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   label: { width: 52, fontSize: 15, fontFamily: FONTS.condensed },
   nudge: { width: 30, height: 28, borderRadius: 8, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },

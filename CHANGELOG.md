@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.41.0
+
+- Removing a bar: the selected bar now shows a small red trash badge right beside it on the board, placed in the clearest spot
+  around the bar (away from the rotate handle, both slide grips and the board's edges) and moving with it. Tap it to take the bar
+  off; Undo puts it back. The trash can by the bar's name is gone: it sat right above the rotation slider and players kept
+  hitting it while turning the bar. Dragging a bar below the floor still removes it too.
+
 ## 0.40.1
 
 - The slide grips on a selected bar now always sit well clear of the bar. When the bar lay along an arm's direction (flat for

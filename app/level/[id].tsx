@@ -30,7 +30,7 @@ import { useProgress, useUnlocked } from '../../components/progress/ProgressProv
 import { aimBy, swingTo } from '../../game/aim';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
-  OPEN_DRAG, atSolution, hintSlots, leverEnd, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
+  OPEN_DRAG, TRASH_GRAB, atSolution, hintSlots, leverEnd, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
 import { CARD_PAUSE_MS, CELEBRATION_MS, burstFor, cardPlace } from '../../game/celebration';
 import { counterSpot } from '../../game/counter';
@@ -648,6 +648,14 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
       const wasArmed = armedRef.current;
       armedRef.current = false;
       setDropZone('off');
+      if (d?.mode === 'trash') {
+        // The remove badge: only if the finger lifted still on it (sliding off cancels). Undo puts the bar back.
+        if (Math.hypot(p.x - d.x, p.y - d.y) < TRASH_GRAB + 8) {
+          setSlots((s) => removeBar(s, d.k).slots);
+          setSelected(null);
+        }
+        return;
+      }
       if (d?.mode === 'move' && wasArmed) {
         setSlots((s) => removeBar(s, d.k).slots);
         setSelected(null);
@@ -834,7 +842,6 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
               return ok;
             }}
             onNudge={(by) => rotate((s) => rotateLegal(level, s, selectedBar, by))}
-            onRemove={() => { if (flying) skip(); const r = removeBar(slots, selectedBar); setSlots(r.slots); setSelected(r.selected); }}
             disabled={flying}
           />
           </View>
