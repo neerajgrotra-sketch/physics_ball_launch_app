@@ -30,7 +30,7 @@ import { useProgress, useUnlocked } from '../../components/progress/ProgressProv
 import { aimBy, swingTo } from '../../game/aim';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
-  OPEN_DRAG, TRASH_GRAB, atSolution, hintSlots, leverEnd, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
+  OPEN_DRAG, TRASH_GRAB, trashObstacles, atSolution, hintSlots, leverEnd, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
 import { CARD_PAUSE_MS, CELEBRATION_MS, burstFor, cardPlace } from '../../game/celebration';
 import { counterSpot } from '../../game/counter';
@@ -604,7 +604,9 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
       }
       primeAudio();
       keepPlaying();
-      const r = pressAt(slots, selected, p, true, { angle, power }, lever);
+      // The remove badge keeps off the level's walls, spikes, glass and the other bars (the board draws it from the same list).
+      const others = boardPieces(slots.filter((x, k) => k !== selected));
+      const r = pressAt(slots, selected, p, true, { angle, power }, lever, trashObstacles(level, others));
       drag.current = r.drag;
       lastLegal.current = slots;
       select(r.selected);

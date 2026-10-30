@@ -1,4 +1,4 @@
-import { WORLD, pieceEnds, type Level, type PlacedPiece } from '../physics';
+import { LAUNCHER, PLATE_OVERHANG, PORTAL_RADIUS, WORLD, blockCorners, glassBox, hazardReach, pieceEnds, type Level, type PlacedPiece } from '../physics';
 import { grabAimLine, nearLauncher, type LineGrab } from './aim';
 import { illegalPieces, legalPlacement } from './placement';
 
@@ -83,42 +83,84 @@ export function moveArms(p: PlacedPiece, lever: End): [[number, number], [number
  * button beside the bar's name above the rotation slider, where players kept hitting it while turning the bar.
  */
 export const TRASH_R = 85;
-/** Radii tried, furthest first: a bar near an edge or a corner may only have room a little closer in. */
-const TRASH_RADII = [TRASH_R, 72, 60];
+/** Radii tried, nearest the ideal first: room further out when the ideal ring is crowded, a little closer in at the board's edges. */
+const TRASH_RADII = [TRASH_R, 100, 72, 115, 60];
 export const TRASH_GRAB = 16;
 /** The badge keeps at least this much room from the bar itself, where room allows: fingers are wide, and a near miss grabbed the bar. */
 export const TRASH_CLEAR = 40;
+/** And this much from anything else on the board (walls, spikes, pads, the glass, the gun, other bars), so it sits in open space. */
+export const TRASH_ROOM = 20;
+
+/** What else is on the board, for the badge to keep off: shapes as outlines, other bars as segments, portals as circles. */
+export interface TrashObstacles { polygons: [number, number][][]; segments: [number, number, number, number][]; circles: [number, number, number][] }
+
+/** The level's own things plus the other bars on the board, as obstacles for trashSpot. */
+export function trashObstacles(level: Level, others: PlacedPiece[]): TrashObstacles {
+  const g = glassBox(level.glass);
+  const box = (l: number, t: number, r: number, b: number): [number, number][] => [[l, t], [r, t], [r, b], [l, b]];
+  return {
+    polygons: [
+      ...(level.blocks ?? []).map(blockCorners),
+      ...(level.pads ?? []).map(blockCorners),
+      ...(level.hazards ?? []).map((h) => blockCorners(hazardReach(h))),
+      box(g.l - PLATE_OVERHANG, g.rim, g.r + PLATE_OVERHANG, g.base),
+      box(LAUNCHER.x - 22, LAUNCHER.y - 22, LAUNCHER.x + 34, WORLD.ground), // the gun and the ball on it
+    ],
+    segments: [...others.map(pieceEnds), ...level.fixed],
+    circles: (level.portals ?? []).flatMap((pr) => [[pr.a.x, pr.a.y, PORTAL_RADIUS], [pr.b.x, pr.b.y, PORTAL_RADIUS]] as [number, number, number][]),
+  };
+}
+
+const NO_OBSTACLES: TrashObstacles = { polygons: [], segments: [], circles: [] };
+
+/** How far a point is from an outline: 0 inside it. */
+function distToPolygon(q: { x: number; y: number }, poly: [number, number][]): number {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if ((yi > q.y) !== (yj > q.y) && q.x < ((xj - xi) * (q.y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  if (inside) return 0;
+  return Math.min(...poly.map((pt, i) => distToSegment(q, [pt[0], pt[1], poly[(i + 1) % poly.length][0], poly[(i + 1) % poly.length][1]])));
+}
 
 /**
- * Where the remove badge sits: well out from the bar (TRASH_R from its centre, closer only when the board runs out), in whichever
- * direction is furthest from everything else the selected bar shows (the bar, its rotate lever, the other end's ring and both slide
- * arms), and on the board.
+ * Where the remove badge sits: well out from the bar (TRASH_R from its centre, further or a little closer only when that ring is
+ * crowded or runs off the board), in open space: at least TRASH_ROOM from everything on the board (`obstacles`) and TRASH_CLEAR
+ * from the bar, in whichever direction is furthest from everything else the selected bar shows (the bar, its rotate lever, the
+ * other end's ring and both slide arms). If nowhere is fully clear, the most open spot found.
  */
-export function trashSpot(p: PlacedPiece, lever: End): [number, number] {
+export function trashSpot(p: PlacedPiece, lever: End, obstacles: TrashObstacles = NO_OBSTACLES): [number, number] {
   const arms = moveArms(p, lever);
-  const segments: [number, number, number, number][] = [
+  const handles: [number, number, number, number][] = [
     pieceEnds(p), leverLine(p, lever),
     [p.x, p.y, arms[0][0], arms[0][1]], [p.x, p.y, arms[1][0], arms[1][1]],
   ];
   const ring = leverLine(p, lever === 2 ? 1 : 2);
-  const clear = (x: number, y: number) => Math.min(
-    ...segments.map((seg) => distToSegment({ x, y }, seg)),
-    Math.hypot(x - ring[0], y - ring[1]),
+  const clear = (q: { x: number; y: number }) => Math.min(
+    ...handles.map((seg) => distToSegment(q, seg)),
+    Math.hypot(q.x - ring[0], q.y - ring[1]),
   );
-  // Furthest out first: the first radius with a spot on the board that keeps TRASH_CLEAR from the bar wins, at its clearest
-  // direction; if none does (a bar squeezed into a corner), the clearest spot found anywhere.
+  const room = (q: { x: number; y: number }) => Math.min(
+    Infinity,
+    ...obstacles.polygons.map((poly) => distToPolygon(q, poly)),
+    ...obstacles.segments.map((seg) => distToSegment(q, seg)),
+    ...obstacles.circles.map(([cx, cy, r]) => Math.hypot(q.x - cx, q.y - cy) - r),
+  );
   let best: [number, number] = [p.x, p.y + TRASH_R], score = -Infinity;
   for (const r of TRASH_RADII) {
     let ringBest: [number, number] | null = null, ringScore = -Infinity;
     for (let k = 0; k < 24; k++) {
       const a = (k / 24) * 2 * Math.PI;
-      const x = p.x + Math.cos(a) * r, y = p.y + Math.sin(a) * r;
-      if (x < 14 || x > WORLD.width - 14 || y < 14 || y > WORLD.ground - 14) continue;
-      const c = clear(x, y);
-      if (c > ringScore) { ringScore = c; ringBest = [x, y]; }
+      const q = { x: p.x + Math.cos(a) * r, y: p.y + Math.sin(a) * r };
+      if (q.x < 14 || q.x > WORLD.width - 14 || q.y < 14 || q.y > WORLD.ground - 14) continue;
+      const c = clear(q), o = room(q);
+      if (o >= TRASH_ROOM && c >= TRASH_CLEAR && c > ringScore) { ringScore = c; ringBest = [q.x, q.y]; }
+      // Fallback, if no ring has a fully open spot: the one with the most room from both.
+      const either = Math.min(c / TRASH_CLEAR, o / TRASH_ROOM);
+      if (either > score) { score = either; best = [q.x, q.y]; }
     }
-    if (ringBest && ringScore >= TRASH_CLEAR) return ringBest;
-    if (ringBest && ringScore > score) { score = ringScore; best = ringBest; }
+    if (ringBest) return ringBest;
   }
   return best;
 }
@@ -207,12 +249,12 @@ export const OPEN_DRAG = 8;
  */
 export function pressAt(
   slots: Slot[], selected: number | null, p: { x: number; y: number }, canAim: boolean,
-  aim?: { angle: number; power: number }, lever: End = 2,
+  aim?: { angle: number; power: number }, lever: End = 2, obstacles?: TrashObstacles,
 ): { drag: Drag | null; selected: number | null; lever?: End } {
   if (selected != null && slots[selected].onBoard) {
     const s = slots[selected];
     const rotate = (end: End): Drag => ({ mode: 'rotate', k: selected, end, offset: s.deg - bearing(p, s) - (end === 1 ? 180 : 0) });
-    const [bx, by] = trashSpot(s, lever);
+    const [bx, by] = trashSpot(s, lever, obstacles);
     if (Math.hypot(p.x - bx, p.y - by) < TRASH_GRAB) return { drag: { mode: 'trash', k: selected, x: bx, y: by }, selected };
     if (distToSegment(p, leverLine(s, lever)) < ROTATE_GRAB) return { drag: rotate(lever), selected };
     const arms = moveArms(s, lever);

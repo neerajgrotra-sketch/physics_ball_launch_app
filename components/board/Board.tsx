@@ -18,7 +18,7 @@ import { BallArt } from './BallArt';
 import { GunArt } from './GunArt';
 import { spinAlong, type BallSkin } from '../../game/skins';
 import { useBallSkin } from '../settings/BallSkin';
-import { leverLine, moveArms, trashSpot, type End } from '../../game/pieces';
+import { leverLine, moveArms, trashObstacles, trashSpot, type End } from '../../game/pieces';
 import { aimPreview } from '../../game/aim';
 import { FUSE_SHARE, confettiPieces, fuseGeometry } from '../../game/celebration';
 
@@ -225,7 +225,7 @@ export function Board(props: BoardProps) {
     : [];
   // The move handles: dotted arms along x and y out of the centre, a two-way arrow grip on each tip.
   const arms = sel ? moveArms(sel, lever) : null;
-  const trash = sel ? trashSpot(sel, lever) : null;
+  const trash = sel ? trashSpot(sel, lever, trashObstacles(level, pieces.filter((_, k) => k !== selected))) : null;
   const armDots = sel && arms
     ? arms.flatMap(([tx, ty], j) => Array.from({ length: 5 }, (_, i) => {
         const t = (i + 1) / 6;

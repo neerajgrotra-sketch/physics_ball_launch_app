@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { LEVELS } from '../levels';
+import { legalPlacement } from './placement';
 import { LAUNCHER, WORLD, pieceEnds, solutionPieces, type Level } from '../physics';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle,
-  ARM_CLEAR, MOVE_ARM, TRASH_CLEAR, TRASH_GRAB, distToSegment, trashSpot, atSolution, hintSlots, moveArms, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
+  ARM_CLEAR, MOVE_ARM, TRASH_CLEAR, TRASH_GRAB, distToSegment, trashObstacles, trashSpot, atSolution, hintSlots, moveArms, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
 } from './pieces';
 
 const level = LEVELS[0];
@@ -275,6 +276,26 @@ describe('move handles', () => {
           expect(fromBar, `${x},${y} ${deg}°`).toBeGreaterThanOrEqual(30);
           if (x > 100 && x < 300 && y > 100 && y < 440) expect(fromBar, `${x},${y} ${deg}°`).toBeGreaterThanOrEqual(TRASH_CLEAR);
         }
+      }
+    }
+  });
+
+  it('on every level the remove badge sits in open space, never on a wall, spikes, a pad, the glass or the gun', () => {
+    const onPoly = (x: number, y: number, poly: [number, number][], pad: number) => {
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const [xi, yi] = poly[i], [xj, yj] = poly[j];
+        if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside || poly.some((pt, i) => distToSegment({ x, y }, [pt[0], pt[1], poly[(i + 1) % poly.length][0], poly[(i + 1) % poly.length][1]]) < pad);
+    };
+    for (const level of LEVELS) {
+      const obs = trashObstacles(level, []);
+      for (let x = 40; x <= 360; x += 40) for (let y = 40; y <= 480; y += 40) for (const deg of [0, 45, 90, 135]) {
+        const b = { x, y, deg, len: level.pieces[0].len };
+        if (!legalPlacement(level, [b])) continue;
+        const [tx, ty] = trashSpot(b, 2, obs);
+        for (const poly of obs.polygons) expect(onPoly(tx, ty, poly, 11), `${level.id} ${x},${y} ${deg}°`).toBe(false);
       }
     }
   });

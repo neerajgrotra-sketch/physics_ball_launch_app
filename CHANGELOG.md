@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.41.2
+
+- The remove badge now finds open space: it keeps clear of the level's walls, spikes, spring pads, portals, the glass, the gun
+  and the other bars, not only the selected bar's own handles (it could land on a pillar, as on Moat). It tries further out when
+  the usual ring is crowded. Checked on every level, over 70,000 bar positions: it never sits on anything.
+
 ## 0.41.1
 
 - The remove badge sits further out from the bar: 85 units from its centre (was 50), closer only where the board runs out, and
