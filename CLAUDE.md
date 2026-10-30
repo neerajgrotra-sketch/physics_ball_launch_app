@@ -203,7 +203,7 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   streak and hints, and the win card's right button is Share. Toughness follows the weekday
   (`DAILY_TIERS`, Monday gentle, Sunday toughest). Puzzles are generated, never hand-edited: `npx tsx tools/make-dailies.ts <first>
   <count>` writes `levels/daily/NNN.json` and its index; the pool stays a multiple of 7 (`tools/dailies.test.ts` checks each answer).
-- **Sharing** (`game/share.ts` `shareMessage`, `components/share.ts`): a level's win card has "📣 Challenge a friend" and the daily's
+- **Sharing** (`game/share.ts` `shareMessage`, `components/share.ts`): a level's win card has "📣 Share" and the daily's
   Share uses the same message: a hook picked by how the shot went (seeded, so a win always shares the same words), the level, stars,
   bounces, par and tries, a dare, and `SHARE_LINK` (a placeholder until the store link exists). A poster goes with it (`Board`'s
   `snapshot`, drawn by `components/board/shareCard.ts` from the level, bars and trails, not a screenshot; words from `game/share.ts`

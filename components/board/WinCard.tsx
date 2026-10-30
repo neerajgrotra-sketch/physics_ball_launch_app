@@ -7,7 +7,7 @@ import { FONTS, useColors } from '../../theme/colors';
  * The prototype's #win card. It sits at the top of the board so the winning path stays visible.
  * ✕ (or any edit to the board) closes it and goes back to playing (onClose).
  */
-/** `onShare` adds a "Challenge a friend" button under the others (a level's win; the daily's main button already shares). */
+/** `onShare` adds a "Share" button under the others (a level's win; the daily's main button already shares). */
 export function WinCard({ text, onAgain, onGo, onClose, onStar, onShare, place = 'top' }: {
   text: WinText; onAgain: () => void; onGo: () => void; onClose: () => void; onStar?: (k: number) => void; onShare?: () => void; place?: 'top' | 'bottom';
 }) {
@@ -64,7 +64,7 @@ export function WinCard({ text, onAgain, onGo, onClose, onStar, onShare, place =
       </View>
       {onShare && (
         <Pressable onPress={onShare} accessibilityRole="button" accessibilityLabel="Share your result" hitSlop={6} style={[styles.share, { borderColor: c.pencil }]}>
-          <Text style={[styles.shareText, { color: c.pencil }]}>📣 Challenge a friend</Text>
+          <Text style={[styles.shareText, { color: c.pencil }]}>📣 Share</Text>
         </Pressable>
       )}
       <Text style={[styles.more, { color: c.muted }]}>Move a bar or aim to keep playing</Text>

@@ -4,6 +4,10 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.45.1
+
+- The win card's "📣 Challenge a friend" button is now "📣 Share" (same message and poster).
+
 ## 0.45.0
 
 - A level won with help now counts: it saves stars, points, best bounces and the winning shot (the card's drawing and Replay),
