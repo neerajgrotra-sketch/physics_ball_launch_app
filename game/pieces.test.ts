@@ -3,7 +3,7 @@ import { LEVELS } from '../levels';
 import { LAUNCHER, WORLD, pieceEnds, solutionPieces, type Level } from '../physics';
 import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, pressAt, removeBar, rotateBy, rotateTo, shownAngle,
-  atSolution, hintSlots, moveArms, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
+  ARM_CLEAR, MOVE_ARM, atSolution, hintSlots, moveArms, shotSlots, LEVER, leverEnd, leverLine, leverTipInside, slotsLegal, solutionSlots, tapChip, type Slot,
 } from './pieces';
 
 const level = LEVELS[0];
@@ -245,6 +245,18 @@ describe('move handles', () => {
         }
       }
     }
+  });
+
+  it('each grip sits well past the end of the bar, even when the bar lies along that axis', () => {
+    // Flat bar: the x arm runs along the bar, so its grip must clear the bar's end (45 from the centre) by ARM_CLEAR.
+    const [gx] = moveArms(bar(200, 300, 0), 2);
+    expect(Math.abs(gx[0] - 200)).toBeGreaterThanOrEqual(45 + ARM_CLEAR);
+    // Upright bar: the same for the y arm.
+    const [, gy] = moveArms(bar(200, 300, 90), 2);
+    expect(Math.abs(gy[1] - 300)).toBeGreaterThanOrEqual(45 + ARM_CLEAR);
+    // Across the axis the arm keeps its usual length.
+    const [, gyFlat] = moveArms(bar(200, 300, 0), 2);
+    expect(Math.abs(gyFlat[1] - 300)).toBe(MOVE_ARM);
   });
 
   it('a touch on the bar itself still moves it freely', () => {

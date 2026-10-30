@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.40.1
+
+- The slide grips on a selected bar now always sit well clear of the bar. When the bar lay along an arm's direction (flat for
+  the sideways grip, upright for the up-down one), the arm ran along the bar and its grip ended just past the bar's end, under the
+  same finger. Each arm now reaches 50 units beyond the bar's end in its direction, still fitting on the board.
+
 ## 0.40.0
 
 - Your gun: Settings has a "Your gun" picker under "Your ball", with six designs: Classic, Brass cannon (on a wooden wheel),

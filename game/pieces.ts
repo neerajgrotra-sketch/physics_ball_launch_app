@@ -40,10 +40,15 @@ export function leverEnd(p: PlacedPiece): End {
 }
 
 /**
- * The move handles: two dotted arms out of the selected bar's centre, one along x and one along y, each this
- * long with a grip at its tip. Dragging a grip slides the bar along that axis with the finger well clear of it.
+ * The move handles: two dotted arms out of the selected bar's centre, one along x and one along y, each at least
+ * this long with a grip at its tip. Dragging a grip slides the bar along that axis with the finger well clear of it.
  */
 export const MOVE_ARM = 72;
+/**
+ * How far a grip stays beyond the bar's own end along its axis. A bar lying along an axis covers that arm, so a fixed-length arm
+ * put the grip just past the bar's end, under the same finger; each arm now reaches at least this far beyond the bar.
+ */
+export const ARM_CLEAR = 50;
 /** Touch within this distance of a grip, or of the arm out beyond the bar's end, takes hold of it. */
 export const MOVE_GRAB = 18;
 export type Axis = 'x' | 'y';
@@ -60,9 +65,17 @@ export function moveArms(p: PlacedPiece, lever: End): [[number, number], [number
     const want: 1 | -1 = Math.abs(towards) > 0.5 ? (towards > 0 ? -1 : 1) : preferred;
     return inside(want) ? want : (-want as 1 | -1);
   };
-  const dx = pick(s * Math.cos(a), (d) => fits(p.x + d * MOVE_ARM, p.y), 1);
-  const dy = pick(s * Math.sin(a), (d) => fits(p.x, p.y + d * MOVE_ARM), -1);
-  return [[p.x + dx * MOVE_ARM, p.y], [p.x, p.y + dy * MOVE_ARM]];
+  // Each arm reaches ARM_CLEAR past the bar's end along it (more when the bar lies along that axis), but no further than fits on
+  // the board on one side or the other; at worst the old fixed length.
+  const reach = (spread: number, fitsAt: (d: 1 | -1, len: number) => boolean) => {
+    const want = Math.max(MOVE_ARM, (Math.abs(spread) * p.len) / 2 + ARM_CLEAR);
+    return fitsAt(1, want) || fitsAt(-1, want) ? want : MOVE_ARM;
+  };
+  const lx = reach(Math.cos(a), (d, len) => fits(p.x + d * len, p.y));
+  const ly = reach(Math.sin(a), (d, len) => fits(p.x, p.y + d * len));
+  const dx = pick(s * Math.cos(a), (d) => fits(p.x + d * lx, p.y), 1);
+  const dy = pick(s * Math.sin(a), (d) => fits(p.x, p.y + d * ly), -1);
+  return [[p.x + dx * lx, p.y], [p.x, p.y + dy * ly]];
 }
 
 const bearing = (p: { x: number; y: number }, c: { x: number; y: number }) => (Math.atan2(p.y - c.y, p.x - c.x) * 180) / Math.PI;
