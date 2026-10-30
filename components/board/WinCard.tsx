@@ -67,7 +67,6 @@ export function WinCard({ text, onAgain, onGo, onClose, onStar, onShare, place =
           <Text style={[styles.shareText, { color: c.pencil }]}>📣 Share</Text>
         </Pressable>
       )}
-      <Text style={[styles.more, { color: c.muted }]}>Move a bar or aim to keep playing</Text>
     </Animated.View>
   );
 }
@@ -77,7 +76,6 @@ const styles = StyleSheet.create({
   closeText: { fontSize: 18, fontFamily: FONTS.bodySemi },
   share: { marginTop: 8, height: 34, paddingHorizontal: 16, borderRadius: 17, borderWidth: 1.5, justifyContent: 'center' },
   shareText: { fontSize: 16, fontFamily: FONTS.condensedBold },
-  more: { marginTop: 8, fontSize: 12, fontFamily: FONTS.body },
   cardTop: { top: 10 },
   cardBottom: { bottom: 26 },
   card: {
