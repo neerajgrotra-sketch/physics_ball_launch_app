@@ -1,5 +1,5 @@
 // Level unlocking and the win card's wording, as in reference/prototype.html. Pure: no UI imports.
-import { golfName, nextStarsText, scoreFor, starsFor } from './score';
+import { cappedBounces, golfName, nextStarsText, scoreFor, starCap, starsFor } from './score';
 
 /**
  * Level locks: on. A level opens once the one before it is won (settings has a testing switch to open them all).
@@ -61,16 +61,24 @@ export interface WinText {
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 /**
- * Card text after the ball lands. `assisted`: 'solve' when the Solve button took the shot, 'hint' when a
- * hint was used on this level; either way there are no stars or score.
+ * Card text after the ball lands. `assisted`: 'solve' when the Solve button took the shot, 'tutorial' for the guided tutorial,
+ * 'hint' for a daily puzzle won with a hint (no stars or score). `help` is the help used on a level (game/score.ts): its win
+ * still scores, capped at ★★ after one hint and ★ after more or the full solution.
  */
 export function winText(opts: {
-  assisted: 'solve' | 'hint' | 'tutorial' | null; tries: number; bounces: number; par: number; last: boolean;
+  assisted: 'solve' | 'hint' | 'tutorial' | null; tries: number; bounces: number; par: number; last: boolean; help?: number;
 }): WinText {
   const { assisted, tries, bounces, par, last } = opts;
+  const help = opts.help ?? 0;
   const go = last ? 'Play again' : 'Next level';
+  const capped = cappedBounces(bounces, par, help);
+  const capNote = help > 0 ? ` · solved with help, max ${'★'.repeat(starCap(help))}` : '';
   if (assisted === 'solve') {
-    return { title: 'Here’s one way in', detail: `${plural(bounces, 'bounce')}, par ${par}`, stars: 0, score: null, next: null, again: 'Try it yourself', go };
+    return {
+      title: 'Here’s one way in', detail: `${plural(bounces, 'bounce')}, par ${par}${help > 0 ? capNote : ''}`,
+      stars: help > 0 ? starsFor(capped, par) : 0, score: help > 0 ? scoreFor({ bounces: capped, par, tries }) : null,
+      next: null, again: 'Try it yourself', go,
+    };
   }
   if (assisted === 'tutorial') {
     return {
@@ -84,10 +92,11 @@ export function winText(opts: {
   const name = golfName(bounces, par);
   return {
     title: name.startsWith('+') ? 'In the glass' : `${name}!`,
-    detail: `${plural(bounces, 'bounce')}, par ${par} · ${tries === 1 ? 'first try' : `${tries} tries`}`,
-    stars: starsFor(bounces, par),
-    score: scoreFor({ bounces, par, tries }),
-    next: nextStarsText(bounces, par),
+    detail: `${plural(bounces, 'bounce')}, par ${par} · ${tries === 1 ? 'first try' : `${tries} tries`}${capNote}`,
+    stars: starsFor(capped, par),
+    score: scoreFor({ bounces: capped, par, tries }),
+    // More stars to aim for only while the cap allows them.
+    next: help > 0 ? null : nextStarsText(bounces, par),
     again: 'Start over',
     go,
   };

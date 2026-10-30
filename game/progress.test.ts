@@ -88,3 +88,22 @@ describe('cardStates', () => {
     expect(cardStates(ids, () => true, 4, 4, true)).not.toContain('next');
   });
 });
+
+describe('winText with help', () => {
+  it('scores a level won after a hint, capped, and says so', () => {
+    const t = winText({ assisted: null, tries: 2, bounces: 3, par: 3, last: false, help: 1 });
+    expect(t.stars).toBe(2);
+    expect(t.score).toBeGreaterThan(0);
+    expect(t.detail).toContain('solved with help, max ★★');
+    expect(t.next).toBeNull();
+  });
+  it('gives the Solve button’s own shot one star on a level', () => {
+    const t = winText({ assisted: 'solve', tries: 1, bounces: 3, par: 3, last: false, help: 2 });
+    expect(t.stars).toBe(1);
+    expect(t.again).toBe('Try it yourself');
+  });
+  it('keeps the daily rule: a helped daily win has no stars', () => {
+    expect(winText({ assisted: 'hint', tries: 1, bounces: 3, par: 3, last: false }).stars).toBe(0);
+    expect(winText({ assisted: 'solve', tries: 1, bounces: 3, par: 3, last: false }).stars).toBe(0);
+  });
+});

@@ -124,8 +124,10 @@ reference/    prototype.html, the behaviour and look to match
   ("N bounces / par P"), and the goal line under the board reads "Goal: into the glass in P bounces, off all N
   bars". A win names the result (Eagle, Birdie, Par, Bogey…), gives 1–3 stars (3 at par or better, 2
   within two) and points (`game/score.ts`); each level's best is saved and the level list shows stars and a
-  total. Wins with a hint or Solve unlock the next level but earn no stars or score (kept clean for a
-  future verified leaderboard: physics is deterministic, so a server can re-run a submitted shot).
+  total. Wins with help still count and score, capped by the help used on that level (`starCap`: one hint ★★, more hints or the
+  full solution ★, never above what the shot earned; points follow, via `cappedBounces`). The help is saved per level for good
+  (`HELP_KEY`, `markHelp`), so Start over can't lift it and rebuilding a shown answer can't earn ★★★; the level card shows a 💡.
+  The help card says what help costs on that level (`helpNote`). The daily keeps "helped = no stars"; the tutorial never scores.
 - **Help (the Solve button):** opens a card offering a hint or the full solution. The one Hint button gives the stored answer's
   next step in order (`game/help.ts` `nextHint`): each bar in turn (placed where the answer has it; clashing bars go back to the
   tray), then the launch angle, then the launch power, skipping any step that already matches. Both are paid from the player's
@@ -133,7 +135,7 @@ reference/    prototype.html, the behaviour and look to match
   the missing steps; a daily gift, a level's first three-star win and a world's last level give more. Short of hints, the card offers
   a rewarded ad for +3 (`components/ads/RewardedAds.tsx`; a 5-second placeholder until AdMob is wired into a store build) and the
   shop (`components/hints/Shop.tsx`: a pack only says "Purchases not activated yet" until in-app purchases are wired up, see BACKLOG.md).
-  Using either marks the round as helped until Start over. Once the board already matches the answer in every step, Solve opens no card and
+  Using either is recorded for the level (see Score). Once the board already matches the answer in every step, Solve opens no card and
   no ad: the button shakes red and a card over the middle of the board says the answer is already
   set up, then fades away without moving anything (`solvedNudge`, `FadeToast`).
 - **Solve:** places the stored solution's pieces (unused pieces go back to the tray), sets angle and power,

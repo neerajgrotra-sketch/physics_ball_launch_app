@@ -8,8 +8,10 @@ import { FONTS, useColors } from '../../theme/colors';
  * button (label and cost), or null when every step already matches. When there aren't enough hints for what's offered, the card
  * also offers an ad for a few more and the shop; an option that can't be afforded opens the shop.
  */
-export function HelpCard({ hint, solutionCost, hints, onHint, onSolve, onAd, onShop, onClose }: {
+export function HelpCard({ hint, solutionCost, hints, note, onHint, onSolve, onAd, onShop, onClose }: {
   hint: { label: string; cost: number } | null; solutionCost: number; hints: number;
+  /** What help costs in stars on this level, shown under the buttons. */
+  note: string;
   onHint: () => void; onSolve: () => void; onAd: () => void; onShop: () => void; onClose: () => void;
 }) {
   const c = useColors();
@@ -55,7 +57,7 @@ export function HelpCard({ hint, solutionCost, hints, onHint, onSolve, onAd, onS
           <Text style={[styles.link, { color: c.pencil }]}>Get more hints</Text>
         </Pressable>
       )}
-      <Text style={[styles.note, { color: c.muted }]}>A level won with help opens the next one but earns no stars or score.</Text>
+      <Text style={[styles.note, { color: c.muted }]}>{note}</Text>
     </View>
   );
 }

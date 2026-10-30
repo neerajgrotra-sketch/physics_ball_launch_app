@@ -95,14 +95,9 @@ the ceiling of this layout; the sensible next step for variety is a *different* 
   and a shop whose packs say "Purchases not activated yet" (0.30.1). Still to do: **real in-app purchases** for the packs (RevenueCat in a development/store build; products
   `hints_30`, `hints_80`, `hints_200` in App Store Connect and Play Console; the shop's `give` call becomes the purchase), and
   showing the balance on the levels screen. Later: hints from badges.
-- **Stars for helped wins (proposed, not built).** Today a win with a hint or Solve earns no stars or score, but Start over clears
-  the help mark, so a player can re-place the bars they were shown and take 3 stars anyway. Proposal: a helped win scores, capped
-  by the help used on that level: 1 hint caps it at ★★, 2 or more hints or the full solution at ★ (and never above what the shot
-  itself earns; points follow the stars). The cap is saved per level and survives Start over, which closes the loophole. The
-  Solve card warns before the first hint ("Using a hint here caps this level at ★★"), and the win card says "solved with help". The
-  +1 💡 star reward stays for unhelped 3-star wins only; a future leaderboard marks helped results. Optional softer version:
-  lift the cap after the level is beaten again with a different solution. About 1 to 2 hours (`game/score.ts`, a per-level
-  help record, win and Solve card text, tests).
+- **Stars for helped wins: done in 0.45.0.** A helped win scores, capped by the help used on that level (1 hint ★★, more or the
+  full solution ★; `game/score.ts` `starCap`, saved per level in `HELP_KEY`, survives Start over). Still open: a softer version
+  that lifts the cap once the level is beaten again with a different solution; a future leaderboard marks helped results.
 - **Badges:** Hole in One, Birdie, Eagle, Perfect World (all levels at par), 7-day Daily streak, Trick Shot.
 - **Hint power-ups** (assisted, no score): longer aim preview, reveal one piece, extra undo.
 - **Real ads:** AdMob rewarded ads in a development/store build (`components/ads/RewardedAds.tsx` is the

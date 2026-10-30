@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { better, golfName, nextStarsText, goalText, parseBest, scoreFor, starsFor, totalScore } from './score';
+import { AFTER_SOLUTION, afterHint, bestOf, better, goalText, golfName, nextStarsText, parseBest, parseHelp, scoreFor, starCap, starsFor, totalScore } from './score';
 
 describe('golf scoring', () => {
   it('names a shot against par', () => {
@@ -60,5 +60,39 @@ describe('goalText with portals', () => {
   it('adds the portal to the goal', () => {
     expect(goalText(2, 3, 0, 1)).toBe('Goal: into the glass in 3 bounces, off both bars and through the portal');
     expect(goalText(2, 3, 1, 1)).toBe('Goal: into the glass in 3 bounces, off both bars and the spring pad and through the portal');
+  });
+});
+
+describe('help cap', () => {
+  it('caps a helped win at ★★ after one hint and ★ after more help, never above what the shot earned', () => {
+    expect(bestOf({ bounces: 3, par: 3, tries: 1 }).stars).toBe(3);
+    expect(bestOf({ bounces: 3, par: 3, tries: 1 }, 1).stars).toBe(2);
+    expect(bestOf({ bounces: 3, par: 3, tries: 1 }, 2).stars).toBe(1);
+    // A shot that only earns ★ stays at ★ whatever the cap.
+    expect(bestOf({ bounces: 9, par: 3, tries: 1 }, 1).stars).toBe(1);
+    // The real bounce count is kept; only stars and points are capped.
+    expect(bestOf({ bounces: 3, par: 3, tries: 1 }, 2).bounces).toBe(3);
+  });
+
+  it('gives fewer points with more help, and points never beat an unhelped win', () => {
+    const clean = bestOf({ bounces: 3, par: 3, tries: 1 }).score;
+    const oneHint = bestOf({ bounces: 3, par: 3, tries: 1 }, 1).score;
+    const solved = bestOf({ bounces: 3, par: 3, tries: 1 }, 2).score;
+    expect(clean).toBeGreaterThan(oneHint);
+    expect(oneHint).toBeGreaterThan(solved);
+    expect(solved).toBeGreaterThan(0);
+  });
+
+  it('only ever adds help, up to the solution level', () => {
+    expect(afterHint(0)).toBe(1);
+    expect(afterHint(1)).toBe(2);
+    expect(afterHint(2)).toBe(2);
+    expect(starCap(0)).toBe(3);
+    expect(starCap(AFTER_SOLUTION)).toBe(1);
+  });
+
+  it('reads the stored help record safely', () => {
+    expect(parseHelp(JSON.stringify({ a: 1, b: 2, c: 7, d: 0, e: 'x' }))).toEqual({ a: 1, b: 2, c: 2 });
+    expect(parseHelp('nope')).toEqual({});
   });
 });

@@ -1,6 +1,7 @@
 // Scoring, golf style: every level has a par (the fewest bounces its solver found). Pure: no UI imports.
-// Bounces are counted by physics (SimResult.bounces). A win with a hint or Solve is "assisted": it
-// unlocks the next level but earns no stars or score, so scores stay comparable for a future leaderboard.
+// Bounces are counted by physics (SimResult.bounces). A win with help (a hint, or the full solution) still counts and scores, but
+// capped by the help used on that level (starCap): the cap is saved per level and survives Start over, so taking the answer and
+// rebuilding it can't earn three stars.
 
 /** Storage key for each level's best result. */
 export const BEST_KEY = 'bank-shot/best';
@@ -47,8 +48,52 @@ export function scoreFor({ bounces, par, tries }: Result): number {
   return 500 + bounceBonus + triesBonus;
 }
 
-export function bestOf(result: Result): Best {
-  return { stars: starsFor(result.bounces, result.par), score: scoreFor(result), bounces: result.bounces };
+/** Storage key for the help used on each level (hintsUsed below), kept for good: Start over doesn't clear it. */
+export const HELP_KEY = 'bank-shot/help';
+/** Help used on each level: 1 = one hint, 2 = two or more hints, or the full solution. Absent = none. */
+export type HelpByLevel = Record<string, number>;
+/** The help a level has after one more hint, or after the full solution. */
+export const afterHint = (help: number) => Math.min(2, help + 1);
+export const AFTER_SOLUTION = 2;
+
+/** Most stars a level can still earn: ★★★ with no help, ★★ after one hint, ★ after more hints or the full solution. */
+export function starCap(help: number): number {
+  return help <= 0 ? 3 : help === 1 ? 2 : 1;
+}
+
+/**
+ * A helped shot is scored as if it took at least as many bounces as its cap allows (par + 1 for ★★, par + 3 for ★), so its stars
+ * and points both follow the cap and are never above what the shot itself earned.
+ */
+export function cappedBounces(bounces: number, par: number, help: number): number {
+  const cap = starCap(help);
+  return cap === 3 ? bounces : Math.max(bounces, par + (cap === 2 ? 1 : 3));
+}
+
+export function bestOf(result: Result, help = 0): Best {
+  const b = cappedBounces(result.bounces, result.par, help);
+  return { stars: starsFor(b, result.par), score: scoreFor({ ...result, bounces: b }), bounces: result.bounces };
+}
+
+/** The help card's line on what help costs in stars on a level, given the help already used there. */
+export function helpNote(help: number): string {
+  if (help <= 0) return 'A hint caps this level at ★★, more help or the full solution at ★. It still opens the next level.';
+  if (help === 1) return 'This level is capped at ★★ (you used a hint). Another hint or the full solution caps it at ★.';
+  return 'This level is capped at ★ (you used help). Hints from here cost no more stars.';
+}
+
+/** Read the stored help record, dropping anything malformed. */
+export function parseHelp(raw: string | null): HelpByLevel {
+  try {
+    const o = JSON.parse(raw ?? '{}');
+    const out: HelpByLevel = {};
+    if (o && typeof o === 'object') for (const [id, n] of Object.entries(o as Record<string, unknown>)) {
+      if (typeof n === 'number' && n > 0) out[id] = Math.min(2, Math.round(n));
+    }
+    return out;
+  } catch {
+    return {};
+  }
 }
 
 /** Keeps the higher score (ties: the fewer bounces). */

@@ -37,7 +37,7 @@ import { CARD_PAUSE_MS, CELEBRATION_MS, burstFor, cardPlace } from '../../game/c
 import { counterSpot } from '../../game/counter';
 import { emptyHistory, record, undo as undoHistory, type History } from '../../game/history';
 import { skipNotice, winText } from '../../game/progress';
-import { bestOf, goalText, starsFor } from '../../game/score';
+import { AFTER_SOLUTION, afterHint, bestOf, cappedBounces, goalText, helpNote, starsFor } from '../../game/score';
 import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
@@ -103,7 +103,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   const c = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { best, shots, won, draftFor, saveDraft } = useProgress();
+  const { best, shots, won, draftFor, saveDraft, help: helpRecord, markHelp } = useProgress();
   const unlocked = useUnlocked();
   const tips = useTips();
   /**
@@ -239,6 +239,13 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   // The bounce counter ticks up as the ball reaches each scored bounce, and shows the full count at the end.
   // The tutorial level never scores (it's practice, and its answer is handed to you), however it's played.
   const practice = level.id === TUTORIAL_ID;
+  // Help used on this level, kept for good (game/score.ts): a win still scores, capped at ★★ after one hint and ★ after more or the
+  // full solution, and Start over doesn't lift it, so rebuilding a shown answer can't earn ★★★. The daily keeps its own rule
+  // (a helped daily win earns no stars) and the tutorial never scores.
+  const capsHelp = !daily && !practice;
+  const levelHelp = capsHelp ? helpRecord[level.id] ?? 0 : 0;
+  // A board saved before help was kept per level (0.45.0) may already carry help: carry it over as one hint.
+  useEffect(() => { if (capsHelp && draft?.helped && !levelHelp) markHelp(level.id, 1); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // The win celebration (game/celebration): a spark runs the winning shot and the glass bursts; the win card waits for the burst.
   const celeT = useSharedValue(1);
   const [cele, setCele] = useState<{ path: Vec[]; jumps: number[]; confetti: number; rings: number } | null>(null);
@@ -251,9 +258,9 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
     setCele(null);
     setCardReady(true);
   };
-  const celebrate = (res: { path: Vec[]; jumps: number[]; bounces: number }, assisted: boolean) => {
+  const celebrate = (res: { path: Vec[]; jumps: number[]; bounces: number }, stars: number, assisted: boolean) => {
     stopCelebration();
-    const burst = burstFor(starsFor(res.bounces, par), assisted);
+    const burst = burstFor(stars, assisted);
     setCele({ path: res.path, jumps: res.jumps, ...burst });
     setCardReady(false);
     celeT.value = 0;
@@ -312,7 +319,11 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
     charge.value = 1;
     charge.value = withTiming(0.55, { duration: 1400, easing: Easing.out(Easing.quad) });
   };
-  const fire = (shot: Slot[], a: number, p: number, assisted = helped || practice) => {
+  /** `viaSolve`: the Solve button's own shot (the full solution). */
+  const fire = (shot: Slot[], a: number, p: number, viaSolve = false) => {
+    // No stars at all: the tutorial, and a daily won with help. A level won with help scores, capped by its help.
+    const assisted = practice || (!!daily && (helped || viaSolve));
+    const helpNow = capsHelp && viaSolve ? AFTER_SOLUTION : levelHelp;
     const placed = boardPieces(shot), numbers = boardNumbers(shot);
     setGuided(tutorial);
     const res = simulate(buildWorld(level, placed), a, p);
@@ -329,21 +340,20 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
       if (res.end === 'dead') feedback.died();
       if (res.success) {
         feedback.landed();
-        celebrate(res, assisted);
+        const stars = assisted ? 0 : starsFor(cappedBounces(res.bounces, par, helpNow), par);
+        celebrate(res, stars, assisted);
         setWinShot({ angle: a, power: p, slots: shot, bounces: res.bounces });
         setDone(true);
         if (tutorial) { tips.finishTutorial(); setTutorial(false); }
-        // The winning shot is kept for the level card's drawing and Replay, but only unassisted wins (and the
-        // tutorial's guided one, which has no score) save it.
+        // Every win keeps its shot for the level card's drawing and Replay; a level's result is scored with its help cap.
         const saved = { pieces: placed.map(({ x, y, deg, len }) => ({ x, y, deg, len })), angle: a, power: p };
-        if (daily) daily.onWin({ bounces: res.bounces, stars: assisted ? 0 : starsFor(res.bounces, par), tries: tryNo, helped: assisted });
+        if (daily) daily.onWin({ bounces: res.bounces, stars, tries: tryNo, helped: assisted });
         else if (practice) won(index, undefined, saved);
-        else if (assisted) won(index);
-        else won(index, bestOf({ bounces: res.bounces, par, tries: tryNo }), saved);
+        else won(index, bestOf({ bounces: res.bounces, par, tries: tryNo }, helpNow), saved);
         // Hint rewards, said once the celebration is over: a level's first three-star win, and a world's last level won.
         if (!practice && !daily) {
           const notes: string[] = [];
-          if (!assisted && starsFor(res.bounces, par) === 3 && wallet.rewardStars(level.id)) notes.push(`+${STAR_REWARD} 💡 for three stars`);
+          if (!assisted && stars === 3 && wallet.rewardStars(level.id)) notes.push(`+${STAR_REWARD} 💡 for three stars`);
           const world = WORLDS.find((w) => w.ids[w.ids.length - 1] === level.id);
           if (world && wallet.rewardWorld(world.name)) notes.push(`+${WORLD_REWARD} 💡: ${world.name} world complete!`);
           if (notes.length) setTimeout(() => wallet.announce(notes.join('\n')), CELEBRATION_MS + 600);
@@ -471,8 +481,8 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   // Share a level's win (game/share.ts): the message, with a picture of the board as it is, every trail of the round on it.
   const snapshot = useRef<((card: ShareCard) => string | null) | null>(null);
   const shareWin = () => {
-    const assisted = solved || helped || guided || practice;
-    const r = { bounces: winShot.bounces, stars: assisted ? 0 : starsFor(winShot.bounces, par), tries, helped: assisted };
+    const assisted = practice || guided || (!!daily && (solved || helped));
+    const r = { bounces: winShot.bounces, stars: assisted ? 0 : starsFor(cappedBounces(winShot.bounces, par, levelHelp), par), tries, helped: assisted || levelHelp > 0 };
     const what = { kind: 'level' as const, number: index + 1, name: level.name };
     shareText(shareMessage(what, r, par), wallet.announce, snapshot.current?.(shareCard(what, r, par)));
   };
@@ -553,6 +563,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
     if (!wallet.spend(1)) { wallet.openShop(); return; }
     setHelp(false);
     setHelped(true);
+    if (capsHelp) markHelp(level.id, afterHint(levelHelp));
     if (next.kind === 'bar') {
       const h = hintSlots(level, slots);
       if (!h) return;
@@ -588,6 +599,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
     }
     setSolved(true);
     setHelped(true);
+    if (capsHelp) markHelp(level.id, AFTER_SOLUTION);
     fire(next, s.angle, s.power, true);
   };
 
@@ -858,6 +870,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
           <HelpCard
             hint={(() => { const h = nextHint(level, barHint(), angle, power); return h ? { label: hintLabel(h), cost: 1 } : null; })()}
             solutionCost={fullCost()} hints={wallet.hints}
+            note={capsHelp ? helpNote(levelHelp) : 'A daily puzzle won with help still counts for your streak, but earns no stars.'}
             onHint={hint} onSolve={fullSolution} onAd={() => { wallet.watchAd(); }} onShop={wallet.openShop} onClose={() => setHelp(false)}
           />
         )}
@@ -865,7 +878,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
           <WinCard
             place={cardPlace(glassBox(level.glass).rim, WORLD.height)}
             onStar={(k) => feedback.star(k)}
-            text={{ ...winText({ assisted: solved ? 'solve' : helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last }), ...(daily ? { go: 'Share' } : {}) }}
+            text={{ ...winText({ assisted: solved ? 'solve' : daily && helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last, help: levelHelp }), ...(daily ? { go: 'Share' } : {}) }}
             onAgain={() => startOver(false)}
             onClose={keepPlaying}
             onGo={() => (daily ? daily.onShare(snapshot.current) : last ? startOver(false) : goTo(index + 1))}

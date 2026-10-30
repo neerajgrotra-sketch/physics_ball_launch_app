@@ -4,6 +4,16 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.45.0
+
+- A level won with help now counts: it saves stars, points, best bounces and the winning shot (the card's drawing and Replay),
+  capped by the help used on that level: one hint caps it at ★★, more hints or the full solution at ★ (never above what the
+  shot itself earned). Solve's own shot is a ★ win. The help is saved per level and stays through Start over, Try it yourself
+  and leaving the level, so taking the answer and rebuilding it can't earn ★★★ (before, Start over cleared the help mark).
+- The help card says what help costs on this level before you use it, the win card says "solved with help, max ★★", and the
+  level card marks helped results with 💡. The +1 💡 three-star reward stays for wins without help. Daily puzzles keep their
+  rule (a helped daily win counts for the streak, with no stars); the tutorial never scores.
+
 ## 0.44.3
 
 - Fixed: the levels screen drew a level as locked when it wasn't, so › in a level opened a "locked" level. A win with a hint

@@ -32,7 +32,7 @@ export default function LevelSelect() {
   const { tipsOn, tutorialDone, restartTutorial, tourSeen, restartTour } = useTips();
   // The guided tour (components/tour/TourGate, in the root layout) shows once, before anything else; Settings can show it again.
   const openTutorial = () => router.push({ pathname: '/level/[id]', params: { id: TUTORIAL_ID } });
-  const { best, shots, frontier } = useProgress();
+  const { best, shots, frontier, help } = useProgress();
   const unlocked = useUnlocked();
   const total = totalScore(best);
   const [settings, setSettings] = useState(false);
@@ -150,7 +150,7 @@ export default function LevelSelect() {
                     ))}
                   </Text>
                   <Text style={[styles.best, { color: next ? c.paper : c.muted }]}>
-                    {b ? `best ${b.bounces}, par ${level.par}` : `par ${level.par}`}
+                    {b ? `${help[level.id] ? '💡 ' : ''}best ${b.bounces}, par ${level.par}` : `par ${level.par}`}
                   </Text>
                 </View>
               )}
