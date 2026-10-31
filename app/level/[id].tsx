@@ -541,13 +541,15 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     shareText(shareMessage(what, r, par), wallet.announce, snapshot.current?.(shareCard(what, r, par)));
   };
 
-  // What's on the board right now: the bounce markers that still describe it, and the bars as segments. A scorecard badge with
-  // either under it collapses to a small see-through chip, and opens up again once the corner is clear (game/counter.ts).
+  // What's on the board right now: the bounce markers that still describe it, and the bars as segments. A scorecard badge with a
+  // bar under it collapses to a small see-through chip, and opens up again once the corner is clear (game/counter.ts).
   const shownMarkList = showMarks && marksFor === setupKey(boardPieces(slots), angle, power) ? marks.slice(0, shownMarks) : [];
   const barSegs = boardPieces(slots).map((p) => { const [x1, y1, x2, y2] = pieceEnds(p); return { x1, y1, x2, y2 }; });
   const triesSpot = spot === 'right' ? 'left' : 'right';
-  const counterSmall = badgeCovers(badgeBox(spot), barSegs, shownMarkList);
-  const triesSmall = badgeCovers(badgeBox(triesSpot), barSegs, shownMarkList);
+  // Only bars shrink a badge: the badges show just for a shot, and shrinking for bounce numbers landing under them made a badge
+  // flick small mid-flight (and stay small under a "So close!" card).
+  const counterSmall = badgeCovers(badgeBox(spot), barSegs, []);
+  const triesSmall = badgeCovers(badgeBox(triesSpot), barSegs, []);
 
   const goTo = (i: number) => {
     if (!flying) router.setParams({ id: LEVELS[i].id });
