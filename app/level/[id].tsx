@@ -953,11 +953,12 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
         {bounces != null && !done && (
           <View style={[styles.counterRow, { justifyContent: spot === 'left' ? 'flex-start' : spot === 'right' ? 'flex-end' : 'center' }]} pointerEvents="none">
             <Animated.View style={slideFor(spot)}>
-              <View style={[styles.counter, counterSmall && styles.counterSmall, { backgroundColor: c.paper, borderColor: c.line }]}>
+              {/* Bold like the tries badge: dark ink, turning red once the shot goes over par. */}
+              <View style={[styles.counter, counterSmall && styles.counterSmall, { backgroundColor: c.paper, borderColor: bounces > par ? c.red : c.ink }]}>
               <Text style={[styles.counterNum, counterSmall && styles.counterNumSmall, { color: bounces > par ? c.red : c.ink }]}>{bounces}</Text>
               {counterSmall
-                ? <Text style={[styles.counterLabelSmall, { color: c.muted }]}>/{par}</Text>
-                : <Text style={[styles.counterLabel, { color: c.muted }]}>{bounces === 1 ? 'bounce' : 'bounces'}{'\n'}par {par}</Text>}
+                ? <Text style={[styles.counterLabelSmall, { color: bounces > par ? c.red : c.ink }]}>/{par}</Text>
+                : <Text style={[styles.counterLabel, { color: bounces > par ? c.red : c.ink }]}>{bounces === 1 ? 'bounce' : 'bounces'}{'\n'}par {par}</Text>}
               </View>
             </Animated.View>
           </View>
