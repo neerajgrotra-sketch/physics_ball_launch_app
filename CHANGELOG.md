@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.48.5
+
+- The scorecard only shows for a shot: on Launch the bounce counter and the tries badge slide in from the board's sides, stay
+  through the flight, and slide back out about a second and a half after the ball stops, so between shots the whole board is clear.
+  (A badge with a bounce number under it still shrinks to a small chip while it's showing.)
+
 ## 0.48.4
 
 - The scorecard badges get out of the way: when a bar (while you drag it there, or left there) or a bounce number sits under the

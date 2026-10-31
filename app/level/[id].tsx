@@ -229,6 +229,17 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   /** Shown in place of the hint after a shot that needs explaining. */
   const [notice, setNotice] = useState<string | { title: string; text: string } | null>(null);
   const { flight, flying, play, skip } = usePlayback();
+  // The scorecard only shows for a shot: it slides in from the board's sides when the ball launches, stays through the flight,
+  // and slides back out a moment after the ball stops, so between shots the whole board is clear.
+  const scoreIn = useSharedValue(0);
+  useEffect(() => {
+    scoreIn.value = flying ? withTiming(1, { duration: 240, easing: Easing.out(Easing.cubic) }) : withDelay(1600, withTiming(0, { duration: 320 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flying]);
+  const slideFromLeft = useAnimatedStyle(() => ({ opacity: scoreIn.value, transform: [{ translateX: (scoreIn.value - 1) * 170 }] }));
+  const slideFromRight = useAnimatedStyle(() => ({ opacity: scoreIn.value, transform: [{ translateX: (1 - scoreIn.value) * 170 }] }));
+  const slideFromTop = useAnimatedStyle(() => ({ opacity: scoreIn.value, transform: [{ translateY: (scoreIn.value - 1) * 80 }] }));
+  const slideFor = (side: 'left' | 'right' | 'center') => (side === 'left' ? slideFromLeft : side === 'right' ? slideFromRight : slideFromTop);
   const feedback = useFeedback();
   const { musicOn } = useSoundSettings();
   const [settings, setSettings] = useState(false);
@@ -941,22 +952,26 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
             corner counterSpot picks, and the tries so far (the other number a result is ranked by) in the opposite corner. */}
         {bounces != null && !done && (
           <View style={[styles.counterRow, { justifyContent: spot === 'left' ? 'flex-start' : spot === 'right' ? 'flex-end' : 'center' }]} pointerEvents="none">
-            <View style={[styles.counter, counterSmall && styles.counterSmall, { backgroundColor: c.paper, borderColor: c.line }]}>
+            <Animated.View style={slideFor(spot)}>
+              <View style={[styles.counter, counterSmall && styles.counterSmall, { backgroundColor: c.paper, borderColor: c.line }]}>
               <Text style={[styles.counterNum, counterSmall && styles.counterNumSmall, { color: bounces > par ? c.red : c.ink }]}>{bounces}</Text>
               {counterSmall
                 ? <Text style={[styles.counterLabelSmall, { color: c.muted }]}>/{par}</Text>
                 : <Text style={[styles.counterLabel, { color: c.muted }]}>{bounces === 1 ? 'bounce' : 'bounces'}{'\n'}par {par}</Text>}
-            </View>
+              </View>
+            </Animated.View>
           </View>
         )}
         {tries > 0 && !done && (
           <View style={[styles.counterRow, { justifyContent: spot === 'right' ? 'flex-start' : 'flex-end' }]} pointerEvents="none">
-            <View style={[styles.counter, triesSmall && styles.counterSmall, { backgroundColor: c.paper, borderColor: c.pencil }]}>
+            <Animated.View style={slideFor(triesSpot)}>
+              <View style={[styles.counter, triesSmall && styles.counterSmall, { backgroundColor: c.paper, borderColor: c.pencil }]}>
               <Text style={[styles.counterNum, triesSmall && styles.counterNumSmall, { color: c.pencil }]}>{tries}</Text>
               {triesSmall
                 ? <Text style={[styles.counterLabelSmall, { color: c.pencil }]}>{tries === 1 ? 'try' : 'tries'}</Text>
                 : <Text style={[styles.counterLabel, { color: c.pencil }]}>{tries === 1 ? 'try' : 'tries'}{'\n'}so far</Text>}
-            </View>
+              </View>
+            </Animated.View>
           </View>
         )}
         {help && !flying && (
