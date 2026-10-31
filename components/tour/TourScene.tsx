@@ -208,7 +208,10 @@ export function TourScene({ kind, scene: given, view = TOUR_VIEW, width }: {
         </Text>
       )}
       {note && (
-        <Text style={[styles.note, { color: noteColor, top: py(view.top + 44), fontSize: Math.max(13, 19 * sc) }]}>{note.text}</Text>
+        // A pill with the paper colour behind it, so the words stay readable over walls, bars and the ball's path.
+        <View style={[styles.noteRow, { top: py(view.top + 40) }]}>
+          <Text style={[styles.note, { color: noteColor, backgroundColor: c.paper, borderColor: noteColor, fontSize: Math.max(13, 19 * sc) }]}>{note.text}</Text>
+        </View>
       )}
       {state.stars.some((k) => k > 0) && (
         <View style={[styles.stars, { top: py(view.top + 66) }]}>
@@ -248,7 +251,11 @@ export function TourScene({ kind, scene: given, view = TOUR_VIEW, width }: {
 
 const styles = StyleSheet.create({
   readout: { position: 'absolute', fontFamily: FONTS.condensed },
-  note: { position: 'absolute', left: 0, right: 0, textAlign: 'center', fontFamily: FONTS.condensedBold },
+  noteRow: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  note: {
+    textAlign: 'center', fontFamily: FONTS.condensedBold, paddingHorizontal: 12, paddingVertical: 3, borderWidth: 1.5, borderRadius: 14,
+    overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+  },
   stars: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6 },
   star: { fontFamily: FONTS.condensedBold },
   button: { position: 'absolute', borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },

@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.47.1
+
+- The captions on the live demo boards (the challenge replay's bounce count and "In the glass in 7!", and the tour's lines) sit on a
+  paper-coloured pill with an outline, so they stay readable over walls, bars and the ball's path.
+
 ## 0.47.0
 
 - A challenge now opens on the sender's own winning shot: "Neeraj got “High ground” in 3 bounces. Here's the shot:", their bars and
