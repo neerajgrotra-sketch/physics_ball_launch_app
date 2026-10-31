@@ -11,7 +11,8 @@ export function TourGate({ hidden }: { hidden: boolean }) {
   const router = useRouter();
   const path = usePathname();
   const { tourSeen, finishTour, restartTutorial } = useTips();
-  if (hidden || tourSeen) return null;
+  // A friend arriving from a challenge link goes straight to the challenge; the tour waits for their next visit.
+  if (hidden || tourSeen || path.startsWith('/challenge')) return null;
   return (
     <Tour
       onStartTutorial={() => {

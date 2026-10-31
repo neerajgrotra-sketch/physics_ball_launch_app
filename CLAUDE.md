@@ -210,6 +210,14 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   `shareCard`): 1080×1350, always in the standard graph-paper colours (`LIGHT`, whatever board theme is picked), "LEVEL N COMPLETE!" and the result line on top, the board zoomed in on where
   the round happened (winner bold red with rings at its bounces, misses blue), a tilted rubber stamp with the result and stars
   placed where it covers the fewest shots, and a dare ("CAN YOU BEAT 2 BOUNCES?") at the bottom. The text never says where the bars went.
+- **Challenge a friend** (`game/challenge.ts`, `app/challenge.tsx`, `LevelGame`'s `challenge`): a level's win card has "⚔️ Challenge a
+  friend" beside "📣 Share". It sends `SITE_URL/challenge?l=<level id>&s=<shot>&n=<first name>` (on the web, the page's own origin):
+  the winning shot's bars, angle and power, lightly scrambled (`encodeShot`). The link opens an intro card ("Neeraj got level 5 in 3
+  bounces. Can you do it in fewer?"), then the level in challenge mode: no locks, no level progress, stars or rewards (like the
+  daily), goal "Beat Neeraj's 3 bounces, off …" (`challengeGoal`). The sender's bounces are never read from the link: the shot is
+  re-run (`challengeBounces`), and a link whose shot doesn't win is refused. The win card says beat / tied / not yet
+  (`challengeWinText`, "(with help)" if helped), with "Challenge back" (the friend's own shot), "Watch <name>'s shot" and "Play all
+  levels". The tour (`TourGate`) skips /challenge. `SHARE_LINK` is `SITE_URL` (the public Vercel address) until a store link exists.
 - **Level header:** ⚙ (settings sheet: music, sound effects, vibration, version) and ••• (back to the levels, also from a deep link)
   on the left, level name in the middle, ‹ › on the right. No back arrow.
 - Level locks are on (`LOCK_LEVELS`): a level opens when the one before is won, and level 2 once the tutorial is finished or skipped

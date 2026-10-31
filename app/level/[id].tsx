@@ -1,7 +1,8 @@
 import { useIsFocused, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef, type ReactElement } from 'react';
 import Svg, { Path } from 'react-native-svg';
-import { Pressable, StyleSheet, Text, View, type LayoutRectangle } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform, Pressable, StyleSheet, Text, View, type LayoutRectangle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
 import { usePlayback } from '../../components/board/usePlayback';
@@ -37,7 +38,9 @@ import { CARD_PAUSE_MS, CELEBRATION_MS, burstFor, cardPlace } from '../../game/c
 import { counterSpot } from '../../game/counter';
 import { emptyHistory, record, undo as undoHistory, type History } from '../../game/history';
 import { skipNotice, winText } from '../../game/progress';
-import { AFTER_SOLUTION, afterHint, bestOf, cappedBounces, goalText, helpNote, starsFor } from '../../game/score';
+import { AFTER_SOLUTION, afterHint, bestOf, cappedBounces, goalEvery, goalText, helpNote, starsFor } from '../../game/score';
+import { SITE_URL, challengeGoal, challengeMessage, challengeUrl, challengeWinText, senderName, type ChallengeShot } from '../../game/challenge';
+import { PROFILE_KEY, parseProfile } from '../../game/profile';
 import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
@@ -94,10 +97,19 @@ export default function LevelScreen() {
  */
 export interface DailyMode { number: number; tier: string; onWin: (result: DailyResult) => void; onShare: (picture: ((card: ShareCard) => string | null) | null) => void }
 
+/**
+ * A friend's challenge (app/challenge.tsx, from a "Challenge a friend" link): one level to beat the sender's bounces in, outside the
+ * player's own progress (no locks, no level result, no rewards, like the daily). `shot` is the sender's winning shot, to watch.
+ */
+export interface ChallengeMode { from: string; bounces: number; shot: ChallengeShot }
+
+/** Where a challenge link points: this site on the web (so a preview links to itself), the public site from the app. */
+const siteUrl = () => (Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : SITE_URL);
+
 // Laid out like the prototype: board, hint, aim controls, tray, then Solve and Launch.
 // Each launch runs simulate() once and plays the path back.
-export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
-  level: Level; index: number; daily?: DailyMode; shot?: Shot; guide: boolean; onReplay: (guide?: boolean) => void;
+export function LevelGame({ level, index, daily, challenge, shot, guide, onReplay }: {
+  level: Level; index: number; daily?: DailyMode; challenge?: ChallengeMode; shot?: Shot; guide: boolean; onReplay: (guide?: boolean) => void;
 }) {
   const last = index === LEVELS.length - 1;
   const c = useColors();
@@ -116,11 +128,11 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
 
   // A level left part-way is picked up where it was (game/drafts.ts): bars, aim, tries, and the trails of its last launches,
   // re-simulated. Not the tutorial (its guide starts from the empty board) or a replayed saved shot.
-  const draftKey = daily ? `daily-${daily.number}` : level.id;
+  const draftKey = daily ? `daily-${daily.number}` : challenge ? `challenge-${level.id}` : level.id;
   // A level won before drafts existed (0.44.0) has none: it opens on its saved winning shot instead.
   const [draft] = useState<Draft | undefined>(() => {
     if (shot || level.id === TUTORIAL_ID) return undefined;
-    const saved = draftFor(draftKey), won = daily ? undefined : shots[level.id];
+    const saved = draftFor(draftKey), won = daily || challenge ? undefined : shots[level.id];
     if (saved || !won) return saved;
     const placed = shotSlots(level, won);
     return {
@@ -188,11 +200,11 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
       launches: trails.map((t) => trailShots.current.get(t.path)).filter((l): l is DraftShot => !!l),
     };
     // A won level keeps even an empty draft, or it would reopen on its winning shot after Start over.
-    saveDraft(draftKey, worthKeeping(d, { angle: 52, power: 45 }) || (!daily && shots[level.id]) ? d : null);
+    saveDraft(draftKey, worthKeeping(d, { angle: 52, power: 45 }) || (!daily && !challenge && shots[level.id]) ? d : null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slots, angle, power, tries, helped, trails]);
   const startOver = (guide?: boolean) => {
-    saveDraft(draftKey, !daily && shots[level.id] ? { bars: level.pieces.map(() => null), angle: 52, power: 45, tries: 0, helped: false, launches: [] } : null);
+    saveDraft(draftKey, !daily && !challenge && shots[level.id] ? { bars: level.pieces.map(() => null), angle: 52, power: 45, tries: 0, helped: false, launches: [] } : null);
     onReplay(guide);
   };
   const wallet = useHintWallet();
@@ -242,7 +254,12 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   // Help used on this level, kept for good (game/score.ts): a win still scores, capped at ★★ after one hint and ★ after more or the
   // full solution, and Start over doesn't lift it, so rebuilding a shown answer can't earn ★★★. The daily keeps its own rule
   // (a helped daily win earns no stars) and the tutorial never scores.
-  const capsHelp = !daily && !practice;
+  const capsHelp = !daily && !challenge && !practice;
+  // The player's first name, for the challenges they send (game/profile.ts, the name the tour asked for).
+  const [myName, setMyName] = useState('');
+  useEffect(() => {
+    AsyncStorage.getItem(PROFILE_KEY).then((raw) => setMyName((parseProfile(raw).name.split(/\s+/)[0] ?? '').slice(0, 20))).catch(() => {});
+  }, []);
   const levelHelp = capsHelp ? helpRecord[level.id] ?? 0 : 0;
   // A board saved before help was kept per level (0.45.0) may already carry help: carry it over as one hint.
   useEffect(() => { if (capsHelp && draft?.helped && !levelHelp) markHelp(level.id, 1); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -322,7 +339,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
   /** `viaSolve`: the Solve button's own shot (the full solution). */
   const fire = (shot: Slot[], a: number, p: number, viaSolve = false) => {
     // No stars at all: the tutorial, and a daily won with help. A level won with help scores, capped by its help.
-    const assisted = practice || (!!daily && (helped || viaSolve));
+    const assisted = practice || ((!!daily || !!challenge) && (helped || viaSolve));
     const helpNow = capsHelp && viaSolve ? AFTER_SOLUTION : levelHelp;
     const placed = boardPieces(shot), numbers = boardNumbers(shot);
     setGuided(tutorial);
@@ -348,10 +365,11 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
         // Every win keeps its shot for the level card's drawing and Replay; a level's result is scored with its help cap.
         const saved = { pieces: placed.map(({ x, y, deg, len }) => ({ x, y, deg, len })), angle: a, power: p };
         if (daily) daily.onWin({ bounces: res.bounces, stars, tries: tryNo, helped: assisted });
+        else if (challenge) { /* a friend's challenge: outside the player's own progress */ }
         else if (practice) won(index, undefined, saved);
         else won(index, bestOf({ bounces: res.bounces, par, tries: tryNo }, helpNow), saved);
         // Hint rewards, said once the celebration is over: a level's first three-star win, and a world's last level won.
-        if (!practice && !daily) {
+        if (!practice && !daily && !challenge) {
           const notes: string[] = [];
           if (!assisted && stars === 3 && wallet.rewardStars(level.id)) notes.push(`+${STAR_REWARD} 💡 for three stars`);
           const world = WORLDS.find((w) => w.ids[w.ids.length - 1] === level.id);
@@ -489,6 +507,31 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
 
   const goTo = (i: number) => {
     if (!flying) router.setParams({ id: LEVELS[i].id });
+  };
+
+  // Challenge a friend (game/challenge.ts): a link to this level with this winning shot in it; the friend plays it in the browser and
+  // tries to beat its bounces. From a challenge, the same button sends one back with the player's own shot.
+  const sendChallenge = () => {
+    const pieces = boardPieces(winShot.slots).map(({ x, y, deg }) => ({ x, y, deg }));
+    const url = challengeUrl({ levelId: level.id, from: myName, shot: { pieces, angle: winShot.angle, power: winShot.power } }, siteUrl());
+    shareText(challengeMessage({ levelNo: index + 1, levelName: level.name, bounces: winShot.bounces, par, url }), wallet.announce);
+  };
+  // In a challenge, after the friend's win: play the sender's shot (their bars and aim set up), not a try and not scored.
+  const watchTheirs = () => {
+    if (!challenge || flying) return;
+    primeAudio();
+    const theirs = shotSlots(level, challenge.shot);
+    setSlots(theirs);
+    setSelected(null);
+    setAngle(challenge.shot.angle);
+    setPower(challenge.shot.power);
+    setNotice(null);
+    const res = simulate(buildWorld(level, boardPieces(theirs)), challenge.shot.angle, challenge.shot.power);
+    launched();
+    playShot(res, () => {
+      setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end, jumps: res.jumps }].slice(-MAX_TRAILS));
+      if (res.success) feedback.landed();
+    }, false);
   };
 
   // After a win: replay the winning shot exactly (same bars, angle and power; physics is deterministic, so
@@ -816,10 +859,10 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
           headerTitle: () => (
             <View style={styles.titleBox}>
               <Text style={[styles.title, { color: c.ink }]} numberOfLines={1} adjustsFontSizeToFit>{level.name}</Text>
-              <Text style={[styles.sub, { color: c.muted }]}>{daily ? `Daily #${daily.number} · ${daily.tier}` : `Level ${index + 1} of ${LEVELS.length}`}</Text>
+              <Text style={[styles.sub, { color: c.muted }]}>{daily ? `Daily #${daily.number} · ${daily.tier}` : challenge ? `Challenge from ${senderName(challenge.from)}` : `Level ${index + 1} of ${LEVELS.length}`}</Text>
             </View>
           ),
-          headerRight: () => daily ? <View style={styles.nav} /> : (
+          headerRight: () => daily || challenge ? <View style={styles.nav} /> : (
             <View style={styles.nav}>
               <IconButton label="‹" a11y="Previous level" disabled={index === 0} onPress={() => goTo(index - 1)} />
               <IconButton label="›" a11y="Next level" disabled={index >= unlocked} onPress={() => goTo(index + 1)} />
@@ -870,7 +913,7 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
           <HelpCard
             hint={(() => { const h = nextHint(level, barHint(), angle, power); return h ? { label: hintLabel(h), cost: 1 } : null; })()}
             solutionCost={fullCost()} hints={wallet.hints}
-            note={capsHelp ? helpNote(levelHelp) : 'A daily puzzle won with help still counts for your streak, but earns no stars.'}
+            note={capsHelp ? helpNote(levelHelp) : challenge ? 'A challenge won with help still counts, but your friend will know.' : 'A daily puzzle won with help still counts for your streak, but earns no stars.'}
             onHint={hint} onSolve={fullSolution} onAd={() => { wallet.watchAd(); }} onShop={wallet.openShop} onClose={() => setHelp(false)}
           />
         )}
@@ -878,15 +921,24 @@ export function LevelGame({ level, index, daily, shot, guide, onReplay }: {
           <WinCard
             place={cardPlace(glassBox(level.glass).rim, WORLD.height)}
             onStar={(k) => feedback.star(k)}
-            text={{ ...winText({ assisted: solved ? 'solve' : daily && helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last, help: levelHelp }), ...(daily ? { go: 'Share' } : {}) }}
+            text={challenge
+              ? { ...challengeWinText(winShot.bounces, challenge.bounces, challenge.from, helped || solved), stars: 0, score: null, next: null, again: 'Try again', go: '⚔️ Challenge back' }
+              : { ...winText({ assisted: solved ? 'solve' : daily && helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last, help: levelHelp }), ...(daily ? { go: 'Share' } : {}) }}
             onAgain={() => startOver(false)}
             onClose={keepPlaying}
-            onGo={() => (daily ? daily.onShare(snapshot.current) : last ? startOver(false) : goTo(index + 1))}
-            onShare={daily ? undefined : shareWin}
+            onGo={() => (daily ? daily.onShare(snapshot.current) : challenge ? sendChallenge() : last ? startOver(false) : goTo(index + 1))}
+            onShare={daily || challenge ? undefined : shareWin}
+            extras={challenge
+              ? [{ label: `👀 Watch ${senderName(challenge.from)}’s shot`, onPress: watchTheirs }, { label: '🎮 Play all levels', onPress: () => router.replace('/') }]
+              : daily || practice ? [] : [{ label: '⚔️ Challenge a friend', onPress: sendChallenge }]}
           />
         )}
       </View>
-      <Text style={[styles.goal, { color: c.ink }]} numberOfLines={2}>{goalText(level.pieces.length, level.par, (level.pads ?? []).length, (level.portals ?? []).length)}</Text>
+      <Text style={[styles.goal, { color: c.ink }]} numberOfLines={2}>
+        {challenge
+          ? challengeGoal(challenge.from, challenge.bounces, goalEvery(level.pieces.length, (level.pads ?? []).length, (level.portals ?? []).length))
+          : goalText(level.pieces.length, level.par, (level.pads ?? []).length, (level.portals ?? []).length)}
+      </Text>
       <View style={styles.controls}>
         {selectedBar != null ? (
           <View onStartShouldSetResponderCapture={skipOnTouch}>

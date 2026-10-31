@@ -4,6 +4,18 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.46.0
+
+- **Challenge a friend.** A level's win card now has two buttons: "📣 Share" (the message and poster, as before) and "⚔️ Challenge
+  a friend", which sends a link to that level with your winning shot inside it ("I got level 5 “High ground” in 3 bounces. Can
+  you beat me? Tap to play, no download needed"). The friend opens it in the browser, sees who challenged them and what to beat,
+  and plays the level straight away, whatever they've unlocked, with "Beat Neeraj's 3 bounces" as the goal. Once in, they see
+  "You beat Neeraj!", "Tied" or "not beaten yet", can watch your shot, challenge you back with theirs, or go on to all the levels.
+- The link carries only the shot (bars, angle, power), lightly scrambled; the friend's game re-runs it to get its bounces and
+  check it wins (game/challenge.ts), so a link can't claim a score it didn't make. A challenge sits outside the friend's own
+  progress (no stars, unlocks or rewards); wins with help say so. Arriving from a link skips the guided tour until next time.
+- The share message's link now points at the game's web site instead of "(link coming soon)".
+
 ## 0.45.2
 
 - The win card no longer says "Move a bar or aim to keep playing" (moving a bar or the aim still closes it).

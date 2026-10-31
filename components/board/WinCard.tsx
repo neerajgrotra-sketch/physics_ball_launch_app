@@ -7,9 +7,13 @@ import { FONTS, useColors } from '../../theme/colors';
  * The prototype's #win card. It sits at the top of the board so the winning path stays visible.
  * ✕ (or any edit to the board) closes it and goes back to playing (onClose).
  */
-/** `onShare` adds a "Share" button under the others (a level's win; the daily's main button already shares). */
-export function WinCard({ text, onAgain, onGo, onClose, onStar, onShare, place = 'top' }: {
-  text: WinText; onAgain: () => void; onGo: () => void; onClose: () => void; onStar?: (k: number) => void; onShare?: () => void; place?: 'top' | 'bottom';
+/**
+ * `onShare` adds a "Share" button under the others (a level's win; the daily's main button already shares), and `extras` more small
+ * buttons beside it ("Challenge a friend"; in a challenge, "Watch their shot" and "Play all levels").
+ */
+export function WinCard({ text, onAgain, onGo, onClose, onStar, onShare, extras = [], place = 'top' }: {
+  text: WinText; onAgain: () => void; onGo: () => void; onClose: () => void; onStar?: (k: number) => void; onShare?: () => void;
+  extras?: { label: string; onPress: () => void }[]; place?: 'top' | 'bottom';
 }) {
   const c = useColors();
   // It fades and slides in, from the side of the board it sits on.
@@ -62,10 +66,19 @@ export function WinCard({ text, onAgain, onGo, onClose, onStar, onShare, place =
           <Text style={styles.goText}>{text.go}</Text>
         </Pressable>
       </View>
-      {onShare && (
-        <Pressable onPress={onShare} accessibilityRole="button" accessibilityLabel="Share your result" hitSlop={6} style={[styles.share, { borderColor: c.pencil }]}>
-          <Text style={[styles.shareText, { color: c.pencil }]}>📣 Share</Text>
-        </Pressable>
+      {(onShare || extras.length > 0) && (
+        <View style={styles.smallRow}>
+          {onShare && (
+            <Pressable onPress={onShare} accessibilityRole="button" accessibilityLabel="Share your result" hitSlop={6} style={[styles.share, { borderColor: c.pencil }]}>
+              <Text style={[styles.shareText, { color: c.pencil }]}>📣 Share</Text>
+            </Pressable>
+          )}
+          {extras.map((x) => (
+            <Pressable key={x.label} onPress={x.onPress} accessibilityRole="button" hitSlop={6} style={[styles.share, { borderColor: c.pencil }]}>
+              <Text style={[styles.shareText, { color: c.pencil }]}>{x.label}</Text>
+            </Pressable>
+          ))}
+        </View>
       )}
     </Animated.View>
   );
@@ -74,7 +87,8 @@ export function WinCard({ text, onAgain, onGo, onClose, onStar, onShare, place =
 const styles = StyleSheet.create({
   close: { position: 'absolute', top: 6, right: 10, padding: 4, zIndex: 1 },
   closeText: { fontSize: 18, fontFamily: FONTS.bodySemi },
-  share: { marginTop: 8, height: 34, paddingHorizontal: 16, borderRadius: 17, borderWidth: 1.5, justifyContent: 'center' },
+  smallRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 8 },
+  share: { height: 34, paddingHorizontal: 16, borderRadius: 17, borderWidth: 1.5, justifyContent: 'center' },
   shareText: { fontSize: 16, fontFamily: FONTS.condensedBold },
   cardTop: { top: 10 },
   cardBottom: { bottom: 26 },

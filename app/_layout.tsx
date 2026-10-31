@@ -76,6 +76,7 @@ function AppRoot() {
               <Stack.Screen name="index" options={{ title: 'Bank Shot', headerShown: false }} />
               <Stack.Screen name="level/[id]" options={{ title: '' }} />
               <Stack.Screen name="daily" options={{ title: '' }} />
+              <Stack.Screen name="challenge" options={{ title: '' }} />
             </Stack>
             <TourGate hidden={intro && !leaving} />
             <MusicHost />

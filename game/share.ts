@@ -4,7 +4,9 @@
 import { golfName } from './score';
 
 /** Where the share sends friends. A placeholder until the App Store / web link is final (BACKLOG.md). */
-export const SHARE_LINK = '(link coming soon)';
+/** Where the game is played: the public web site (game/challenge.ts), until a store link exists. */
+import { SITE_URL } from './challenge';
+export const SHARE_LINK = SITE_URL;
 
 export interface ShareResult { bounces: number; stars: number; tries: number; helped: boolean }
 
