@@ -52,3 +52,27 @@ export function counterSpot(level: Level): CounterSpot {
   }
   return best[0];
 }
+
+/** The board box a badge takes in a top corner (the bounce counter's own spot, or the tries badge's opposite one). */
+export function badgeBox(spot: CounterSpot): Box {
+  if (spot === 'left') return [MARGIN, MARGIN, MARGIN + W, MARGIN + H];
+  if (spot === 'right') return [WORLD.width - MARGIN - W, MARGIN, WORLD.width - MARGIN, MARGIN + H];
+  return [(WORLD.width - W) / 2, MARGIN, (WORLD.width + W) / 2, MARGIN + H];
+}
+
+/**
+ * Whether anything the player is working with sits under a badge: a placed bar (checked along its length, with a bar's half-width
+ * of margin) or a bounce marker. Then the badge collapses to a small chip so it doesn't hide them.
+ */
+export function badgeCovers(box: Box, bars: { x1: number; y1: number; x2: number; y2: number }[], marks: { x: number; y: number }[]): boolean {
+  const PAD = 8;
+  const inside = (x: number, y: number) => x >= box[0] - PAD && x <= box[2] + PAD && y >= box[1] - PAD && y <= box[3] + PAD;
+  if (marks.some((m) => inside(m.x, m.y))) return true;
+  return bars.some((b) => {
+    for (let k = 0; k <= 12; k++) {
+      const t = k / 12;
+      if (inside(b.x1 + (b.x2 - b.x1) * t, b.y1 + (b.y2 - b.y1) * t)) return true;
+    }
+    return false;
+  });
+}

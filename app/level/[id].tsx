@@ -35,7 +35,7 @@ import {
   OPEN_DRAG, TRASH_GRAB, trashObstacles, atSolution, hintSlots, leverEnd, shotPieces, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
 import { CARD_PAUSE_MS, CELEBRATION_MS, burstFor, cardPlace } from '../../game/celebration';
-import { counterSpot } from '../../game/counter';
+import { badgeBox, badgeCovers, counterSpot } from '../../game/counter';
 import { emptyHistory, record, undo as undoHistory, type History } from '../../game/history';
 import { skipNotice, winText } from '../../game/progress';
 import { AFTER_SOLUTION, afterHint, bestOf, cappedBounces, goalEvery, goalText, helpNote, starsFor } from '../../game/score';
@@ -46,7 +46,7 @@ import { useBallSkin } from '../../components/settings/BallSkin';
 import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
-import { WORLD, buildWorld, glassBox, simulate, type Hit, type Level, type Vec } from '../../physics';
+import { WORLD, buildWorld, glassBox, pieceEnds, simulate, type Hit, type Level, type Vec } from '../../physics';
 import type { DailyResult } from '../../game/daily';
 import { shareCard, shareMessage } from '../../game/share';
 import type { ShareCard } from '../../components/board/shareCard';
@@ -530,6 +530,14 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     shareText(shareMessage(what, r, par), wallet.announce, snapshot.current?.(shareCard(what, r, par)));
   };
 
+  // What's on the board right now: the bounce markers that still describe it, and the bars as segments. A scorecard badge with
+  // either under it collapses to a small see-through chip, and opens up again once the corner is clear (game/counter.ts).
+  const shownMarkList = showMarks && marksFor === setupKey(boardPieces(slots), angle, power) ? marks.slice(0, shownMarks) : [];
+  const barSegs = boardPieces(slots).map((p) => { const [x1, y1, x2, y2] = pieceEnds(p); return { x1, y1, x2, y2 }; });
+  const triesSpot = spot === 'right' ? 'left' : 'right';
+  const counterSmall = badgeCovers(badgeBox(spot), barSegs, shownMarkList);
+  const triesSmall = badgeCovers(badgeBox(triesSpot), barSegs, shownMarkList);
+
   const goTo = (i: number) => {
     if (!flying) router.setParams({ id: LEVELS[i].id });
   };
@@ -902,7 +910,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
         <Board
           level={level}
           pieces={boardPieces(slots)}
-          marks={showMarks && marksFor === setupKey(boardPieces(slots), angle, power) ? marks.slice(0, shownMarks) : []}
+          marks={shownMarkList}
           numbers={boardNumbers(slots)}
           illegal={illegalBars(level, slots)}
           selected={boardIndex(slots, selected)}
@@ -933,17 +941,21 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
             corner counterSpot picks, and the tries so far (the other number a result is ranked by) in the opposite corner. */}
         {bounces != null && !done && (
           <View style={[styles.counterRow, { justifyContent: spot === 'left' ? 'flex-start' : spot === 'right' ? 'flex-end' : 'center' }]} pointerEvents="none">
-            <View style={[styles.counter, { backgroundColor: c.paper, borderColor: c.line }]}>
-              <Text style={[styles.counterNum, { color: bounces > par ? c.red : c.ink }]}>{bounces}</Text>
-              <Text style={[styles.counterLabel, { color: c.muted }]}>{bounces === 1 ? 'bounce' : 'bounces'}{'\n'}par {par}</Text>
+            <View style={[styles.counter, counterSmall && styles.counterSmall, { backgroundColor: c.paper, borderColor: c.line }]}>
+              <Text style={[styles.counterNum, counterSmall && styles.counterNumSmall, { color: bounces > par ? c.red : c.ink }]}>{bounces}</Text>
+              {counterSmall
+                ? <Text style={[styles.counterLabelSmall, { color: c.muted }]}>/{par}</Text>
+                : <Text style={[styles.counterLabel, { color: c.muted }]}>{bounces === 1 ? 'bounce' : 'bounces'}{'\n'}par {par}</Text>}
             </View>
           </View>
         )}
         {tries > 0 && !done && (
           <View style={[styles.counterRow, { justifyContent: spot === 'right' ? 'flex-start' : 'flex-end' }]} pointerEvents="none">
-            <View style={[styles.counter, { backgroundColor: c.paper, borderColor: c.pencil }]}>
-              <Text style={[styles.counterNum, { color: c.pencil }]}>{tries}</Text>
-              <Text style={[styles.counterLabel, { color: c.pencil }]}>{tries === 1 ? 'try' : 'tries'}{'\n'}so far</Text>
+            <View style={[styles.counter, triesSmall && styles.counterSmall, { backgroundColor: c.paper, borderColor: c.pencil }]}>
+              <Text style={[styles.counterNum, triesSmall && styles.counterNumSmall, { color: c.pencil }]}>{tries}</Text>
+              {triesSmall
+                ? <Text style={[styles.counterLabelSmall, { color: c.pencil }]}>{tries === 1 ? 'try' : 'tries'}</Text>
+                : <Text style={[styles.counterLabel, { color: c.pencil }]}>{tries === 1 ? 'try' : 'tries'}{'\n'}so far</Text>}
             </View>
           </View>
         )}
@@ -1150,6 +1162,10 @@ const styles = StyleSheet.create({
   },
   counterNum: { fontSize: 30, lineHeight: 32, fontFamily: FONTS.condensedBold, fontVariant: ['tabular-nums'] },
   counterLabel: { fontSize: 11, lineHeight: 13, fontFamily: FONTS.bodyMedium },
+  // Collapsed: a small see-through chip, so a bar or a bounce number underneath shows through.
+  counterSmall: { paddingVertical: 1, paddingHorizontal: 7, gap: 3, borderRadius: 8, opacity: 0.6 },
+  counterNumSmall: { fontSize: 17, lineHeight: 20 },
+  counterLabelSmall: { fontSize: 11, fontFamily: FONTS.bodyMedium },
   controls: { paddingHorizontal: 12, paddingTop: 4, gap: 6 },
   bottom: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tray: { flex: 1 },

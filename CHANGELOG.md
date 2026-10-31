@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.48.4
+
+- The scorecard badges get out of the way: when a bar (while you drag it there, or left there) or a bounce number sits under the
+  bounce counter or the tries badge, that badge shrinks to a small see-through chip ("4 /6", "33 tries") on the top edge, and opens
+  back up to the full badge once the corner is clear (`badgeCovers` in game/counter.ts).
+
 ## 0.48.3
 
 - The tries badge moved to the opposite top corner from the bounce counter (bounces left, tries right on most levels), so the
