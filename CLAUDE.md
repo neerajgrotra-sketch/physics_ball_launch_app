@@ -217,7 +217,9 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   daily), goal "Beat Neeraj's 3 bounces, off …" (`challengeGoal`). The sender's bounces are never read from the link: the shot is
   re-run (`challengeBounces`), and a link whose shot doesn't win is refused. The win card says beat / tied / not yet
   (`challengeWinText`, "(with help)" if helped), with "Challenge back" (the friend's own shot), "Watch <name>'s shot" and "Play all
-  levels". The tour (`TourGate`) skips /challenge. `SHARE_LINK` is `SITE_URL` (the public Vercel address) until a store link exists.
+  levels". The intro card explains the game with the tour's live "goal" scene (`TourScene`). The tour (`TourGate`) skips /challenge.
+  Link previews: Open Graph tags in `public/index.html` with `public/og.png` (`NODE_PATH=$(npm root -g) node scripts/make-og.mjs`);
+  their URLs are absolute, so change them with `SITE_URL` if the address changes. `SHARE_LINK` is `SITE_URL` (the public Vercel address) until a store link exists.
 - **Level header:** ⚙ (settings sheet: music, sound effects, vibration, version) and ••• (back to the levels, also from a deep link)
   on the left, level name in the middle, ‹ › on the right. No back arrow.
 - Level locks are on (`LOCK_LEVELS`): a level opens when the one before is won, and level 2 once the tutorial is finished or skipped

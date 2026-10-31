@@ -4,6 +4,15 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.46.1
+
+- A challenge link now opens on a page that explains the game to someone who has never seen it: who sent it and what to beat, a
+  live demo board (the tour's "goal" scene: a shot that misses a bar, a nudge of power, then the shot that goes in off every bar),
+  three lines on how to play, and "Free, right here in your browser. No download, no sign-up."
+- Shared links now show a proper preview in chat apps (WhatsApp, iMessage…): a picture of the game, "Bank Shot: can you beat my
+  shot?" and "Free, no download" (Open Graph tags in public/index.html, picture made by scripts/make-og.mjs), instead of a bare
+  address.
+
 ## 0.46.0
 
 - **Challenge a friend.** A level's win card now has two buttons: "📣 Share" (the message and poster, as before) and "⚔️ Challenge

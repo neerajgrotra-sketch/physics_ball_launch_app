@@ -1,6 +1,7 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { TourScene } from '../components/tour/TourScene';
 import { TUTORIAL_ID } from '../game/coach';
 import { challengeBounces, readChallenge, senderName } from '../game/challenge';
 import { LEVELS } from '../levels';
@@ -16,6 +17,7 @@ export default function ChallengeScreen() {
   const params = useLocalSearchParams<{ l?: string; s?: string; n?: string }>();
   const c = useColors();
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const [started, setStarted] = useState(false);
   const [round, setRound] = useState(0);
   const found = useMemo(() => {
@@ -40,21 +42,37 @@ export default function ChallengeScreen() {
 
   const index = LEVELS.indexOf(found.level);
   const who = senderName(found.from, true);
+  // First what the game is, for a friend who has never seen it: who sent it and what to beat, the tour's live "goal" scene (a shot
+  // that misses a bar, a nudge of power, then the shot that goes in off every bar: components/tour), and three lines of how to play.
   if (!started) {
+    const sceneW = Math.min(width - 48, 380);
     return (
-      <View style={[styles.wrap, { backgroundColor: c.panel }]}>
+      <ScrollView style={{ backgroundColor: c.panel }} contentContainerStyle={styles.wrap}>
         <Stack.Screen options={{ title: 'Challenge' }} />
-        <Text style={[styles.kicker, { color: c.red }]}>⚔️ CHALLENGE</Text>
+        <Text style={[styles.kicker, { color: c.red }]}>⚔️ A CHALLENGE FROM {who.toUpperCase()}</Text>
         <Text style={[styles.title, { color: c.ink }]}>{who} got level {index + 1}, “{found.level.name}”, in {found.bounces} bounce{found.bounces === 1 ? '' : 's'}.</Text>
         <Text style={[styles.big, { color: c.pencil }]}>Can you do it in fewer?</Text>
-        <Text style={[styles.body, { color: c.muted }]}>
-          Place the bars, aim the cannon and bounce the ball into the glass, off every bar. Fewer bounces wins. Once you’re in, you can watch
-          {found.from ? ` ${found.from}’s` : ' their'} shot.
-        </Text>
+        <View style={[styles.scene, { borderColor: c.line, backgroundColor: c.paper }]}>
+          <TourScene kind="goal" width={sceneW} />
+        </View>
+        <Text style={[styles.what, { color: c.ink }]}>Bank Shot is a bounce puzzle.</Text>
+        <View style={styles.steps}>
+          {[
+            ['📐', 'Place the bars anywhere and aim the cannon.'],
+            ['🏀', 'Bounce the ball off every bar and into the glass.'],
+            ['🏆', `Fewer bounces wins. Beat ${found.bounces} to beat ${found.from || 'your friend'}.`],
+          ].map(([icon, text]) => (
+            <View key={icon} style={styles.step}>
+              <Text style={styles.icon}>{icon}</Text>
+              <Text style={[styles.stepText, { color: c.ink }]}>{text}</Text>
+            </View>
+          ))}
+        </View>
         <Pressable onPress={() => setStarted(true)} accessibilityRole="button" style={[styles.go, { backgroundColor: c.red }]}>
           <Text style={styles.goText}>Take the challenge</Text>
         </Pressable>
-      </View>
+        <Text style={[styles.small, { color: c.muted }]}>Free, right here in your browser. No download, no sign-up.</Text>
+      </ScrollView>
     );
   }
   return (
@@ -66,7 +84,14 @@ export default function ChallengeScreen() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28, gap: 14 },
+  wrap: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
+  scene: { borderWidth: 1, borderRadius: 12, overflow: 'hidden', marginVertical: 4 },
+  what: { fontSize: 19, fontFamily: FONTS.condensedBold, textAlign: 'center' },
+  steps: { gap: 8, width: '100%', maxWidth: 360, alignSelf: 'center' },
+  step: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  icon: { fontSize: 20, width: 28, textAlign: 'center' },
+  stepText: { flex: 1, fontSize: 15, lineHeight: 20, fontFamily: FONTS.bodyMedium },
+  small: { fontSize: 13, fontFamily: FONTS.body, textAlign: 'center' },
   kicker: { fontSize: 15, fontFamily: FONTS.condensedBold, letterSpacing: 2 },
   title: { fontSize: 26, lineHeight: 31, fontFamily: FONTS.condensedBold, textAlign: 'center', maxWidth: 420 },
   big: { fontSize: 22, fontFamily: FONTS.bodySemi, textAlign: 'center' },
