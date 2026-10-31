@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.48.8
+
+- The win card has "Try again" beside the reset: it closes the card and keeps your bars, trails and tries, so you can tweak the
+  shot for fewer bounces. "Start over" is now "Reset level", so it's clear it wipes the board (players tapped it to retry and
+  lost their setup). The same goes for the daily and a friend's challenge.
+
 ## 0.48.7
 
 - The tries badge and bounce counter stay full and bold when a bounce number lands under them (one at the top edge shrank the tries

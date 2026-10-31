@@ -11,8 +11,9 @@ import { FONTS, useColors } from '../../theme/colors';
  * `onShare` adds a "Share" button under the others (a level's win; the daily's main button already shares), and `extras` more small
  * buttons beside it ("Challenge a friend"; in a challenge, "Watch their shot" and "Play all levels").
  */
-export function WinCard({ text, onAgain, onGo, onClose, onStar, onShare, extras = [], place = 'top' }: {
-  text: WinText; onAgain: () => void; onGo: () => void; onClose: () => void; onStar?: (k: number) => void; onShare?: () => void;
+export function WinCard({ text, onAgain, onRetry, onGo, onClose, onStar, onShare, extras = [], place = 'top' }: {
+  /** `onRetry`: "Try again", which closes the card and keeps the bars, trails and tries (onAgain is the reset). */
+  text: WinText; onAgain: () => void; onRetry?: () => void; onGo: () => void; onClose: () => void; onStar?: (k: number) => void; onShare?: () => void;
   extras?: { label: string; onPress: () => void }[]; place?: 'top' | 'bottom';
 }) {
   const c = useColors();
@@ -62,6 +63,11 @@ export function WinCard({ text, onAgain, onGo, onClose, onStar, onShare, extras 
         <Pressable onPress={onAgain} accessibilityRole="button" style={[styles.ghost, { borderColor: c.line }]}>
           <Text style={[styles.ghostText, { color: c.muted }]}>{text.again}</Text>
         </Pressable>
+        {onRetry && (
+          <Pressable onPress={onRetry} accessibilityRole="button" accessibilityHint="Keeps your bars and tries" style={[styles.ghost, { borderColor: c.pencil }]}>
+            <Text style={[styles.ghostText, { color: c.pencil, fontFamily: FONTS.bodySemi }]}>Try again</Text>
+          </Pressable>
+        )}
         <Pressable onPress={onGo} accessibilityRole="button" style={[styles.go, { backgroundColor: c.red }]}>
           <Text style={styles.goText}>{text.go}</Text>
         </Pressable>
@@ -107,7 +113,7 @@ const styles = StyleSheet.create({
     fontSize: 15, lineHeight: 20, fontFamily: FONTS.bodySemi, textAlign: 'center', marginBottom: 12,
     paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, overflow: 'hidden',
   },
-  btns: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
+  btns: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   ghost: { height: 38, paddingHorizontal: 12, borderRadius: 19, borderWidth: 1.5, justifyContent: 'center' },
   ghostText: { fontSize: 14, fontFamily: FONTS.bodyMedium },
   go: { height: 40, paddingHorizontal: 18, borderRadius: 20, justifyContent: 'center' },

@@ -35,12 +35,12 @@ describe('winText', () => {
     expect(winText({ ...base, bounces: 3, tries: 1 })).toMatchObject({ title: 'Par!', detail: '3 bounces, par 3 · first try', stars: 3, next: null });
     expect(winText({ ...base, bounces: 2 }).title).toBe('Birdie!');
     expect(winText({ ...base, bounces: 9 })).toMatchObject({ title: 'In the glass', stars: 1 });
-    expect(winText(base)).toMatchObject({ again: 'Start over', go: 'Next level' });
+    expect(winText(base)).toMatchObject({ again: 'Reset level', go: 'Next level' });
   });
 
   it('gives no stars or score with help', () => {
     expect(winText({ ...base, assisted: 'solve' })).toMatchObject({ title: 'Here’s one way in', again: 'Try it yourself', stars: 0, score: null });
-    expect(winText({ ...base, assisted: 'hint' })).toMatchObject({ stars: 0, score: null, again: 'Start over' });
+    expect(winText({ ...base, assisted: 'hint' })).toMatchObject({ stars: 0, score: null, again: 'Reset level' });
   });
 
   it('offers to play the last level again', () => {

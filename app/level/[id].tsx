@@ -990,9 +990,10 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
             place={cardPlace(glassBox(level.glass).rim, WORLD.height)}
             onStar={(k) => feedback.star(k)}
             text={challenge
-              ? { ...challengeWinText(winShot.bounces, challenge.bounces, challenge.from, helped || solved), stars: 0, score: null, next: null, again: 'Try again', go: '⚔️ Challenge back' }
+              ? { ...challengeWinText(winShot.bounces, challenge.bounces, challenge.from, helped || solved), stars: 0, score: null, next: null, again: 'Reset level', go: '⚔️ Challenge back' }
               : { ...winText({ assisted: solved ? 'solve' : daily && helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last, help: levelHelp }), ...(daily ? { go: 'Share' } : {}) }}
             onAgain={() => startOver(false)}
+            onRetry={keepPlaying}
             onClose={keepPlaying}
             onGo={() => (daily ? daily.onShare(snapshot.current) : challenge ? sendChallenge() : last ? startOver(false) : goTo(index + 1))}
             onShare={daily || challenge ? undefined : shareWin}

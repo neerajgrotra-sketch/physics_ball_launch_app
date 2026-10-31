@@ -120,7 +120,8 @@ reference/    prototype.html, the behaviour and look to match
   unlock the next level and save progress locally.
   After a win, Launch becomes "Replay ▶": it replays the winning shot exactly (bars restored to where
   they were, same angle and power) without resetting or counting a try. The card's left button is
-  "Start over" (or "Try it yourself" after Solve), which resets the level. Any edit after a win (touching the board, a
+  "Reset level" (or "Try it yourself" after Solve), which resets the level, and beside it "Try again" closes the card keeping
+  bars, trails and tries (`WinCard`'s `onRetry`). Any edit after a win (touching the board, a
   bar chip, a slider or rotation) or the card's ✕ closes the card and goes back to normal play, keeping bars,
   trails and tries; the level stays won.
 - **Score (golf):** every real bounce counts (bars, edges, floor, outside of the glass), except down inside

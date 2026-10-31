@@ -87,7 +87,7 @@ export function winText(opts: {
     };
   }
   if (assisted === 'hint') {
-    return { title: 'In, with a hint', detail: `${plural(bounces, 'bounce')}, par ${par}. Win it without help for stars.`, stars: 0, score: null, next: null, again: 'Start over', go };
+    return { title: 'In, with a hint', detail: `${plural(bounces, 'bounce')}, par ${par}. Win it without help for stars.`, stars: 0, score: null, next: null, again: 'Reset level', go };
   }
   const name = golfName(bounces, par);
   return {
@@ -97,7 +97,7 @@ export function winText(opts: {
     score: scoreFor({ bounces: capped, par, tries }),
     // More stars to aim for only while the cap allows them.
     next: help > 0 ? null : nextStarsText(bounces, par),
-    again: 'Start over',
+    again: 'Reset level',
     go,
   };
 }
