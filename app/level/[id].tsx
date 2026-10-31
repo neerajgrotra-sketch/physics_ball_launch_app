@@ -54,6 +54,15 @@ import { shareText } from '../../components/share';
 import { FONTS, useColors } from '../../theme/colors';
 
 const MAX_TRAILS = 4;
+
+/**
+ * The trails with a replayed shot's path as the newest. Physics is deterministic, so a replay's path matches the original point
+ * for point: an identical trail already on the board moves to the front instead of being drawn twice.
+ */
+function withReplayTrail(ts: Trail[], res: { path: Vec[]; success: boolean; end: Trail['end']; jumps: number[] }): Trail[] {
+  const same = (t: Trail) => t.path.length === res.path.length && t.path.every((q, i) => q[0] === res.path[i][0] && q[1] === res.path[i][1]);
+  return [...ts.filter((t) => !same(t)), { path: res.path, ok: res.success, end: res.end, jumps: res.jumps }].slice(-MAX_TRAILS);
+}
 type ViewRef = ComponentRef<typeof View>;
 
 /**
@@ -575,7 +584,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     const res = simulate(buildWorld(level, boardPieces(theirs)), challenge.shot.angle, challenge.shot.power);
     launched();
     playShot(res, () => {
-      setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end, jumps: res.jumps }].slice(-MAX_TRAILS));
+      setTrails((ts) => withReplayTrail(ts, res));
       if (res.success) feedback.landed();
     }, false, setupKey(boardPieces(theirs), challenge.shot.angle, challenge.shot.power));
   };
@@ -593,7 +602,12 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     setNotice(null);
     const res = simulate(buildWorld(level, boardPieces(shot)), a, p);
     launched();
-    playShot(res, () => { if (res.success) feedback.landed(); }, false, setupKey(boardPieces(shot), a, p));
+    // The replayed shot stays on the board as its newest trail (it was missing after Clear, leaving only the bounce numbers).
+    playShot(res, () => {
+      trailShots.current.set(res.path, { pieces: boardPieces(shot), angle: a, power: p });
+      setTrails((ts) => withReplayTrail(ts, res));
+      if (res.success) feedback.landed();
+    }, false, setupKey(boardPieces(shot), a, p));
   };
 
   // Put the bars and the aim back the way they were before the last change. During a shot, it first skips to the shot's end.

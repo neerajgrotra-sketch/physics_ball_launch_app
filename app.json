@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bank Shot",
     "slug": "bank-shot",
-    "version": "0.48.9",
+    "version": "0.48.10",
     "scheme": "bankshot",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",

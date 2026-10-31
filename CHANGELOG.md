@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.48.10
+
+- Replay leaves the winning shot on the board as a trail. After Clear, the board used to come back with only the bounce
+  numbers once the replay finished. A replay of a shot that's already drawn doesn't draw it twice.
+
 ## 0.48.9
 
 - Fixed: sharing a daily puzzle after a better second win shared the day's first win (a 1-star picture after a 3-star Par). Share
