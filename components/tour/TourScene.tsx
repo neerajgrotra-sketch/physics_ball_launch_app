@@ -9,7 +9,7 @@ import { FONTS, useColors } from '../../theme/colors';
 import { Board, type Trail } from '../board/Board';
 import { usePlayback } from '../board/usePlayback';
 import { useFeedback } from '../feedback/useFeedback';
-import { SCENES } from './scenes';
+import { SCENES, type Scene } from './scenes';
 
 /** A pill drawn over the board (a tray chip, Launch, Solve…), centred at (x, y) in world units. */
 export interface SceneButton { id: string; label: string; x: number; y: number; w: number; kind: 'chip' | 'primary'; on?: boolean }
@@ -74,9 +74,13 @@ export function freshState(level: Level): SceneState {
  * over, with real shots from simulate() and their sounds, and a ghost finger acting out the controls. It never takes touches, so the
  * tour's swipe still works over it.
  */
-export function TourScene({ kind, width }: { kind: TourPicture; width: number }) {
+export function TourScene({ kind, scene: given, view = TOUR_VIEW, width }: {
+  kind?: TourPicture; width: number;
+  /** A scene of its own instead of a tour page's (a challenge's intro plays the sender's real shot), and the rows of the board to show. */
+  scene?: Scene; view?: { top: number; height: number };
+}) {
   const c = useColors();
-  const scene = SCENES[kind];
+  const scene = given ?? SCENES[kind!];
   const level = useMemo(() => levelById(scene.level), [scene.level]);
   const [state, setState] = useState<SceneState>(() => scene.setup(freshState(level), level));
   const live = useRef(state);
@@ -179,18 +183,18 @@ export function TourScene({ kind, width }: { kind: TourPicture; width: number })
     })();
     return () => { alive = false; timers.forEach(clearTimeout); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kind]);
+  }, [kind, scene]);
 
   // The board is drawn at full size and shifted up inside a frame that shows only the view's rows.
   const sc = width / WORLD.width;
   const px = (x: number) => x * sc;
-  const py = (y: number) => (y - TOUR_VIEW.top) * sc;
+  const py = (y: number) => (y - view.top) * sc;
   const { finger, note } = state;
   const noteColor = note ? c[note.color] : c.ink;
 
   return (
-    <View style={{ width, height: TOUR_VIEW.height * sc, overflow: 'hidden' }} pointerEvents="none">
-      <View style={{ position: 'absolute', left: 0, top: -TOUR_VIEW.top * sc, width, height: WORLD.height * sc }}>
+    <View style={{ width, height: view.height * sc, overflow: 'hidden' }} pointerEvents="none">
+      <View style={{ position: 'absolute', left: 0, top: -view.top * sc, width, height: WORLD.height * sc }}>
         <Board
           level={state.board ?? level} pieces={state.pieces} numbers={state.numbers} selected={state.selected} lever={state.lever} ghosts={state.ghosts}
           trails={state.trails} angle={state.angle} power={state.power} tries={0} flight={flight} done={state.done && !flight}
@@ -199,15 +203,15 @@ export function TourScene({ kind, width }: { kind: TourPicture; width: number })
       </View>
 
       {state.readout !== '' && (
-        <Text style={[styles.readout, { color: c.muted, left: px(12), top: py(TOUR_VIEW.top + 8), fontSize: Math.max(11, 15 * sc) }]}>
+        <Text style={[styles.readout, { color: c.muted, left: px(12), top: py(view.top + 8), fontSize: Math.max(11, 15 * sc) }]}>
           {state.readout}
         </Text>
       )}
       {note && (
-        <Text style={[styles.note, { color: noteColor, top: py(TOUR_VIEW.top + 44), fontSize: Math.max(13, 19 * sc) }]}>{note.text}</Text>
+        <Text style={[styles.note, { color: noteColor, top: py(view.top + 44), fontSize: Math.max(13, 19 * sc) }]}>{note.text}</Text>
       )}
       {state.stars.some((k) => k > 0) && (
-        <View style={[styles.stars, { top: py(TOUR_VIEW.top + 66) }]}>
+        <View style={[styles.stars, { top: py(view.top + 66) }]}>
           {state.stars.map((k, i) => (
             <Text key={i} style={[styles.star, { color: c.red, fontSize: 40 * sc, opacity: Math.min(1, k * 2), transform: [{ scale: 0.4 + 0.6 * k + 0.25 * Math.sin(k * Math.PI) }] }]}>★</Text>
           ))}

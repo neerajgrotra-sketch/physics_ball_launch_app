@@ -1,6 +1,7 @@
-import { Link, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Link, Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Fragment, useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DailyCard } from '../components/daily/DailyCard';
 import { ShotThumbnail } from '../components/levels/ShotThumbnail';
@@ -12,6 +13,7 @@ import { TUTORIAL_ID } from '../game/coach';
 import { VERSION_LABEL } from '../components/version';
 import { totalScore } from '../game/score';
 import { cardStates } from '../game/progress';
+import { WEB_GUEST_KEY } from '../game/challenge';
 import { WORLDS, levelContents, worldStartingAt, type World } from '../game/worlds';
 import { LEVELS } from '../levels';
 import { FONTS, useColors } from '../theme/colors';
@@ -37,6 +39,15 @@ export default function LevelSelect() {
   const total = totalScore(best);
   const [settings, setSettings] = useState(false);
   const [info, setInfo] = useState<World | null>(null);
+  // A browser that came in through a challenge (app/challenge.tsx) gets that one level on the web; the levels are in the app, so it's
+  // sent to the app page. "?full=1" lifts it (testing the web game in a browser that first opened a challenge).
+  const { full } = useLocalSearchParams<{ full?: string }>();
+  const [guest, setGuest] = useState<boolean | null>(Platform.OS === 'web' ? null : false);
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    if (full === '1') { AsyncStorage.removeItem(WEB_GUEST_KEY).catch(() => {}); setGuest(false); return; }
+    AsyncStorage.getItem(WEB_GUEST_KEY).then((v) => setGuest(v === '1')).catch(() => setGuest(false));
+  }, [full]);
   const tile = Math.floor((Math.min(width, 560) - 2 * 18 - (COLUMNS - 1) * GAP) / COLUMNS);
   // Each card's look comes from the real unlocks (game/progress.ts cardStates), not from saved stars alone: a win with a hint or
   // Solve saves no stars but does unlock the next level, and the list used to show that level locked (while › opened it).
@@ -67,6 +78,7 @@ export default function LevelSelect() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  if (guest !== false) return guest ? <Redirect href="/get" /> : null;
   return (
     <View style={styles.screen}>
     <ScrollView ref={scroller} contentContainerStyle={[styles.page, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18 }]}>

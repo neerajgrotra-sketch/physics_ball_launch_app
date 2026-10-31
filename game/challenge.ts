@@ -9,6 +9,16 @@ import { shotPieces } from './pieces';
 /** The public web site (Vercel, production). The web build uses its own address instead, so a preview or local build links to itself. */
 export const SITE_URL = 'https://racing-cobalt-ydmy8we-neerajgrotra-7631s-projects.vercel.app';
 
+/**
+ * The app in the stores, where a challenge sends a web visitor once they've played it (app/get.tsx). Null until the app is listed:
+ * the page then says it's coming soon.
+ */
+export const APP_STORE_URL: string | null = null;
+export const PLAY_STORE_URL: string | null = null;
+
+/** Set in a browser that first came to the game through a challenge: the web gives it that one level, then points to the app. */
+export const WEB_GUEST_KEY = 'bank-shot/web-guest';
+
 export interface ChallengeShot { pieces: { x: number; y: number; deg: number }[]; angle: number; power: number }
 export interface Challenge { levelId: string; from: string; shot: ChallengeShot }
 

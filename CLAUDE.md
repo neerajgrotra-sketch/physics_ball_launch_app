@@ -217,7 +217,10 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   daily), goal "Beat Neeraj's 3 bounces, off …" (`challengeGoal`). The sender's bounces are never read from the link: the shot is
   re-run (`challengeBounces`), and a link whose shot doesn't win is refused. The win card says beat / tied / not yet
   (`challengeWinText`, "(with help)" if helped), with "Challenge back" (the friend's own shot), "Watch <name>'s shot" and "Play all
-  levels". The intro card explains the game with the tour's live "goal" scene (`TourScene`). The tour (`TourGate`) skips /challenge.
+  levels". The intro card plays the sender's own winning shot on the real level (`shotScene` in `components/tour/scenes.ts`, through
+  `TourScene` with `scene` and a full-board `view`). On the web a challenge is a newcomer's one level: the win card's way on is "📲 Get the
+  app" (`app/get.tsx`, store buttons from `APP_STORE_URL`/`PLAY_STORE_URL`, "coming soon" while null), and a browser that first came
+  through a challenge (`WEB_GUEST_KEY`, set only if it had no progress) is redirected from the levels screen to /get (`/?full=1` lifts it). The tour (`TourGate`) skips /challenge.
   Link previews: Open Graph tags in `public/index.html` with `public/og.png` (`NODE_PATH=$(npm root -g) node scripts/make-og.mjs`);
   their URLs are absolute, so change them with `SITE_URL` if the address changes. `SHARE_LINK` is `SITE_URL` (the public Vercel address) until a store link exists.
 - **Level header:** ⚙ (settings sheet: music, sound effects, vibration, version) and ••• (back to the levels, also from a deep link)

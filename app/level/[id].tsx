@@ -101,7 +101,11 @@ export interface DailyMode { number: number; tier: string; onWin: (result: Daily
  * A friend's challenge (app/challenge.tsx, from a "Challenge a friend" link): one level to beat the sender's bounces in, outside the
  * player's own progress (no locks, no level result, no rewards, like the daily). `shot` is the sender's winning shot, to watch.
  */
-export interface ChallengeMode { from: string; bounces: number; shot: ChallengeShot }
+export interface ChallengeMode {
+  from: string; bounces: number; shot: ChallengeShot;
+  /** Where the win card points next: the app (on the web) or the rest of the game (in the app). */
+  next: { label: string; go: () => void };
+}
 
 /** Where a challenge link points: this site on the web (so a preview links to itself), the public site from the app. */
 const siteUrl = () => (Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : SITE_URL);
@@ -929,7 +933,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
             onGo={() => (daily ? daily.onShare(snapshot.current) : challenge ? sendChallenge() : last ? startOver(false) : goTo(index + 1))}
             onShare={daily || challenge ? undefined : shareWin}
             extras={challenge
-              ? [{ label: `👀 Watch ${senderName(challenge.from)}’s shot`, onPress: watchTheirs }, { label: '🎮 Play all levels', onPress: () => router.replace('/') }]
+              ? [{ label: `👀 Watch ${senderName(challenge.from)}’s shot`, onPress: watchTheirs }, { label: challenge.next.label, onPress: challenge.next.go }]
               : daily || practice ? [] : [{ label: '⚔️ Challenge a friend', onPress: sendChallenge }]}
           />
         )}

@@ -77,6 +77,7 @@ function AppRoot() {
               <Stack.Screen name="level/[id]" options={{ title: '' }} />
               <Stack.Screen name="daily" options={{ title: '' }} />
               <Stack.Screen name="challenge" options={{ title: '' }} />
+              <Stack.Screen name="get" options={{ title: '', headerShown: false }} />
             </Stack>
             <TourGate hidden={intro && !leaving} />
             <MusicHost />

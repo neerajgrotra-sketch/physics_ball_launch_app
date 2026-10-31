@@ -4,6 +4,17 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.47.0
+
+- A challenge now opens on the sender's own winning shot: "Neeraj got “High ground” in 3 bounces. Here's the shot:", their bars and
+  aim on the real level, the ball playing out with its bounces counted, then "Can you do it in fewer?" (`shotScene`, played by the
+  tour's live board, now able to show any scene on the full board). It replaces the generic demo, which players couldn't relate to.
+  Copying the shot only ties: winning takes fewer bounces.
+- On the web, a challenge is the one level a newcomer plays. After it, the win card's button is "📲 Get the app", which opens a
+  "Get Bank Shot" page (app/get.tsx) with App Store and Google Play buttons ("coming soon" until the app is listed:
+  `APP_STORE_URL`, `PLAY_STORE_URL` in game/challenge.ts). A browser that first came through a challenge is sent to that page from
+  the levels screen too. A browser already playing the web game isn't affected, and `/?full=1` lifts the limit for testing.
+
 ## 0.46.1
 
 - A challenge link now opens on a page that explains the game to someone who has never seen it: who sent it and what to beat, a

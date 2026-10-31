@@ -1,6 +1,7 @@
 import { LAUNCHER, solutionPieces, type Level, type PlacedPiece } from '../../physics';
 import { toGrid } from '../../game/aim';
-import { leverEnd, leverLine, moveArms } from '../../game/pieces';
+import { leverEnd, leverLine, moveArms, shotPieces } from '../../game/pieces';
+import type { ChallengeShot } from '../../game/challenge';
 import { PIECE_DEMOS, TOUR_SCENES, type TourPicture } from '../../game/tour';
 import type { Ctx, SceneButton, SceneState } from './TourScene';
 
@@ -108,6 +109,29 @@ async function turn(ctx: Ctx, deg: number) {
 }
 
 const missed = (touched: boolean[]) => touched.map((t, i) => (t ? 0 : i + 1)).filter(Boolean);
+
+/**
+ * A friend's challenge intro (app/challenge.tsx): the sender's real winning shot on the real level, bars and aim as they set them,
+ * counting its bounces as it goes, then what to beat. Copying it only ties: winning takes fewer bounces.
+ */
+export function shotScene(level: Level, shot: ChallengeShot, who: string): Scene {
+  return {
+    level,
+    setup: (s, l) => ({ ...s, pieces: shotPieces(l, shot), numbers: l.pieces.map((_, i) => i + 1), angle: shot.angle, power: shot.power, buttons: [] }),
+    async run(ctx) {
+      say(ctx, `${who}’s shot`, 'pencil');
+      await ctx.wait(900);
+      let n = 0;
+      const res = await ctx.shoot((h) => {
+        if (!h.counts) return;
+        n++;
+        say(ctx, `${n} bounce${n === 1 ? '' : 's'}`, 'pencil');
+      });
+      if (res.success) say(ctx, `In the glass in ${res.bounces}!`, 'red');
+      await ctx.wait(2200);
+    },
+  };
+}
 
 export const SCENES: Record<TourPicture, Scene> = {
   // A three-bar chain into the glass, then the same shot again: the second path lies exactly on the first.
