@@ -125,7 +125,8 @@ reference/    prototype.html, the behaviour and look to match
   trails and tries; the level stays won.
 - **Score (golf):** every real bounce counts (bars, edges, floor, outside of the glass), except down inside
   the glass (`SimResult.bounces`, `Hit.counts`). A live counter on the board ticks up during the shot
-  ("N bounces / par P"), and the goal line under the board reads "Goal: into the glass in P bounces, off all N
+  ("N bounces / par P", with a blue "N tries so far" badge beside it: the scorecard, in the corner `counterSpot` picks; the board's own
+  "Try / angle / power" corner text is off in levels, `hud={false}`), and the goal line under the board reads "Goal: into the glass in P bounces, off all N
   bars". A win names the result (Eagle, Birdie, Par, Bogey…), gives 1–3 stars (3 at par or better, 2
   within two) and points (`game/score.ts`); each level's best is saved and the level list shows stars and a
   total. Wins with help still count and score, capped by the help used on that level (`starCap`: one hint ★★, more hints or the

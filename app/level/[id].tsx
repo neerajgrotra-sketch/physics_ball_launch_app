@@ -912,6 +912,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
           angle={angle}
           power={power}
           tries={tries}
+          hud={false}
           flight={flight}
           charge={charge}
           dropZone={dropZone}
@@ -928,11 +929,18 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
             onClose={() => setNotice(null)}
           />
         )}
-        {bounces != null && !done && (
+        {(bounces != null || tries > 0) && !done && (
           <View style={[styles.counterRow, { justifyContent: spot === 'left' ? 'flex-start' : spot === 'right' ? 'flex-end' : 'center' }]} pointerEvents="none">
-            <View style={[styles.counter, { backgroundColor: c.paper, borderColor: c.line }]}>
-              <Text style={[styles.counterNum, { color: bounces > par ? c.red : c.ink }]}>{bounces}</Text>
-              <Text style={[styles.counterLabel, { color: c.muted }]}>{bounces === 1 ? 'bounce' : 'bounces'}{'\n'}par {par}</Text>
+            {/* The scorecard: this shot's bounces against par, and the tries so far (the two numbers a result is ranked by). */}
+            {bounces != null && (
+              <View style={[styles.counter, { backgroundColor: c.paper, borderColor: c.line }]}>
+                <Text style={[styles.counterNum, { color: bounces > par ? c.red : c.ink }]}>{bounces}</Text>
+                <Text style={[styles.counterLabel, { color: c.muted }]}>{bounces === 1 ? 'bounce' : 'bounces'}{'\n'}par {par}</Text>
+              </View>
+            )}
+            <View style={[styles.counter, { backgroundColor: c.paper, borderColor: c.pencil }]}>
+              <Text style={[styles.counterNum, { color: c.pencil }]}>{tries}</Text>
+              <Text style={[styles.counterLabel, { color: c.pencil }]}>{tries === 1 ? 'try' : 'tries'}{'\n'}so far</Text>
             </View>
           </View>
         )}
@@ -1132,7 +1140,7 @@ const styles = StyleSheet.create({
   stage: { flex: 1, paddingHorizontal: 6, paddingTop: 2 },
   hint: { marginHorizontal: 12, marginTop: 4, fontSize: 12, lineHeight: 16, fontFamily: FONTS.body },
   goal: { marginHorizontal: 12, marginTop: 6, fontSize: 16, lineHeight: 20, fontFamily: FONTS.bodySemi, textAlign: 'center' },
-  counterRow: { position: 'absolute', top: 10, left: 14, right: 14, flexDirection: 'row' },
+  counterRow: { position: 'absolute', top: 10, left: 14, right: 14, flexDirection: 'row', gap: 6 },
   counter: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingVertical: 4, paddingHorizontal: 10, borderRadius: 10, borderWidth: 1.5,

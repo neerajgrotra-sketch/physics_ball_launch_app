@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.48.2
+
+- A scorecard at the top of the board: the bounce counter ("6 bounces, par 6") with a matching blue badge beside it for the tries
+  so far ("56 tries"), the two numbers a result is ranked by. The small "Try 56 · 89.1° power 100.0" text in the board's corner is
+  gone (it hid under the counter, and the angle and power are on the sliders). The tries badge shows as soon as there's a try,
+  including on a level reopened part-way; the scorecard still takes the corner that covers the least of the level.
+
 ## 0.48.1
 
 - Bounce numbers belong to the bars and aim that fired the shot: moving or turning a bar, or changing the aim, clears them (they no
