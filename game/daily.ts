@@ -87,7 +87,12 @@ export function streak(state: DailyState, today: string): number {
  * help), three stars, and a streak milestone if this win reaches one. Returns the new state, the hints, and the reasons, for the message.
  */
 export function winDaily(state: DailyState, today: string, result: DailyResult): { state: DailyState; hints: number; reasons: string[] } {
-  if (state.days[today]) return { state, hints: 0, reasons: [] };
+  const had = state.days[today];
+  // A later win the same day earns nothing more, but the day keeps its best result (more stars, then fewer bounces).
+  if (had) {
+    const better = result.stars > had.stars || (result.stars === had.stars && result.bounces < had.bounces);
+    return { state: better ? { ...state, days: { ...state.days, [today]: result } } : state, hints: 0, reasons: [] };
+  }
   const next: DailyState = { ...state, days: { ...state.days, [today]: result } };
   const run = streak(next, today);
   next.best = Math.max(state.best, run);

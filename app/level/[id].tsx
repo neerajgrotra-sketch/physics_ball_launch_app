@@ -97,7 +97,7 @@ export default function LevelScreen() {
  * The daily puzzle (app/daily.tsx) plays in the same game: no level list position, progress or level rewards; a win is recorded
  * for its day instead (components/daily), and the win card's right button shares the result.
  */
-export interface DailyMode { number: number; tier: string; onWin: (result: DailyResult) => void; onShare: (picture: ((card: ShareCard) => string | null) | null) => void }
+export interface DailyMode { number: number; tier: string; onWin: (result: DailyResult) => void; onShare: (picture: ((card: ShareCard) => string | null) | null, result: DailyResult) => void }
 
 /**
  * A friend's challenge (app/challenge.tsx, from a "Challenge a friend" link): one level to beat the sender's bounces in, outside the
@@ -995,7 +995,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
             onAgain={() => startOver(false)}
             onRetry={keepPlaying}
             onClose={keepPlaying}
-            onGo={() => (daily ? daily.onShare(snapshot.current) : challenge ? sendChallenge() : last ? startOver(false) : goTo(index + 1))}
+            onGo={() => (daily ? daily.onShare(snapshot.current, { bounces: winShot.bounces, stars: helped || solved ? 0 : starsFor(winShot.bounces, par), tries, helped: helped || solved }) : challenge ? sendChallenge() : last ? startOver(false) : goTo(index + 1))}
             onShare={daily || challenge ? undefined : shareWin}
             extras={challenge
               ? [{ label: `👀 Watch ${senderName(challenge.from)}’s shot`, onPress: watchTheirs }, { label: challenge.next.label, onPress: challenge.next.go }]

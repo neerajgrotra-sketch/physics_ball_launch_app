@@ -16,7 +16,7 @@ interface Daily {
   /** Records a win on `day`'s puzzle: the first one that day counts for the streak and gives hints (game/daily.ts winDaily). */
   won: (day: string, result: DailyResult) => void;
   /** Shares `day`'s result (the share sheet; on a browser without one, copies it). */
-  share: (day: string, picture?: ((card: ShareCard) => string | null) | null) => void;
+  share: (day: string, picture?: ((card: ShareCard) => string | null) | null, result?: DailyResult) => void;
   /** Testing only (settings, Reset progress): forget every daily result. */
   reset: () => void;
 }
@@ -49,13 +49,14 @@ export function DailyProvider({ children }: { children: ReactNode }) {
     today: () => todaysDaily(),
     won: (day, result) => {
       const { state: next, hints, reasons } = winDaily(live.current, day, result);
+      if (next !== live.current) save(next);
       if (!hints) return;
-      save(next);
       // Said once the win celebration is over, like a level's rewards.
       setTimeout(() => wallet.give(hints, reasons.join('\n')), CELEBRATION_MS + 600);
     },
-    share: (day, picture) => {
-      const result = live.current.days[day];
+    // `shown`: the win on screen (the share card is about that shot, not the day's first win).
+    share: (day, picture, shown) => {
+      const result = shown ?? live.current.days[day];
       if (!result) return;
       const { number, index } = dailyFor(day, DAILIES.length);
       const level = DAILIES[index];

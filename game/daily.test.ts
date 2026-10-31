@@ -65,3 +65,14 @@ describe('daily puzzle: words', () => {
   });
 
 });
+
+describe('winDaily, a second win the same day', () => {
+  it('keeps the better result and gives no more hints', () => {
+    const first = winDaily(emptyDaily(), '2026-11-02', { bounces: 6, stars: 1, tries: 11, helped: false });
+    const again = winDaily(first.state, '2026-11-02', { bounces: 3, stars: 3, tries: 22, helped: false });
+    expect(again.hints).toBe(0);
+    expect(again.state.days['2026-11-02']).toMatchObject({ bounces: 3, stars: 3 });
+    const worse = winDaily(again.state, '2026-11-02', { bounces: 8, stars: 1, tries: 30, helped: false });
+    expect(worse.state).toBe(again.state);
+  });
+});

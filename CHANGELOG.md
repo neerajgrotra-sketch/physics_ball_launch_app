@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.48.9
+
+- Fixed: sharing a daily puzzle after a better second win shared the day's first win (a 1-star picture after a 3-star Par). Share
+  now sends the win on screen, and the day keeps its best result (more stars, then fewer bounces); the daily's hints and streak
+  still count once a day.
+
 ## 0.48.8
 
 - The win card has "Try again" beside the reset: it closes the card and keeps your bars, trails and tries, so you can tweak the
