@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.47.2
+
+- The challenge replay is told slowly for a first-time visitor: it opens on the board with "Neeraj placed 5 bars", then "Watch the
+  ball bounce into the glass", then the shot. Each bounce gets a numbered red marker where it happened and a caption saying what it
+  hit ("Bounce 6: a wall", "the floor"), and it ends on the total explained: "7 bounces: 5 bars + 2 walls". The bars' own numbers
+  and the "Try 00 / angle / power" corner are hidden on this board, so the only numbers are the bounce count (players read the bar
+  numbers 1–5 as bounces and the 7 looked wrong).
+
 ## 0.47.1
 
 - The captions on the live demo boards (the challenge replay's bounce count and "In the glass in 7!", and the tour's lines) sit on a

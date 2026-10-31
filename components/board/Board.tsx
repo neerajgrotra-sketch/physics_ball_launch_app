@@ -48,6 +48,10 @@ export interface BoardProps {
   angle: number;
   power: number;
   tries: number;
+  /** The "Try 01" and angle/power lines in the corner (off for a demo board that explains itself). */
+  hud?: boolean;
+  /** Each bar's number beside it (off where other numbers are on the board, like a replay's bounce marks). */
+  barLabels?: boolean;
   /** The launch being played back (see usePlayback). */
   flight?: Flight | null;
   /** How energised the ball is (0–1), after a spring pad has kicked it. */
@@ -90,7 +94,7 @@ function Spark({ t, x, y, k, color }: { t: SharedValue<number>; x: number; y: nu
  * Pure rendering: everything it shows comes from props (and the player's ball skin, from Settings). Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, flight = null, charge, dropZone = 'off', celebrate = null, kick, warp, done = false, onTouch, snapshot } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, hud = true, barLabels = true, flight = null, charge, dropZone = 'off', celebrate = null, kick, warp, done = false, onTouch, snapshot } = props;
   const c = useColors();
   const [box, setBox] = useState({ w: 0, h: 0 });
   const hudFont = useFont(condensed600, 15);
@@ -234,7 +238,7 @@ export function Board(props: BoardProps) {
     : [];
   const otherEnd = sel && selEnds ? (lever === 2 ? [selEnds[0], selEnds[1]] : [selEnds[2], selEnds[3]]) : null;
   // Each bar gets its number beside it (above it), and the selected one its rotation too: "2 · 137°".
-  const labels = labelFont ? pieces.map((p, i) => {
+  const labels = labelFont && barLabels ? pieces.map((p, i) => {
     const text = i === selected ? `${numbers[i] ?? i + 1} · ${((-p.deg % 180) + 180) % 180}°` : String(numbers[i] ?? i + 1);
     const a = (p.deg * Math.PI) / 180;
     let nx = Math.sin(a), ny = -Math.cos(a); // a normal to the bar
@@ -412,10 +416,10 @@ export function Board(props: BoardProps) {
                 {celebrate && <Celebration cele={celebrate} glass={g} c={c} />}
 
                 {/* HUD */}
-                {hudFont && (
+                {hud && hudFont && (
                   <Text x={12} y={24} text={`Try ${String(tries).padStart(2, '0')}`} font={hudFont} color={c.ink} />
                 )}
-                {subFont && (
+                {hud && subFont && (
                   <Text x={12} y={42} text={`${angle.toFixed(1)}°   power ${power.toFixed(1)}`} font={subFont} color={c.muted} />
                 )}
               </Group>

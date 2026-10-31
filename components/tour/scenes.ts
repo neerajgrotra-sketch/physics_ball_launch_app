@@ -1,4 +1,4 @@
-import { LAUNCHER, solutionPieces, type Level, type PlacedPiece } from '../../physics';
+import { LAUNCHER, WORLD, buildWorld, simulate, solutionPieces, type Hit, type Level, type PlacedPiece } from '../../physics';
 import { toGrid } from '../../game/aim';
 import { leverEnd, leverLine, moveArms, shotPieces } from '../../game/pieces';
 import type { ChallengeShot } from '../../game/challenge';
@@ -112,23 +112,45 @@ const missed = (touched: boolean[]) => touched.map((t, i) => (t ? 0 : i + 1)).fi
 
 /**
  * A friend's challenge intro (app/challenge.tsx): the sender's real winning shot on the real level, bars and aim as they set them,
- * counting its bounces as it goes, then what to beat. Copying it only ties: winning takes fewer bounces.
+ * told slowly for someone who has never seen the game: first the board and the sender's bars, then the shot, each bounce marked on the
+ * board with its number and what it hit (bars, walls and the floor all count, so the total can be more than the bars), then the total.
+ * Copying it only ties: winning takes fewer bounces.
  */
 export function shotScene(level: Level, shot: ChallengeShot, who: string): Scene {
+  const pieces = shotPieces(level, shot);
+  const res = simulate(buildWorld(level, pieces), shot.angle, shot.power);
+  const at = (h: Hit) => res.path[Math.min(h.i, res.path.length - 1)];
+  // What a bounce hit, in words: the board's edges and the floor are all 'wall' to physics, so the floor is told apart by height.
+  const kindOf = (h: Hit) => (h.kind === 'piece' ? 'bar' : h.kind === 'pad' ? 'spring pad' : h.kind === 'glass' ? 'glass' : h.kind === 'wall' && at(h)[1] >= WORLD.ground - 14 ? 'floor' : 'wall');
+  const counted = res.hits.filter((h) => h.counts);
+  const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  // "5 bars + 1 wall + 1 floor": the total explained, bars first.
+  const tally = ['bar', 'wall', 'floor', 'glass', 'spring pad']
+    .map((k) => [k, counted.filter((h) => kindOf(h) === k).length] as const)
+    .filter(([, n]) => n > 0)
+    .map(([k, n]) => (k === 'floor' || k === 'glass' ? `${n} ${k}` : plural(n, k)))
+    .join(' + ');
   return {
     level,
-    setup: (s, l) => ({ ...s, pieces: shotPieces(l, shot), numbers: l.pieces.map((_, i) => i + 1), angle: shot.angle, power: shot.power, buttons: [] }),
+    setup: (s) => ({ ...s, pieces, numbers: [], angle: shot.angle, power: shot.power, buttons: [], readout: '', marks: [] }),
     async run(ctx) {
-      say(ctx, `${who}’s shot`, 'pencil');
-      await ctx.wait(900);
+      say(ctx, `${who} placed ${plural(pieces.length, 'bar')}`, 'pencil');
+      await ctx.wait(2200);
+      say(ctx, 'Watch the ball bounce into the glass', 'pencil');
+      await ctx.wait(1600);
       let n = 0;
-      const res = await ctx.shoot((h) => {
+      await ctx.shoot((h) => {
         if (!h.counts) return;
         n++;
-        say(ctx, `${n} bounce${n === 1 ? '' : 's'}`, 'pencil');
+        const [x, y] = at(h);
+        ctx.set((st) => ({ marks: [...(st.marks ?? []), { x, y, n }] }));
+        const k = kindOf(h);
+        say(ctx, `Bounce ${n}: ${k === 'bar' || k === 'wall' || k === 'spring pad' ? `a ${k}` : `the ${k}`}`, 'pencil');
       });
-      if (res.success) say(ctx, `In the glass in ${res.bounces}!`, 'red');
-      await ctx.wait(2200);
+      if (res.success) {
+        say(ctx, `${plural(res.bounces, 'bounce')}: ${tally}`, 'red');
+      }
+      await ctx.wait(3200);
     },
   };
 }

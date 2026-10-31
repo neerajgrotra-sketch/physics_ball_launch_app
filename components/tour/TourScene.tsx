@@ -26,6 +26,8 @@ export interface SceneState {
   power: number;
   /** The ball rests where the last trail ended (a win). */
   done: boolean;
+  /** Numbered rings where the ball bounced (a challenge's replay counts its bounces on the board). */
+  marks?: { x: number; y: number; n: number }[];
   /** The ghost finger, its fingertip at (x, y) in world units. */
   finger: { x: number; y: number; down: boolean; shown: boolean };
   buttons: SceneButton[];
@@ -197,11 +199,16 @@ export function TourScene({ kind, scene: given, view = TOUR_VIEW, width }: {
       <View style={{ position: 'absolute', left: 0, top: -view.top * sc, width, height: WORLD.height * sc }}>
         <Board
           level={state.board ?? level} pieces={state.pieces} numbers={state.numbers} selected={state.selected} lever={state.lever} ghosts={state.ghosts}
-          trails={state.trails} angle={state.angle} power={state.power} tries={0} flight={flight} done={state.done && !flight}
+          trails={state.trails} angle={state.angle} power={state.power} tries={0} hud={!given} barLabels={!given} flight={flight} done={state.done && !flight}
           charge={charge} kick={kick} warp={warp}
         />
       </View>
 
+      {(state.marks ?? []).map((m) => (
+        <View key={m.n} style={[styles.mark, { left: px(m.x) - 11, top: py(m.y) - 11, backgroundColor: c.red, borderColor: c.paper }]}>
+          <Text style={[styles.markText, { color: c.paper }]}>{m.n}</Text>
+        </View>
+      ))}
       {state.readout !== '' && (
         <Text style={[styles.readout, { color: c.muted, left: px(12), top: py(view.top + 8), fontSize: Math.max(11, 15 * sc) }]}>
           {state.readout}
@@ -251,6 +258,8 @@ export function TourScene({ kind, scene: given, view = TOUR_VIEW, width }: {
 
 const styles = StyleSheet.create({
   readout: { position: 'absolute', fontFamily: FONTS.condensed },
+  mark: { position: 'absolute', width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  markText: { fontSize: 12, fontFamily: FONTS.condensedBold },
   noteRow: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   note: {
     textAlign: 'center', fontFamily: FONTS.condensedBold, paddingHorizontal: 12, paddingVertical: 3, borderWidth: 1.5, borderRadius: 14,

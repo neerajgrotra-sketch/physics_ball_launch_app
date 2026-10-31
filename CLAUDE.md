@@ -218,7 +218,9 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   re-run (`challengeBounces`), and a link whose shot doesn't win is refused. The win card says beat / tied / not yet
   (`challengeWinText`, "(with help)" if helped), with "Challenge back" (the friend's own shot), "Watch <name>'s shot" and "Play all
   levels". The intro card plays the sender's own winning shot on the real level (`shotScene` in `components/tour/scenes.ts`, through
-  `TourScene` with `scene` and a full-board `view`). On the web a challenge is a newcomer's one level: the win card's way on is "📲 Get the
+  `TourScene` with `scene` and a full-board `view`). It is told slowly: the bars first, then the shot with a numbered marker and caption per
+  bounce (bars, walls, floor all count), then the total ("7 bounces: 5 bars + 2 walls"); bar numbers and the HUD are hidden there
+  (`Board`'s `barLabels`, `hud`). On the web a challenge is a newcomer's one level: the win card's way on is "📲 Get the
   app" (`app/get.tsx`, store buttons from `APP_STORE_URL`/`PLAY_STORE_URL`, "coming soon" while null), and a browser that first came
   through a challenge (`WEB_GUEST_KEY`, set only if it had no progress) is redirected from the levels screen to /get (`/?full=1` lifts it). The tour (`TourGate`) skips /challenge.
   Link previews: Open Graph tags in `public/index.html` with `public/og.png` (`NODE_PATH=$(npm root -g) node scripts/make-og.mjs`);
