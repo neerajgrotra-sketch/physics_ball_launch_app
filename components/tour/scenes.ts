@@ -1,7 +1,8 @@
-import { LAUNCHER, WORLD, buildWorld, simulate, solutionPieces, type Hit, type Level, type PlacedPiece } from '../../physics';
+import { LAUNCHER, buildWorld, simulate, solutionPieces, type Hit, type Level, type PlacedPiece } from '../../physics';
 import { toGrid } from '../../game/aim';
 import { leverEnd, leverLine, moveArms, shotPieces } from '../../game/pieces';
 import type { ChallengeShot } from '../../game/challenge';
+import { bounceKind } from '../../game/marks';
 import { PIECE_DEMOS, TOUR_SCENES, type TourPicture } from '../../game/tour';
 import type { Ctx, SceneButton, SceneState } from './TourScene';
 
@@ -120,8 +121,7 @@ export function shotScene(level: Level, shot: ChallengeShot, who: string): Scene
   const pieces = shotPieces(level, shot);
   const res = simulate(buildWorld(level, pieces), shot.angle, shot.power);
   const at = (h: Hit) => res.path[Math.min(h.i, res.path.length - 1)];
-  // What a bounce hit, in words: the board's edges and the floor are all 'wall' to physics, so the floor is told apart by height.
-  const kindOf = (h: Hit) => (h.kind === 'piece' ? 'bar' : h.kind === 'pad' ? 'spring pad' : h.kind === 'glass' ? 'glass' : h.kind === 'wall' && at(h)[1] >= WORLD.ground - 14 ? 'floor' : 'wall');
+  const kindOf = (h: Hit) => bounceKind(h, at(h));
   const counted = res.hits.filter((h) => h.counts);
   const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
   // "5 bars + 1 wall + 1 floor": the total explained, bars first.

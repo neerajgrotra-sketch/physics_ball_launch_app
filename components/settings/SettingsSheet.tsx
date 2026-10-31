@@ -10,6 +10,7 @@ import { VERSION_LABEL } from '../version';
 import { BallPicker } from './BallPicker';
 import { GunPicker } from './GunPicker';
 import { ThemePicker } from './ThemePicker';
+import { useBallSkin } from './BallSkin';
 import { useDaily } from '../daily/DailyProvider';
 import { useHintWallet } from '../hints/HintWallet';
 
@@ -23,6 +24,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
   const c = useColors();
   const { musicOn, toggleMusic, effectsOn, toggleEffects, hapticsOn, toggleHaptics } = useSoundSettings();
   const { tipsOn, setTipsOn, restartTutorial, restartTour } = useTips();
+  const { bounceMarks, setBounceMarks } = useBallSkin();
   const { unlockAll, setUnlockAll, resetProgress } = useProgress();
   const wallet = useHintWallet();
   const daily = useDaily();
@@ -61,6 +63,16 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
                 />
               </View>
             )}
+            <View style={[styles.row, { borderColor: c.line }]}>
+              <View style={styles.labelBox}>
+                <Text style={[styles.label, { color: c.ink }]}>Show bounce numbers</Text>
+                <Text style={[styles.note, { color: c.muted }]}>Numbers each bounce on the board, so you can see how the count adds up</Text>
+              </View>
+              <Switch
+                value={bounceMarks} onValueChange={setBounceMarks}
+                trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Show bounce numbers"
+              />
+            </View>
             <View style={[styles.row, { borderColor: c.line }]}>
               <Text style={[styles.label, { color: c.ink }]}>Tips (ghost finger)</Text>
               <Switch

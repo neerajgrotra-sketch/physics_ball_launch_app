@@ -41,6 +41,8 @@ import { skipNotice, winText } from '../../game/progress';
 import { AFTER_SOLUTION, afterHint, bestOf, cappedBounces, goalEvery, goalText, helpNote, starsFor } from '../../game/score';
 import { SITE_URL, challengeGoal, challengeMessage, challengeUrl, challengeWinText, senderName, type ChallengeShot } from '../../game/challenge';
 import { PROFILE_KEY, parseProfile } from '../../game/profile';
+import { bounceMarks, type Mark } from '../../game/marks';
+import { useBallSkin } from '../../components/settings/BallSkin';
 import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
@@ -158,6 +160,10 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     if (k !== selected && k != null && s[k]?.onBoard) setLever(leverEnd(s[k]));
     setSelected(k);
   };
+  /** The last shot's bounce markers and how many have appeared so far; drawn when "Show bounce numbers" is on (Settings). */
+  const [marks, setMarks] = useState<Mark[]>([]);
+  const [shownMarks, setShownMarks] = useState(0);
+  const { bounceMarks: showMarks } = useBallSkin();
   const [trails, setTrails] = useState<Trail[]>(() => (draft?.launches ?? []).map((l) => {
     const res = simulate(buildWorld(level, l.pieces), l.angle, l.power);
     trailShots.current.set(res.path, l);
@@ -320,12 +326,18 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   };
   // Everything the ball meets on its way, in order: bounces and trips through a portal. Each fires as playback reaches it.
   const playShot = (res: { path: Vec[]; hits: Hit[]; jumps: number[] }, done: () => void, count = true) => {
+    // Bounce markers (game/marks.ts): each scored bounce's number appears where it happens; a skip or the end shows them all.
+    const all = bounceMarks(res);
+    setMarks(all);
+    setShownMarks(0);
+    const finish = () => { setShownMarks(all.length); done(); };
     const events = [...res.hits.map((h) => ({ i: h.i, h })), ...res.jumps.map((i) => ({ i, h: undefined as Hit | undefined }))]
       .sort((x, y) => x.i - y.i);
-    play(res.path, done, events.map((e) => e.i), (k) => {
+    play(res.path, finish, events.map((e) => e.i), (k) => {
       const e = events[k];
       if (!e.h) { warpAt(res, e.i); return; }
       hitAt(res, e.h);
+      if (e.h.counts) setShownMarks((n) => n + 1);
       if (count && e.h.counts) setBounces((n) => (n ?? 0) + 1);
     }, res.jumps);
   };
@@ -672,6 +684,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   const clearTrails = () => {
     if (flying) skip();
     setTrails([]);
+    setMarks([]);
   };
 
   const setAim = (a: number, p: number) => {
@@ -880,6 +893,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
         <Board
           level={level}
           pieces={boardPieces(slots)}
+          marks={showMarks ? marks.slice(0, shownMarks) : []}
           numbers={boardNumbers(slots)}
           illegal={illegalBars(level, slots)}
           selected={boardIndex(slots, selected)}

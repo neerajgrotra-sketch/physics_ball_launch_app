@@ -52,6 +52,8 @@ export interface BoardProps {
   hud?: boolean;
   /** Each bar's number beside it (off where other numbers are on the board, like a replay's bounce marks). */
   barLabels?: boolean;
+  /** Numbered markers at the shot's scored bounces (game/marks.ts), shown as they happen. */
+  marks?: { x: number; y: number; n: number }[];
   /** The launch being played back (see usePlayback). */
   flight?: Flight | null;
   /** How energised the ball is (0–1), after a spring pad has kicked it. */
@@ -94,7 +96,7 @@ function Spark({ t, x, y, k, color }: { t: SharedValue<number>; x: number; y: nu
  * Pure rendering: everything it shows comes from props (and the player's ball skin, from Settings). Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, hud = true, barLabels = true, flight = null, charge, dropZone = 'off', celebrate = null, kick, warp, done = false, onTouch, snapshot } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, hud = true, barLabels = true, marks = [], flight = null, charge, dropZone = 'off', celebrate = null, kick, warp, done = false, onTouch, snapshot } = props;
   const c = useColors();
   const [box, setBox] = useState({ w: 0, h: 0 });
   const hudFont = useFont(condensed600, 15);
@@ -392,6 +394,18 @@ export function Board(props: BoardProps) {
                 {labelFont && labels.map((l, i) => (
                   <Text key={`n${i}`} x={l.x} y={l.y} text={l.text} font={labelFont} color={illegal[i] ? c.red : c.pencil} />
                 ))}
+
+                {/* bounce markers: a red disc with the bounce's number, where it happened */}
+                {labelFont && marks.map((m) => {
+                  const t = String(m.n), w = labelFont.measureText(t).width;
+                  return (
+                    <Group key={`mk${m.n}`}>
+                      <Circle cx={m.x} cy={m.y} r={10} color={c.red} />
+                      <Circle cx={m.x} cy={m.y} r={10} color={c.paper} style="stroke" strokeWidth={2} />
+                      <Text x={m.x - w / 2} y={m.y + 4.5} text={t} font={labelFont} color={c.paper} />
+                    </Group>
+                  );
+                })}
 
                 {/* launcher: the player's gun (game/guns.ts), aimed */}
                 <GunArt gun={gun} angle={angle} power={power} c={c} />

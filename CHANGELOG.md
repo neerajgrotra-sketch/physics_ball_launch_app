@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.48.0
+
+- **Bounce numbers on every level.** As a shot plays, each scored bounce gets a numbered red marker where it happened (bars, walls,
+  the floor, the outside of the glass), counting up with the live counter, so you can see exactly how the bounce count is made.
+  The markers stay on the board until the next shot (Clear removes them; a skipped shot shows them all at once). Settings has
+  "Show bounce numbers" to turn them off (on by default, remembered). `game/marks.ts` makes them; the challenge replay uses the same.
+
 ## 0.47.2
 
 - The challenge replay is told slowly for a first-time visitor: it opens on the board with "Neeraj placed 5 bars", then "Watch the

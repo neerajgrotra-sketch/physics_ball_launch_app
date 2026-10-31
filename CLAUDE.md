@@ -103,6 +103,9 @@ reference/    prototype.html, the behaviour and look to match
   turns red and snaps back to its last allowed spot on release; rotation skips clipping angles; a new bar
   lands on the nearest allowed spot. Pieces can't be edited mid-flight. (The prototype removed a bar by re-tapping its chip.)
 - **Trails:** keep the last 4 launches, oldest faintest. A successful trail is drawn in red.
+- **Bounce numbers:** each scored bounce of a shot gets a numbered red marker where it happened (`game/marks.ts` `bounceMarks`, drawn by
+  `Board`'s `marks`), appearing with the live counter and staying until the next shot (Clear removes them; skip shows them all).
+  Settings "Show bounce numbers" turns them off (`BallSkin`'s `bounceMarks`, `MARKS_KEY`, on by default).
 - **Skip:** during a flight, a tap on the board, a touch on the angle, power or rotation controls, the bar and cannon chips, Solve, Clear or
   Undo (each skips, then does what it does: a bar chip selects its bar, the cannon chip goes back to aiming), or Launch (which reads "Skip ›") jumps to the end of the
   shot. The path is already computed in full, so the whole trajectory becomes the trail and the outcome
