@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.48.3
+
+- The tries badge moved to the opposite top corner from the bounce counter (bounces left, tries right on most levels), so the
+  two don't form one wide banner that hides bars placed near the top of the board.
+
 ## 0.48.2
 
 - A scorecard at the top of the board: the bounce counter ("6 bounces, par 6") with a matching blue badge beside it for the tries

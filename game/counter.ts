@@ -6,8 +6,9 @@ import { WORLD, LAUNCHER, PORTAL_RADIUS, blockCorners, glassBox, hazardReach, PL
 
 export type CounterSpot = 'left' | 'center' | 'right';
 
-/** The scorecard's size in board units (the bounce counter and the tries badge side by side), and the gap from the board's edge. */
-const W = 250, H = 62, MARGIN = 10;
+/** The bounce counter's size in board units (about 118 × 50 px on a phone), and the gap from the board's edge. The tries badge takes
+ * the opposite top corner. */
+const W = 140, H = 62, MARGIN = 10;
 
 type Box = [number, number, number, number]; // x1, y1, x2, y2
 
