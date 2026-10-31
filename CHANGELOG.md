@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.48.1
+
+- Bounce numbers belong to the bars and aim that fired the shot: moving or turning a bar, or changing the aim, clears them (they no
+  longer describe the board), and Undo back to that exact setup brings them back. The ghost trails stay as before.
+
 ## 0.48.0
 
 - **Bounce numbers on every level.** As a shot plays, each scored bounce gets a numbered red marker where it happened (bars, walls,

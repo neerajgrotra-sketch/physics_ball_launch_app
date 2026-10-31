@@ -109,6 +109,10 @@ export interface ChallengeMode {
   next: { label: string; go: () => void };
 }
 
+/** The bars on the board and the aim, as a string: what a shot's bounce markers belong to. */
+const setupKey = (pieces: { x: number; y: number; deg: number }[], angle: number, power: number) =>
+  `${pieces.map((p) => `${p.x},${p.y},${p.deg}`).join(';')}|${angle.toFixed(1)}|${power.toFixed(1)}`;
+
 /** Where a challenge link points: this site on the web (so a preview links to itself), the public site from the app. */
 const siteUrl = () => (Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : SITE_URL);
 
@@ -163,6 +167,9 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   /** The last shot's bounce markers and how many have appeared so far; drawn when "Show bounce numbers" is on (Settings). */
   const [marks, setMarks] = useState<Mark[]>([]);
   const [shownMarks, setShownMarks] = useState(0);
+  // The markers belong to the bars and aim that fired the shot: moving a bar or the aim hides them (they no longer describe the
+  // board), and Undo back to that exact setup shows them again.
+  const [marksFor, setMarksFor] = useState('');
   const { bounceMarks: showMarks } = useBallSkin();
   const [trails, setTrails] = useState<Trail[]>(() => (draft?.launches ?? []).map((l) => {
     const res = simulate(buildWorld(level, l.pieces), l.angle, l.power);
@@ -325,10 +332,12 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     feedback.warped();
   };
   // Everything the ball meets on its way, in order: bounces and trips through a portal. Each fires as playback reaches it.
-  const playShot = (res: { path: Vec[]; hits: Hit[]; jumps: number[] }, done: () => void, count = true) => {
+  /** `setup`: the bars and aim the shot was fired from (setupKey), which its bounce markers belong to. */
+  const playShot = (res: { path: Vec[]; hits: Hit[]; jumps: number[] }, done: () => void, count = true, setup = '') => {
     // Bounce markers (game/marks.ts): each scored bounce's number appears where it happens; a skip or the end shows them all.
     const all = bounceMarks(res);
     setMarks(all);
+    setMarksFor(setup);
     setShownMarks(0);
     const finish = () => { setShownMarks(all.length); done(); };
     const events = [...res.hits.map((h) => ({ i: h.i, h })), ...res.jumps.map((i) => ({ i, h: undefined as Hit | undefined }))]
@@ -395,7 +404,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       }
     };
     launched();
-    playShot(res, finished);
+    playShot(res, finished, true, setupKey(placed, a, p));
   };
 
   // Opened with a saved shot (Replay on the level card): play it once, like the Replay button. It isn't a try
@@ -410,7 +419,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
         setBounces(res.bounces);
         setTrails([{ path: res.path, ok: res.success, end: res.end, jumps: res.jumps }]);
         if (res.success) feedback.landed();
-      });
+      }, true, setupKey(shotPieces(level, shot), shot.angle, shot.power));
     }, 500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -547,7 +556,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     playShot(res, () => {
       setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end, jumps: res.jumps }].slice(-MAX_TRAILS));
       if (res.success) feedback.landed();
-    }, false);
+    }, false, setupKey(boardPieces(theirs), challenge.shot.angle, challenge.shot.power));
   };
 
   // After a win: replay the winning shot exactly (same bars, angle and power; physics is deterministic, so
@@ -563,7 +572,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     setNotice(null);
     const res = simulate(buildWorld(level, boardPieces(shot)), a, p);
     launched();
-    playShot(res, () => { if (res.success) feedback.landed(); }, false);
+    playShot(res, () => { if (res.success) feedback.landed(); }, false, setupKey(boardPieces(shot), a, p));
   };
 
   // Put the bars and the aim back the way they were before the last change. During a shot, it first skips to the shot's end.
@@ -893,7 +902,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
         <Board
           level={level}
           pieces={boardPieces(slots)}
-          marks={showMarks ? marks.slice(0, shownMarks) : []}
+          marks={showMarks && marksFor === setupKey(boardPieces(slots), angle, power) ? marks.slice(0, shownMarks) : []}
           numbers={boardNumbers(slots)}
           illegal={illegalBars(level, slots)}
           selected={boardIndex(slots, selected)}
