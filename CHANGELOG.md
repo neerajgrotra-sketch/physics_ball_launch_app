@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.49.3
+
+- The bounce and tries badges always match. If either would cover a bar, both shrink to the small chip together. Before,
+  only the covered one shrank, so after a few tries they looked like two different designs.
+
 ## 0.49.2
 
 - A flat or upright bar near an edge no longer stacks its move grip on the rotate icon. With no room on the far side,

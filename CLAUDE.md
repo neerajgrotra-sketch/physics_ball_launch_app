@@ -130,8 +130,8 @@ reference/    prototype.html, the behaviour and look to match
 - **Score (golf):** every real bounce counts (bars, edges, floor, outside of the glass), except down inside
   the glass (`SimResult.bounces`, `Hit.counts`). A live counter on the board ticks up during the shot
   ("N bounces / par P", with a blue "N tries so far" badge in the opposite top corner: the counter takes the corner `counterSpot` picks; both slide in
-  from the board's sides on Launch and back out 1.6 s after the ball stops (`scoreIn`), so between shots the board is clear; a badge with a
-  bar under it shrinks to a small see-through chip, `badgeCovers` (bounce numbers don't shrink it); the board's own
+  from the board's sides on Launch and back out 1.6 s after the ball stops (`scoreIn`), so between shots the board is clear; if either badge has a
+  bar under it both shrink to a small see-through chip together, so they always match, `badgeCovers` (bounce numbers don't shrink it); the board's own
   "Try / angle / power" corner text is off in levels, `hud={false}`), and the goal line under the board reads "Goal: into the glass in P bounces, off all N
   bars". A win names the result (Eagle, Birdie, Par, Bogey…), gives 1–3 stars (3 at par or better, 2
   within two) and points (`game/score.ts`); each level's best is saved and the level list shows stars and a

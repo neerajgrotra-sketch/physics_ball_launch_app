@@ -559,8 +559,10 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   const triesSpot = spot === 'right' ? 'left' : 'right';
   // Only bars shrink a badge: the badges show just for a shot, and shrinking for bounce numbers landing under them made a badge
   // flick small mid-flight (and stay small under a "So close!" card).
-  const counterSmall = badgeCovers(badgeBox(spot), barSegs, []);
-  const triesSmall = badgeCovers(badgeBox(triesSpot), barSegs, []);
+  // The two badges are a pair: if either would cover a bar, both shrink, so they always look alike (one shrinking on its own
+  // looked like a different, older badge).
+  const counterSmall = badgeCovers(badgeBox(spot), barSegs, []) || badgeCovers(badgeBox(triesSpot), barSegs, []);
+  const triesSmall = counterSmall;
 
   const goTo = (i: number) => {
     if (!flying) router.setParams({ id: LEVELS[i].id });
