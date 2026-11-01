@@ -1,3 +1,4 @@
+import { trailOpacity } from '../../game/trails';
 import { Canvas, Circle, DashPathEffect, Group, Path, Rect, Text, useCanvasRef, useFont, type SkPath, type Transforms3d } from '@shopify/react-native-skia';
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
@@ -272,7 +273,7 @@ export function Board(props: BoardProps) {
                     strokeWidth={1.4}
                     strokeCap="round"
                     strokeJoin="round"
-                    opacity={0.16 + 0.14 * (i + 4 - trails.length)}
+                    opacity={trailOpacity(i, trails.length)}
                   />
                 ))}
 

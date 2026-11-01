@@ -10,6 +10,7 @@ import { VERSION_LABEL } from '../version';
 import { BallPicker } from './BallPicker';
 import { GunPicker } from './GunPicker';
 import { ThemePicker } from './ThemePicker';
+import { TRAIL_CHOICES } from '../../game/trails';
 import { useBallSkin } from './BallSkin';
 import { useDaily } from '../daily/DailyProvider';
 import { useHintWallet } from '../hints/HintWallet';
@@ -24,7 +25,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
   const c = useColors();
   const { musicOn, toggleMusic, effectsOn, toggleEffects, hapticsOn, toggleHaptics } = useSoundSettings();
   const { tipsOn, setTipsOn, restartTutorial, restartTour } = useTips();
-  const { bounceMarks, setBounceMarks } = useBallSkin();
+  const { bounceMarks, setBounceMarks, trailCount, setTrailCount } = useBallSkin();
   const { unlockAll, setUnlockAll, resetProgress } = useProgress();
   const wallet = useHintWallet();
   const daily = useDaily();
@@ -72,6 +73,26 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
                 value={bounceMarks} onValueChange={setBounceMarks}
                 trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Show bounce numbers"
               />
+            </View>
+            <View style={[styles.row, styles.stack, { borderColor: c.line }]}>
+              <View style={styles.labelBox}>
+                <Text style={[styles.label, { color: c.ink }]}>Trails kept</Text>
+                <Text style={[styles.note, { color: c.muted }]}>How many of your last shots stay on the board, oldest faintest</Text>
+              </View>
+              <View style={styles.chips}>
+                {TRAIL_CHOICES.map((n) => {
+                  const on = trailCount === n;
+                  return (
+                    <Pressable
+                      key={n} onPress={() => setTrailCount(n)} accessibilityRole="button" accessibilityState={{ selected: on }}
+                      accessibilityLabel={`Keep ${n} trail${n === 1 ? '' : 's'}`}
+                      style={[styles.chip, styles.trailChip, { borderColor: c.pencil }, on && { backgroundColor: c.pencil }]}
+                    >
+                      <Text style={[styles.chipText, { color: on ? c.paper : c.pencil }]}>{n}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
             <View style={[styles.row, { borderColor: c.line }]}>
               <Text style={[styles.label, { color: c.ink }]}>Tips (ghost finger)</Text>
@@ -227,6 +248,8 @@ const styles = StyleSheet.create({
   input: { height: 42, borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 12, fontSize: 16, fontFamily: FONTS.body },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { height: 32, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1.5, justifyContent: 'center' },
+  stack: { flexDirection: 'column', alignItems: 'stretch' },
+  trailChip: { minWidth: 44, height: 36, borderRadius: 18, paddingHorizontal: 0, alignItems: 'center' },
   chipText: { fontSize: 14, fontFamily: FONTS.bodySemi },
   done: { height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
   doneText: { color: '#fff', fontSize: 19, fontFamily: FONTS.condensedBold },

@@ -4,6 +4,7 @@ import Svg, { Path } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, Pressable, StyleSheet, Text, View, type LayoutRectangle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MAX_TRAILS } from '../../game/trails';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
 import { usePlayback } from '../../components/board/usePlayback';
 import { HelpCard } from '../../components/board/HelpCard';
@@ -53,15 +54,14 @@ import type { ShareCard } from '../../components/board/shareCard';
 import { shareText } from '../../components/share';
 import { FONTS, useColors } from '../../theme/colors';
 
-const MAX_TRAILS = 4;
 
 /**
  * The trails with a replayed shot's path as the newest. Physics is deterministic, so a replay's path matches the original point
  * for point: an identical trail already on the board moves to the front instead of being drawn twice.
  */
-function withReplayTrail(ts: Trail[], res: { path: Vec[]; success: boolean; end: Trail['end']; jumps: number[] }): Trail[] {
+function withReplayTrail(ts: Trail[], res: { path: Vec[]; success: boolean; end: Trail['end']; jumps: number[] }, keep: number = MAX_TRAILS): Trail[] {
   const same = (t: Trail) => t.path.length === res.path.length && t.path.every((q, i) => q[0] === res.path[i][0] && q[1] === res.path[i][1]);
-  return [...ts.filter((t) => !same(t)), { path: res.path, ok: res.success, end: res.end, jumps: res.jumps }].slice(-MAX_TRAILS);
+  return [...ts.filter((t) => !same(t)), { path: res.path, ok: res.success, end: res.end, jumps: res.jumps }].slice(-keep);
 }
 type ViewRef = ComponentRef<typeof View>;
 
@@ -179,12 +179,14 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   // The markers belong to the bars and aim that fired the shot: moving a bar or the aim hides them (they no longer describe the
   // board), and Undo back to that exact setup shows them again.
   const [marksFor, setMarksFor] = useState('');
-  const { bounceMarks: showMarks } = useBallSkin();
+  const { bounceMarks: showMarks, trailCount } = useBallSkin();
   const [trails, setTrails] = useState<Trail[]>(() => (draft?.launches ?? []).map((l) => {
     const res = simulate(buildWorld(level, l.pieces), l.angle, l.power);
     trailShots.current.set(res.path, l);
     return { path: res.path, ok: res.success, end: res.end, jumps: res.jumps };
   }));
+  // Only the newest few are drawn (Settings, "Trails kept"), so lowering the setting tidies the board at once.
+  const shownTrails = trails.length > trailCount ? trails.slice(-trailCount) : trails;
   const [angle, setAngle] = useState(shot?.angle ?? draft?.angle ?? 52);
   const [power, setPower] = useState(shot?.power ?? draft?.power ?? 45);
   // Undo: every change to the bars or the aim is remembered (a drag or held slider counts as one step), see game/history.
@@ -396,7 +398,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       charge.value = withTiming(0, { duration: 500 });
       setBounces(res.bounces);
       trailShots.current.set(res.path, { pieces: placed, angle: a, power: p });
-      setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end, jumps: res.jumps }].slice(-MAX_TRAILS));
+      setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end, jumps: res.jumps }].slice(-trailCount));
       // A destroyed ball needs no card: the board shows the burst and the sound plays.
       setNotice(res.end === 'skipped' ? skipNotice(level.pieces.length, numbers, res.touched, { pads: { total: (level.pads ?? []).length, touched: res.padsTouched }, portals: { total: (level.portals ?? []).length, used: res.portalsUsed } }) : null);
       if (res.end === 'dead') feedback.died();
@@ -584,7 +586,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     const res = simulate(buildWorld(level, boardPieces(theirs)), challenge.shot.angle, challenge.shot.power);
     launched();
     playShot(res, () => {
-      setTrails((ts) => withReplayTrail(ts, res));
+      setTrails((ts) => withReplayTrail(ts, res, trailCount));
       if (res.success) feedback.landed();
     }, false, setupKey(boardPieces(theirs), challenge.shot.angle, challenge.shot.power));
   };
@@ -605,7 +607,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     // The replayed shot stays on the board as its newest trail (it was missing after Clear, leaving only the bounce numbers).
     playShot(res, () => {
       trailShots.current.set(res.path, { pieces: boardPieces(shot), angle: a, power: p });
-      setTrails((ts) => withReplayTrail(ts, res));
+      setTrails((ts) => withReplayTrail(ts, res, trailCount));
       if (res.success) feedback.landed();
     }, false, setupKey(boardPieces(shot), a, p));
   };
@@ -943,7 +945,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
           selected={boardIndex(slots, selected)}
           lever={lever}
           ghosts={ghosts}
-          trails={trails}
+          trails={shownTrails}
           angle={angle}
           power={power}
           tries={tries}

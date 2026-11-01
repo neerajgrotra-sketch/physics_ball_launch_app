@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.49.0
+
+- Fewer ghost trails: the board keeps your last 3 shots by default (it was 4), and Settings has "Trails kept" (1, 2, 3, 5
+  or 8; `game/trails.ts`). Lowering it tidies the board at once. Older trails fade more steeply, so the newest shot
+  stands out even on the long spring and wall levels.
+
 ## 0.48.11
 
 - Solve and Clear look live: ink text on a blue border, where the old grey made players think they were switched off.

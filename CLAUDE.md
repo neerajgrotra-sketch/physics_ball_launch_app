@@ -102,7 +102,8 @@ reference/    prototype.html, the behaviour and look to match
   (`game/placement.ts`, the same rule the level generator uses): a bar dragged somewhere it isn't allowed
   turns red and snaps back to its last allowed spot on release; rotation skips clipping angles; a new bar
   lands on the nearest allowed spot. Pieces can't be edited mid-flight. (The prototype removed a bar by re-tapping its chip.)
-- **Trails:** keep the last 4 launches, oldest faintest. A successful trail is drawn in red. Clear (eraser icon) wipes them and the bounce numbers;
+- **Trails:** keep the last 3 launches by default, oldest faintest (`trailOpacity`); Settings "Trails kept" picks 1, 2, 3, 5 or 8
+  (`game/trails.ts`, `BallSkin`'s `trailCount`, `TRAILS_KEY`). A successful trail is drawn in red. Clear (eraser icon) wipes them and the bounce numbers;
   it is dimmed only when there is nothing to clear. Action buttons use ink text on a pencil border (grey read as disabled).
 - **Bounce numbers:** each scored bounce of a shot gets a numbered red marker where it happened (`game/marks.ts` `bounceMarks`, drawn by
   `Board`'s `marks`), appearing with the live counter and staying until the next shot (Clear removes them; skip shows them all). They belong to
