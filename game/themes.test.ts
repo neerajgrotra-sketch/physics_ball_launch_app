@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DARK, LIGHT, THEMES, resolveTheme } from '../theme/palettes';
+import { DARK, LIGHT, NEON, THEMES, resolveTheme } from '../theme/palettes';
 
 // Relative luminance and contrast ratio (WCAG), to keep every theme's pieces readable on its paper.
 const lum = (hex: string) => {
@@ -18,10 +18,12 @@ describe('board themes', () => {
     expect(resolveTheme('unknown', false).id).toBe('graph');
     expect(resolveTheme('chalk', false).id).toBe('chalk');
     expect(new Set(THEMES.map((t) => t.id)).size).toBe(THEMES.length);
+    expect(resolveTheme('neon', false)).toBe(NEON);
+    expect(THEMES).not.toContain(NEON); // ASMR mode's look, not a picker choice
   });
 
   it('keeps walls, bars, the glass and text readable on every theme', () => {
-    for (const t of THEMES) {
+    for (const t of [...THEMES, NEON]) {
       const p = t.palette;
       expect(contrast(p.ink, p.paper), `${t.id} ink`).toBeGreaterThan(7);
       expect(contrast(p.pencil, p.paper), `${t.id} bars`).toBeGreaterThan(3.5);

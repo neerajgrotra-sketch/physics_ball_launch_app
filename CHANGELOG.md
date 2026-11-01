@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.50.0
+
+- ASMR mode (Settings, off by default). The whole game switches to a neon look: near-black board, glowing walls, bars and
+  glass, a comet tail behind the ball, a ring of light at every bounce, and the newest trail glowing. Every bounce plays
+  the next note of a calm pentatonic run on a soft bell, and landing plays a slow rolled chord. It's a look and a sound
+  only; the physics doesn't change. Turning it off brings back the theme you'd picked. New: `game/asmr.ts`, `NEON` in
+  `theme/palettes.ts`, `chime.wav` and `glow.wav` from `scripts/make-sounds.mjs`.
+
 ## 0.49.3
 
 - The bounce and tries badges always match. If either would cover a bar, both shrink to the small chip together. Before,

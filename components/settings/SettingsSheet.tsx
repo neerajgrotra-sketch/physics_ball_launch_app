@@ -11,6 +11,7 @@ import { BallPicker } from './BallPicker';
 import { GunPicker } from './GunPicker';
 import { ThemePicker } from './ThemePicker';
 import { TRAIL_CHOICES } from '../../game/trails';
+import { useAsmr } from './Theme';
 import { useBallSkin } from './BallSkin';
 import { useDaily } from '../daily/DailyProvider';
 import { useHintWallet } from '../hints/HintWallet';
@@ -26,6 +27,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
   const { musicOn, toggleMusic, effectsOn, toggleEffects, hapticsOn, toggleHaptics } = useSoundSettings();
   const { tipsOn, setTipsOn, restartTutorial, restartTour } = useTips();
   const { bounceMarks, setBounceMarks, trailCount, setTrailCount } = useBallSkin();
+  const [asmr, setAsmr] = useAsmr();
   const { unlockAll, setUnlockAll, resetProgress } = useProgress();
   const wallet = useHintWallet();
   const daily = useDaily();
@@ -64,6 +66,16 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
                 />
               </View>
             )}
+            <View style={[styles.row, { borderColor: c.line }]}>
+              <View style={styles.labelBox}>
+                <Text style={[styles.label, { color: c.ink }]}>ASMR mode ✨</Text>
+                <Text style={[styles.note, { color: c.muted }]}>Neon glow, comet trails and a calm musical note on every bounce</Text>
+              </View>
+              <Switch
+                value={asmr} onValueChange={(on) => { onMusicTap?.(); setAsmr(on); }}
+                trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="ASMR mode"
+              />
+            </View>
             <View style={[styles.row, { borderColor: c.line }]}>
               <View style={styles.labelBox}>
                 <Text style={[styles.label, { color: c.ink }]}>Show bounce numbers</Text>

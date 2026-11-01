@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react';
 import { useColorScheme } from 'react-native';
 import { AUTO_THEME, resolveTheme, type Palette, type Theme } from './palettes';
 
-export { AUTO_THEME, DARK, LIGHT, THEMES, resolveTheme, type Palette, type Theme } from './palettes';
+export { AUTO_THEME, DARK, LIGHT, NEON, THEMES, resolveTheme, type Palette, type Theme } from './palettes';
 
 /** Font family names, as registered by useFonts in app/_layout.tsx. */
 export const FONTS = {

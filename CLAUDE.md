@@ -254,6 +254,12 @@ Barlow and Barlow Condensed type. Use the colour tokens from `reference/prototyp
 theme in Settings (`theme/palettes.ts` THEMES: Chalkboard, Notebook, Night, Sand; Auto is the default). Every colour comes from
 `useColors()`, never a fixed hex, so a theme recolours everything; `game/themes.test.ts` checks each theme's contrast.
 
+**ASMR mode** (Settings, `useAsmr` in `components/settings/Theme.tsx`, `ASMR_KEY`, off by default) shows the `NEON` palette
+whatever theme is picked (the picked one comes back when it's off), and the board adds `BlurMask` glow under the walls, glass,
+bars, ball and newest trail, a `CometTail` on the flight and a `BounceFlash` ring at each hit (`LevelGame`'s `flash`). Sound:
+`feedbackPrefs.asmr` swaps each bounce for `chime.wav` stepped along `asmrStep` (major pentatonic, up then down) and the landing
+for `glow.wav`. A look and a sound only, never the physics. The share poster keeps the graph-paper colours.
+
 ## Launch and intro
 
 - Launch screen (iOS/Android, expo-splash-screen in `app.json`): the rounded icon `assets/splash-icon.png`

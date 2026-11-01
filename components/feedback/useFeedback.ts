@@ -2,6 +2,7 @@ import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef } from 'react';
 import type { Hit } from '../../physics';
+import { asmrRate } from '../../game/asmr';
 import { feedbackPrefs } from './SoundSettings';
 import { localSound, setAudioModeOnce, sourceOf } from './localAudio';
 
@@ -17,6 +18,8 @@ const SOUNDS = {
   warp: require('../../assets/sounds/warp.wav'),
   star: require('../../assets/sounds/star.wav'),
   burst: require('../../assets/sounds/burst.wav'),
+  chime: require('../../assets/sounds/chime.wav'),
+  glow: require('../../assets/sounds/glow.wav'),
 };
 
 /** Bounce speed (px/s) that counts as a full-strength hit. Launches top out at 1120. */
@@ -78,7 +81,7 @@ class Pool {
  * the bundled source as before.
  */
 let pools: Record<SoundName, Pool> | null = null;
-const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 3, wall: 3, glass: 3, star: 3 };
+const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 3, wall: 3, glass: 3, star: 3, chime: 4 };
 const makePools = (src: (name: SoundName) => number | { uri: string }) => Object.fromEntries(
   (Object.keys(SOUNDS) as SoundName[]).map((name) => [name, new Pool(src(name), POOL_SIZE[name] ?? 2)]),
 ) as Record<SoundName, Pool>;
@@ -111,7 +114,7 @@ export function useFeedback() {
     launched() {
       barHits.current = 0;
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);
-      play('launch', 0.8);
+      play('launch', feedbackPrefs.asmr ? 0.3 : 0.8);
     },
     hit(h: Hit) {
       const strength = Math.max(0.2, Math.min(1, h.speed / HARD_HIT));
@@ -119,6 +122,8 @@ export function useFeedback() {
         ? Haptics.ImpactFeedbackStyle.Medium
         : Haptics.ImpactFeedbackStyle.Light;
       buzz(Haptics.impactAsync, h.kind === 'pad' || h.spring ? Haptics.ImpactFeedbackStyle.Heavy : style);
+      // ASMR mode: every bounce is the next note of a calm pentatonic run (game/asmr.ts) on a soft bell.
+      if (feedbackPrefs.asmr) { play('chime', 0.35 + 0.45 * strength, asmrRate(barHits.current++)); return; }
       if (h.kind === 'pad' || h.spring) play('boing', Math.max(0.7, strength));
       else if (h.kind === 'glass') play('glass', strength);
       else if (h.kind === 'wall' || h.kind === 'block') play('wall', strength * (h.kind === 'block' ? 0.8 : 0.6));
@@ -126,15 +131,17 @@ export function useFeedback() {
     },
     landed() {
       buzz(Haptics.notificationAsync, Haptics.NotificationFeedbackType.Success);
-      play('land', 1);
+      if (feedbackPrefs.asmr) play('glow', 0.9);
+      else play('land', 1);
     },
     star(k: number) {
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);
-      play('star', 0.8, 2 ** (([0, 4, 7][k] ?? 7) / 12));
+      if (feedbackPrefs.asmr) play('chime', 0.55, 2 ** ((12 + ([0, 4, 7][k] ?? 7)) / 12));
+      else play('star', 0.8, 2 ** (([0, 4, 7][k] ?? 7) / 12));
     },
     burst() {
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Medium);
-      play('burst', 0.85);
+      if (!feedbackPrefs.asmr) play('burst', 0.85); // ASMR mode: the landing chord is enough
     },
     warped() {
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);

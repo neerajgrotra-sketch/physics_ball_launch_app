@@ -21,7 +21,8 @@ interface SoundSettings {
  * The effect and vibration switches as plain values, read by useFeedback at the moment it plays (it runs on screens outside this
  * provider too, like the intro). The provider keeps them current.
  */
-export const feedbackPrefs = { effects: true, haptics: true };
+/** Read by the sound code as each effect plays. `asmr`: ASMR mode (components/settings/Theme.tsx) swaps the effects for calm notes. */
+export const feedbackPrefs = { effects: true, haptics: true, asmr: false };
 
 const SoundSettingsContext = createContext<SoundSettings>({
   musicOn: true, toggleMusic: () => {}, effectsOn: true, toggleEffects: () => {}, hapticsOn: true, toggleHaptics: () => {},

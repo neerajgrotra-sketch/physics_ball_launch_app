@@ -51,9 +51,20 @@ export const THEMES: Theme[] = [
   },
 ];
 
+/**
+ * ASMR mode's look (Settings, "ASMR mode"; game/asmr.ts): neon light on near-black. Not in the theme picker: the mode switches to it
+ * whatever theme is picked, and the board adds glow, comet tails and bounce flashes on top.
+ */
+export const NEON: Theme = {
+  id: 'neon', name: 'Neon', dark: true, palette: {
+    paper: '#05060d', grid: '#121733', ink: '#d7ecff', pencil: '#4ff0ff', red: '#ff4fd8',
+    muted: '#7f8ab0', steel: '#e9edff', panel: '#020309', line: '#262d52',
+  },
+};
+
 export const AUTO_THEME = 'auto';
 
 /** The palette for a theme choice: 'auto' (or anything unknown) follows the phone's light or dark setting. */
 export function resolveTheme(id: string, systemDark: boolean): Theme {
-  return THEMES.find((t) => t.id === id) ?? (systemDark ? THEMES[1] : THEMES[0]);
+  return THEMES.find((t) => t.id === id) ?? (id === NEON.id ? NEON : systemDark ? THEMES[1] : THEMES[0]);
 }

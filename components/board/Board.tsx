@@ -1,5 +1,5 @@
 import { trailOpacity } from '../../game/trails';
-import { Canvas, Circle, DashPathEffect, Group, Path, Rect, Text, useCanvasRef, useFont, type SkPath, type Transforms3d } from '@shopify/react-native-skia';
+import { BlurMask, Canvas, Circle, DashPathEffect, Group, Path, Rect, Text, useCanvasRef, useFont, type SkPath, type Transforms3d } from '@shopify/react-native-skia';
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
@@ -19,6 +19,7 @@ import { BallArt } from './BallArt';
 import { GunArt } from './GunArt';
 import { spinAlong, type BallSkin } from '../../game/skins';
 import { useBallSkin } from '../settings/BallSkin';
+import { useAsmr } from '../settings/Theme';
 import { leverLine, moveArms, trashObstacles, trashSpot, type End } from '../../game/pieces';
 import { aimPreview } from '../../game/aim';
 import { FUSE_SHARE, confettiPieces, fuseGeometry } from '../../game/celebration';
@@ -65,6 +66,8 @@ export interface BoardProps {
   celebrate?: { t: SharedValue<number>; path: Vec[]; jumps: number[]; confetti: number; rings: number } | null;
   /** The latest pad kick: `t` runs 0 → 1 for the burst ring and the pad's flash, at (x, y). */
   kick?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
+  /** ASMR mode: the latest bounce, for a soft ring of light where it happened (`t` runs 0 → 1). */
+  flash?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
   /** The latest trip through a portal: `t` runs 0 → 1 for the ring where the ball comes out. */
   warp?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
   /** The level is won: the ball rests where the last trail ended. */
@@ -97,7 +100,9 @@ function Spark({ t, x, y, k, color }: { t: SharedValue<number>; x: number; y: nu
  * Pure rendering: everything it shows comes from props (and the player's ball skin, from Settings). Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, hud = true, barLabels = true, marks = [], flight = null, charge, dropZone = 'off', celebrate = null, kick, warp, done = false, onTouch, snapshot } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, hud = true, barLabels = true, marks = [], flight = null, charge, dropZone = 'off', celebrate = null, kick, flash, warp, done = false, onTouch, snapshot } = props;
+  // ASMR mode (game/asmr.ts): neon glow under the walls, glass, bars and ball, a comet tail on the flight, a ring at each bounce.
+  const [asmr] = useAsmr();
   const c = useColors();
   const [box, setBox] = useState({ w: 0, h: 0 });
   const hudFont = useFont(condensed600, 15);
@@ -264,6 +269,12 @@ export function Board(props: BoardProps) {
                 <Path path={grid.major} color={c.grid} style="stroke" strokeWidth={1.1} />
 
                 {/* ghost trails, oldest faintest */}
+                {asmr && trails.length > 0 && (
+                  // ASMR mode: the newest trail glows, so a winning path lights up.
+                  <Path path={trailPaths[trails.length - 1]} color={trails[trails.length - 1].ok ? c.red : c.pencil} style="stroke" strokeWidth={5} strokeCap="round" strokeJoin="round" opacity={0.35}>
+                    <BlurMask blur={5} style="normal" />
+                  </Path>
+                )}
                 {trails.map((t, i) => (
                   <Path
                     key={i}
@@ -278,6 +289,11 @@ export function Board(props: BoardProps) {
                 ))}
 
                 {/* floor and board edges bounce: solid ink. Fixed obstacles are dead: grey and hatched. */}
+                {asmr && (
+                  <Group opacity={0.55}>
+                    <Rect x={1.5} y={1.5} width={W - 3} height={GROUND - 1.5} color={c.pencil} style="stroke" strokeWidth={8}><BlurMask blur={7} style="normal" /></Rect>
+                  </Group>
+                )}
                 <Rect x={1.5} y={1.5} width={W - 3} height={GROUND - 1.5} color={c.ink} style="stroke" strokeWidth={3} />
                 <Path path={line(0, GROUND, W, GROUND)} color={c.ink} style="stroke" strokeWidth={4} strokeCap="round" />
                 {/* Hazards first, then blocks over them: a thin hazard laid along a block's edge shows spikes on the outside only. */}
@@ -326,6 +342,13 @@ export function Board(props: BoardProps) {
                 )}
 
                 {/* glass */}
+                {asmr && (
+                  <Group opacity={0.8}>
+                    <Path path={line(g.l, g.rim, g.l, g.base)} color={c.red} style="stroke" strokeWidth={10} strokeCap="round"><BlurMask blur={8} style="normal" /></Path>
+                    <Path path={line(g.r, g.rim, g.r, g.base)} color={c.red} style="stroke" strokeWidth={10} strokeCap="round"><BlurMask blur={8} style="normal" /></Path>
+                    <Path path={line(g.l - 8, g.base, g.r + 8, g.base)} color={c.red} style="stroke" strokeWidth={10} strokeCap="round"><BlurMask blur={8} style="normal" /></Path>
+                  </Group>
+                )}
                 <Rect x={g.l} y={g.rim} width={g.r - g.l} height={g.base - g.rim} color={c.red} opacity={0.1} />
                 <Path path={line(g.l, g.rim, g.l, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
                 <Path path={line(g.r, g.rim, g.r, g.base)} color={c.red} style="stroke" strokeWidth={3} strokeCap="round" />
@@ -343,6 +366,11 @@ export function Board(props: BoardProps) {
                   const [x1, y1, x2, y2] = pieceEnds(p);
                   return (
                     <Group key={i}>
+                      {asmr && (
+                        <Path path={line(x1, y1, x2, y2)} color={illegal[i] ? c.red : (p.restitution ?? 0) > 1 ? '#ffb020' : c.pencil} style="stroke" strokeWidth={16} strokeCap="round" opacity={0.7}>
+                          <BlurMask blur={9} style="normal" />
+                        </Path>
+                      )}
                       {(p.restitution ?? 0) > 1 && <Path path={line(x1, y1, x2, y2)} color={c.ink} style="stroke" strokeWidth={10} strokeCap="round" />}
                       <Path path={line(x1, y1, x2, y2)} color={illegal[i] ? c.red : (p.restitution ?? 0) > 1 ? '#ffb020' : c.pencil} style="stroke" strokeWidth={6} strokeCap="round" />
                     </Group>
@@ -415,15 +443,23 @@ export function Board(props: BoardProps) {
                 ))}
 
                 {/* current flight */}
+                {flight && flightPath && asmr && (
+                  <Path path={flightPath} end={flight.end} color={c.pencil} style="stroke" strokeWidth={6} strokeCap="round" strokeJoin="round" opacity={0.35}>
+                    <BlurMask blur={5} style="normal" />
+                  </Path>
+                )}
                 {flight && flightPath && (
                   <Path
                     path={flightPath}
                     end={flight.end}
-                    color={c.pencil} style="stroke" strokeWidth={2} strokeCap="round" strokeJoin="round" opacity={0.95}
+                    color={c.pencil} style="stroke" strokeWidth={asmr ? 1.6 : 2} strokeCap="round" strokeJoin="round" opacity={0.95}
                   />
                 )}
+                {flight && flightPath && asmr && <CometTail flight={flight} path={flightPath} color={c.pencil} />}
+                {flash && asmr && <BounceFlash t={flash.t} x={flash.x} y={flash.y} color={c.pencil} />}
 
                 {/* ball */}
+                {asmr && <BallGlow x={flight ? flight.x : ball[0]} y={flight ? flight.y : ball[1]} color={c.pencil} />}
                 {flight
                   ? <FlyingBall flight={flight} skin={skin} c={c} charge={charge} />
                   : <Ball x={ball[0]} y={ball[1]} turn={restTurn} skin={skin} c={c} />}
@@ -523,6 +559,62 @@ function Confetti({ burst, x, y, angle, speed, color, wide }: { burst: SharedVal
   const rx = useDerivedValue(() => px.value - w / 2);
   const ry = useDerivedValue(() => py.value - h / 2);
   return <Rect x={rx} y={ry} width={w} height={h} color={color} opacity={o} />;
+}
+
+/** ASMR mode: a soft halo of light round the ball. */
+function BallGlow({ x, y, color }: { x: number | SharedValue<number>; y: number | SharedValue<number>; color: string }) {
+  return (
+    <Circle cx={x} cy={y} r={R + 7} color={color} opacity={0.55}>
+      <BlurMask blur={8} style="normal" />
+    </Circle>
+  );
+}
+
+/** How long the comet tail behind the ball is, in board units. */
+const TAIL = 70;
+
+/**
+ * ASMR mode: a comet tail behind the flying ball, the last stretch of its path drawn in three layers that get wider and brighter
+ * towards the ball, with a glow. Playback says how far along the path's length the ball is (`end`).
+ */
+function CometTail({ flight, path, color }: { flight: Flight; path: SkPath; color: string }) {
+  const share = useMemo(() => {
+    const p = flight.path;
+    let total = 0;
+    for (let i = 1; i < p.length; i++) if (!flight.jumps.includes(i)) total += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+    return total > 0 ? TAIL / total : 0;
+  }, [flight.path, flight.jumps]);
+  const s1 = useDerivedValue(() => Math.max(0, flight.end.value - share));
+  const s2 = useDerivedValue(() => Math.max(0, flight.end.value - share * 0.55));
+  const s3 = useDerivedValue(() => Math.max(0, flight.end.value - share * 0.25));
+  return (
+    <Group>
+      <Path path={path} start={s1} end={flight.end} color={color} style="stroke" strokeWidth={4} strokeCap="round" strokeJoin="round" opacity={0.25}>
+        <BlurMask blur={3} style="normal" />
+      </Path>
+      <Path path={path} start={s2} end={flight.end} color={color} style="stroke" strokeWidth={8} strokeCap="round" strokeJoin="round" opacity={0.4}>
+        <BlurMask blur={4} style="normal" />
+      </Path>
+      <Path path={path} start={s3} end={flight.end} color="#ffffff" style="stroke" strokeWidth={5} strokeCap="round" strokeJoin="round" opacity={0.7} />
+    </Group>
+  );
+}
+
+/** ASMR mode: a ring of light opening out where the ball bounced, fading as it grows. */
+function BounceFlash({ t, x, y, color }: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number>; color: string }) {
+  const r = useDerivedValue(() => 6 + 26 * t.value);
+  const o = useDerivedValue(() => 0.9 * (1 - t.value));
+  const core = useDerivedValue(() => 0.8 * (1 - t.value) ** 2);
+  return (
+    <Group>
+      <Circle cx={x} cy={y} r={r} color={color} style="stroke" strokeWidth={2.5} opacity={o}>
+        <BlurMask blur={2} style="normal" />
+      </Circle>
+      <Circle cx={x} cy={y} r={7} color="#ffffff" opacity={core}>
+        <BlurMask blur={5} style="normal" />
+      </Circle>
+    </Group>
+  );
 }
 
 /** A pad flashes white-hot when it kicks the ball. */

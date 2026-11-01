@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, Pressable, StyleSheet, Text, View, type LayoutRectangle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MAX_TRAILS } from '../../game/trails';
+import { useAsmr } from '../../components/settings/Theme';
 import { Board, type TouchPhase, type Trail } from '../../components/board/Board';
 import { usePlayback } from '../../components/board/usePlayback';
 import { HelpCard } from '../../components/board/HelpCard';
@@ -343,6 +344,10 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   };
   // A portal: a ring flashes where the ball comes out (warp runs 0 → 1 at warpX, warpY).
   const warp = useSharedValue(1);
+  const flash = useSharedValue(1);
+  const flashX = useSharedValue(0);
+  const flashY = useSharedValue(0);
+  const [asmr] = useAsmr();
   const warpX = useSharedValue(0);
   const warpY = useSharedValue(0);
   const warpAt = (res: { path: Vec[] }, i: number) => {
@@ -374,6 +379,14 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   };
   const hitAt = (res: { path: Vec[] }, h: Hit) => {
     feedback.hit(h);
+    if (asmr) {
+      // ASMR mode: a ring of light where the ball bounced (Board's flash).
+      const p = res.path[Math.min(h.i, res.path.length - 1)];
+      flashX.value = p[0];
+      flashY.value = p[1];
+      flash.value = 0;
+      flash.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.cubic) });
+    }
     if (h.kind !== 'pad' && !h.spring) return;
     const at = res.path[Math.min(h.i, res.path.length - 1)];
     kickX.value = at[0];
@@ -960,6 +973,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
           celebrate={cele ? { t: celeT, ...cele } : null}
           warp={{ t: warp, x: warpX, y: warpY }}
           kick={{ t: kick, x: kickX, y: kickY }}
+          flash={{ t: flash, x: flashX, y: flashY }}
           done={done}
           onTouch={onTouch}
           snapshot={snapshot}

@@ -149,6 +149,16 @@ const sounds = {
     partials(0.4, [[2700, 0.3, 0.05], [5200, 0.2, 0.035]], { start: 0.11 }),
     scale(thud(0.5, 130, 40, 0.14), 0.9),
   ),
+  // ASMR mode (game/asmr.ts): a soft bell (C5) for every bounce, pitched up a pentatonic scale as a shot goes on. A gentle attack
+  // and a long, quiet ring, so a fast chain blurs into a melody rather than a clatter.
+  chime: partials(1.4, [[523.25, 1, 0.55], [1046.5, 0.22, 0.32], [1569.75, 0.07, 0.2], [2093, 0.04, 0.12]], { attack: 0.008 }),
+  // ASMR mode's landing: a slow, warm rolled chord (C, E, G, D an octave up), like a hand across chimes.
+  glow: mix(
+    partials(2.4, [[523.25, 0.8, 0.9], [1046.5, 0.15, 0.5]], { attack: 0.02 }),
+    partials(2.4, [[659.25, 0.7, 0.9], [1318.5, 0.12, 0.5]], { attack: 0.02, start: 0.08 }),
+    partials(2.4, [[783.99, 0.65, 0.9], [1567.98, 0.1, 0.5]], { attack: 0.02, start: 0.16 }),
+    partials(2.4, [[1174.66, 0.5, 0.8]], { attack: 0.02, start: 0.24 }),
+  ),
 };
 
 mkdirSync(OUT, { recursive: true });
