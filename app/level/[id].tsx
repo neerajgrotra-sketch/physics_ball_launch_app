@@ -942,7 +942,9 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
           marks={shownMarkList}
           numbers={boardNumbers(slots)}
           illegal={illegalBars(level, slots)}
-          selected={boardIndex(slots, selected)}
+          // During a shot the selected bar's handles, arms and trash badge are hidden so the flight is clear; the selection itself
+          // stays, so they come back when the ball stops.
+          selected={flying ? null : boardIndex(slots, selected)}
           lever={lever}
           ghosts={ghosts}
           trails={shownTrails}

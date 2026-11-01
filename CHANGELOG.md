@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.49.1
+
+- The selected bar's turn handle, move arms and trash badge hide while a shot flies, so the flight is clear. The bar stays
+  selected, and its handles come back as soon as the ball stops.
+
 ## 0.49.0
 
 - Fewer ghost trails: the board keeps your last 3 shots by default (it was 4), and Settings has "Trails kept" (1, 2, 3, 5
