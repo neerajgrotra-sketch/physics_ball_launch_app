@@ -249,6 +249,27 @@ describe('move handles', () => {
     }
   });
 
+  it('a grip never lands on the rotate icon, even by an edge', () => {
+    for (let x = 20; x <= 380; x += 10) {
+      for (let y = 20; y <= 520; y += 25) {
+        for (const deg of [0, 15, 30, 60, 75, 90, 105, 150, 165, 179]) {
+          const b = bar(x, y, deg);
+          const lever = leverEnd(b);
+          const [, , tx, ty] = leverLine(b, lever);
+          for (const [gx, gy] of moveArms(b, lever)) expect(Math.hypot(gx - tx, gy - ty)).toBeGreaterThan(30);
+        }
+      }
+    }
+  });
+
+  it('a flat bar by the right edge puts its x grip past the lever, not on it', () => {
+    const b = bar(329, 300, 0);
+    expect(leverEnd(b)).toBe(1);
+    const [, , tx] = leverLine(b, 1);
+    const [[gx]] = moveArms(b, 1);
+    expect(gx).toBeLessThan(tx - 30);
+  });
+
   it('each grip sits well past the end of the bar, even when the bar lies along that axis', () => {
     // Flat bar: the x arm runs along the bar, so its grip must clear the bar's end (45 from the centre) by ARM_CLEAR.
     const [gx] = moveArms(bar(200, 300, 0), 2);

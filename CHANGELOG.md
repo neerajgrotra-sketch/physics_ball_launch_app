@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.49.2
+
+- A flat or upright bar near an edge no longer stacks its move grip on the rotate icon. With no room on the far side,
+  the grip is shortened there if it still clears the bar, and otherwise goes out past the lever's tip (`moveArms`). A
+  test sweeps every board position and angle.
+
 ## 0.49.1
 
 - The selected bar's turn handle, move arms and trash badge hide while a shot flies, so the flight is clear. The bar stays

@@ -87,7 +87,7 @@ reference/    prototype.html, the behaviour and look to match
   it to move. The selected bar has a dotted lever out of one end with the rotate icon at its tip
   (`leverLine`, 60 long): drag anywhere on it to turn the bar about its centre, finger clear of the bar.
   Two dotted arms out of its centre (`moveArms`, one along x, one along y, each with a two-way arrow grip, reaching at least `ARM_CLEAR`
-  past the bar's end along it, so a flat or upright bar never hides its grip under the finger) slide the bar along
+  past the bar's end along it, so a flat or upright bar never hides its grip under the finger; each arm points away from the lever, and near an edge is shortened or goes past the lever's tip, never onto its icon) slide the bar along
   that axis from a distance; dragging the bar itself still moves it freely.
   Tapping the other end (small ring) moves the lever there; on selection it goes on whichever end keeps
   its tip on the board (`leverEnd`). While a bar is selected the aim rows become its rotation

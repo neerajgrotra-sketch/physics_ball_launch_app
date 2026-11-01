@@ -56,27 +56,44 @@ export type Axis = 'x' | 'y';
 /**
  * Where the two grips sit: [x grip, y grip]. Each arm goes to the side of the centre that keeps its tip on the
  * board, and away from the rotate lever when the bar lies along that axis (so the two never cover each other).
+ * Near an edge there may be no room on the far side: the arm is then shortened there if it still clears the bar's end, and
+ * otherwise goes out past the lever's tip on the lever's side, never onto the lever's rotate icon (a flat bar by the right edge
+ * put both icons in the same spot).
  */
 export function moveArms(p: PlacedPiece, lever: End): [[number, number], [number, number]] {
   const a = (p.deg * Math.PI) / 180, s = lever === 2 ? 1 : -1;
   const fits = (x: number, y: number) => x > 12 && x < WORLD.width - 12 && y > 12 && y < WORLD.ground - 12;
-  // The lever leaves the bar towards (s·cos a, s·sin a); take the arm the other way where they'd line up.
-  const pick = (towards: number, inside: (d: 1 | -1) => boolean, preferred: 1 | -1): 1 | -1 => {
-    const want: 1 | -1 = Math.abs(towards) > 0.5 ? (towards > 0 ? -1 : 1) : preferred;
-    return inside(want) ? want : (-want as 1 | -1);
+  // One arm: `spread` is how much of the bar lies along the axis (cos or sin of its angle); the lever leaves the bar towards
+  // s·spread along it. Returns the signed distance of the grip from the centre.
+  const arm = (spread: number, inside: (off: number) => boolean, preferred: 1 | -1): number => {
+    const halfAlong = (Math.abs(spread) * p.len) / 2;
+    // Reach ARM_CLEAR past the bar's end along the axis (more when the bar lies along it), at least the old fixed length.
+    const want = Math.max(MOVE_ARM, halfAlong + ARM_CLEAR);
+    const towards = s * spread;
+    if (Math.abs(towards) > 0.5) {
+      const away: 1 | -1 = towards > 0 ? -1 : 1;
+      if (inside(away * want)) return away * want;
+      // Shortened on the far side, as long as the grip still clears the bar's end.
+      for (let len = want - 4; len >= halfAlong + ARM_SHORT; len -= 4) if (inside(away * len)) return away * len;
+      // Past the lever's tip on its own side.
+      const beyond = Math.max(want, Math.abs(spread) * (p.len / 2 + LEVER) + ARM_PAST_LEVER);
+      if (inside(-away * beyond)) return -away * beyond;
+      return inside(-away * want) ? -away * want : away * MOVE_ARM;
+    }
+    for (const len of [want, MOVE_ARM]) {
+      if (inside(preferred * len)) return preferred * len;
+      if (inside(-preferred * len)) return -preferred * len;
+    }
+    return preferred * MOVE_ARM;
   };
-  // Each arm reaches ARM_CLEAR past the bar's end along it (more when the bar lies along that axis), but no further than fits on
-  // the board on one side or the other; at worst the old fixed length.
-  const reach = (spread: number, fitsAt: (d: 1 | -1, len: number) => boolean) => {
-    const want = Math.max(MOVE_ARM, (Math.abs(spread) * p.len) / 2 + ARM_CLEAR);
-    return fitsAt(1, want) || fitsAt(-1, want) ? want : MOVE_ARM;
-  };
-  const lx = reach(Math.cos(a), (d, len) => fits(p.x + d * len, p.y));
-  const ly = reach(Math.sin(a), (d, len) => fits(p.x, p.y + d * len));
-  const dx = pick(s * Math.cos(a), (d) => fits(p.x + d * lx, p.y), 1);
-  const dy = pick(s * Math.sin(a), (d) => fits(p.x, p.y + d * ly), -1);
-  return [[p.x + dx * lx, p.y], [p.x, p.y + dy * ly]];
+  const ox = arm(Math.cos(a), (off) => fits(p.x + off, p.y), 1);
+  const oy = arm(Math.sin(a), (off) => fits(p.x, p.y + off), -1);
+  return [[p.x + ox, p.y], [p.x, p.y + oy]];
 }
+/** A shortened arm still reaches this far past the bar's end. */
+const ARM_SHORT = 30;
+/** An arm on the lever's side goes this far past the lever's tip, so the two icons stand apart. */
+const ARM_PAST_LEVER = 40;
 
 /**
  * The remove badge: a small red trash can beside the selected bar, tap to take the bar off (Undo brings it back). It used to be a
