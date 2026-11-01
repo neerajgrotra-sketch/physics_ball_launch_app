@@ -1060,7 +1060,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
         <View style={styles.actions}>
           {/* During a shot, Solve, Clear and Undo (like the bar and cannon chips) only skip to its end, like Skip ›. */}
           <Ghost label="Solve" badge={practice ? undefined : `💡${wallet.hints}`} onPress={openHelp} big shake={solvedTaps} />
-          <Ghost label="Clear" onPress={clearTrails} big />
+          <Ghost label="Clear" icon="eraser" onPress={clearTrails} big disabled={!flying && trails.length === 0 && marks.length === 0} />
           <UndoButton enabled={flying || (canUndo && !done)} onPress={undoMove} />
           {/* Launch; during a flight, Skip (jump to the end of the shot); after a win, Replay. */}
           <Pressable
@@ -1129,7 +1129,7 @@ function UndoButton({ enabled, onPress }: { enabled: boolean; onPress: () => voi
       accessibilityRole="button"
       accessibilityLabel="Undo the last change"
       accessibilityState={{ disabled: !enabled }}
-      style={[styles.undo, { borderColor: c.line, opacity: enabled ? 1 : 0.35 }]}
+      style={[styles.undo, { borderColor: enabled ? c.pencil : c.line, opacity: enabled ? 1 : 0.35 }]}
     >
       <Svg width={22} height={22} viewBox="0 0 24 24">
         <Path d="M9 5.5 L4 10.5 L9 15.5" stroke={c.ink} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" fill="none" />
@@ -1139,11 +1139,23 @@ function UndoButton({ enabled, onPress }: { enabled: boolean; onPress: () => voi
   );
 }
 
+/** An eraser wiping a line: Clear (it wipes the ghost trails). */
+function EraserIcon({ color }: { color: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24">
+      <Path d="M14.5 3.8 L20.2 9.5 L11.2 18.5 L5.5 12.8 Z" stroke={color} strokeWidth={2} strokeLinejoin="round" fill={color} fillOpacity={0.18} />
+      <Path d="M5.5 12.8 L11.2 18.5 L9.7 20 H6.5 L3.5 17 Q3 16.5 3.5 16 Z" fill={color} />
+      <Path d="M13 20 H21" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 /**
- * A quiet outlined button. Each change of `shake` (after the first) shakes it side to side and lights it red for a moment. `badge` is a
+ * An outlined button: ink text on a pencil border, so it reads as live (the old grey looked switched off); dimmed only when
+ * `disabled`. Each change of `shake` (after the first) shakes it side to side and lights it red for a moment. `badge` is a
  * small count after the label (Solve shows the player's hints, 💡12).
  */
-function Ghost({ label, badge, onPress, big, shake = 0, disabled }: { label: string; badge?: string; onPress: () => void; big?: boolean; shake?: number; disabled?: boolean }) {
+function Ghost({ label, badge, icon, onPress, big, shake = 0, disabled }: { label: string; badge?: string; icon?: 'eraser'; onPress: () => void; big?: boolean; shake?: number; disabled?: boolean }) {
   const c = useColors();
   const x = useSharedValue(0);
   const [red, setRed] = useState(false);
@@ -1163,9 +1175,11 @@ function Ghost({ label, badge, onPress, big, shake = 0, disabled }: { label: str
         disabled={disabled}
         accessibilityRole="button"
         accessibilityLabel={badge ? `${label}, ${badge.replace('💡', '')} hints left` : label}
-        style={[styles.ghost, big && styles.ghostBig, badge != null && styles.ghostBadged, { borderColor: red ? c.red : c.line }]}
+        accessibilityState={{ disabled: !!disabled }}
+        style={[styles.ghost, big && styles.ghostBig, (badge != null || icon) && styles.ghostBadged, { borderColor: red ? c.red : c.pencil, opacity: disabled ? 0.35 : 1 }]}
       >
-        <Text style={[styles.ghostText, big && styles.ghostTextBig, { color: red ? c.red : c.muted }]}>{label}</Text>
+        {icon === 'eraser' && <EraserIcon color={red ? c.red : c.pencil} />}
+        <Text style={[styles.ghostText, big && styles.ghostTextBig, { color: red ? c.red : c.ink }]}>{label}</Text>
         {badge != null && <Text style={[styles.badge, { color: red ? c.red : c.pencil }]}>{badge}</Text>}
       </Pressable>
     </Animated.View>
@@ -1208,7 +1222,7 @@ const styles = StyleSheet.create({
   ghostBig: { height: 44, paddingHorizontal: 20, borderRadius: 22 },
   ghostBadged: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14 },
   badge: { fontSize: 14, fontFamily: FONTS.condensedBold },
-  ghostText: { fontSize: 14, fontFamily: FONTS.bodyMedium },
+  ghostText: { fontSize: 14, fontFamily: FONTS.bodySemi },
   ghostTextBig: { fontSize: 15 },
   launch: { flex: 1, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   launchText: { color: '#fff', fontSize: 20, letterSpacing: 0.3, fontFamily: FONTS.condensedBold },

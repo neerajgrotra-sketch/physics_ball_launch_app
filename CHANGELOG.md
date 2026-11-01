@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.48.11
+
+- Solve and Clear look live: ink text on a blue border, where the old grey made players think they were switched off.
+  Clear has an eraser icon, and it dims only when there's really nothing to clear (no trails or bounce numbers). An
+  enabled Undo gets the same blue border.
+
 ## 0.48.10
 
 - Replay leaves the winning shot on the board as a trail. After Clear, the board used to come back with only the bounce
