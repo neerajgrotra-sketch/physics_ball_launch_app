@@ -1,5 +1,5 @@
 import { trailOpacity } from '../../game/trails';
-import { BlurMask, Canvas, Circle, DashPathEffect, Group, Path, Rect, Text, useCanvasRef, useFont, type SkPath, type Transforms3d } from '@shopify/react-native-skia';
+import { BlurMask, Canvas, Skia, Circle, DashPathEffect, Group, Path, Rect, Text, useCanvasRef, useFont, type SkPath, type Transforms3d } from '@shopify/react-native-skia';
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
@@ -14,7 +14,7 @@ import { LIGHT } from '../../theme/palettes';
 import {
   blockPath, padChevrons, crossPath, hazardPaths, deadPaths, gridPaths, handleArcPath, moveIconPath, linePath, polyPath, trashIconPath,
 } from './paths';
-import type { Flight } from './usePlayback';
+import { POINTS_PER_SECOND, type Flight } from './usePlayback';
 import { BallArt } from './BallArt';
 import { GunArt } from './GunArt';
 import { spinAlong, type BallSkin } from '../../game/skins';
@@ -22,6 +22,7 @@ import { useBallSkin } from '../settings/BallSkin';
 import { useAsmr } from '../settings/Theme';
 import { leverLine, moveArms, trashObstacles, trashSpot, type End } from '../../game/pieces';
 import { aimPreview } from '../../game/aim';
+import { SHARD_GRAVITY, SHATTER_MS, SLOW, SHATTER_TIME, shatterPieces, type Ember, type Puff, type Shard } from '../../game/shatter';
 import { FUSE_SHARE, confettiPieces, fuseGeometry } from '../../game/celebration';
 
 const { width: W, height: H, ground: GROUND } = WORLD;
@@ -82,18 +83,6 @@ export type TouchPhase = 'down' | 'move' | 'up';
 
 const condensed600 = require('@expo-google-fonts/barlow-condensed/600SemiBold/BarlowCondensed_600SemiBold.ttf');
 const condensed500 = require('@expo-google-fonts/barlow-condensed/500Medium/BarlowCondensed_500Medium.ttf');
-
-const SPARKS = 10;
-
-/** One spark of the explosion: flies out from (x, y) along its angle while `t` runs 0 → 1, shrinking and fading. */
-function Spark({ t, x, y, k, color }: { t: SharedValue<number>; x: number; y: number; k: number; color: string }) {
-  const a = (k / SPARKS) * Math.PI * 2 + (k % 2) * 0.2, reach = 26 + (k % 3) * 9;
-  const cx = useDerivedValue(() => x + Math.cos(a) * reach * t.value);
-  const cy = useDerivedValue(() => y + Math.sin(a) * reach * t.value);
-  const r = useDerivedValue(() => (k % 2 ? 2.6 : 1.8) * (1 - t.value) + 0.2);
-  const o = useDerivedValue(() => 1 - t.value);
-  return <Circle cx={cx} cy={cy} r={r} color={color} opacity={o} />;
-}
 
 /**
  * The game board, drawn in Skia in world units (WORLD, 400 × 560) and scaled uniformly to fit its container.
@@ -201,17 +190,21 @@ export function Board(props: BoardProps) {
   // Only a dead (grey) hit gets the ×.
   const deadEnd = last && last.end === 'dead' && !flight ? last.path[last.path.length - 1] : null;
 
-  // The ball bursts where it was destroyed: a ring and sparks, about half a second, once per dead shot.
+  // The ball shatters where it was destroyed, in slow motion (game/shatter.ts), once per dead shot. Its last velocity (the path is
+  // recorded at POINTS_PER_SECOND) sends the pieces on the way it was going.
   const burst = useSharedValue(1);
   const burstKey = deadEnd ? trails.length : 0;
   useEffect(() => {
     if (!burstKey) return;
     burst.value = 0;
-    burst.value = withTiming(1, { duration: 550, easing: Easing.out(Easing.quad) });
+    burst.value = withTiming(1, { duration: SHATTER_MS, easing: Easing.linear });
   }, [burstKey, burst]);
-  const ringR = useDerivedValue(() => 6 + 30 * burst.value);
-  const ringO = useDerivedValue(() => 0.9 * (1 - burst.value));
-  const [bx, by] = deadEnd ?? [0, 0];
+  const deadVel = useMemo<[number, number]>(() => {
+    const p = last?.path;
+    if (!deadEnd || !p || p.length < 2) return [0, 0];
+    const a = p[p.length - 2], b = p[p.length - 1];
+    return [(b[0] - a[0]) * POINTS_PER_SECOND, (b[1] - a[1]) * POINTS_PER_SECOND];
+  }, [deadEnd, last]);
 
   // Aim preview: the first 0.3 s of free flight only. Never preview bounces.
   const aimDots = !flight && !done ? aimPreview(angle, power) : [];
@@ -334,12 +327,7 @@ export function Board(props: BoardProps) {
                 ))}
                 {kick && <KickRing t={kick.t} x={kick.x} y={kick.y} />}
                 {warp && <KickRing t={warp.t} x={warp.x} y={warp.y} />}
-                {deadEnd && (
-                  <Group>
-                    <Circle cx={bx} cy={by} r={ringR} color={c.red} style="stroke" strokeWidth={2.5} opacity={ringO} />
-                    {Array.from({ length: SPARKS }, (_, k) => <Spark key={k} t={burst} x={bx} y={by} k={k} color={c.red} />)}
-                  </Group>
-                )}
+                {deadEnd && <Shatter key={burstKey} t={burst} x={deadEnd[0]} y={deadEnd[1]} vx={deadVel[0]} vy={deadVel[1]} c={c} asmr={asmr} />}
 
                 {/* glass */}
                 {asmr && (
@@ -559,6 +547,98 @@ function Confetti({ burst, x, y, angle, speed, color, wide }: { burst: SharedVal
   const rx = useDerivedValue(() => px.value - w / 2);
   const ry = useDerivedValue(() => py.value - h / 2);
   return <Rect x={rx} y={ry} width={w} height={h} color={color} opacity={o} />;
+}
+
+/** Where shards come to rest: on the floor, less a little so they sit on its line. */
+const SHARD_FLOOR = GROUND - 3;
+
+/**
+ * The ball shattering on a hazard, in slow motion (game/shatter.ts): a white flash, two shockwave rings, shards that burst out
+ * with the ball's momentum, tumble, land and skid on the floor, embers drifting up, and a puff of smoke. `t` runs 0 → 1 over
+ * SHATTER_MS; shatterClock turns that into slowed physics time. In ASMR mode the pieces glow in the neon colours.
+ */
+function Shatter({ t, x, y, vx, vy, c, asmr }: { t: SharedValue<number>; x: number; y: number; vx: number; vy: number; c: Palette; asmr: boolean }) {
+  const { shards, embers, puffs } = useMemo(() => shatterPieces(x, y, vx, vy, SHARD_FLOOR), [x, y, vx, vy]);
+  const flashR = useDerivedValue(() => 5 + 24 * Math.min(1, t.value / 0.12));
+  const flashO = useDerivedValue(() => (t.value < 0.12 ? 0.95 * (1 - t.value / 0.12) : 0));
+  const r1 = useDerivedValue(() => 8 + 74 * Math.min(1, t.value / 0.45));
+  const o1 = useDerivedValue(() => 0.85 * Math.max(0, 1 - t.value / 0.45));
+  const w1 = useDerivedValue(() => 0.6 + 3 * Math.max(0, 1 - t.value / 0.45));
+  const r2 = useDerivedValue(() => 6 + 46 * Math.min(1, Math.max(0, (t.value - 0.06) / 0.5)));
+  const o2 = useDerivedValue(() => (t.value < 0.06 ? 0 : 0.6 * Math.max(0, 1 - (t.value - 0.06) / 0.5)));
+  const hot = asmr ? c.red : '#ff8a3d';
+  const tones = asmr ? [c.pencil, c.red, '#ffffff'] : [c.steel, hot, c.ink];
+  return (
+    <Group>
+      {puffs.map((p, k) => <SmokePuff key={`p${k}`} t={t} x={x} y={y} p={p} color={c.muted} />)}
+      <Circle cx={x} cy={y} r={r1} color={hot} style="stroke" strokeWidth={w1} opacity={o1}>
+        {asmr && <BlurMask blur={2} style="normal" />}
+      </Circle>
+      <Circle cx={x} cy={y} r={r2} color={asmr ? c.pencil : c.red} style="stroke" strokeWidth={1.5} opacity={o2} />
+      {shards.map((s, k) => <ShardPiece key={`s${k}`} t={t} x={x} y={y} s={s} fill={tones[s.tone]} edge={c.ink} glow={asmr || s.tone === 1} />)}
+      {embers.map((e, k) => <EmberDot key={`e${k}`} t={t} x={x} y={y} e={e} color={asmr ? (k % 2 ? c.red : c.pencil) : k % 3 ? '#ffb347' : '#ffe2a8'} />)}
+      <Circle cx={x} cy={y} r={flashR} color="#ffffff" opacity={flashO}>
+        <BlurMask blur={6} style="normal" />
+      </Circle>
+    </Group>
+  );
+}
+
+function ShardPiece({ t, x, y, s, fill, edge, glow }: { t: SharedValue<number>; x: number; y: number; s: Shard; fill: string; edge: string; glow: boolean }) {
+  const path = useMemo(() => {
+    const p = Skia.PathBuilder.Make();
+    p.moveTo(s.pts[0][0], s.pts[0][1]);
+    p.lineTo(s.pts[1][0], s.pts[1][1]);
+    p.lineTo(s.pts[2][0], s.pts[2][1]);
+    p.close();
+    return p.detach();
+  }, [s]);
+  const { vx, vy, spin, land } = s;
+  const at = useDerivedValue<Transforms3d>(() => {
+    // shatterClock and shardAt (game/shatter.ts), inlined so they run on the UI thread.
+    const u = Math.min(1, Math.max(0, t.value));
+    const time = SHATTER_TIME * (1 - (1 - u) ** SLOW);
+    const air = Math.min(time, land);
+    const slide = Math.max(0, time - land);
+    const px = x + vx * air + vx * 0.2 * Math.min(slide, 0.25);
+    const py = Math.min(SHARD_FLOOR, y + vy * air + 0.5 * SHARD_GRAVITY * air * air);
+    return [{ translateX: px }, { translateY: py }, { rotate: spin * air }];
+  });
+  const o = useDerivedValue(() => (t.value < 0.8 ? 1 : Math.max(0, (1 - t.value) / 0.2)));
+  return (
+    <Group transform={at} opacity={o}>
+      {glow && <Path path={path} color={fill} opacity={0.8}><BlurMask blur={3} style="normal" /></Path>}
+      <Path path={path} color={fill} />
+      <Path path={path} color={edge} style="stroke" strokeWidth={0.7} opacity={0.6} />
+    </Group>
+  );
+}
+
+function EmberDot({ t, x, y, e, color }: { t: SharedValue<number>; x: number; y: number; e: Ember; color: string }) {
+  const cx = useDerivedValue(() => {
+    const time = SHATTER_TIME * (1 - (1 - Math.min(1, t.value)) ** SLOW);
+    return x + e.vx * time + Math.sin(e.phase + time * 6) * e.wobble;
+  });
+  const cy = useDerivedValue(() => y + e.vy * SHATTER_TIME * (1 - (1 - Math.min(1, t.value)) ** SLOW));
+  const o = useDerivedValue(() => (t.value < 0.05 ? t.value / 0.05 : 0.9 * Math.max(0, 1 - t.value)));
+  return (
+    <Circle cx={cx} cy={cy} r={e.r} color={color} opacity={o}>
+      <BlurMask blur={1.5} style="normal" />
+    </Circle>
+  );
+}
+
+function SmokePuff({ t, x, y, p, color }: { t: SharedValue<number>; x: number; y: number; p: Puff; color: string }) {
+  const k = useDerivedValue(() => Math.min(1, t.value / 0.9));
+  const cx = useDerivedValue(() => x + p.dx * (1 + k.value));
+  const cy = useDerivedValue(() => y + p.dy - 28 * k.value);
+  const r = useDerivedValue(() => p.r * (0.5 + 1.3 * k.value));
+  const o = useDerivedValue(() => 0.38 * (1 - k.value) * Math.min(1, t.value / 0.08));
+  return (
+    <Circle cx={cx} cy={cy} r={r} color={color} opacity={o}>
+      <BlurMask blur={6} style="normal" />
+    </Circle>
+  );
 }
 
 /** ASMR mode: a soft halo of light round the ball. */

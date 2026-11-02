@@ -14,13 +14,13 @@ const SOUNDS = {
   wall: require('../../assets/sounds/wall.wav'),
   glass: require('../../assets/sounds/glass.wav'),
   land: require('../../assets/sounds/land.wav'),
-  dead: require('../../assets/sounds/dead.wav'),
   boing: require('../../assets/sounds/boing.wav'),
   warp: require('../../assets/sounds/warp.wav'),
   star: require('../../assets/sounds/star.wav'),
   burst: require('../../assets/sounds/burst.wav'),
   chime: require('../../assets/sounds/chime.wav'),
   glow: require('../../assets/sounds/glow.wav'),
+  shatter: require('../../assets/sounds/shatter.wav'),
 };
 type Sound = keyof typeof SOUNDS;
 
@@ -87,7 +87,8 @@ export function useFeedback() {
       play('warp', 0.8);
     },
     died() {
-      play('dead', 0.7);
+      // The ball shatters (slow motion on the board): crack, boom and shards tinkling down.
+      play('shatter', feedbackPrefs.asmr ? 0.7 : 0.9);
     },
   };
 }

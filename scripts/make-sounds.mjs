@@ -80,6 +80,29 @@ function zap(seconds, f0, f1, tau, fall) {
   return out;
 }
 
+/**
+ * Shards landing: `count` short glassy or metallic pings scattered over `spread` seconds, thick at first and thinning out, each
+ * quieter than the last. Seeded, so the file is the same every run.
+ */
+function tinkles(seconds, count, spread, seed) {
+  const n = Math.round(seconds * RATE), out = new Float64Array(n);
+  let s = seed;
+  const rand = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  for (let k = 0; k < count; k++) {
+    const at = 0.04 + spread * (k / count) ** 1.7 + rand() * 0.03;
+    const f = k % 4 === 3 ? 1100 + rand() * 900 : 2600 + rand() * 4200; // mostly glassy, every fourth a lower metal clink
+    const amp = 0.55 * (1 - k / count) ** 0.8 + 0.08;
+    const tau = 0.025 + rand() * 0.05;
+    const start = Math.round(at * RATE);
+    for (let i = start; i < n; i++) {
+      const t = (i - start) / RATE;
+      if (t > tau * 8) break;
+      out[i] += amp * Math.min(1, t / 0.0008) * Math.exp(-t / tau) * (Math.sin(2 * Math.PI * f * t) + 0.4 * Math.sin(2 * Math.PI * f * 2.76 * t));
+    }
+  }
+  return out;
+}
+
 function scale(track, k) {
   return track.map((v) => v * k);
 }
@@ -141,14 +164,6 @@ const sounds = {
     partials(0.35, [[3100, 0.25, 0.04], [4700, 0.18, 0.035]], { start: 0.1 }),
     scale(thud(0.2, 190, 80, 0.06), 0.8),
   ),
-  // The ball destroyed on a hazard: a sharp crack, a falling zap, glass-like shards, and a low boom under it all.
-  dead: mix(
-    scale(crack(0.14, 0.03), 0.7),
-    scale(zap(0.45, 1500, 90, 0.16, 0.09), 0.55),
-    partials(0.5, [[3300, 0.35, 0.05], [4800, 0.25, 0.04], [6100, 0.18, 0.03]], { start: 0.04 }),
-    partials(0.4, [[2700, 0.3, 0.05], [5200, 0.2, 0.035]], { start: 0.11 }),
-    scale(thud(0.5, 130, 40, 0.14), 0.9),
-  ),
   // ASMR mode (game/asmr.ts): a soft bell (C5) for every bounce, pitched up a pentatonic scale as a shot goes on. A gentle attack
   // and a long, quiet ring, so a fast chain blurs into a melody rather than a clatter.
   chime: partials(1.4, [[523.25, 1, 0.55], [1046.5, 0.22, 0.32], [1569.75, 0.07, 0.2], [2093, 0.04, 0.12]], { attack: 0.008 }),
@@ -158,6 +173,15 @@ const sounds = {
     partials(2.4, [[659.25, 0.7, 0.9], [1318.5, 0.12, 0.5]], { attack: 0.02, start: 0.08 }),
     partials(2.4, [[783.99, 0.65, 0.9], [1567.98, 0.1, 0.5]], { attack: 0.02, start: 0.16 }),
     partials(2.4, [[1174.66, 0.5, 0.8]], { attack: 0.02, start: 0.24 }),
+  ),
+  // The ball shattering on a hazard (slow motion on the board): a sharp crack and a deep boom, a rush of air, then shards
+  // tinkling down and skidding to rest, thinning out over almost two seconds, with a soft falling shimmer underneath.
+  shatter: mix(
+    scale(crack(0.16, 0.035), 0.75),
+    scale(thud(1.2, 120, 34, 0.32), 1.0),
+    scale(whoosh(0.7, 0.04, 2600), 0.5),
+    scale(zap(1.6, 2400, 260, 0.6, 0.5), 0.12),
+    tinkles(2.2, 30, 1.7, 4242),
   ),
 };
 

@@ -13,13 +13,13 @@ const SOUNDS = {
   bounce: require('../../assets/sounds/bounce.wav'),
   glass: require('../../assets/sounds/glass.wav'),
   land: require('../../assets/sounds/land.wav'),
-  dead: require('../../assets/sounds/dead.wav'),
   boing: require('../../assets/sounds/boing.wav'),
   warp: require('../../assets/sounds/warp.wav'),
   star: require('../../assets/sounds/star.wav'),
   burst: require('../../assets/sounds/burst.wav'),
   chime: require('../../assets/sounds/chime.wav'),
   glow: require('../../assets/sounds/glow.wav'),
+  shatter: require('../../assets/sounds/shatter.wav'),
 };
 
 /** Bounce speed (px/s) that counts as a full-strength hit. Launches top out at 1120. */
@@ -148,8 +148,11 @@ export function useFeedback() {
       play('warp', 0.8);
     },
     died() {
-      buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Soft);
-      play('dead', 0.7);
+      // The ball shatters (slow motion on the board): a heavy jolt, then light taps as the shards land, with the crack, boom
+      // and tinkling of shatter.wav.
+      buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Heavy);
+      for (const ms of [140, 300, 520, 820]) setTimeout(() => buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light), ms);
+      play('shatter', feedbackPrefs.asmr ? 0.7 : 0.9);
     },
   };
 }

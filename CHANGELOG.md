@@ -4,6 +4,15 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.51.0
+
+- The ball shatters in slow motion when it dies on a hazard or a dead surface. A white flash and two shockwave rings, then
+  22 shards (a few big chunks among the splinters) burst out carrying the ball's momentum. They tumble, land and skid on the
+  floor, with embers drifting up and a puff of smoke, over 2.8 s. The pieces are seeded by where the ball died, so the same
+  death always breaks the same way (`game/shatter.ts`). In ASMR mode the shards glow in the neon colours. New sound
+  `shatter.wav`: a crack and deep boom, a rush of air, then shards tinkling down and thinning out. On phones, a heavy jolt
+  and then light taps as the pieces land. It replaces the old ring and sparks and the `dead` sound.
+
 ## 0.50.0
 
 - ASMR mode (Settings, off by default). The whole game switches to a neon look: near-black board, glowing walls, bars and
