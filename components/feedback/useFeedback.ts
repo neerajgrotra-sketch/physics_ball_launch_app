@@ -18,8 +18,8 @@ const SOUNDS = {
   star: require('../../assets/sounds/star.wav'),
   burst: require('../../assets/sounds/burst.wav'),
   chime: require('../../assets/sounds/chime.wav'),
-  glow: require('../../assets/sounds/glow.wav'),
   shatter: require('../../assets/sounds/shatter.wav'),
+  bloom: require('../../assets/sounds/bloom.wav'),
 };
 
 /** Bounce speed (px/s) that counts as a full-strength hit. Launches top out at 1120. */
@@ -131,7 +131,7 @@ export function useFeedback() {
     },
     landed() {
       buzz(Haptics.notificationAsync, Haptics.NotificationFeedbackType.Success);
-      if (feedbackPrefs.asmr) play('glow', 0.9);
+      if (feedbackPrefs.asmr) play('bloom', 0.95); // the light bloom's harp run and chord
       else play('land', 1);
     },
     star(k: number) {

@@ -4,6 +4,21 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.52.0
+
+- ASMR mode's win is a 4.6 s "light bloom" (`game/bloom.ts`, `Board`'s `Bloom`):
+  - a pulse of white light races the winning path from the cannon to the glass;
+  - the glass fills with rising liquid light, its surface rippling;
+  - two spirograph mandalas draw themselves round the glass, turning opposite ways;
+  - rainbow rings ripple out across the board, and a column of light rises over the glass;
+  - fireflies spiral in and are drawn into the glass, which breathes out one last glow;
+  - then the win card.
+- A better result gets more rings and fireflies.
+- New sound `bloom.wav`: a harp run up the bounce chimes' scale as the light runs the path, then a warm chorused chord
+  swelling in under high sparkles, over a low C. It replaces `glow.wav`.
+- The fireflies' and ripples' glow is drawn with plain translucent circles, not blur, to keep it smooth on phones.
+- Normal mode keeps the fuse and confetti.
+
 ## 0.51.0
 
 - The ball shatters in slow motion when it dies on a hazard or a dead surface. A white flash and two shockwave rings, then

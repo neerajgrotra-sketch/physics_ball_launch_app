@@ -36,6 +36,7 @@ import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
   OPEN_DRAG, TRASH_GRAB, trashObstacles, atSolution, hintSlots, leverEnd, shotPieces, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
+import { BLOOM_MS, bloomFor } from '../../game/bloom';
 import { CARD_PAUSE_MS, CELEBRATION_MS, burstFor, cardPlace } from '../../game/celebration';
 import { badgeBox, badgeCovers, counterSpot } from '../../game/counter';
 import { emptyHistory, record, undo as undoHistory, type History } from '../../game/history';
@@ -305,7 +306,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   useEffect(() => { if (capsHelp && draft?.helped && !levelHelp) markHelp(level.id, 1); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // The win celebration (game/celebration): a spark runs the winning shot and the glass bursts; the win card waits for the burst.
   const celeT = useSharedValue(1);
-  const [cele, setCele] = useState<{ path: Vec[]; jumps: number[]; confetti: number; rings: number } | null>(null);
+  const [cele, setCele] = useState<{ path: Vec[]; jumps: number[]; confetti: number; rings: number; bloom?: { rings: number; flies: number } } | null>(null);
   const [cardReady, setCardReady] = useState(true);
   const celeTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const stopCelebration = () => {
@@ -318,14 +319,16 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   const celebrate = (res: { path: Vec[]; jumps: number[]; bounces: number }, stars: number, assisted: boolean) => {
     stopCelebration();
     const burst = burstFor(stars, assisted);
-    setCele({ path: res.path, jumps: res.jumps, ...burst });
+    // ASMR mode plays the longer light bloom (game/bloom.ts) instead of the fuse and confetti.
+    const dur = asmr ? BLOOM_MS : CELEBRATION_MS;
+    setCele({ path: res.path, jumps: res.jumps, ...burst, bloom: asmr ? bloomFor(stars, assisted) : undefined });
     setCardReady(false);
     celeT.value = 0;
-    celeT.value = withTiming(1, { duration: CELEBRATION_MS, easing: Easing.linear });
+    celeT.value = withTiming(1, { duration: dur, easing: Easing.linear });
     celeTimers.current = [
-      setTimeout(() => feedback.burst(), CELEBRATION_MS * 0.6),
+      setTimeout(() => feedback.burst(), dur * 0.6),
       // The card only comes once the whole celebration has played out (players found it cut the burst short).
-      setTimeout(() => { setCele(null); setCardReady(true); }, CELEBRATION_MS + CARD_PAUSE_MS),
+      setTimeout(() => { setCele(null); setCardReady(true); }, dur + CARD_PAUSE_MS),
     ];
   };
   useEffect(() => () => celeTimers.current.forEach(clearTimeout), []);
@@ -434,7 +437,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
           if (!assisted && stars === 3 && wallet.rewardStars(level.id)) notes.push(`+${STAR_REWARD} 💡 for three stars`);
           const world = WORLDS.find((w) => w.ids[w.ids.length - 1] === level.id);
           if (world && wallet.rewardWorld(world.name)) notes.push(`+${WORLD_REWARD} 💡: ${world.name} world complete!`);
-          if (notes.length) setTimeout(() => wallet.announce(notes.join('\n')), CELEBRATION_MS + 600);
+          if (notes.length) setTimeout(() => wallet.announce(notes.join('\n')), (asmr ? BLOOM_MS : CELEBRATION_MS) + 600);
         }
       }
     };

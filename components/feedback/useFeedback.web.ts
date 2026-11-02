@@ -19,8 +19,8 @@ const SOUNDS = {
   star: require('../../assets/sounds/star.wav'),
   burst: require('../../assets/sounds/burst.wav'),
   chime: require('../../assets/sounds/chime.wav'),
-  glow: require('../../assets/sounds/glow.wav'),
   shatter: require('../../assets/sounds/shatter.wav'),
+  bloom: require('../../assets/sounds/bloom.wav'),
 };
 type Sound = keyof typeof SOUNDS;
 
@@ -71,7 +71,7 @@ export function useFeedback() {
       else play('bounce', Math.max(0.6, strength), pitch(barHits++));
     },
     landed() {
-      if (feedbackPrefs.asmr) play('glow', 0.9);
+      if (feedbackPrefs.asmr) play('bloom', 0.95); // the light bloom's harp run and chord
       else play('land', 1);
     },
     /** Star k (0-based) pops in on the win card: each a step higher up a major chord. */

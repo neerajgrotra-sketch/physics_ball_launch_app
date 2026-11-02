@@ -103,6 +103,40 @@ function tinkles(seconds, count, spread, seed) {
   return out;
 }
 
+/**
+ * A soft pad: each note as a pair of slightly detuned sines (a gentle chorus), swelling in over `attack`, breathing with a slow
+ * tremolo, and dying away over the last `release` seconds. `notes` are [frequency, amplitude].
+ */
+function pad(seconds, notes, { start = 0, attack = 0.8, release = 1.5, tremolo = 3.5 } = {}) {
+  const n = Math.round(seconds * RATE), out = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / RATE - start;
+    if (t < 0) continue;
+    const left = seconds - start - t;
+    const env = Math.min(1, t / attack) * Math.min(1, left / release) * (0.85 + 0.15 * Math.sin(2 * Math.PI * tremolo * t));
+    let v = 0;
+    for (const [f, a] of notes) v += a * (Math.sin(2 * Math.PI * f * t) + Math.sin(2 * Math.PI * f * 1.004 * t + 1.3)) * 0.5;
+    out[i] += env * v;
+  }
+  return out;
+}
+
+/** A harp run: plucked notes one after another, `gap` seconds apart, starting at `start`. */
+function glissando(seconds, freqs, gap, start = 0) {
+  return mix(...freqs.map((f, k) => partials(seconds, [[f, 0.6, 0.7], [f * 2, 0.18, 0.4], [f * 3, 0.06, 0.25]], { attack: 0.004, start: start + k * gap })));
+}
+
+/** Sparkles: high, soft pentatonic pings scattered from `from` to `to` seconds. Seeded. */
+function sparkles(seconds, count, from, to, seed) {
+  let s = seed;
+  const rand = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  const notes = [2093, 2349.3, 2637, 3136, 3520, 4186];
+  return mix(...Array.from({ length: count }, (_, k) => {
+    const at = from + (to - from) * (k / count) + rand() * 0.08;
+    return partials(seconds, [[notes[Math.floor(rand() * notes.length)], 0.14 + rand() * 0.1, 0.18]], { attack: 0.003, start: at });
+  }));
+}
+
 function scale(track, k) {
   return track.map((v) => v * k);
 }
@@ -167,13 +201,6 @@ const sounds = {
   // ASMR mode (game/asmr.ts): a soft bell (C5) for every bounce, pitched up a pentatonic scale as a shot goes on. A gentle attack
   // and a long, quiet ring, so a fast chain blurs into a melody rather than a clatter.
   chime: partials(1.4, [[523.25, 1, 0.55], [1046.5, 0.22, 0.32], [1569.75, 0.07, 0.2], [2093, 0.04, 0.12]], { attack: 0.008 }),
-  // ASMR mode's landing: a slow, warm rolled chord (C, E, G, D an octave up), like a hand across chimes.
-  glow: mix(
-    partials(2.4, [[523.25, 0.8, 0.9], [1046.5, 0.15, 0.5]], { attack: 0.02 }),
-    partials(2.4, [[659.25, 0.7, 0.9], [1318.5, 0.12, 0.5]], { attack: 0.02, start: 0.08 }),
-    partials(2.4, [[783.99, 0.65, 0.9], [1567.98, 0.1, 0.5]], { attack: 0.02, start: 0.16 }),
-    partials(2.4, [[1174.66, 0.5, 0.8]], { attack: 0.02, start: 0.24 }),
-  ),
   // The ball shattering on a hazard (slow motion on the board): a sharp crack and a deep boom, a rush of air, then shards
   // tinkling down and skidding to rest, thinning out over almost two seconds, with a soft falling shimmer underneath.
   shatter: mix(
@@ -182,6 +209,15 @@ const sounds = {
     scale(whoosh(0.7, 0.04, 2600), 0.5),
     scale(zap(1.6, 2400, 260, 0.6, 0.5), 0.12),
     tinkles(2.2, 30, 1.7, 4242),
+  ),
+  // ASMR mode's win, timed to the light bloom (game/bloom.ts): a harp run up the bounce chimes' pentatonic scale as the light races
+  // the winning path, then a warm, chorused chord (C, E, G, A, D) swelling in under high sparkles, with a low C underneath.
+  bloom: mix(
+    glissando(5.6, [261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5], 0.1),
+    scale(pad(5.6, [[261.63, 0.5], [329.63, 0.4], [392, 0.35], [440, 0.22], [587.33, 0.2]], { start: 1.1, attack: 0.9, release: 2.2 }), 0.7),
+    scale(pad(5.6, [[65.41, 0.6], [130.81, 0.3]], { start: 1.0, attack: 1.2, release: 2.4, tremolo: 0.8 }), 0.6),
+    sparkles(5.6, 18, 1.6, 4.4, 777),
+    partials(5.6, [[1046.5, 0.35, 1.2], [1568, 0.2, 0.9], [2093, 0.12, 0.7]], { attack: 0.01, start: 4.05 }),
   ),
 };
 

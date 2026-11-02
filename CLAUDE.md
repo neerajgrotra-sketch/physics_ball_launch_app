@@ -259,7 +259,9 @@ theme in Settings (`theme/palettes.ts` THEMES: Chalkboard, Notebook, Night, Sand
 whatever theme is picked (the picked one comes back when it's off), and the board adds `BlurMask` glow under the walls, glass,
 bars, ball and newest trail, a `CometTail` on the flight and a `BounceFlash` ring at each hit (`LevelGame`'s `flash`). Sound:
 `feedbackPrefs.asmr` swaps each bounce for `chime.wav` stepped along `asmrStep` (major pentatonic, up then down) and the landing
-for `glow.wav`. A look and a sound only, never the physics. The share poster keeps the graph-paper colours.
+for `bloom.wav`. Its win is the light bloom (`game/bloom.ts` `BLOOM_MS`, phases in `BLOOM_PHASES`, `Board`'s `Bloom`: the light
+runs the path, the glass fills, spirograph mandalas, ripples, a light column, fireflies spiralling in); the win card waits for it.
+Keep its many small pieces off `BlurMask` (plain translucent halos): blur on dozens of pieces is slow on phones. A look and a sound only, never the physics. The share poster keeps the graph-paper colours.
 
 ## Launch and intro
 
