@@ -1,4 +1,4 @@
-import { Circle, Group, Path, type SkCanvas, Skia } from '@shopify/react-native-skia';
+import { BlurMask, Circle, Group, Path, type SkCanvas, Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 import { gunShapes, type GunColors, type GunShape, type GunSkin } from '../../game/guns';
 import { linePath, polygonPath } from './paths';
@@ -7,13 +7,24 @@ import { linePath, polygonPath } from './paths';
  * The gun (game/guns.ts) for a Skia canvas, aimed at `angle` with `power`, in world units. Its paths are built only when the gun or
  * the aim changes (the board redraws on every finger movement; see Board.tsx `shape`).
  */
-export function GunArt({ gun, angle, power, c }: { gun: GunSkin; angle: number; power: number; c: GunColors }) {
+/**
+ * `glow` (ASMR mode): a neon colour for a soft halo behind the gun and a crisp outline round each part, so its own colours (an iron
+ * barrel, dark wheels) still read on a near-black board.
+ */
+export function GunArt({ gun, angle, power, c, glow }: { gun: GunSkin; angle: number; power: number; c: GunColors; glow?: string }) {
   const parts = useMemo(
     () => gunShapes(gun, angle, power, c).map((s) => ({ s, path: s.kind === 'poly' ? polygonPath(s.points) : s.kind === 'line' ? linePath(s.from[0], s.from[1], s.to[0], s.to[1]) : null })),
     [gun, angle, power, c.ink, c.muted, c.paper],
   );
   return (
     <Group>
+      {glow && (
+        <Group opacity={0.55}>
+          {parts.map(({ s, path }, i) => s.kind === 'circle'
+            ? <Circle key={`g${i}`} cx={s.at[0]} cy={s.at[1]} r={s.r + 2} color={glow}><BlurMask blur={5} style="normal" /></Circle>
+            : <Path key={`g${i}`} path={path!} color={glow} style="stroke" strokeWidth={s.kind === 'line' ? s.width + 5 : 6} strokeCap="round" strokeJoin="round"><BlurMask blur={5} style="normal" /></Path>)}
+        </Group>
+      )}
       {parts.map(({ s, path }, i) => {
         if (s.kind === 'circle') {
           return (
@@ -31,6 +42,9 @@ export function GunArt({ gun, angle, power, c }: { gun: GunSkin; angle: number; 
           </Group>
         );
       })}
+      {glow && parts.map(({ s, path }, i) => s.kind === 'circle'
+        ? (s.fill || s.stroke) && (s.alpha ?? 1) > 0.5 ? <Circle key={`o${i}`} cx={s.at[0]} cy={s.at[1]} r={s.r} color={glow} style="stroke" strokeWidth={1.2} opacity={0.9} /> : null
+        : s.kind === 'poly' ? <Path key={`o${i}`} path={path!} color={glow} style="stroke" strokeWidth={1.2} strokeJoin="round" opacity={0.9} /> : null)}
     </Group>
   );
 }

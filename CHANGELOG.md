@@ -4,6 +4,16 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.53.0
+
+- The cannon fires with a blast, in every mode (`game/muzzle.ts`, `Board`'s `MuzzleBlast` and `RecoilGroup`): the gun kicks back,
+  the barrel glows white-hot, and a star-shaped muzzle flash, a shock ring and a cone of sparks burst from the end of the barrel
+  along the aim, then smoke rolls out and drifts up. It's fiery orange normally and neon in ASMR mode, and it's a look only
+  (the ball still leaves the same spot). `launch.wav` is now a cannon boom: a crack, a deep boom, a rush of air and a sizzle
+  of sparks.
+- ASMR mode: every gun gets a neon edge (a soft cyan glow behind it and a crisp outline round each part, `GunArt`'s `glow`), so
+  dark guns like the pirate cannon's iron barrel and wheels show on the black board.
+
 ## 0.52.0
 
 - ASMR mode's win is a 4.6 s "light bloom" (`game/bloom.ts`, `Board`'s `Bloom`):

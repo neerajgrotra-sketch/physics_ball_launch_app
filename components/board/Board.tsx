@@ -1,6 +1,6 @@
 import { trailOpacity } from '../../game/trails';
 import { BlurMask, Canvas, Skia, Circle, DashPathEffect, Group, Path, Rect, Text, useCanvasRef, useFont, type SkPath, type Transforms3d } from '@shopify/react-native-skia';
-import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import {
@@ -22,6 +22,7 @@ import { useBallSkin } from '../settings/BallSkin';
 import { useAsmr } from '../settings/Theme';
 import { leverLine, moveArms, trashObstacles, trashSpot, type End } from '../../game/pieces';
 import { aimPreview } from '../../game/aim';
+import { blastPuffs, blastSparks, muzzle, recoilAt, type Puff as SmokeCloud, type Spark as BlastSpark } from '../../game/muzzle';
 import { SHARD_GRAVITY, SHATTER_MS, SLOW, SHATTER_TIME, shatterPieces, type Ember, type Puff, type Shard } from '../../game/shatter';
 import { FUSE_SHARE, confettiPieces, fuseGeometry } from '../../game/celebration';
 import { BLOOM_PHASES, fireflies, fireflyAt, phase, spirograph, type Firefly } from '../../game/bloom';
@@ -70,6 +71,8 @@ export interface BoardProps {
   kick?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
   /** ASMR mode: the latest bounce, for a soft ring of light where it happened (`t` runs 0 → 1). */
   flash?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
+  /** The latest launch, for the gun's kick and the muzzle blast (game/muzzle.ts): `t` runs 0 → 1 over BLAST_MS, aimed at `angle`. */
+  blast?: { t: SharedValue<number>; angle: number };
   /** The latest trip through a portal: `t` runs 0 → 1 for the ring where the ball comes out. */
   warp?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
   /** The level is won: the ball rests where the last trail ended. */
@@ -90,7 +93,7 @@ const condensed500 = require('@expo-google-fonts/barlow-condensed/500Medium/Barl
  * Pure rendering: everything it shows comes from props (and the player's ball skin, from Settings). Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, hud = true, barLabels = true, marks = [], flight = null, charge, dropZone = 'off', celebrate = null, kick, flash, warp, done = false, onTouch, snapshot } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, hud = true, barLabels = true, marks = [], flight = null, charge, dropZone = 'off', celebrate = null, kick, flash, blast, warp, done = false, onTouch, snapshot } = props;
   // ASMR mode (game/asmr.ts): neon glow under the walls, glass, bars and ball, a comet tail on the flight, a ring at each bounce.
   const [asmr] = useAsmr();
   const c = useColors();
@@ -426,7 +429,10 @@ export function Board(props: BoardProps) {
                 })}
 
                 {/* launcher: the player's gun (game/guns.ts), aimed */}
-                <GunArt gun={gun} angle={angle} power={power} c={c} />
+                <RecoilGroup blast={blast}>
+                  <GunArt gun={gun} angle={angle} power={power} c={c} glow={asmr ? c.pencil : undefined} />
+                </RecoilGroup>
+                {blast && <MuzzleBlast t={blast.t} gunId={gun.id} angle={blast.angle} c={c} asmr={asmr} />}
                 {aimDots.map((d, i) => (
                   <Circle key={i} cx={d.x} cy={d.y} r={2} color={c.ink} opacity={d.a} />
                 ))}
@@ -672,6 +678,100 @@ function Confetti({ burst, x, y, angle, speed, color, wide }: { burst: SharedVal
   const rx = useDerivedValue(() => px.value - w / 2);
   const ry = useDerivedValue(() => py.value - h / 2);
   return <Rect x={rx} y={ry} width={w} height={h} color={color} opacity={o} />;
+}
+
+/** The gun kicks back along its aim when it fires (game/muzzle.ts recoilAt). */
+function RecoilGroup({ blast, children }: { blast?: { t: SharedValue<number>; angle: number }; children: ReactNode }) {
+  const a = ((blast?.angle ?? 0) * Math.PI) / 180, ux = Math.cos(a), uy = -Math.sin(a);
+  const kick = useDerivedValue<Transforms3d>(() => {
+    const k = blast ? recoilAt(blast.t.value) : 0;
+    return [{ translateX: -ux * k }, { translateY: -uy * k }];
+  });
+  return <Group transform={kick}>{children}</Group>;
+}
+
+/** The muzzle flash: a star of light longest along the aim, drawn pointing along +x (turned to the aim by its group). */
+/** How long the flash lasts, as a share of BLAST_MS. */
+const FLASH = 0.17;
+
+function flashStar(): SkPath {
+  const p = Skia.PathBuilder.Make();
+  const rays = [[0, 46], [0.35, 14], [0.75, 22], [1.4, 11], [2.2, 7], [Math.PI, 6], [-2.2, 7], [-1.4, 11], [-0.75, 22], [-0.35, 14]];
+  rays.forEach(([ang, len], i) => {
+    const mid = ang + 0.17;
+    const x = Math.cos(ang) * len, y = Math.sin(ang) * len;
+    if (i) p.lineTo(x, y); else p.moveTo(x, y);
+    p.lineTo(Math.cos(mid) * 5, Math.sin(mid) * 5);
+  });
+  p.close();
+  return p.detach();
+}
+
+/**
+ * The launch blast at the end of the barrel (game/muzzle.ts): a star-shaped flash and a white-hot core, a shock ring, a cone of
+ * sparks thrown forward and falling, and smoke rolling out along the aim and drifting up. In ASMR mode it's drawn in the neon colours.
+ */
+function MuzzleBlast({ t, gunId, angle, c, asmr }: { t: SharedValue<number>; gunId: string; angle: number; c: Palette; asmr: boolean }) {
+  const { at, u } = useMemo(() => muzzle(gunId, angle), [gunId, angle]);
+  const star = useMemo(flashStar, []);
+  const sparks = useMemo(() => blastSparks(18), []);
+  const puffs = useMemo(() => blastPuffs(6), []);
+  const rot = Math.atan2(u[1], u[0]);
+  const fp = useDerivedValue(() => Math.min(1, t.value / FLASH));
+  const starAt = useDerivedValue<Transforms3d>(() => [{ translateX: at[0] }, { translateY: at[1] }, { rotate: rot }, { scale: 0.6 + 0.8 * Math.sqrt(fp.value) }]);
+  const starO = useDerivedValue(() => (t.value > 0 && t.value < FLASH ? 1 - fp.value * fp.value : 0));
+  const coreR = useDerivedValue(() => 6 + 14 * fp.value);
+  const ringR = useDerivedValue(() => 6 + 48 * (1 - (1 - Math.min(1, t.value / 0.32)) ** 2));
+  const ringO = useDerivedValue(() => (t.value > 0 && t.value < 0.32 ? 0.9 * (1 - t.value / 0.32) : 0));
+  const ringW = useDerivedValue(() => 0.8 + 3.2 * Math.max(0, 1 - t.value / 0.32));
+  // The barrel glows hot for a moment.
+  const heatO = useDerivedValue(() => (t.value > 0 && t.value < 0.4 ? 0.7 * (1 - t.value / 0.4) : 0));
+  const barrel = useMemo(() => linePath(at[0] - u[0] * 22, at[1] - u[1] * 22, at[0], at[1]), [at, u]);
+  const hot = asmr ? c.pencil : '#ffb347';
+  const sparkHues = asmr ? [c.pencil, c.red, '#ffffff'] : ['#ffd36b', '#ff8a3d', '#fff3c4'];
+  return (
+    <Group>
+      {puffs.map((p, k) => <BlastSmoke key={`bs${k}`} t={t} at={at} u={u} p={p} color={asmr ? c.pencil : c.muted} asmr={asmr} />)}
+      <Path path={barrel} color={hot} style="stroke" strokeWidth={12} strokeCap="round" opacity={heatO}><BlurMask blur={6} style="normal" /></Path>
+      <Circle cx={at[0]} cy={at[1]} r={ringR} color={hot} style="stroke" strokeWidth={ringW} opacity={ringO} />
+      <Group transform={starAt} opacity={starO}>
+        <Path path={star} color={hot}><BlurMask blur={2} style="normal" /></Path>
+      </Group>
+      <Circle cx={at[0]} cy={at[1]} r={coreR} color="#ffffff" opacity={starO}><BlurMask blur={4} style="normal" /></Circle>
+      {sparks.map((s, k) => <BlastSparkDot key={`sp${k}`} t={t} at={at} rot={rot} s={s} color={sparkHues[k % 3]} />)}
+    </Group>
+  );
+}
+
+/** One spark of the blast: thrown forward along its angle off the aim, falling, fading over the first half of the blast. */
+function BlastSparkDot({ t, at, rot, s, color }: { t: SharedValue<number>; at: [number, number]; rot: number; s: BlastSpark; color: string }) {
+  const dx = Math.cos(rot + s.off) * s.speed, dy = Math.sin(rot + s.off) * s.speed;
+  const p = useDerivedValue(() => Math.min(1, t.value / 0.5));
+  const ease = useDerivedValue(() => 1 - (1 - p.value) ** 2);
+  const cx = useDerivedValue(() => at[0] + dx * ease.value * 0.42);
+  const cy = useDerivedValue(() => at[1] + dy * ease.value * 0.42 + 110 * p.value * p.value);
+  const o = useDerivedValue(() => (t.value > 0 && p.value < 1 ? 1 - p.value : 0));
+  return (
+    <Group opacity={o}>
+      <Circle cx={cx} cy={cy} r={s.size * 3.2} color={color} opacity={0.28} />
+      <Circle cx={cx} cy={cy} r={s.size * 1.3} color={color} />
+    </Group>
+  );
+}
+
+/** One puff of the blast's smoke: rolls out along the aim, swells, drifts up and thins away. */
+function BlastSmoke({ t, at, u, p, color, asmr }: { t: SharedValue<number>; at: [number, number]; u: [number, number]; p: SmokeCloud; color: string; asmr: boolean }) {
+  const q = useDerivedValue(() => Math.min(1, Math.max(0, (t.value - p.delay) / (1 - p.delay))));
+  const ease = useDerivedValue(() => 1 - (1 - q.value) ** 2);
+  const cx = useDerivedValue(() => at[0] + u[0] * p.along * ease.value - u[1] * p.side * ease.value);
+  const cy = useDerivedValue(() => at[1] + u[1] * p.along * ease.value + u[0] * p.side * ease.value - 18 * q.value);
+  const r = useDerivedValue(() => p.r * (0.4 + 1.3 * ease.value));
+  const o = useDerivedValue(() => (q.value <= 0 || q.value >= 1 ? 0 : (asmr ? 0.22 : 0.32) * (1 - q.value) * Math.min(1, q.value / 0.06)));
+  return (
+    <Circle cx={cx} cy={cy} r={r} color={color} opacity={o}>
+      <BlurMask blur={5} style="normal" />
+    </Circle>
+  );
 }
 
 /** Where shards come to rest: on the floor, less a little so they sit on its line. */

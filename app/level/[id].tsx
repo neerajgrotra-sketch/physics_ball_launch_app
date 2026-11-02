@@ -36,6 +36,7 @@ import {
   boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
   OPEN_DRAG, TRASH_GRAB, trashObstacles, atSolution, hintSlots, leverEnd, shotPieces, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
+import { BLAST_MS } from '../../game/muzzle';
 import { BLOOM_MS, bloomFor } from '../../game/bloom';
 import { CARD_PAUSE_MS, CELEBRATION_MS, burstFor, cardPlace } from '../../game/celebration';
 import { badgeBox, badgeCovers, counterSpot } from '../../game/counter';
@@ -340,9 +341,15 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   const kick = useSharedValue(1);
   const kickX = useSharedValue(0);
   const kickY = useSharedValue(0);
-  const launched = () => {
+  // The launch blast (game/muzzle.ts): the gun kicks and the muzzle flashes, sparks and smokes, along the angle it fired at.
+  const blastT = useSharedValue(1);
+  const [blastAngle, setBlastAngle] = useState(angle);
+  const launched = (a: number) => {
     charge.value = 0;
     kick.value = 1;
+    setBlastAngle(a);
+    blastT.value = 0;
+    blastT.value = withTiming(1, { duration: BLAST_MS, easing: Easing.linear });
     feedback.launched();
   };
   // A portal: a ring flashes where the ball comes out (warp runs 0 → 1 at warpX, warpY).
@@ -441,7 +448,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
         }
       }
     };
-    launched();
+    launched(a);
     playShot(res, finished, true, setupKey(placed, a, p));
   };
 
@@ -452,7 +459,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     const timer = setTimeout(() => {
       const res = simulate(buildWorld(level, shotPieces(level, shot)), shot.angle, shot.power);
       setBounces(0);
-      launched();
+      launched(shot.angle);
       playShot(res, () => {
         setBounces(res.bounces);
         setTrails([{ path: res.path, ok: res.success, end: res.end, jumps: res.jumps }]);
@@ -602,7 +609,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     setPower(challenge.shot.power);
     setNotice(null);
     const res = simulate(buildWorld(level, boardPieces(theirs)), challenge.shot.angle, challenge.shot.power);
-    launched();
+    launched(challenge.shot.angle);
     playShot(res, () => {
       setTrails((ts) => withReplayTrail(ts, res, trailCount));
       if (res.success) feedback.landed();
@@ -621,7 +628,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     setPower(p);
     setNotice(null);
     const res = simulate(buildWorld(level, boardPieces(shot)), a, p);
-    launched();
+    launched(a);
     // The replayed shot stays on the board as its newest trail (it was missing after Clear, leaving only the bounce numbers).
     playShot(res, () => {
       trailShots.current.set(res.path, { pieces: boardPieces(shot), angle: a, power: p });
@@ -977,6 +984,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
           warp={{ t: warp, x: warpX, y: warpY }}
           kick={{ t: kick, x: kickX, y: kickY }}
           flash={{ t: flash, x: flashX, y: flashY }}
+          blast={{ t: blastT, angle: blastAngle }}
           done={done}
           onTouch={onTouch}
           snapshot={snapshot}

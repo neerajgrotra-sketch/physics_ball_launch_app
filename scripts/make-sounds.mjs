@@ -137,6 +137,24 @@ function sparkles(seconds, count, from, to, seed) {
   }));
 }
 
+/** Crackling sparks: tiny seeded clicks, thick at first and thinning out over `spread` seconds. */
+function crackle(seconds, count, spread, seed) {
+  const n = Math.round(seconds * RATE), out = new Float64Array(n);
+  let s = seed;
+  const rand = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  for (let k = 0; k < count; k++) {
+    const start = Math.round((0.02 + spread * (k / count) ** 1.8 + rand() * 0.01) * RATE);
+    const amp = 0.5 * (1 - k / count) + 0.1, len = Math.round((0.002 + rand() * 0.004) * RATE);
+    let prev = 0;
+    for (let i = 0; i < len && start + i < n; i++) {
+      const white = rand() * 2 - 1;
+      out[start + i] += amp * (white - prev) * (1 - i / len);
+      prev = white;
+    }
+  }
+  return out;
+}
+
 function scale(track, k) {
   return track.map((v) => v * k);
 }
@@ -158,8 +176,14 @@ function wav(samples, peak = 0.8) {
 }
 
 const sounds = {
-  // The launcher firing: a short thunk with a whoosh of air behind it.
-  launch: mix(thud(0.3, 190, 85, 0.04), scale(whoosh(0.3, 0.05, 1800), 0.9)),
+  // The cannon firing (with the muzzle blast on the board, game/muzzle.ts): a sharp crack and a deep boom, a rush of air, and a
+  // short sizzle of sparks.
+  launch: mix(
+    scale(crack(0.1, 0.016), 0.55),
+    scale(thud(0.8, 170, 40, 0.13), 1.0),
+    scale(whoosh(0.5, 0.03, 2600), 0.75),
+    scale(crackle(0.7, 26, 0.45, 2024), 0.35),
+  ),
   // Ball off the floor or a board edge: a dull, woody tok (bars ring; walls don't).
   wall: partials(0.12, [[520, 1, 0.018], [1240, 0.35, 0.01], [2010, 0.15, 0.006]], { attack: 0.001 }),
   // Steel ball on a bar: a short bright tink.

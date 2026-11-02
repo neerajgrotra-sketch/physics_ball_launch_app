@@ -114,7 +114,7 @@ export function useFeedback() {
     launched() {
       barHits.current = 0;
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);
-      play('launch', feedbackPrefs.asmr ? 0.3 : 0.8);
+      play('launch', feedbackPrefs.asmr ? 0.45 : 0.85); // the cannon's boom (the board shows the muzzle blast)
     },
     hit(h: Hit) {
       const strength = Math.max(0.2, Math.min(1, h.speed / HARD_HIT));
