@@ -4,6 +4,10 @@ Agreed work that isn't built yet, roughly in priority order. Move an item to CHA
 
 ## Next up
 
+- **Stamp book** (step 2 of the daily stamp card; step 1 shipped in 0.54.0): tapping the stamp row opens a book of every week
+  played, newest first, with the current and best streak, full weeks and total stamps; a "share my week" grid in the Wordle style
+  (`★★★ ★★ ✓ ✗ …`) beside the daily's Share; and a holographic stamp for a perfect week (seven three-star days).
+
 - **Reset button** (user feedback): a clear "start over" on the board that takes every bar back to the tray and clears the trails (and
   the try count) without leaving the level. Today the Clear button only wipes the ghost trails, and Start over only shows after a win.
   Decide whether it keeps the aim, and whether it asks first when several bars are placed.

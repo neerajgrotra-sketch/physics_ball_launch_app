@@ -19,6 +19,7 @@ import { HintWalletProvider } from '../components/hints/HintWallet';
 import { DailyProvider } from '../components/daily/DailyProvider';
 import { ProgressProvider } from '../components/progress/ProgressProvider';
 import { Intro } from '../components/splash/Intro';
+import { IntroDone } from '../components/splash/introState';
 import { TourGate } from '../components/tour/TourGate';
 import { FONTS, useTheme } from '../theme/colors';
 import { ThemeProvider } from '../components/settings/Theme';
@@ -61,6 +62,7 @@ function AppRoot() {
           <SoundSettingsProvider>
             <RewardedAdsProvider>
               <HintWalletProvider ready={!intro}>
+              <IntroDone.Provider value={!intro}>
               <DailyProvider>
               <TipsProvider>
             <StatusBar style={theme.dark ? 'light' : 'dark'} />
@@ -83,6 +85,7 @@ function AppRoot() {
             <MusicHost />
               </TipsProvider>
               </DailyProvider>
+              </IntroDone.Provider>
               </HintWalletProvider>
             </RewardedAdsProvider>
           </SoundSettingsProvider>

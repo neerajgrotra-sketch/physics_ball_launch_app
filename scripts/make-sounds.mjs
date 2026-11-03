@@ -243,6 +243,12 @@ const sounds = {
     sparkles(5.6, 18, 1.6, 4.4, 777),
     partials(5.6, [[1046.5, 0.35, 1.2], [1568, 0.2, 0.9], [2093, 0.12, 0.7]], { attack: 0.01, start: 4.05 }),
   ),
+  // A rubber stamp thumped onto the daily card (components/daily/StampRow.tsx): a soft slap of paper and a firm, low thump.
+  stamp: mix(
+    scale(crack(0.05, 0.006), 0.35),
+    scale(thud(0.3, 150, 70, 0.045), 1.0),
+    partials(0.3, [[310, 0.25, 0.04], [620, 0.08, 0.02]], { attack: 0.001 }),
+  ),
 };
 
 mkdirSync(OUT, { recursive: true });

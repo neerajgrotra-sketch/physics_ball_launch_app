@@ -215,6 +215,11 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   streak and hints, and the win card's right button is Share. Toughness follows the weekday
   (`DAILY_TIERS`, Monday gentle, Sunday toughest). Puzzles are generated, never hand-edited: `npx tsx tools/make-dailies.ts <first>
   <count>` writes `levels/daily/NNN.json` and its index; the pool stays a multiple of 7 (`tools/dailies.test.ts` checks each answer).
+  The card shows the week's stamp card (`weekSlots`, `components/daily/StampRow.tsx`: Monday to Sunday, won stamps with stars,
+  helped 💡, frozen ❄, missed ✗, today breathing, the rest dotted, Sunday gold). Today's stamp thumps in once (`stamped`, `markStamped`,
+  `stamp.wav`) when the levels screen is in view and the intro (`useIntroDone`) and tour are gone. A full week gives `WEEK_BONUS` hints and a
+  streak freeze (`MAX_FREEZES` 2, earned, never sold); `applyFreezes` spends them on missed days once they're over (provider: on load and
+  every minute), only when they cover the whole gap. The stamp book and week sharing are next (BACKLOG.md).
 - **Sharing** (`game/share.ts` `shareMessage`, `components/share.ts`): a level's win card has "📣 Share" and the daily's
   Share uses the same message: a hook picked by how the shot went (seeded, so a win always shares the same words), the level, stars,
   bounces, par and tries, a dare, and `SHARE_LINK` (a placeholder until the store link exists). A poster goes with it (`Board`'s

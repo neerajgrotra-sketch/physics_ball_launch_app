@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { CELEBRATION_MS } from '../../game/celebration';
-import { DAILY_KEY, dailyFor, emptyDaily, parseDaily, streak, winDaily, type DailyResult, type DailyState } from '../../game/daily';
+import { DAILY_KEY, applyFreezes, dailyFor, emptyDaily, parseDaily, streak, winDaily, type DailyResult, type DailyState } from '../../game/daily';
 import { dayOf } from '../../game/wallet';
 import { DAILIES, type DailyLevel } from '../../levels/daily';
 import { useHintWallet } from '../hints/HintWallet';
@@ -17,12 +17,14 @@ interface Daily {
   won: (day: string, result: DailyResult) => void;
   /** Shares `day`'s result (the share sheet; on a browser without one, copies it). */
   share: (day: string, picture?: ((card: ShareCard) => string | null) | null, result?: DailyResult) => void;
+  /** The stamp for `day` has been thumped onto the card (DailyCard), so it plays once. */
+  markStamped: (day: string) => void;
   /** Testing only (settings, Reset progress): forget every daily result. */
   reset: () => void;
 }
 
 const DailyContext = createContext<Daily>({
-  state: emptyDaily(), today: () => ({ day: '', number: 1, level: DAILIES[0] }), won: () => {}, share: () => {}, reset: () => {},
+  state: emptyDaily(), today: () => ({ day: '', number: 1, level: DAILIES[0] }), won: () => {}, share: () => {}, markStamped: () => {}, reset: () => {},
 });
 
 export function todaysDaily(now = new Date()) {
@@ -36,14 +38,21 @@ export function DailyProvider({ children }: { children: ReactNode }) {
   const wallet = useHintWallet();
   const [state, setState] = useState<DailyState>(emptyDaily());
   const live = useRef(state);
-  useEffect(() => {
-    AsyncStorage.getItem(DAILY_KEY).then((raw) => { live.current = parseDaily(raw); setState(live.current); }).catch(() => {});
-  }, []);
   const save = (next: DailyState) => {
     live.current = next;
     setState(next);
     AsyncStorage.setItem(DAILY_KEY, JSON.stringify(next)).catch(() => {});
   };
+  // Streak freezes are spent once a missed day is over (game/daily.ts applyFreezes): on load, and as the clock passes midnight.
+  const freeze = () => {
+    const next = applyFreezes(live.current, dayOf(new Date()));
+    if (next !== live.current) save(next);
+  };
+  useEffect(() => {
+    AsyncStorage.getItem(DAILY_KEY).then((raw) => { live.current = parseDaily(raw); setState(live.current); freeze(); }).catch(() => {});
+    const t = setInterval(freeze, 60_000);
+    return () => clearInterval(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const value: Daily = {
     state,
     today: () => todaysDaily(),
@@ -63,6 +72,7 @@ export function DailyProvider({ children }: { children: ReactNode }) {
       const what = { kind: 'daily' as const, number, name: level.name, streak: streak(live.current, day) }, par = level.par ?? 0;
       shareText(shareMessage(what, result, par), wallet.announce, picture?.(shareCard(what, result, par)));
     },
+    markStamped: (day) => { if (live.current.stamped !== day) save({ ...live.current, stamped: day }); },
     reset: () => save(emptyDaily()),
   };
   return <DailyContext.Provider value={value}>{children}</DailyContext.Provider>;

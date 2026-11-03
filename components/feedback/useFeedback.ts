@@ -20,6 +20,7 @@ const SOUNDS = {
   chime: require('../../assets/sounds/chime.wav'),
   shatter: require('../../assets/sounds/shatter.wav'),
   bloom: require('../../assets/sounds/bloom.wav'),
+  stamp: require('../../assets/sounds/stamp.wav'),
 };
 
 /** Bounce speed (px/s) that counts as a full-strength hit. Launches top out at 1120. */
@@ -142,6 +143,12 @@ export function useFeedback() {
     burst() {
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Medium);
       if (!feedbackPrefs.asmr) play('burst', 0.85); // ASMR mode: the landing chord is enough
+    },
+    /** Today's stamp thumps onto the daily card (in ASMR mode, a glowing seal with a chime). */
+    stamped() {
+      buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Heavy);
+      play('stamp', 0.9);
+      if (feedbackPrefs.asmr) play('chime', 0.45, 2);
     },
     warped() {
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);

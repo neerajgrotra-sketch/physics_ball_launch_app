@@ -21,6 +21,7 @@ const SOUNDS = {
   chime: require('../../assets/sounds/chime.wav'),
   shatter: require('../../assets/sounds/shatter.wav'),
   bloom: require('../../assets/sounds/bloom.wav'),
+  stamp: require('../../assets/sounds/stamp.wav'),
 };
 type Sound = keyof typeof SOUNDS;
 
@@ -82,6 +83,11 @@ export function useFeedback() {
     /** The glass bursts into confetti. */
     burst() {
       if (!feedbackPrefs.asmr) play('burst', 0.85); // ASMR mode: the landing chord is enough
+    },
+    /** Today's stamp thumps onto the daily card (in ASMR mode, a glowing seal with a chime). */
+    stamped() {
+      play('stamp', 0.9);
+      if (feedbackPrefs.asmr) play('chime', 0.45, 2);
     },
     warped() {
       play('warp', 0.8);

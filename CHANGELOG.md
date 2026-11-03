@@ -4,6 +4,23 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.54.0
+
+- The daily card has a stamp card for the week, Monday to Sunday (`game/daily.ts` `weekSlots`, `components/daily/StampRow.tsx`).
+  Each slot shows one of:
+  - a won day: an inked, tilted stamp with its stars;
+  - a helped day: a lighter stamp with 💡;
+  - a missed day: a faint ✗;
+  - today: a breathing dashed ring;
+  - a day still to come: a dotted ring, with Sunday, the toughest, in gold;
+  - a day before your first daily: blank.
+- The day you win thumps its stamp onto the card when you're back on the levels screen. It drops, squashes and splashes ink,
+  with a new `stamp.wav` and a buzz, plays once, and waits for the intro and tour. Reduced motion just shows it.
+- Streak freezes: a full week (seven days won) gives +5 💡 and a ❄️ freeze, holding 2 at most. They're earned and never bought.
+  A freeze covers a missed day by itself once the day is over (`applyFreezes`), so the streak lives on, but a frozen day doesn't
+  count towards a full week. A gap longer than your freezes breaks the streak and keeps the freezes.
+- A full week turns the card gold. The streak line moved under the stamps, with the freezes held.
+
 ## 0.53.0
 
 - The cannon fires with a blast, in every mode (`game/muzzle.ts`, `Board`'s `MuzzleBlast` and `RecoilGroup`): the gun kicks back,
