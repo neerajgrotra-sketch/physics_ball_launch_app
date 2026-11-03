@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useAsmr } from '../settings/Theme';
-import { trackFor, MUSIC_DUCKED, MUSIC_VOLUME, type Track } from './music';
+import { musicReady, trackFor, useMusicTurn, MUSIC_DUCKED, MUSIC_VOLUME, type Track } from './music';
 import { audioContext, buffer, generation, onRunning, resume, running } from './webAudio';
 
 /**
@@ -77,19 +77,22 @@ function startLoop(track: Track, buf: AudioBuffer, volume: number): Playing | nu
 
 export function useLevelMusic(levelId: string, on: boolean, duck = false) {
   const [asmr] = useAsmr();
+  // This session's tracks settle a moment after start (each session plays the next one); `start` waits for that, so it has to be a new
+  // function once they have, or the effects below never call it again when the track happens to be the same.
+  const turnReady = useMusicTurn();
   const track = trackFor(levelId, asmr);
   const holding = useRef(false);
   duckedNow = duck;
 
   const start = useCallback(async () => {
-    if (!holding.current || !running()) return;
+    if (!holding.current || !running() || !musicReady()) return;
     if (live() && current!.track === track) return;
     const buf = await buffer(track.src);
     if (!buf || !holding.current || !running() || (live() && current!.track === track)) return;
     // A different track playing (ASMR mode toggled) fades out as this one fades in; one left on a replaced context just stops.
     stopNow(live() ? FADE : 0);
     current = startLoop(track, buf, duckedNow ? MUSIC_DUCKED : MUSIC_VOLUME);
-  }, [track]);
+  }, [track, turnReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Decode the track right away so starting is instant, and start as soon as audio is unlocked.
   useEffect(() => {

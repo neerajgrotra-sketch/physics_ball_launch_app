@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.57.1
+
+- Music takes turns instead of being picked at random. Each session plays the next track of each mode (`game/musicTurn.ts`,
+  `MUSIC_TURN_KEY`), so a reload or a new app start always sounds different. A random pick often played Neon Drift several
+  sessions running.
+- The players wait for the session's track to be settled before starting, so a session never begins on one track and swaps.
+
 ## 0.57.0
 
 - Two more tracks of the game's own music (`scripts/make-music.mjs`), so each session can sound different. The game picks one

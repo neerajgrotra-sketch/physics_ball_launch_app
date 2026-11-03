@@ -2,7 +2,7 @@ import { useAudioPlayer } from 'expo-audio';
 import { useEffect, useState } from 'react';
 import { localSound, setAudioModeOnce, sourceOf } from './localAudio';
 import { warmSounds } from './useFeedback';
-import { MUSIC_DUCKED, MUSIC_VOLUME, trackFor } from './music';
+import { MUSIC_DUCKED, MUSIC_VOLUME, trackFor, useMusicTurn } from './music';
 import { musicDemand, onMusicDemand } from './musicDemand';
 import { useAsmr } from '../settings/Theme';
 
@@ -18,16 +18,18 @@ export function MusicHost() {
   // No player exists until that file is ready; the music simply starts a moment later. The effects are got ready at the same time.
   // ASMR mode has its own track ("Neon Drift"); toggling it swaps the player for that mode's track.
   const [asmr] = useAsmr();
+  const turnReady = useMusicTurn(); // this session's tracks (each session plays the next one)
   const [track, setTrack] = useState<string | number | null>(null);
   useEffect(() => {
     setAudioModeOnce();
     warmSounds().catch(() => {});
   }, []);
   useEffect(() => {
+    if (!turnReady) return;
     let live = true;
     localSound(trackFor('', asmr).src).then((f) => { if (live) setTrack(f); });
     return () => { live = false; };
-  }, [asmr]);
+  }, [asmr, turnReady]);
   return track == null ? null : <MusicPlayer key={String(track)} source={sourceOf(track)} />;
 }
 
