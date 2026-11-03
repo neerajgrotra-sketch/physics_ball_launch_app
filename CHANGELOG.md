@@ -4,6 +4,19 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.57.0
+
+- Two more tracks of the game's own music (`scripts/make-music.mjs`), so each session can sound different. The game picks one
+  track per mode at random when it starts.
+  - **Sketchbook** (regular mode): Graph Paper's livelier, longer sibling. 112 BPM and 32 bars, about 69 s. Four sections (verse,
+    lift, a counter-melody with open hi-hats, the verse again), with offbeat piano stabs, a bouncing bass, claps and a catchy
+    motif per section.
+  - **Felt Glass** (ASMR mode): minimalist ambient, about 60 BPM and 64 s. Airy pads that cross-fade from chord to chord, a very
+    sparse and loosely played felt piano, gentle sustained tones, a faint dark shimmer and a soft low end. No drums, beat, bright
+    bells or builds, and no clear start or end. The quietest track, leaving the treble for the game's clinks and chimes.
+  - New instruments in the generator: `feltPiano`, `airPad`, `sustain`, `shimmer`, and an open hi-hat.
+  - Graph Paper and Neon Drift are unchanged: they re-render byte for byte.
+
 ## 0.56.0
 
 - The game's own music, composed and synthesized by code (`scripts/make-music.mjs`), so there's nothing to license. It

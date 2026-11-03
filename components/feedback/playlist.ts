@@ -3,6 +3,8 @@
 export interface Track { src: number; loop: number | null; asmr: boolean }
 
 export const PLAYLIST: Track[] = [
+  { src: require('../../assets/music/asmr-felt-glass.mp3'), loop: 64, asmr: true },
   { src: require('../../assets/music/asmr-neon-drift.mp3'), loop: 41.142857, asmr: true },
   { src: require('../../assets/music/graph-paper.mp3'), loop: 40, asmr: false },
+  { src: require('../../assets/music/sketchbook.mp3'), loop: 68.571429, asmr: false },
 ];

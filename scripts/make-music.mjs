@@ -2,6 +2,9 @@
 // license). Two seamless loops:
 //   graph-paper      regular mode: light and playful, 96 BPM, C major, plucked melody, electric piano, round bass, soft drums
 //   asmr-neon-drift  ASMR mode: hypnotic, 70 BPM, C major pentatonic (the ASMR bounce chimes' notes), pads, drone, slow arpeggio
+//   sketchbook       regular mode: Graph Paper's livelier, longer sibling, 112 BPM, 32 bars, offbeat piano, bouncier bass
+//   asmr-felt-glass  ASMR mode: minimalist ambient, ~60 BPM, felt piano, airy pads, sustained tones, soft shimmer, no beat
+// The game picks one track per mode each session (components/feedback/music.ts), so a mode with two keeps play fresh.
 // Each is an exact number of bars. It's rendered once with its reverb and echo tails running past the end, then those tails are
 // wrapped onto the start, which is exactly what the music sounds like looping forever: no gap, click or cut at the seam. Tones that
 // run the whole loop (the drone, slow swells) are tuned to a whole number of cycles per loop for the same reason.
@@ -67,7 +70,7 @@ function env(i, len, attack, tau) {
 // ---------------------------------------------------------------- instruments (each returns a mono Float32Array)
 
 /** A plucked string (Karplus-Strong): a burst of seeded noise circulating in a tuned delay line, softened a little each pass. */
-function pluck(freq, dur, { bright = 0.5, decay = 0.996, seed = 1 } = {}) {
+function pluck(freq, dur, { bright = 0.5, decay = 0.996, seed = 1, attack = 0 } = {}) {
   const n = Math.round(dur * SR), out = new Float32Array(n);
   const p = Math.max(2, Math.round(SR / freq)), line = new Float32Array(p), rand = rng(seed + Math.round(freq));
   for (let i = 0; i < p; i++) line[i] = rand() * 2 - 1;
@@ -77,7 +80,7 @@ function pluck(freq, dur, { bright = 0.5, decay = 0.996, seed = 1 } = {}) {
     const next = (k + 1) % p;
     const v = line[k];
     line[k] = decay * 0.5 * (v + line[next]);
-    out[i] = v * Math.min(1, (n - i) / (0.02 * SR));
+    out[i] = v * Math.min(1, (n - i) / (0.02 * SR)) * (attack ? Math.min(1, i / (attack * SR)) : 1);
     k = next;
   }
   return out;
@@ -144,16 +147,79 @@ function kick() {
 
 /** Noise bursts: a shaker (bright, very short) or a finger snap (a little body, short). Seeded per hit. */
 function noiseHit(kind, seed) {
-  const len = kind === 'shaker' ? 0.06 : 0.12, n = Math.round(len * SR), out = new Float32Array(n), rand = rng(seed);
+  const len = kind === 'shaker' ? 0.06 : kind === 'hat' ? 0.16 : 0.12, n = Math.round(len * SR), out = new Float32Array(n), rand = rng(seed);
   let prev = 0, lp = 0;
   for (let i = 0; i < n; i++) {
     const t = i / SR, w = rand() * 2 - 1;
     const hp = w - prev; prev = w; // high-passed
     lp += 0.35 * (w - lp);          // band-ish for the snap
     const tone = kind === 'snap' ? 0.6 * lp + 0.4 * hp : hp;
-    out[i] = tone * Math.exp(-t / (kind === 'shaker' ? 0.012 : 0.03)) * Math.min(1, t / 0.0015);
+    out[i] = tone * Math.exp(-t / (kind === 'shaker' ? 0.012 : kind === 'hat' ? 0.045 : 0.03)) * Math.min(1, t / 0.0015);
   }
   return out;
+}
+
+/**
+ * A muted felt piano: a few slightly stretched partials (real strings run a touch sharp up the series), each fading faster the higher
+ * it is, a soft felt-hammer attack instead of a bright strike, a low-pass to keep the treble restrained, and a damper at the end.
+ */
+function feltPiano(freq, dur, { vel = 0.7, seed = 9 } = {}) {
+  const n = Math.round(dur * SR), out = new Float32Array(n), B = 0.0004;
+  const partials = [1, 2, 3, 4, 5].map((k) => ({ f: freq * k * Math.sqrt(1 + B * k * k), a: [1, 0.45, 0.2, 0.09, 0.04][k - 1], tau: 2.6 / (1 + 0.9 * (k - 1)) }));
+  const rand = rng(seed + Math.round(freq));
+  let lp = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    let v = 0;
+    for (const p of partials) v += p.a * Math.sin(2 * Math.PI * p.f * t) * Math.exp(-t / p.tau);
+    // The felt: a short, dark thump of noise as the hammer lands.
+    lp += 0.08 * ((rand() * 2 - 1) - lp);
+    v += lp * 1.2 * Math.exp(-t / 0.018);
+    out[i] = v * Math.min(1, t / 0.012) * Math.min(1, (n - i) / (0.25 * SR)) * vel;
+  }
+  return lowpass(lowpass(out, 1800), 2600);
+}
+
+/** An airy pad: soft near-sine voices with a breath of filtered noise around them, swelling slowly in and out. */
+function airPad(freq, dur, { attack = 3, release = 3.5, seed = 11 } = {}) {
+  const n = Math.round(dur * SR), out = new Float32Array(n), rand = rng(seed + Math.round(freq * 10));
+  const voices = [-5, 0, 4].map((cents) => ({ f: freq * 2 ** (cents / 1200), ph: rand() * Math.PI * 2 }));
+  const air = new Float32Array(n);
+  for (let i = 0; i < n; i++) air[i] = rand() * 2 - 1;
+  lowpass(lowpass(air, freq * 2.2), freq * 2.2); // breath centred on the note's own region
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    let v = 0;
+    for (const { f, ph } of voices) v += Math.sin(2 * Math.PI * f * t + ph) + 0.18 * Math.sin(4 * Math.PI * f * t + ph);
+    const e = Math.min(1, t / attack) * Math.min(1, (n - i) / (release * SR));
+    out[i] = (v * 0.22 + air[i] * 0.9) * e * e;
+  }
+  return lowpass(out, 1600);
+}
+
+/** A sustained tone: a plain sine with its octave, breathing very slowly, for long held notes under the piano. */
+function sustain(freq, dur, { attack = 2.5, release = 3, breathe = 0.12 } = {}) {
+  const n = Math.round(dur * SR), out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    const e = Math.min(1, t / attack) * Math.min(1, (n - i) / (release * SR));
+    out[i] = (Math.sin(2 * Math.PI * freq * t) + 0.2 * Math.sin(4 * Math.PI * freq * t)) * e * e * (1 - breathe + breathe * Math.sin(2 * Math.PI * 0.11 * t));
+  }
+  return out;
+}
+
+/** Shimmer: a high, very soft cluster that flickers gently (slow, out-of-step tremolos), kept dark so it sparkles without glare. */
+function shimmer(freq, dur, { seed = 21 } = {}) {
+  const n = Math.round(dur * SR), out = new Float32Array(n), rand = rng(seed + Math.round(freq));
+  const parts = [1, 1.5, 2].map((r) => ({ f: freq * r, rate: 0.3 + rand() * 0.5, ph: rand() * 6.28 }));
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    let v = 0;
+    for (const p of parts) v += Math.sin(2 * Math.PI * p.f * t) * (0.5 + 0.5 * Math.sin(2 * Math.PI * p.rate * t + p.ph));
+    const e = Math.min(1, t / 2.5) * Math.min(1, (n - i) / (3 * SR));
+    out[i] = v * e * e;
+  }
+  return lowpass(out, 3500);
 }
 
 // ---------------------------------------------------------------- effects
@@ -338,6 +404,130 @@ function neonDrift() {
   return { name: 'asmr-neon-drift', L, bus: dry };
 }
 
+/**
+ * Regular mode: "Sketchbook", Graph Paper's livelier, longer sibling. 112 BPM, 32 bars of 4/4 (about 69 s), C major. Four
+ * sections: a verse, a lift, a section with a counter-melody and open hi-hats, and the verse again with a variation. Offbeat
+ * piano stabs, a bouncing eighth-note bass, claps on 2 and 4, and a catchy motif per section.
+ */
+function sketchbook() {
+  const bpm = 112, beat = 60 / bpm, bar = 4 * beat, bars = 32, L = bars * bar;
+  const total = L + TAIL;
+  const dry = new Bus(total, L), send = new Bus(total, L);
+  const swing = (b) => { const whole = Math.floor(b), frac = b - whole; return whole + (Math.abs(frac - 0.5) < 1e-6 ? 0.54 : frac); };
+  const at = (barNo, b) => barNo * bar + swing(b) * beat;
+  const C = [[60, 64, 67, 72], 36], G = [[59, 62, 67, 71], 43], Am = [[57, 60, 64, 69], 33], F = [[57, 60, 65, 69], 41], Em = [[55, 59, 64, 67], 40], Dm = [[57, 62, 65, 69], 38];
+  const sections = [
+    [C, G, Am, F, C, G, F, G],     // verse
+    [F, G, Em, Am, Dm, G, C, C],   // lift
+    [Am, F, C, G, Am, F, Dm, G],   // counter-melody
+    [C, G, Am, F, C, G, F, C],     // verse again, home
+  ];
+  const PENTA = [72, 74, 76, 79, 81, 84]; // C5 D5 E5 G5 A5 C6
+  sections.forEach((chords, sec) => {
+    // One motif per section (seeded), repeated with small changes each bar, so it's catchy rather than random.
+    const rand = rng(1120 + sec * 7);
+    const motif = Array.from({ length: 8 }, (_, e) => (rand() < (e % 2 ? 0.45 : 0.85) ? Math.floor(rand() * PENTA.length) : -1));
+    chords.forEach(([voicing, root], k) => {
+      const i = sec * 8 + k;
+      // Piano: a chord on 1, then bright offbeat stabs on the "and"s of 2 and 4 (the upbeat lift).
+      const stab = (b, dur, g) => voicing.forEach((m, v) => {
+        const sg = epiano(midi(m), dur * beat + 0.5, { tau: 0.7, index: 1.9 });
+        dry.add(sg, at(i, b), g * 0.22, (v - 1.5) * 0.25);
+        send.add(sg, at(i, b), g * 0.06, (v - 1.5) * 0.25);
+      });
+      stab(0, 1, 1); stab(1.5, 0.45, 0.75); stab(3.5, 0.45, 0.75);
+      // Bass: bouncing eighths, root-root-fifth-octave, an octave up for phone speakers.
+      [[0, 0, 0.55], [1, 0, 0.4], [1.5, 7, 0.4], [2, 0, 0.55], [3, 12, 0.4], [3.5, 7, 0.4]].forEach(([b, iv, d]) =>
+        dry.add(bass(midi(root + 12 + iv), d * beat), at(i, b), b % 2 ? 0.26 : 0.34));
+      // Drums: kick on 1 and 3 with a pickup, claps on 2 and 4, shaker on every eighth, open hats on the offbeats in section 3.
+      for (const kb of [0, 2, ...(k % 2 ? [3.5] : [])]) dry.add(kick(), at(i, kb), 0.28);
+      for (const sb of [1, 3]) { const sg = noiseHit('snap', i * 10 + sb); dry.add(sg, at(i, sb), 0.26, 0.1); send.add(sg, at(i, sb), 0.06); }
+      for (let e = 0; e < 8; e++) dry.add(noiseHit('shaker', 5000 + i * 100 + e), at(i, e / 2), e % 2 ? 0.08 : 0.05, 0.4);
+      if (sec === 2) for (const hb of [0.5, 1.5, 2.5, 3.5]) dry.add(noiseHit('hat', 7000 + i * 10 + hb * 2), at(i, hb), 0.07, -0.35);
+      // Melody: the section's motif, nudged onto chord tones on the strong eighths, a little different on odd bars.
+      const pcs = voicing.map((m) => m % 12);
+      motif.forEach((idx, e) => {
+        if (idx < 0) return;
+        let j = Math.min(PENTA.length - 1, idx + (k % 2 && e > 4 ? 1 : 0));
+        if (e % 2 === 0 && !pcs.includes(PENTA[j] % 12)) {
+          const near = PENTA.map((m, q) => (pcs.includes(m % 12) ? q : -1)).filter((q) => q >= 0);
+          if (near.length) j = near.reduce((a, q) => (Math.abs(q - j) < Math.abs(a - j) ? q : a), near[0]);
+        }
+        const sg = pluck(midi(PENTA[j]), 1.1, { bright: 0.6, decay: 0.996, seed: i * 8 + e, attack: 0.002 });
+        dry.add(sg, at(i, e / 2), 0.46, 0.2);
+        send.add(sg, at(i, e / 2), 0.15, 0.2);
+      });
+      // Counter-melody in section 3: a high pluck answering on the last eighth of each bar.
+      if (sec === 2) {
+        const sg = pluck(midi(voicing[2] + 12), 0.9, { bright: 0.7, seed: 900 + i, attack: 0.002 });
+        dry.add(sg, at(i, 3.5), 0.22, -0.4);
+        send.add(sg, at(i, 3.5), 0.1);
+      }
+    });
+  });
+  const wet = reverb(send, { room: 0.78, damp: 0.42 });
+  wet.mixInto(dry, 1);
+  return { name: 'sketchbook', L, bus: dry };
+}
+
+/**
+ * ASMR mode: "Felt Glass", minimalist ambient. About 60 BPM, 16 bars of 4/4 (64 s), simple consonant chords in C. Soft airy pads
+ * that cross-fade from chord to chord, gentle sustained tones, a very sparse felt-piano melody played a little loosely, a faint
+ * high shimmer and a soft low root. No drums, no beat, no bright bells, no builds: a continuous texture with no clear start or end,
+ * quiet and even, leaving the treble free for the game's glass clinks and chimes.
+ */
+function feltGlass() {
+  const bpm = 60, beat = 60 / bpm, bar = 4 * beat, bars = 16, L = bars * bar;
+  const total = L + TAIL + 2;
+  const dry = new Bus(total, L), send = new Bus(total, L);
+  // Two bars per chord; each voicing stays close to the last, so the changes are barely felt.
+  const chords = [
+    [[48, 55, 64, 67, 71], 36], // Cmaj7
+    [[45, 52, 60, 64, 67], 33], // Am7
+    [[41, 53, 57, 60, 64], 29], // Fmaj7
+    [[43, 50, 55, 62, 64], 31], // G6
+    [[48, 55, 62, 64, 67], 36], // Cadd9
+    [[40, 52, 55, 59, 64], 28], // Em7
+    [[41, 53, 57, 64, 67], 29], // Fmaj9 (no 3rd doubling)
+    [[43, 50, 55, 60, 62], 31], // Gsus
+  ];
+  const rand = rng(6060);
+  chords.forEach(([voicing, root], c) => {
+    const t0 = c * 2 * bar - 2.5; // each pad swells in ahead of its chord, under the one before
+    voicing.slice(1).forEach((m, k) => {
+      const sg = airPad(midi(m), 2 * bar + 6, { attack: 3.2, release: 3.8, seed: c * 5 + k });
+      dry.add(sg, t0, 0.2, (k - 1.5) * 0.45);
+      send.add(sg, t0, 0.2, (k - 1.5) * 0.45);
+    });
+    // A gentle low root, held, and a sustained middle tone that drifts across the change.
+    dry.add(sustain(midi(root + 12), 2 * bar + 5, { attack: 3, release: 3.5 }), t0, 0.065);
+    const held = sustain(midi(voicing[2] + 12), 2 * bar + 4, { attack: 3.5, release: 3.5, breathe: 0.2 });
+    dry.add(held, t0 + 1, 0.05, c % 2 ? 0.3 : -0.3);
+    send.add(held, t0 + 1, 0.06);
+    // Felt piano: one to three soft notes per chord, from its own tones, placed loosely (never on a strict grid).
+    const tones = voicing.slice(2).map((m) => m + 12).filter((m) => m >= 60 && m <= 79);
+    const count = 1 + Math.floor(rand() * 2.6);
+    for (let q = 0; q < count; q++) {
+      const m = tones[Math.floor(rand() * tones.length)];
+      const when = c * 2 * bar + (0.4 + q * 2.6 + rand() * 1.2) * beat;
+      const sg = feltPiano(midi(m), 5, { vel: 0.5 + rand() * 0.3, seed: c * 10 + q });
+      dry.add(sg, when, 0.42, rand() * 0.6 - 0.3);
+      send.add(sg, when, 0.3);
+      // Now and then a quiet fifth below, like a hand resting on the keys.
+      if (rand() < 0.3) { const lo = feltPiano(midi(m - 7), 5, { vel: 0.35, seed: c * 10 + q + 50 }); dry.add(lo, when + 0.06, 0.3); send.add(lo, when + 0.06, 0.2); }
+    }
+    // A faint shimmer over every other chord, high but dark, flickering slowly.
+    if (c % 2 === 1) {
+      const sg = shimmer(midi(voicing[3] + 24), 2 * bar + 3, { seed: c });
+      dry.add(sg, t0 + 1.5, 0.012, c % 4 === 1 ? 0.5 : -0.5);
+      send.add(sg, t0 + 1.5, 0.03);
+    }
+  });
+  const wet = reverb(send, { room: 0.93, damp: 0.5 });
+  wet.mixInto(dry, 1.3);
+  return { name: 'asmr-felt-glass', L, bus: dry };
+}
+
 // ---------------------------------------------------------------- output
 
 /** A gentle low cut (one-pole high-pass) on a bus, in place: rumble no phone speaker plays, which only eats headroom. */
@@ -374,7 +564,7 @@ function wav(l, r, gain, rate, channels) {
 }
 
 const only = process.argv[2];
-for (const make of [graphPaper, neonDrift]) {
+for (const make of [graphPaper, neonDrift, sketchbook, feltGlass]) {
   const { name, L, bus } = make();
   if (only && !name.includes(only)) continue;
   lowCut(bus, 70);
@@ -383,7 +573,7 @@ for (const make of [graphPaper, neonDrift]) {
   // (The game sets the music's overall volume itself.)
   let peak = 0, sum = 0;
   for (let i = 0; i < looped.n; i++) { peak = Math.max(peak, Math.abs(looped.l[i]), Math.abs(looped.r[i])); sum += looped.l[i] ** 2 + looped.r[i] ** 2; }
-  const target = name.startsWith('asmr') ? -20 : -18; // dBFS RMS
+  const target = name === 'asmr-felt-glass' ? -21 : name.startsWith('asmr') ? -20 : -18; // dBFS RMS: Felt Glass is the quietest
   const gain = Math.min(0.89 / peak, 10 ** (target / 20) / Math.sqrt(sum / (2 * looped.n)));
   const rms = Math.sqrt(sum / (2 * looped.n)) * gain;
   // Seam check: how big the step is from the loop's last sample to its first, against a typical sample-to-sample step.
