@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { trackFor, MUSIC_DUCKED, MUSIC_VOLUME } from './music';
-import { audioContext, buffer, latestGain, onRunning, play, resume, running } from './webAudio';
+import { audioContext, buffer, generation, latestGain, onRunning, play, resume, running } from './webAudio';
 
 /**
  * Web version of useLevelMusic.ts: loops the session's track through Web Audio while a level is open and music is on. One loop for
@@ -8,7 +8,9 @@ import { audioContext, buffer, latestGain, onRunning, play, resume, running } fr
  * again; when the last one lets go it stops after a short grace. Browsers only allow audio after a tap; any tap unlocks it
  * (webAudio.ts), so it starts as the level loads when you came from the level list, otherwise on the first tap.
  */
-let current: { stop: () => void; gain: GainNode | null } | null = null;
+/** The playing loop, and which audio context it's on (webAudio.ts replaces a stuck one; then the loop must start again). */
+let current: { stop: () => void; gain: GainNode | null; gen: number } | null = null;
+const live = () => !!current && current.gen === generation();
 let holders = 0;
 let stopTimer: ReturnType<typeof setTimeout> | undefined;
 let duckedNow = false;
@@ -26,11 +28,12 @@ export function useLevelMusic(levelId: string, on: boolean, duck = false) {
   duckedNow = duck;
 
   const start = useCallback(async () => {
-    if (!track || !holding.current || current || !running()) return;
+    if (!track || !holding.current || live() || !running()) return;
     const buf = await buffer(track);
-    if (buf && holding.current && !current) {
+    if (buf && holding.current && !live() && running()) {
+      current?.stop(); // a loop left on a replaced context
       const stop = play(buf, duckedNow ? MUSIC_DUCKED : MUSIC_VOLUME, true);
-      current = { stop, gain: latestGain() };
+      current = { stop, gain: latestGain(), gen: generation() };
     }
   }, [track]);
 
@@ -61,7 +64,7 @@ export function useLevelMusic(levelId: string, on: boolean, duck = false) {
   // Dip while the ball flies, with a short glide so it doesn't click.
   useEffect(() => {
     const ac = audioContext();
-    if (ac && current?.gain) current.gain.gain.setTargetAtTime(duck ? MUSIC_DUCKED : MUSIC_VOLUME, ac.currentTime, 0.08);
+    if (ac && live() && current?.gain) current.gain.gain.setTargetAtTime(duck ? MUSIC_DUCKED : MUSIC_VOLUME, ac.currentTime, 0.08);
   }, [duck]);
 
   return {

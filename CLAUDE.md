@@ -306,7 +306,9 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
   On web, audio starts on the first tap anywhere (browser rule; the tap that opens a level counts) and runs
   through one Web Audio context (`components/feedback/webAudio.ts`). Its tap listener stays for good: iPhone Safari pauses the
   context after a while of silence and only a real `touchend`/`click` can wake it (the game's Pressables don't count), so removing
-  the listener after the first unlock left re-opened levels silent until a reload. Sound plays with the iPhone silent
+  the listener after the first unlock left re-opened levels silent until a reload. After an interruption (a phone call) WebKit can leave the
+  context stuck for good, so a tap that finds it interrupted, or still paused after one resume, replaces it (`replace`, `generation`;
+  the music checks `generation()` and starts again on the new context). Sound plays with the iPhone silent
   switch on (native `playsInSilentMode`; web `navigator.audioSession.type = 'playback'`).
 
 ## Commands

@@ -4,6 +4,15 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.55.3
+
+- Fix: on iPhone Safari, the game could go silent after a phone call (or Siri, or another app playing audio) until the page
+  was reloaded.
+  - iOS interrupts the page's audio, and WebKit can leave it stuck: asking it to resume never works, whatever you tap.
+  - Now a tap that finds the audio interrupted replaces it with a fresh audio context at once, which is what the reload was doing.
+    So does a tap that finds it still paused after one try to resume (`webAudio.ts` `replace`, `generation`).
+  - The music starts again on the new one. Decoded sounds are kept.
+
 ## 0.55.2
 
 - Fix: on iPhone Safari, a level re-opened from the level list could be completely silent until the page was reloaded.
