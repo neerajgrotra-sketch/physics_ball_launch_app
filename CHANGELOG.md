@@ -4,6 +4,17 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.55.2
+
+- Fix: on iPhone Safari, a level re-opened from the level list could be completely silent until the page was reloaded.
+  - Safari pauses a page's audio after a while of silence, such as on the levels screen once the music has faded, and only lets it
+    resume inside a real tap. The game listened for one tap to unlock audio, then stopped listening, and the game's own buttons
+    don't count as such a tap. So the audio could never wake again.
+  - It now keeps listening, so every tap wakes the audio if it's paused (`webAudio.ts`). It also tries when the page comes back
+    into view, and whenever a sound is due.
+- Fix: re-opening a level whose last shot died replayed the shatter. It now plays only for a death that has just happened. Each
+  death is keyed by its own shot, so back-to-back deaths at the trail limit each shatter too.
+
 ## 0.55.1
 
 - Fix: in ASMR mode the launch and bounce sounds could run ahead of the picture. 0.55.0 drew a hidden, blurred flare on every bar

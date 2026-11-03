@@ -64,15 +64,17 @@ export function onRunning(cb: () => void): () => void {
 }
 
 // Any tap anywhere unlocks audio, including the tap that opens a level from the list, so its music can
-// start as the level loads. touchend and click count as user gestures on iPhone (pointerdown doesn't).
+// start as the level loads. touchend and click count as user gestures on iPhone (pointerdown doesn't, nor do the
+// pointer events behind the game's buttons).
+// The listener stays for good: iPhone Safari pauses ("suspended" or "interrupted") a page's audio after a while of
+// silence, e.g. on the levels screen once the music has faded, and it can only be woken from inside a real tap.
+// Removing the listener after the first unlock left a level re-opened later silent until the page was reloaded.
 if (typeof document !== 'undefined') {
-  const UNLOCK_EVENTS = ['touchend', 'click', 'keydown'] as const;
-  const unlock = () => {
-    resume().then(() => {
-      if (running()) for (const e of UNLOCK_EVENTS) document.removeEventListener(e, unlock, true);
-    });
-  };
-  for (const e of UNLOCK_EVENTS) document.addEventListener(e, unlock, true);
+  const WAKE_EVENTS = ['touchend', 'click', 'keydown'] as const;
+  const wake = () => { if (!running()) resume(); };
+  for (const e of WAKE_EVENTS) document.addEventListener(e, wake, true);
+  // Coming back to the page (another app, the lock screen): try to wake it straight away too.
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && ctx && !running()) ctx.resume().catch(() => {}); });
 }
 
 /** Decode a bundled sound (a require()d asset) once; null if it can't be loaded. */
@@ -92,7 +94,12 @@ export function buffer(module: number): Promise<AudioBuffer | null> {
 /** Play a decoded sound once (effects), or looped (music). `rate` > 1 raises the pitch. Returns a stop function. */
 export function play(buf: AudioBuffer, volume: number, loop = false, rate = 1): () => void {
   const ac = ctx;
-  if (!ac || ac.state !== 'running') return () => {};
+  if (!ac) return () => {};
+  if (ac.state !== 'running') {
+    // Paused by the browser: ask it to wake (this works when we're inside a tap, and is harmless otherwise). This sound is skipped.
+    ac.resume().catch(() => {});
+    return () => {};
+  }
   const src = ac.createBufferSource();
   const gain = ac.createGain();
   gain.gain.value = volume;

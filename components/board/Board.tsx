@@ -200,7 +200,11 @@ export function Board(props: BoardProps) {
   // The ball shatters where it was destroyed, in slow motion (game/shatter.ts), once per dead shot. Its last velocity (the path is
   // recorded at POINTS_PER_SECOND) sends the pieces on the way it was going.
   const burst = useSharedValue(1);
-  const burstKey = deadEnd ? trails.length : 0;
+  // Keyed by the dead shot's own path, so each death plays once (even when the trail count stays at its limit), and not for a
+  // dead trail the board opened with (a level re-opened on its saved board replayed the shatter every time).
+  const deadPath = deadEnd ? last.path : null;
+  const openedWith = useRef(deadPath);
+  const burstKey = deadPath && deadPath !== openedWith.current ? deadPath : null;
   // Only in the drawing while it plays: its ~40 pieces stayed drawn, invisibly, on every frame until the next shot.
   const [shattering, setShattering] = useState(false);
   useEffect(() => {
@@ -348,7 +352,7 @@ export function Board(props: BoardProps) {
                 ))}
                 {kick && <KickRing t={kick.t} x={kick.x} y={kick.y} />}
                 {warp && <KickRing t={warp.t} x={warp.x} y={warp.y} />}
-                {deadEnd && shattering && <Shatter key={burstKey} t={burst} x={deadEnd[0]} y={deadEnd[1]} vx={deadVel[0]} vy={deadVel[1]} c={c} asmr={asmr} />}
+                {deadEnd && shattering && <Shatter key={trails.length} t={burst} x={deadEnd[0]} y={deadEnd[1]} vx={deadVel[0]} vy={deadVel[1]} c={c} asmr={asmr} />}
 
                 {/* glass */}
                 {asmr && (
