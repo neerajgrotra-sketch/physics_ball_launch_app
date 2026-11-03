@@ -269,7 +269,10 @@ runs the path, the glass fills, spirograph mandalas, ripples, a light column, fi
 Blocks are violet neon glass in ASMR mode (`NEON_BLOCK`), and the bar or block a bounce strikes flares up (`hitTarget`, the flash's
 `what`, `Board`'s `HitFlare`). Guns get a neon edge in ASMR mode (`GunArt`'s `glow`: dark guns vanished on the black board). Every launch, in any mode, plays the
 muzzle blast (`game/muzzle.ts`: recoil, flash, shock ring, sparks, smoke along the aim; `LevelGame`'s `blast`, `launched(angle)`) and the
-`launch.wav` boom. Keep its many small pieces off `BlurMask` (plain translucent halos): blur on dozens of pieces is slow on phones. A look and a sound only, never the physics. The share poster keeps the graph-paper colours.
+`launch.wav` boom. Don't add a `BlurMask` to anything drawn every frame, and don't keep effects mounted (hidden at opacity 0) for later: both slow
+phone browsers until sounds run ahead of the picture (0.55.0). Flare only what was struck (`struck`), unmount finished effects
+(the shatter). To compare speed, build in a clean checkout (`git worktree`): the main folder's build is split differently and
+measures ~3× slower. Keep its many small pieces off `BlurMask` (plain translucent halos): blur on dozens of pieces is slow on phones. A look and a sound only, never the physics. The share poster keeps the graph-paper colours.
 
 ## Launch and intro
 

@@ -344,6 +344,8 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   const kickY = useSharedValue(0);
   // The launch blast (game/muzzle.ts): the gun kicks and the muzzle flashes, sparks and smokes, along the angle it fired at.
   const blastT = useSharedValue(1);
+  // The blast stays mounted and draws without blur: mounting it at the moment of launch stalled the first shot (the boom played before
+  // the ball moved), and blurs redrawn every frame slowed phones enough to put sounds out of step with the picture.
   const [blastAngle, setBlastAngle] = useState(angle);
   const launched = (a: number) => {
     charge.value = 0;
@@ -359,6 +361,8 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   const flashX = useSharedValue(0);
   const flashY = useSharedValue(0);
   const flashWhat = useSharedValue(-1);
+  /** The bar or block the last bounce struck (game/asmr.ts hitTarget): the board draws a flare on that one alone. */
+  const [struck, setStruck] = useState(-1);
   const [asmr] = useAsmr();
   const warpX = useSharedValue(0);
   const warpY = useSharedValue(0);
@@ -396,7 +400,9 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       const p = res.path[Math.min(h.i, res.path.length - 1)];
       flashX.value = p[0];
       flashY.value = p[1];
-      flashWhat.value = hitTarget(level, h, [p[0], p[1]]); // the bar or block struck lights up too
+      const what = hitTarget(level, h, [p[0], p[1]]); // the bar or block struck lights up too
+      flashWhat.value = what;
+      if (what >= 0) setStruck(what);
       flash.value = 0;
       flash.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.cubic) });
     }
@@ -988,6 +994,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
           kick={{ t: kick, x: kickX, y: kickY }}
           flash={{ t: flash, x: flashX, y: flashY, what: flashWhat }}
           blast={{ t: blastT, angle: blastAngle }}
+          struck={struck}
           done={done}
           onTouch={onTouch}
           snapshot={snapshot}

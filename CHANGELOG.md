@@ -4,6 +4,16 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.55.1
+
+- Fix: in ASMR mode the launch and bounce sounds could run ahead of the picture. 0.55.0 drew a hidden, blurred flare on every bar
+  and block on every frame (waiting to be lit), and a blurred glow under every block. Blur is the costliest thing to draw in a phone
+  browser, so frames slowed, and the sounds, played at the exact moment of each bounce, got ahead.
+  - A flare is now drawn only on the bar or block just struck (`struck`), with plain glow bands instead of a blur.
+  - Block glows are two plain bands.
+  - The hazard shatter is taken off the board once it has played: its ~40 pieces had stayed drawn until the next shot.
+  - Everything else is as in 0.54.0.
+
 ## 0.55.0
 
 - ASMR mode:

@@ -74,6 +74,8 @@ export interface BoardProps {
   flash?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number>; /** what was struck (game/asmr.ts hitTarget) */ what?: SharedValue<number> };
   /** The latest launch, for the gun's kick and the muzzle blast (game/muzzle.ts): `t` runs 0 → 1 over BLAST_MS, aimed at `angle`. */
   blast?: { t: SharedValue<number>; angle: number };
+  /** ASMR mode: the bar or block the last bounce struck (game/asmr.ts hitTarget), the only one given a flare. */
+  struck?: number;
   /** The latest trip through a portal: `t` runs 0 → 1 for the ring where the ball comes out. */
   warp?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
   /** The level is won: the ball rests where the last trail ended. */
@@ -94,7 +96,7 @@ const condensed500 = require('@expo-google-fonts/barlow-condensed/500Medium/Barl
  * Pure rendering: everything it shows comes from props (and the player's ball skin, from Settings). Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, hud = true, barLabels = true, marks = [], flight = null, charge, dropZone = 'off', celebrate = null, kick, flash, blast, warp, done = false, onTouch, snapshot } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, hud = true, barLabels = true, marks = [], flight = null, charge, dropZone = 'off', celebrate = null, kick, flash, blast, struck = -1, warp, done = false, onTouch, snapshot } = props;
   // ASMR mode (game/asmr.ts): neon glow under the walls, glass, bars and ball, a comet tail on the flight, a ring at each bounce.
   const [asmr] = useAsmr();
   const c = useColors();
@@ -199,10 +201,15 @@ export function Board(props: BoardProps) {
   // recorded at POINTS_PER_SECOND) sends the pieces on the way it was going.
   const burst = useSharedValue(1);
   const burstKey = deadEnd ? trails.length : 0;
+  // Only in the drawing while it plays: its ~40 pieces stayed drawn, invisibly, on every frame until the next shot.
+  const [shattering, setShattering] = useState(false);
   useEffect(() => {
     if (!burstKey) return;
     burst.value = 0;
     burst.value = withTiming(1, { duration: SHATTER_MS, easing: Easing.linear });
+    setShattering(true);
+    const t = setTimeout(() => setShattering(false), SHATTER_MS + 50);
+    return () => clearTimeout(t);
   }, [burstKey, burst]);
   const deadVel = useMemo<[number, number]>(() => {
     const p = last?.path;
@@ -305,9 +312,10 @@ export function Board(props: BoardProps) {
                 {blocks.map((b, i) => asmr ? (
                   // ASMR mode: blocks are violet neon glass, not white slabs; one the ball strikes flares up.
                   <Group key={`blk${i}`}>
-                    <Path path={b} color={NEON_BLOCK} style="stroke" strokeWidth={9} strokeJoin="round" opacity={0.45}><BlurMask blur={7} style="normal" /></Path>
+                    <Path path={b} color={NEON_BLOCK} style="stroke" strokeWidth={14} strokeJoin="round" opacity={0.14} />
+                    <Path path={b} color={NEON_BLOCK} style="stroke" strokeWidth={7} strokeJoin="round" opacity={0.3} />
                     <Path path={b} color={NEON_BLOCK} opacity={0.16} />
-                    {flash?.what && <HitFlare path={b} t={flash.t} what={flash.what} me={BLOCK_HIT + i} color={NEON_BLOCK} fill />}
+                    {flash?.what && struck === BLOCK_HIT + i && <HitFlare path={b} t={flash.t} what={flash.what} me={BLOCK_HIT + i} color={NEON_BLOCK} fill />}
                     <Path path={b} color={NEON_BLOCK} style="stroke" strokeWidth={2.2} strokeJoin="round" />
                   </Group>
                 ) : (
@@ -340,7 +348,7 @@ export function Board(props: BoardProps) {
                 ))}
                 {kick && <KickRing t={kick.t} x={kick.x} y={kick.y} />}
                 {warp && <KickRing t={warp.t} x={warp.x} y={warp.y} />}
-                {deadEnd && <Shatter key={burstKey} t={burst} x={deadEnd[0]} y={deadEnd[1]} vx={deadVel[0]} vy={deadVel[1]} c={c} asmr={asmr} />}
+                {deadEnd && shattering && <Shatter key={burstKey} t={burst} x={deadEnd[0]} y={deadEnd[1]} vx={deadVel[0]} vy={deadVel[1]} c={c} asmr={asmr} />}
 
                 {/* glass */}
                 {asmr && (
@@ -374,7 +382,7 @@ export function Board(props: BoardProps) {
                       )}
                       {(p.restitution ?? 0) > 1 && <Path path={line(x1, y1, x2, y2)} color={c.ink} style="stroke" strokeWidth={10} strokeCap="round" />}
                       <Path path={line(x1, y1, x2, y2)} color={illegal[i] ? c.red : (p.restitution ?? 0) > 1 ? '#ffb020' : c.pencil} style="stroke" strokeWidth={6} strokeCap="round" />
-                      {asmr && flash?.what && <HitFlare path={line(x1, y1, x2, y2)} t={flash.t} what={flash.what} me={i} color={(p.restitution ?? 0) > 1 ? '#ffb020' : c.pencil} />}
+                      {asmr && flash?.what && struck === i && <HitFlare path={line(x1, y1, x2, y2)} t={flash.t} what={flash.what} me={i} color={(p.restitution ?? 0) > 1 ? '#ffb020' : c.pencil} />}
                     </Group>
                   );
                 })}
@@ -941,12 +949,14 @@ const NEON_BLOCK = '#b18cff';
  */
 function HitFlare({ path, t, what, me, color, fill = false }: { path: SkPath; t: SharedValue<number>; what: SharedValue<number>; me: number; color: string; fill?: boolean }) {
   const o = useDerivedValue(() => (what.value === me && t.value < 1 ? (1 - t.value) ** 1.5 : 0));
-  const glowW = useDerivedValue(() => 10 + 14 * (1 - t.value));
   const coreO = useDerivedValue(() => o.value * 0.9);
   const fillO = useDerivedValue(() => o.value * 0.45);
+  // Plain bands, no blur: a blur here (and one hidden on every bar and block, waiting to be lit) slowed frames on phones enough to
+  // put the bounce sounds out of step with the picture.
   return (
     <Group opacity={o}>
-      <Path path={path} color={color} style="stroke" strokeWidth={glowW} strokeCap="round" strokeJoin="round" opacity={0.7}><BlurMask blur={9} style="normal" /></Path>
+      <Path path={path} color={color} style="stroke" strokeWidth={22} strokeCap="round" strokeJoin="round" opacity={0.18} />
+      <Path path={path} color={color} style="stroke" strokeWidth={12} strokeCap="round" strokeJoin="round" opacity={0.35} />
       {fill && <Path path={path} color={color} opacity={fillO} />}
       <Path path={path} color="#ffffff" style="stroke" strokeWidth={fill ? 2.5 : 3.5} strokeCap="round" strokeJoin="round" opacity={coreO} />
     </Group>
