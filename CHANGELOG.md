@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.58.1
+
+- Settings scrolls properly on phones. The sheet's scroll view sat inside two `Pressable`s, the backdrop (tap to close) and an
+  empty one that kept taps on the sheet from closing it. On iPhone they competed with the scroll view for the finger, so the
+  sheet scrolled only for a while after tapping a control, then stuck again. The backdrop is now a layer behind the sheet, and
+  the sheet is a plain view. The shop and the world info cards had the same structure and get the same fix.
+
 ## 0.58.0
 
 - Two more tracks of the game's own music (`scripts/make-music.mjs`), so each mode now takes turns between three:

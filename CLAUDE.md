@@ -244,6 +244,8 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   through a challenge (`WEB_GUEST_KEY`, set only if it had no progress) is redirected from the levels screen to /get (`/?full=1` lifts it). The tour (`TourGate`) skips /challenge.
   Link previews: Open Graph tags in `public/index.html` with `public/og.png` (`NODE_PATH=$(npm root -g) node scripts/make-og.mjs`);
   their URLs are absolute, so change them with `SITE_URL` if the address changes. `SHARE_LINK` is `SITE_URL` (the public Vercel address) until a store link exists.
+- **Sheets** (settings, shop, world info): the backdrop is a full-size `Pressable` *behind* the sheet, never a `Pressable` wrapped
+  round it. A Pressable round a `ScrollView` fights it for the finger on iPhone, so the sheet scrolled only now and then (0.58.1).
 - **Level header:** ⚙ (settings sheet: music, sound effects, vibration, version) and ••• (back to the levels, also from a deep link)
   on the left, level name in the middle, ‹ › on the right. No back arrow.
 - Level locks are on (`LOCK_LEVELS`): a level opens when the one before is won, and level 2 once the tutorial is finished or skipped

@@ -25,8 +25,11 @@ export function WorldInfo({ world, onClose }: { world: World | null; onClose: ()
 
   return (
     <Modal transparent visible animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close world info">
-        <Pressable style={[styles.sheet, { backgroundColor: c.paper, borderColor: c.line }]} onPress={() => {}}>
+      {/* The backdrop is a layer behind the sheet, not round it: a Pressable round the sheet's ScrollView fought it for the
+          finger on iPhone, so the sheet only scrolled now and then (it came back for a while after a tap on a control). */}
+      <View style={styles.backdrop}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close world info" />
+        <View style={[styles.sheet, { backgroundColor: c.paper, borderColor: c.line }]}>
           <ScrollView contentContainerStyle={styles.body}>
             <View style={[styles.banner, { backgroundColor: c.pencil }]}>
               <Text style={[styles.kicker, { color: c.paper }]}>WORLD {n}</Text>
@@ -81,8 +84,8 @@ export function WorldInfo({ world, onClose }: { world: World | null; onClose: ()
               <Text style={styles.goText}>{stars > 0 ? 'Keep going' : "Let's play"}</Text>
             </Pressable>
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }

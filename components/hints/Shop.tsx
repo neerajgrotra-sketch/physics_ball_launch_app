@@ -22,8 +22,11 @@ export function Shop({ visible, onClose }: { visible: boolean; onClose: () => vo
   useEffect(() => { if (!visible) setNotActive(0); }, [visible]);
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close the shop">
-        <Pressable style={[styles.sheet, { backgroundColor: c.paper, borderColor: c.line }]} onPress={() => {}}>
+      {/* The backdrop is a layer behind the sheet, not round it: a Pressable round the sheet's ScrollView fought it for the
+          finger on iPhone, so the sheet only scrolled now and then (it came back for a while after a tap on a control). */}
+      <View style={styles.backdrop}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close the shop" />
+        <View style={[styles.sheet, { backgroundColor: c.paper, borderColor: c.line }]}>
           <ScrollView contentContainerStyle={styles.body}>
             <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" hitSlop={10} style={styles.close}>
               <Text style={[styles.closeText, { color: c.muted }]}>✕</Text>
@@ -69,8 +72,8 @@ export function Shop({ visible, onClose }: { visible: boolean; onClose: () => vo
               Free hints too: a daily gift, +1 for each level's first three-star win, and +5 for finishing a world.
             </Text>
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }

@@ -36,8 +36,11 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
 
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close settings">
-        <Pressable style={[styles.sheet, { backgroundColor: c.paper, borderColor: c.line }]} onPress={() => {}}>
+      {/* The backdrop is a layer behind the sheet, not round it: a Pressable round the sheet's ScrollView fought it for the
+          finger on iPhone, so the sheet only scrolled now and then (it came back for a while after a tap on a control). */}
+      <View style={styles.backdrop}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close settings" />
+        <View style={[styles.sheet, { backgroundColor: c.paper, borderColor: c.line }]}>
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             <Text style={[styles.title, { color: c.ink }]}>Settings</Text>
             <View style={[styles.row, { borderColor: c.line }]}>
@@ -174,8 +177,8 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
             </Pressable>
             <Text style={[styles.version, { color: c.muted }]}>{VERSION_LABEL}</Text>
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }
