@@ -4,6 +4,16 @@ Agreed work that isn't built yet, roughly in priority order. Move an item to CHA
 
 ## Next up
 
+- **Daily tracks by progress** (user feedback: the daily should fit the level the player is at; discussed, agreed to park).
+  - Proposal: three tracks a day, Rookie (Worlds 1–2: bars, blocks), Pro (adds hazards and springs) and Expert (everything,
+    portals too). Each track uses only the mechanics its players have met, and still rises Monday to Sunday.
+  - A player gets the track for the furthest world reached. Everyone on a track shares the puzzle, so sharing and challenges stay
+    comparable ("Daily #8 · Pro").
+  - Streak, stamps and rewards are unchanged: a stamp is a stamp on any track.
+  - Work: `tools/make-dailies.ts` makes three puzzles per day (about 3× the generation time). `dailyFor` and the card pick the
+    track. Sharing and the stamp card name it.
+  - Open questions: three tracks or two; whether a player may choose a harder track ("Try Expert"; suggested yes, never forced);
+    whether harder tracks earn more (suggested no). Later, tune the boundaries from play data (the measurement work).
 - **Stamp book** (step 2 of the daily stamp card; step 1 shipped in 0.54.0): tapping the stamp row opens a book of every week
   played, newest first, with the current and best streak, full weeks and total stamps; a "share my week" grid in the Wordle style
   (`★★★ ★★ ✓ ✗ …`) beside the daily's Share; and a holographic stamp for a perfect week (seven three-star days).
