@@ -4,6 +4,15 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.55.0
+
+- ASMR mode:
+  - **Blocks are violet neon glass** instead of white slabs: a dark see-through fill with a glowing violet edge, matching the
+    cyan bars and the pink glass.
+  - **The bar or block the ball strikes lights up**, like the spring pads: a burst of glow round it and a white-hot core,
+    fading over the bounce. A block also brightens inside. `game/asmr.ts` `hitTarget` names the bar a hit struck, or the
+    block nearest the ball; `Board`'s `HitFlare` draws it.
+
 ## 0.54.0
 
 - The daily card has a stamp card for the week, Monday to Sunday (`game/daily.ts` `weekSlots`, `components/daily/StampRow.tsx`).

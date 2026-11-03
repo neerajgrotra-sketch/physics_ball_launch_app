@@ -22,6 +22,7 @@ import { useBallSkin } from '../settings/BallSkin';
 import { useAsmr } from '../settings/Theme';
 import { leverLine, moveArms, trashObstacles, trashSpot, type End } from '../../game/pieces';
 import { aimPreview } from '../../game/aim';
+import { BLOCK_HIT } from '../../game/asmr';
 import { blastPuffs, blastSparks, muzzle, recoilAt, type Puff as SmokeCloud, type Spark as BlastSpark } from '../../game/muzzle';
 import { SHARD_GRAVITY, SHATTER_MS, SLOW, SHATTER_TIME, shatterPieces, type Ember, type Puff, type Shard } from '../../game/shatter';
 import { FUSE_SHARE, confettiPieces, fuseGeometry } from '../../game/celebration';
@@ -70,7 +71,7 @@ export interface BoardProps {
   /** The latest pad kick: `t` runs 0 → 1 for the burst ring and the pad's flash, at (x, y). */
   kick?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
   /** ASMR mode: the latest bounce, for a soft ring of light where it happened (`t` runs 0 → 1). */
-  flash?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
+  flash?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number>; /** what was struck (game/asmr.ts hitTarget) */ what?: SharedValue<number> };
   /** The latest launch, for the gun's kick and the muzzle blast (game/muzzle.ts): `t` runs 0 → 1 over BLAST_MS, aimed at `angle`. */
   blast?: { t: SharedValue<number>; angle: number };
   /** The latest trip through a portal: `t` runs 0 → 1 for the ring where the ball comes out. */
@@ -301,7 +302,15 @@ export function Board(props: BoardProps) {
                     <Path path={h.body} color={c.paper} style="stroke" strokeWidth={1.2} opacity={0.5} />
                   </Group>
                 ))}
-                {blocks.map((b, i) => (
+                {blocks.map((b, i) => asmr ? (
+                  // ASMR mode: blocks are violet neon glass, not white slabs; one the ball strikes flares up.
+                  <Group key={`blk${i}`}>
+                    <Path path={b} color={NEON_BLOCK} style="stroke" strokeWidth={9} strokeJoin="round" opacity={0.45}><BlurMask blur={7} style="normal" /></Path>
+                    <Path path={b} color={NEON_BLOCK} opacity={0.16} />
+                    {flash?.what && <HitFlare path={b} t={flash.t} what={flash.what} me={BLOCK_HIT + i} color={NEON_BLOCK} fill />}
+                    <Path path={b} color={NEON_BLOCK} style="stroke" strokeWidth={2.2} strokeJoin="round" />
+                  </Group>
+                ) : (
                   <Group key={`blk${i}`}>
                     <Path path={b} color={c.steel} />
                     <Path path={b} color={c.ink} style="stroke" strokeWidth={2.5} strokeJoin="round" />
@@ -365,6 +374,7 @@ export function Board(props: BoardProps) {
                       )}
                       {(p.restitution ?? 0) > 1 && <Path path={line(x1, y1, x2, y2)} color={c.ink} style="stroke" strokeWidth={10} strokeCap="round" />}
                       <Path path={line(x1, y1, x2, y2)} color={illegal[i] ? c.red : (p.restitution ?? 0) > 1 ? '#ffb020' : c.pencil} style="stroke" strokeWidth={6} strokeCap="round" />
+                      {asmr && flash?.what && <HitFlare path={line(x1, y1, x2, y2)} t={flash.t} what={flash.what} me={i} color={(p.restitution ?? 0) > 1 ? '#ffb020' : c.pencil} />}
                     </Group>
                   );
                 })}
@@ -918,6 +928,27 @@ function BounceFlash({ t, x, y, color }: { t: SharedValue<number>; x: SharedValu
       <Circle cx={x} cy={y} r={7} color="#ffffff" opacity={core}>
         <BlurMask blur={5} style="normal" />
       </Circle>
+    </Group>
+  );
+}
+
+/** ASMR mode's blocks: violet neon glass (the bars are cyan, the glass pink). */
+const NEON_BLOCK = '#b18cff';
+
+/**
+ * ASMR mode: the bar or block the ball just struck (`what`, game/asmr.ts hitTarget, equal to `me`) flares up: a burst of glow round
+ * it and a white-hot core (a block also brightens inside), fading as the bounce's flash runs out.
+ */
+function HitFlare({ path, t, what, me, color, fill = false }: { path: SkPath; t: SharedValue<number>; what: SharedValue<number>; me: number; color: string; fill?: boolean }) {
+  const o = useDerivedValue(() => (what.value === me && t.value < 1 ? (1 - t.value) ** 1.5 : 0));
+  const glowW = useDerivedValue(() => 10 + 14 * (1 - t.value));
+  const coreO = useDerivedValue(() => o.value * 0.9);
+  const fillO = useDerivedValue(() => o.value * 0.45);
+  return (
+    <Group opacity={o}>
+      <Path path={path} color={color} style="stroke" strokeWidth={glowW} strokeCap="round" strokeJoin="round" opacity={0.7}><BlurMask blur={9} style="normal" /></Path>
+      {fill && <Path path={path} color={color} opacity={fillO} />}
+      <Path path={path} color="#ffffff" style="stroke" strokeWidth={fill ? 2.5 : 3.5} strokeCap="round" strokeJoin="round" opacity={coreO} />
     </Group>
   );
 }

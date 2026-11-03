@@ -37,6 +37,7 @@ import {
   OPEN_DRAG, TRASH_GRAB, trashObstacles, atSolution, hintSlots, leverEnd, shotPieces, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
 import { BLAST_MS } from '../../game/muzzle';
+import { hitTarget } from '../../game/asmr';
 import { BLOOM_MS, bloomFor } from '../../game/bloom';
 import { CARD_PAUSE_MS, CELEBRATION_MS, burstFor, cardPlace } from '../../game/celebration';
 import { badgeBox, badgeCovers, counterSpot } from '../../game/counter';
@@ -357,6 +358,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   const flash = useSharedValue(1);
   const flashX = useSharedValue(0);
   const flashY = useSharedValue(0);
+  const flashWhat = useSharedValue(-1);
   const [asmr] = useAsmr();
   const warpX = useSharedValue(0);
   const warpY = useSharedValue(0);
@@ -394,6 +396,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       const p = res.path[Math.min(h.i, res.path.length - 1)];
       flashX.value = p[0];
       flashY.value = p[1];
+      flashWhat.value = hitTarget(level, h, [p[0], p[1]]); // the bar or block struck lights up too
       flash.value = 0;
       flash.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.cubic) });
     }
@@ -983,7 +986,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
           celebrate={cele ? { t: celeT, ...cele } : null}
           warp={{ t: warp, x: warpX, y: warpY }}
           kick={{ t: kick, x: kickX, y: kickY }}
-          flash={{ t: flash, x: flashX, y: flashY }}
+          flash={{ t: flash, x: flashX, y: flashY, what: flashWhat }}
           blast={{ t: blastT, angle: blastAngle }}
           done={done}
           onTouch={onTouch}

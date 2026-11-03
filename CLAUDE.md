@@ -266,7 +266,8 @@ bars, ball and newest trail, a `CometTail` on the flight and a `BounceFlash` rin
 `feedbackPrefs.asmr` swaps each bounce for `chime.wav` stepped along `asmrStep` (major pentatonic, up then down) and the landing
 for `bloom.wav`. Its win is the light bloom (`game/bloom.ts` `BLOOM_MS`, phases in `BLOOM_PHASES`, `Board`'s `Bloom`: the light
 runs the path, the glass fills, spirograph mandalas, ripples, a light column, fireflies spiralling in); the win card waits for it.
-Guns get a neon edge in ASMR mode (`GunArt`'s `glow`: dark guns vanished on the black board). Every launch, in any mode, plays the
+Blocks are violet neon glass in ASMR mode (`NEON_BLOCK`), and the bar or block a bounce strikes flares up (`hitTarget`, the flash's
+`what`, `Board`'s `HitFlare`). Guns get a neon edge in ASMR mode (`GunArt`'s `glow`: dark guns vanished on the black board). Every launch, in any mode, plays the
 muzzle blast (`game/muzzle.ts`: recoil, flash, shock ring, sparks, smoke along the aim; `LevelGame`'s `blast`, `launched(angle)`) and the
 `launch.wav` boom. Keep its many small pieces off `BlurMask` (plain translucent halos): blur on dozens of pieces is slow on phones. A look and a sound only, never the physics. The share poster keeps the graph-paper colours.
 
