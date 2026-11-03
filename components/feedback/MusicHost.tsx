@@ -4,6 +4,7 @@ import { localSound, setAudioModeOnce, sourceOf } from './localAudio';
 import { warmSounds } from './useFeedback';
 import { MUSIC_DUCKED, MUSIC_VOLUME, trackFor } from './music';
 import { musicDemand, onMusicDemand } from './musicDemand';
+import { useAsmr } from '../settings/Theme';
 
 /**
  * The app's one music player, mounted once in the root layout and never again, so the music runs on across levels. React owns
@@ -15,15 +16,19 @@ import { musicDemand, onMusicDemand } from './musicDemand';
 export function MusicHost() {
   // The track is played from a file on the phone (localAudio.ts): in Expo Go the bundled one is a stream from the PC, which stalled.
   // No player exists until that file is ready; the music simply starts a moment later. The effects are got ready at the same time.
+  // ASMR mode has its own track ("Neon Drift"); toggling it swaps the player for that mode's track.
+  const [asmr] = useAsmr();
   const [track, setTrack] = useState<string | number | null>(null);
   useEffect(() => {
-    let live = true;
     setAudioModeOnce();
     warmSounds().catch(() => {});
-    localSound(trackFor('')).then((f) => { if (live) setTrack(f); });
-    return () => { live = false; };
   }, []);
-  return track == null ? null : <MusicPlayer source={sourceOf(track)} />;
+  useEffect(() => {
+    let live = true;
+    localSound(trackFor('', asmr).src).then((f) => { if (live) setTrack(f); });
+    return () => { live = false; };
+  }, [asmr]);
+  return track == null ? null : <MusicPlayer key={String(track)} source={sourceOf(track)} />;
 }
 
 /** The player itself, made once the track is a file on the phone. */

@@ -4,6 +4,21 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.56.0
+
+- The game's own music, composed and synthesized by code (`scripts/make-music.mjs`), so there's nothing to license. It
+  replaces the Suno track.
+  - **Graph Paper** (regular mode): 96 BPM, C major. A plucked melody, an electric piano, a round bass and soft brushed drums.
+  - **Neon Drift** (ASMR mode): 70 BPM, C major pentatonic, the same notes as the ASMR bounce chimes. Pads, a breathing drone, a
+    slow bell arpeggio with ping-pong echoes, sparkles and a faint tape hiss.
+  - Both are exact loops. Echo and reverb tails are wrapped onto the start and the drone is tuned to whole cycles per loop, so
+    the seam has no gap or click.
+  - Mixed for phone speakers: no deep rumble, and the calm track sits about 2 dB under the regular one.
+- ASMR mode plays Neon Drift and regular mode plays Graph Paper. Toggling the mode fades from one to the other.
+- Web: a track's exact loop length comes with it (`<name>.json`). The player books each repeat on the audio clock and lets the
+  tail overlap, so an MP3's encoder padding can't make a gap. Phones loop a seamless WAV (`assets/music/loops`).
+- `scripts/make-playlist.mjs` now writes `Track` entries (file, loop length, ASMR or not); `music.ts` `trackFor(levelId, asmr)`.
+
 ## 0.55.3
 
 - Fix: on iPhone Safari, the game could go silent after a phone call (or Siri, or another app playing audio) until the page

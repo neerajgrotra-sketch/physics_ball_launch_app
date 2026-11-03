@@ -292,7 +292,12 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
 - Version: `package.json` and `app.json` (`expo.version`) stay equal; record changes in `CHANGELOG.md`.
   Store builds bump `expo.ios.buildNumber` / `expo.android.versionCode`. The level list shows the version
   and the git commit (`components/version.ts`; Vercel passes `EXPO_PUBLIC_COMMIT`).
-- Music: a session playlist (`components/feedback/music.ts`): one track is picked at app start and plays on every level. The playlist
+- Music is the game's own, composed in code by `scripts/make-music.mjs` (nothing licensed): "Graph Paper" for regular mode and
+  "Neon Drift" (`asmr-` file names) for ASMR mode, exact seamless loops with their tails wrapped. Re-run it to change the music
+  (`node scripts/make-music.mjs [name]`); it writes the MP3, the phones' WAV loop and a `<name>.json` loop length. The web player books
+  a repeat every loop length on the audio clock (`useLevelMusic.web.ts` `startLoop`) so MP3 padding can't gap the seam.
+- Music: a session playlist (`components/feedback/music.ts`): one track per mode is picked at app start and plays on every level
+  (`trackFor(levelId, asmr)`; toggling ASMR mode swaps it). The playlist
   (`playlist.ts`) is generated from every MP3/M4A in `assets/music` by `scripts/make-playlist.mjs`, which runs before each web build;
   to add music, add a file there. Phones play seamless WAV copies (`assets/music/loops`, `playlist.native.ts`, made by the same script
   with ffmpeg: an MP3's encoder padding made the iOS loop hiccup); the web keeps the MP3. It starts when a level opens.
