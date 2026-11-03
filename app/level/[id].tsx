@@ -39,7 +39,7 @@ import {
 import { BLAST_MS } from '../../game/muzzle';
 import { hitTarget } from '../../game/asmr';
 import { BLOOM_MS, bloomFor } from '../../game/bloom';
-import { CARD_PAUSE_MS, CELEBRATION_MS, burstFor, cardPlace } from '../../game/celebration';
+import { CARD_PAUSE_MS, CELEBRATION_MS, FUSE_SHARE, burstFor, cardPlace, fuseTicks } from '../../game/celebration';
 import { badgeBox, badgeCovers, counterSpot } from '../../game/counter';
 import { emptyHistory, record, undo as undoHistory, type History } from '../../game/history';
 import { skipNotice, winText } from '../../game/progress';
@@ -318,7 +318,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     setCele(null);
     setCardReady(true);
   };
-  const celebrate = (res: { path: Vec[]; jumps: number[]; bounces: number }, stars: number, assisted: boolean) => {
+  const celebrate = (res: { path: Vec[]; jumps: number[]; hits: Hit[]; bounces: number }, stars: number, assisted: boolean) => {
     stopCelebration();
     const burst = burstFor(stars, assisted);
     // ASMR mode plays the longer light bloom (game/bloom.ts) instead of the fuse and confetti.
@@ -327,8 +327,11 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     setCardReady(false);
     celeT.value = 0;
     celeT.value = withTiming(1, { duration: dur, easing: Easing.linear });
+    // Normal mode: the fuse fizzes as the spark runs the path, with a tick at each bounce it passes (the bloom's sound has its own run).
+    if (!asmr) feedback.fuse();
     celeTimers.current = [
-      setTimeout(() => feedback.burst(), dur * 0.6),
+      ...(asmr ? [] : fuseTicks(res.path, res.jumps, res.hits).map((f, k) => setTimeout(() => feedback.spark(k), f * FUSE_SHARE * dur))),
+      setTimeout(() => feedback.burst(), dur * FUSE_SHARE),
       // The card only comes once the whole celebration has played out (players found it cut the burst short).
       setTimeout(() => { setCele(null); setCardReady(true); }, dur + CARD_PAUSE_MS),
     ];

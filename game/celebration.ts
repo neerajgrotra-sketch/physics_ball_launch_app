@@ -1,4 +1,4 @@
-import type { Vec } from '../physics';
+import type { Hit, Vec } from '../physics';
 
 // The win celebration, "light the fuse": a spark races along the winning shot from the cannon to the glass, then the glass bursts into
 // confetti. The bigger the result the bigger the burst. Everything here is plain numbers, so the drawing (components/board/Board.tsx)
@@ -52,4 +52,13 @@ export function confettiPieces(n: number): { angle: number; speed: number; color
       wide: k % 2 === 0,
     };
   });
+}
+
+/**
+ * When the spark passes each scored bounce of the winning shot, as a share of the fuse's run (0–1), in order: the sound plays a tick
+ * there, so the fuse retraces the shot's rhythm. Bounces down inside the glass don't count and get none.
+ */
+export function fuseTicks(path: Vec[], jumps: number[], hits: Hit[]): number[] {
+  const { cum } = fuseGeometry(path, jumps);
+  return hits.filter((h) => h.counts).map((h) => cum[Math.min(h.i, cum.length - 1)] ?? 1);
 }

@@ -155,6 +155,35 @@ function crackle(seconds, count, spread, seed) {
   return out;
 }
 
+/**
+ * A lit fuse fizzing for `seconds`: dense seeded crackles at an even rate (unlike crackle(), which thins out) over a hiss with the
+ * low end taken out, swelling a little as it burns and cut short at the end, where the burst takes over.
+ */
+function sizzle(seconds, perSecond, seed) {
+  const n = Math.round(seconds * RATE), out = new Float64Array(n);
+  let s = seed, prev = 0, hp = 0;
+  const rand = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  const env = (t) => Math.min(1, t / 0.06) * (0.7 + 0.3 * (t / seconds)) * Math.min(1, (seconds - t) / 0.03);
+  for (let i = 0; i < n; i++) {
+    const white = rand() * 2 - 1;
+    hp = 0.6 * (hp + white - prev); // a rough high-pass: hiss, not rumble
+    prev = white;
+    out[i] = 0.16 * hp * env(i / RATE);
+  }
+  const count = Math.round(seconds * perSecond);
+  for (let k = 0; k < count; k++) {
+    const start = Math.round(rand() * (seconds - 0.01) * RATE), len = Math.round((0.0015 + rand() * 0.004) * RATE);
+    const amp = (0.25 + rand() * 0.75) * env(start / RATE);
+    let p = 0;
+    for (let i = 0; i < len && start + i < n; i++) {
+      const w = rand() * 2 - 1;
+      out[start + i] += amp * (w - p) * (1 - i / len);
+      p = w;
+    }
+  }
+  return out;
+}
+
 function scale(track, k) {
   return track.map((v) => v * k);
 }
@@ -206,6 +235,14 @@ const sounds = {
     scale(zap(0.55, 700, 2600, 0.22, 0.14), 0.4),
     partials(0.6, [[2100, 0.2, 0.09], [3150, 0.16, 0.08], [4200, 0.12, 0.07]], { start: 0.06 }),
     scale(whoosh(0.4, 0.12, 3000), 0.45),
+  ),
+  // The win's "light the fuse" (game/celebration.ts): a fuse fizzing while the spark races the winning path to the glass
+  // (FUSE_SHARE of CELEBRATION_MS, 1.2 s), cut off where the burst takes over.
+  fuse: sizzle(1.2, 90, 1911),
+  // The spark passing one of the shot's bounces on its way (played once per bounce, each a step higher): a tiny bright tick.
+  spark: mix(
+    partials(0.18, [[2637, 0.6, 0.05], [3951, 0.3, 0.03], [5274, 0.15, 0.02]], { attack: 0.001 }),
+    scale(crack(0.03, 0.004), 0.25),
   ),
   // A portal: a soft whoosh in, a rising shimmer out, glassy overtones.
   warp: mix(

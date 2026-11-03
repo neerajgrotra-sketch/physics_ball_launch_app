@@ -17,6 +17,8 @@ const SOUNDS = {
   warp: require('../../assets/sounds/warp.wav'),
   star: require('../../assets/sounds/star.wav'),
   burst: require('../../assets/sounds/burst.wav'),
+  fuse: require('../../assets/sounds/fuse.wav'),
+  spark: require('../../assets/sounds/spark.wav'),
   chime: require('../../assets/sounds/chime.wav'),
   shatter: require('../../assets/sounds/shatter.wav'),
   bloom: require('../../assets/sounds/bloom.wav'),
@@ -82,7 +84,7 @@ class Pool {
  * the bundled source as before.
  */
 let pools: Record<SoundName, Pool> | null = null;
-const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 3, wall: 3, glass: 3, star: 3, chime: 4 };
+const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 3, wall: 3, glass: 3, star: 3, chime: 4, spark: 3 };
 const makePools = (src: (name: SoundName) => number | { uri: string }) => Object.fromEntries(
   (Object.keys(SOUNDS) as SoundName[]).map((name) => [name, new Pool(src(name), POOL_SIZE[name] ?? 2)]),
 ) as Record<SoundName, Pool>;
@@ -139,6 +141,14 @@ export function useFeedback() {
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);
       if (feedbackPrefs.asmr) play('chime', 0.55, 2 ** ((12 + ([0, 4, 7][k] ?? 7)) / 12));
       else play('star', 0.8, 2 ** (([0, 4, 7][k] ?? 7) / 12));
+    },
+    /** The win's fuse is lit: it fizzes while the spark races the winning path (normal mode; ASMR mode's bloom has its own run). */
+    fuse() {
+      if (!feedbackPrefs.asmr) play('fuse', 0.6);
+    },
+    /** The spark passes the shot's k-th bounce (0-based): a tick, each a step higher, so the fuse retraces the shot's rhythm. */
+    spark(k: number) {
+      if (!feedbackPrefs.asmr) play('spark', 0.5, pitch(k));
     },
     burst() {
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Medium);

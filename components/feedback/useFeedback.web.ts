@@ -18,6 +18,8 @@ const SOUNDS = {
   warp: require('../../assets/sounds/warp.wav'),
   star: require('../../assets/sounds/star.wav'),
   burst: require('../../assets/sounds/burst.wav'),
+  fuse: require('../../assets/sounds/fuse.wav'),
+  spark: require('../../assets/sounds/spark.wav'),
   chime: require('../../assets/sounds/chime.wav'),
   shatter: require('../../assets/sounds/shatter.wav'),
   bloom: require('../../assets/sounds/bloom.wav'),
@@ -79,6 +81,14 @@ export function useFeedback() {
     star(k: number) {
       if (feedbackPrefs.asmr) play('chime', 0.55, 2 ** ((12 + ([0, 4, 7][k] ?? 7)) / 12));
       else play('star', 0.8, 2 ** (([0, 4, 7][k] ?? 7) / 12));
+    },
+    /** The win's fuse is lit: it fizzes while the spark races the winning path (normal mode; ASMR mode's bloom has its own run). */
+    fuse() {
+      if (!feedbackPrefs.asmr) play('fuse', 0.6);
+    },
+    /** The spark passes the shot's k-th bounce (0-based): a tick, each a step higher, so the fuse retraces the shot's rhythm. */
+    spark(k: number) {
+      if (!feedbackPrefs.asmr) play('spark', 0.5, pitch(k));
     },
     /** The glass bursts into confetti. */
     burst() {

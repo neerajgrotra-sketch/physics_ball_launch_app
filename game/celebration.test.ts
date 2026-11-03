@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { burstFor, cardPlace, confettiPieces, fuseGeometry } from './celebration';
+import { burstFor, cardPlace, confettiPieces, fuseGeometry, fuseTicks } from './celebration';
 
 describe('celebration', () => {
   it('puts the win card away from the glass', () => {
@@ -34,5 +34,17 @@ describe('celebration', () => {
       expect(Math.sin(p.angle)).toBeLessThan(0); // up the screen
       expect(p.speed).toBeGreaterThan(100);
     }
+  });
+});
+
+describe('fuseTicks', () => {
+  it('places a tick where the spark passes each scored bounce, in order', () => {
+    const path: [number, number][] = [[0, 0], [10, 0], [20, 0], [30, 0], [40, 0]];
+    const hits = [
+      { i: 1, kind: 'piece' as const, speed: 1, counts: true },
+      { i: 3, kind: 'wall' as const, speed: 1, counts: true },
+      { i: 4, kind: 'glass' as const, speed: 1, counts: false },
+    ];
+    expect(fuseTicks(path, [], hits)).toEqual([0.25, 0.75]);
   });
 });

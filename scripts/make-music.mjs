@@ -4,7 +4,9 @@
 //   asmr-neon-drift  ASMR mode: hypnotic, 70 BPM, C major pentatonic (the ASMR bounce chimes' notes), pads, drone, slow arpeggio
 //   sketchbook       regular mode: Graph Paper's livelier, longer sibling, 112 BPM, 32 bars, offbeat piano, bouncier bass
 //   asmr-felt-glass  ASMR mode: minimalist ambient, ~60 BPM, felt piano, airy pads, sustained tones, soft shimmer, no beat
-// The game picks one track per mode each session (components/feedback/music.ts), so a mode with two keeps play fresh.
+//   protractor       regular mode: 100 BPM straight eighths, D minor into F major, marimba arpeggios, a whistled tune, rim-and-hat groove
+//   asmr-paper-lanterns  ASMR mode: 64 BPM, kalimba in a lilting 3+3+2, warm low pads, a held root, faint rain and water drops
+// The game plays one track per mode each session, the next one the session after (components/feedback/music.ts), so play stays fresh.
 // Each is an exact number of bars. It's rendered once with its reverb and echo tails running past the end, then those tails are
 // wrapped onto the start, which is exactly what the music sounds like looping forever: no gap, click or cut at the seam. Tones that
 // run the whole loop (the drone, slow swells) are tuned to a whole number of cycles per loop for the same reason.
@@ -220,6 +222,60 @@ function shimmer(freq, dur, { seed = 21 } = {}) {
     out[i] = v * e * e;
   }
   return lowpass(out, 3500);
+}
+
+/** A marimba: a wooden bar's partials (the 4th and 10th, not the octave), each dying faster than the one below, a soft mallet. */
+function marimba(freq, dur, { tau = 0.45 } = {}) {
+  const n = Math.round(dur * SR), out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    const v = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t / tau)
+      + 0.2 * Math.sin(2 * Math.PI * freq * 3.99 * t) * Math.exp(-t / (tau * 0.16))
+      + 0.1 * Math.sin(2 * Math.PI * freq * 9.8 * t) * Math.exp(-t / (tau * 0.05));
+    out[i] = v * Math.min(1, t / 0.0015) * Math.min(1, (n - i) / (0.03 * SR));
+  }
+  return out;
+}
+
+/** A whistle: a near-pure tone gliding up into the note, with a vibrato that grows as it's held and a breath of air on top. */
+function whistle(freq, dur, { seed = 31, vib = 5.4, depth = 0.009 } = {}) {
+  const n = Math.round(dur * SR), out = new Float32Array(n), rand = rng(seed + Math.round(freq));
+  let ph = 0, air = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    const scoop = 1 - 0.03 * Math.exp(-t / 0.04);
+    const f = freq * scoop * (1 + depth * Math.min(1, t / 0.35) * Math.sin(2 * Math.PI * vib * t));
+    ph += (2 * Math.PI * f) / SR;
+    air += 0.2 * ((rand() * 2 - 1) - air);
+    const e = Math.min(1, t / 0.05) * Math.min(1, (n - i) / (0.12 * SR)) * (0.85 + 0.15 * Math.exp(-t / 0.3));
+    out[i] = (Math.sin(ph) + 0.06 * Math.sin(2 * ph) + 0.05 * air) * e;
+  }
+  return out;
+}
+
+/** A kalimba tine: a soft sine with a bright, inharmonic overtone that dies at once, and a tiny click of the thumb. */
+function kalimba(freq, dur, { tau = 1.3 } = {}) {
+  const n = Math.round(dur * SR), out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    const v = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t / tau)
+      + 0.22 * Math.sin(2 * Math.PI * freq * 5.95 * t) * Math.exp(-t / 0.05)
+      + 0.08 * Math.sin(2 * Math.PI * freq * 2 * t) * Math.exp(-t / (tau * 0.4));
+    out[i] = v * Math.min(1, t / 0.004) * Math.min(1, (n - i) / (0.05 * SR));
+  }
+  return lowpass(out, 5000);
+}
+
+/** A water drop: a tiny sine that rises fast in pitch as it fades (the "plip" of a drop on still water). */
+function drop(freq) {
+  const n = Math.round(0.09 * SR), out = new Float32Array(n);
+  let ph = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / SR, f = freq * (1 + 0.9 * (1 - Math.exp(-t / 0.012)));
+    ph += (2 * Math.PI * f) / SR;
+    out[i] = Math.sin(ph) * Math.exp(-t / 0.018) * Math.min(1, t / 0.001);
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------- effects
@@ -528,6 +584,156 @@ function feltGlass() {
   return { name: 'asmr-felt-glass', L, bus: dry };
 }
 
+/**
+ * Regular mode: "Protractor". 100 BPM straight eighths (no swing, unlike the other two), 24 bars of 4/4 (57.6 s). D minor
+ * into F major and back: a marimba arpeggio that never stops, like working a puzzle out; a marimba motif in sections 1 and 3 and a
+ * whistled tune in section 2; a syncopated bass; kick, rim clicks on 2 and 4 and soft sixteenth hats.
+ */
+function protractor() {
+  const bpm = 100, beat = 60 / bpm, bar = 4 * beat, bars = 24, L = bars * bar;
+  const total = L + TAIL;
+  const dry = new Bus(total, L), send = new Bus(total, L), echo = new Bus(total, L);
+  const at = (barNo, b) => barNo * bar + b * beat;
+  const Dm = [[57, 62, 65, 69], 38], Bb = [[58, 62, 65, 70], 34], F = [[57, 60, 65, 69], 41], C = [[55, 60, 64, 67], 36];
+  const Am = [[57, 60, 64, 69], 33], Gm = [[55, 58, 62, 67], 43];
+  const sections = [
+    [Dm, Bb, F, C, Dm, Bb, C, C],   // the puzzle
+    [Bb, C, Am, Dm, Gm, C, F, F],   // it opens up (the whistle)
+    [Dm, Bb, F, C, Gm, Bb, C, C],   // back to work, home to D minor
+  ];
+  const SCALE = [74, 77, 79, 81, 84, 86]; // D minor pentatonic: D5 F5 G5 A5 C6 D6
+  const ARP = [0, 1, 2, 3, 2, 1, 2, 3];
+  sections.forEach((chords, sec) => {
+    const rand = rng(1000 + sec * 13);
+    const motif = Array.from({ length: 8 }, (_, e) => (rand() < (e % 2 ? 0.35 : 0.8) ? Math.floor(rand() * SCALE.length) : -1));
+    chords.forEach(([voicing, root], k) => {
+      const i = sec * 8 + k;
+      const pcs = voicing.map((m) => m % 12);
+      // Marimba arpeggio on every eighth, up and down the chord, the upbeats softer.
+      ARP.forEach((q, e) => {
+        const sg = marimba(midi(voicing[q] + (e === 3 ? 12 : 0)), 0.9, { tau: 0.35 });
+        dry.add(sg, at(i, e / 2), e % 2 ? 0.11 : 0.16, e % 2 ? 0.35 : -0.35);
+        send.add(sg, at(i, e / 2), 0.05);
+      });
+      // A low sustained chord under it, very soft, so the harmony carries between the notes.
+      voicing.slice(0, 3).forEach((m, v) => {
+        const sg = pad(midi(m), bar + 1.2, { attack: 0.25, release: 0.9, cutoff: 900, seed: 300 + i * 3 + v });
+        dry.add(sg, at(i, 0), 0.3, (v - 1) * 0.5);
+        send.add(sg, at(i, 0), 0.08);
+      });
+      // Bass: syncopated, the root on 1, a push on the and of 2, the fifth on 3, an octave pickup at the end, up an octave for phones.
+      [[0, 0, 1.2, 0.36], [1.5, 0, 0.45, 0.28], [2, 7, 0.9, 0.3], [3.5, 12, 0.4, 0.24]].forEach(([b, iv, d, g]) =>
+        dry.add(bass(midi(root + 12 + iv), d * beat), at(i, b), g));
+      // Drums: kick on 1 and the and of 2 (and 3 in the middle section), rim clicks on 2 and 4, sixteenth hats with a lilt.
+      for (const kb of [0, 1.5, ...(sec === 1 ? [3] : [])]) dry.add(kick(), at(i, kb), 0.24);
+      for (const sb of [1, 3]) { const sg = noiseHit('snap', 8000 + i * 10 + sb); dry.add(sg, at(i, sb), 0.2, -0.1); send.add(sg, at(i, sb), 0.05); }
+      for (let h = 0; h < 16; h++) dry.add(noiseHit('shaker', 9000 + i * 100 + h), at(i, h / 4), h % 4 === 2 ? 0.07 : h % 2 ? 0.03 : 0.045, 0.45);
+      if (sec === 1) {
+        // The whistle: long notes, one or two a bar, from the chord's own tones, with an echo.
+        const tones = SCALE.filter((m) => pcs.includes(m % 12));
+        const pick = tones.length ? tones : SCALE;
+        const a = pick[(k * 2) % pick.length], b = pick[(k * 2 + 1) % pick.length];
+        const long = k % 4 === 3;
+        const w1 = whistle(midi(a), long ? 3.4 * beat : 1.8 * beat, { seed: i });
+        dry.add(w1, at(i, 0.5), 0.2, 0.15); echo.add(w1, at(i, 0.5), 0.1); send.add(w1, at(i, 0.5), 0.08);
+        if (!long) { const w2 = whistle(midi(b), 1.4 * beat, { seed: i + 50 }); dry.add(w2, at(i, 2.5), 0.17, 0.15); echo.add(w2, at(i, 2.5), 0.09); send.add(w2, at(i, 2.5), 0.07); }
+        return;
+      }
+      // Marimba motif an octave over the arpeggio, nudged onto chord tones on the beats, a little different on odd bars.
+      motif.forEach((idx, e) => {
+        if (idx < 0) return;
+        let j = Math.min(SCALE.length - 1, idx + (k % 2 && e > 4 ? 1 : 0));
+        if (e % 2 === 0 && !pcs.includes(SCALE[j] % 12)) {
+          const near = SCALE.map((m, q) => (pcs.includes(m % 12) ? q : -1)).filter((q) => q >= 0);
+          if (near.length) j = near.reduce((a, q) => (Math.abs(q - j) < Math.abs(a - j) ? q : a), near[0]);
+        }
+        const sg = marimba(midi(SCALE[j]), 1.1, { tau: 0.5 });
+        dry.add(sg, at(i, e / 2), 0.3, 0.1);
+        send.add(sg, at(i, e / 2), 0.12);
+        echo.add(sg, at(i, e / 2), 0.06);
+      });
+    });
+  });
+  const wetE = pingPong(echo, 3 * beat / 4, 0.35, 3000);
+  wetE.mixInto(dry, 0.7);
+  const wet = reverb(send, { room: 0.76, damp: 0.45 });
+  wet.mixInto(dry, 1);
+  return { name: 'protractor', L, bus: dry };
+}
+
+/**
+ * ASMR mode: "Paper Lanterns". 64 BPM, 16 bars of 4/4 (60 s), from the ASMR bounce chimes' notes (C D E G A) over soft chords.
+ * A kalimba plays a lilting 3+3+2 figure, sparse and loosely timed, into a slow echo; warm low pads cross-fade chord to chord over a
+ * held root; faint rain underneath and now and then a single water drop. No beat, nothing bright, so the game's chimes ring on top.
+ */
+function paperLanterns() {
+  const bpm = 64, beat = 60 / bpm, bar = 4 * beat, bars = 16, L = bars * bar;
+  const total = L + TAIL + 2;
+  const dry = new Bus(total, L), send = new Bus(total, L), echo = new Bus(total, L);
+  const PENTA = new Set([0, 2, 4, 7, 9]);
+  const chords = [
+    [[45, 57, 60, 64, 67], 33], // Am7
+    [[41, 57, 60, 64, 69], 29], // Fmaj7
+    [[48, 55, 60, 62, 64], 36], // Cadd9
+    [[43, 55, 59, 62, 64], 31], // G6
+    [[45, 57, 60, 64, 69], 33], // Am
+    [[40, 55, 59, 62, 67], 28], // Em7
+    [[41, 53, 57, 60, 64], 29], // Fmaj7
+    [[43, 50, 55, 60, 62], 31], // Gsus
+  ];
+  const rand = rng(6464);
+  chords.forEach(([voicing, root], c) => {
+    const t0 = c * 2 * bar - 2; // each pad swells in under the one before
+    voicing.slice(1).forEach((m, k) => {
+      const sg = pad(midi(m), 2 * bar + 4.5, { attack: 2.6, release: 3.2, cutoff: 850, seed: 500 + c * 5 + k });
+      dry.add(sg, t0, 0.34, (k - 1.5) * 0.5);
+      send.add(sg, t0, 0.24, (k - 1.5) * 0.5);
+    });
+    dry.add(sustain(midi(root + 12), 2 * bar + 4, { attack: 2.6, release: 3, breathe: 0.15 }), t0, 0.07);
+    // Kalimba: for each of the chord's two bars, the 3+3+2 figure (eighths 0, 3, 6) from its pentatonic tones, rising, with
+    // passing notes now and then; each note a touch early or late.
+    const tones = [...new Set(voicing.slice(1).flatMap((m) => [m + 12, m + 24]))].filter((m) => PENTA.has(m % 12) && m >= 67 && m <= 88).sort((a, b) => a - b);
+    for (let half = 0; half < 2; half++) {
+      const barStart = (c * 2 + half) * bar;
+      const slots = [0, 3, 6, ...(rand() < 0.5 ? [7] : []), ...(rand() < 0.35 ? [4] : [])];
+      let q = Math.floor(rand() * 2);
+      for (const e of slots.sort((a, b) => a - b)) {
+        if (rand() < 0.15) continue; // a breath
+        const m = tones[Math.min(tones.length - 1, q)];
+        q = (q + 1 + Math.floor(rand() * 2)) % tones.length;
+        const when = barStart + (e / 2) * beat + (rand() - 0.5) * 0.04;
+        const sg = kalimba(midi(m), 3, { tau: 1.1 + rand() * 0.5 });
+        const g = e === 0 ? 0.3 : 0.22;
+        dry.add(sg, when, g, rand() * 0.8 - 0.4);
+        echo.add(sg, when, g * 0.5);
+        send.add(sg, when, g * 0.5);
+      }
+    }
+    // A water drop or two per chord, at random spots, high and very soft.
+    const drops = 1 + Math.floor(rand() * 2);
+    for (let d = 0; d < drops; d++) {
+      const when = c * 2 * bar + rand() * 2 * bar;
+      const sg = drop(900 + rand() * 900);
+      dry.add(sg, when, 0.05, rand() * 1.6 - 0.8);
+      send.add(sg, when, 0.06);
+    }
+  });
+  // Rain: soft filtered noise through the whole loop, its level drifting very slowly (one swell per loop, so it meets at the seam).
+  const nL = Math.round(L * SR), rain = new Float32Array(nL), rr = rng(77);
+  let prev = 0;
+  for (let i = 0; i < nL; i++) { const w = rr() * 2 - 1; rain[i] = w - 0.7 * prev; prev = w; }
+  lowpass(lowpass(rain, 3200), 4200);
+  for (let i = 0; i < nL; i++) rain[i] *= 0.8 + 0.2 * Math.sin((2 * Math.PI * i) / nL);
+  dry.add(rain, 0, 0.022, -0.2);
+  dry.add(rain.slice().reverse(), 0, 0.022, 0.2); // a different stretch of it on the other side, so it's wide
+  const wetE = pingPong(echo, 3 * beat / 2, 0.5, 2200);
+  wetE.mixInto(dry, 0.75);
+  wetE.mixInto(send, 0.4);
+  const wet = reverb(send, { room: 0.92, damp: 0.45 });
+  wet.mixInto(dry, 1.25);
+  return { name: 'asmr-paper-lanterns', L, bus: dry };
+}
+
 // ---------------------------------------------------------------- output
 
 /** A gentle low cut (one-pole high-pass) on a bus, in place: rumble no phone speaker plays, which only eats headroom. */
@@ -564,9 +770,9 @@ function wav(l, r, gain, rate, channels) {
 }
 
 const only = process.argv[2];
-for (const make of [graphPaper, neonDrift, sketchbook, feltGlass]) {
+for (const [file, make] of [['graph-paper', graphPaper], ['asmr-neon-drift', neonDrift], ['sketchbook', sketchbook], ['asmr-felt-glass', feltGlass], ['protractor', protractor], ['asmr-paper-lanterns', paperLanterns]]) {
+  if (only && !file.includes(only)) continue; // skipped before rendering, so one track takes seconds
   const { name, L, bus } = make();
-  if (only && !name.includes(only)) continue;
   lowCut(bus, 70);
   const looped = wrap(bus, L);
   // Level: by average loudness (RMS), so the calm ASMR track sits a little under the regular one, never above -1 dBFS peak.

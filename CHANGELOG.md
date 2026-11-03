@@ -4,6 +4,19 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.58.0
+
+- Two more tracks of the game's own music (`scripts/make-music.mjs`), so each mode now takes turns between three:
+  - **Protractor** (regular mode): 100 BPM in straight eighths (the other two swing), D minor into F major and back, 24 bars
+    (57.6 s). A marimba arpeggio runs throughout, with a marimba motif in the first and last sections and a whistled tune in the
+    middle one, over a syncopated bass, kick, rim clicks and soft sixteenth hats.
+  - **Paper Lanterns** (ASMR mode): 64 BPM, 16 bars (60 s), from the ASMR bounce chimes' notes. A kalimba in a lilting 3+3+2
+    figure into a slow echo, warm low pads over a held root, faint rain and the odd water drop. No beat.
+  - New instruments (marimba, whistle, kalimba, water drop) leave the four earlier tracks byte for byte as they were.
+- The normal-mode win has a sound for the fuse. While the spark runs the winning path the fuse fizzes (`fuse.wav`), and each bounce
+  it passes ticks a step higher (`spark.wav`, `fuseTicks` in `game/celebration.ts`), so the trace replays the shot's rhythm before
+  the glass bursts. Until now this part of the win was silent, apart from the landing chime. ASMR mode keeps its bloom.
+
 ## 0.57.1
 
 - Music takes turns instead of being picked at random. Each session plays the next track of each mode (`game/musicTurn.ts`,

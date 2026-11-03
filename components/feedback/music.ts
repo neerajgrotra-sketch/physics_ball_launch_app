@@ -1,6 +1,6 @@
 // Background music: a playlist of looping tracks (playlist.ts, generated from assets/music by scripts/make-playlist.mjs). The game's
-// own tracks are composed by scripts/make-music.mjs: "Graph Paper" and "Sketchbook" for regular play, "Neon Drift" and "Felt Glass"
-// for ASMR mode (files named asmr-…). Each session plays one track per mode, on every level, and the next session plays the next one
+// own tracks are composed by scripts/make-music.mjs: "Graph Paper", "Sketchbook" and "Protractor" for regular play, "Neon Drift",
+// "Felt Glass" and "Paper Lanterns" for ASMR mode (files named asmr-…). Each session plays one track per mode, on every level, and the next session plays the next one
 // (game/musicTurn.ts), so each visit sounds different; toggling ASMR mode swaps to that mode's track. To add a track, put an MP3 or M4A
 // in assets/music (an asmr- name for ASMR mode).
 import AsyncStorage from '@react-native-async-storage/async-storage';

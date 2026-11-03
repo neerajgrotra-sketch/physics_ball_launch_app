@@ -120,7 +120,9 @@ reference/    prototype.html, the behaviour and look to match
   `Board`'s `Shatter`, `shatter.wav`, a heavy buzz then light taps) if a level has one, or runs out of time
   (14 s). Landing without every bar placed and hit says so and names any bar it missed (`skipNotice`).
 - **Dead hits:** when a shot hits a dead surface, mark the spot with a small red ×.
-- **Win:** the ball has to settle inside the glass for 0.35 s. Show "In the glass in N tries", then
+- **Win:** the ball has to settle inside the glass for 0.35 s. The celebration lights the fuse: a spark runs the winning path, with
+  `fuse.wav` fizzing and a `spark.wav` tick a step higher at each bounce it passes (`fuseTicks`; normal mode, ASMR mode plays the bloom),
+  then the glass bursts. Show "In the glass in N tries", then
   unlock the next level and save progress locally.
   After a win, Launch becomes "Replay ▶": it replays the winning shot exactly (bars restored to where
   they were, same angle and power) without resetting or counting a try. The card's left button is
@@ -292,8 +294,8 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
 - Version: `package.json` and `app.json` (`expo.version`) stay equal; record changes in `CHANGELOG.md`.
   Store builds bump `expo.ios.buildNumber` / `expo.android.versionCode`. The level list shows the version
   and the git commit (`components/version.ts`; Vercel passes `EXPO_PUBLIC_COMMIT`).
-- Music is the game's own, composed in code by `scripts/make-music.mjs` (nothing licensed): "Graph Paper" and "Sketchbook" for regular
-  mode, "Neon Drift" and "Felt Glass" (`asmr-` file names) for ASMR mode, exact seamless loops with their tails wrapped. Each session
+- Music is the game's own, composed in code by `scripts/make-music.mjs` (nothing licensed): "Graph Paper", "Sketchbook" and "Protractor"
+  for regular mode, "Neon Drift", "Felt Glass" and "Paper Lanterns" (`asmr-` file names) for ASMR mode, exact seamless loops with their tails wrapped. Each session
   plays the next one per mode (`game/musicTurn.ts`, `MUSIC_TURN_KEY`; `music.ts` `loadMusicTurn`/`useMusicTurn`, the players wait for it). A track the owner approved must keep re-rendering byte for byte: change a shared instrument through a new option
   (as `pluck`'s `attack`), not its defaults. Re-run it to change the music
   (`node scripts/make-music.mjs [name]`); it writes the MP3, the phones' WAV loop and a `<name>.json` loop length. The web player books
