@@ -2,7 +2,9 @@
   "expo": {
     "name": "Bank Shot",
     "slug": "bank-shot",
-    "version": "0.62.0",
+    "owner": "ngrotra",
+    "version": "0.62.1",
+    "runtimeVersion": { "policy": "sdkVersion" },
     "scheme": "bankshot",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",

@@ -349,6 +349,11 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
 - Deployed on Vercel from GitHub (`vercel.json`): every push to `main` rebuilds the site. Commits must be authored as the owner
   (`neerajgrotra-sketch <neerajgrotra@gmail.com>`): Vercel silently skips deploying a commit whose author isn't on the team. `public/index.html`
   is the web page template (phone fit, no zoom, Add to Home Screen); `scripts/make-icons.mjs` draws the icons.
+- **Testing in Expo Go without the laptop (preferred):** every push to `main` publishes the app to Expo's servers with EAS Update
+  (`.github/workflows/expo-update.yml`, on GitHub's machines, so the owner's work network doesn't matter). On the phone: expo.dev, project
+  `bank-shot` (account ngrotra), Updates, branch `main`, "Open in Expo Go" (or its QR code). Needs the `EXPO_TOKEN` repository secret;
+  `app.json` has `owner` and `runtimeVersion: { policy: "sdkVersion" }` (what Expo Go accepts), and `expo-updates` is installed. The
+  run links the project (`eas init`, `eas update:configure`) itself, so no project id is committed.
 - **Testing in Expo Go (the owner's Windows PC):** when asked to start Expo Go, give these steps (a cloud session can't open a
   tunnel itself). In **Command Prompt** (not PowerShell, whose `npx` makes `expo login` non-interactive; not as administrator,
   which starts in system32), one line at a time:

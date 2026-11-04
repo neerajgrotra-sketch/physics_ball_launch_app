@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.62.1
+
+- Expo Go testing without the laptop. A GitHub Action (`.github/workflows/expo-update.yml`) publishes every push to `main` to Expo's
+  servers (EAS Update), so the phone opens the latest version from expo.dev over any connection, with no hotspot or shared Wi-Fi.
+  It needs an `EXPO_TOKEN` repository secret. `expo-updates` is installed, and `app.json` names the Expo account and sets the runtime
+  version Expo Go accepts.
+
 ## 0.62.0
 
 - Two more tracks of the game's own music (`scripts/make-music.mjs`), so each mode now takes turns between four:

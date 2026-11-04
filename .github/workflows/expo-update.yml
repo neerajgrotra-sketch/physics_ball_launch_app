@@ -1,0 +1,53 @@
+# Publishes the app to Expo's servers (EAS Update) on every push to main, so Expo Go on a phone can open the latest version over any
+# internet connection: no laptop, hotspot or shared Wi-Fi needed. Open it from the project's page on expo.dev (Updates, branch "main",
+# "Open in Expo Go" or its QR code).
+#
+# Needs one repository secret, EXPO_TOKEN: an access token from expo.dev (Account settings, Access tokens) for the ngrotra account.
+# The project is linked to that account (app.json "owner") on each run, so nothing about it has to be committed.
+name: Expo Go update
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: expo-update
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Check the Expo token is set
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Add the EXPO_TOKEN secret (expo.dev > Account settings > Access tokens) under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      # Link the project to the Expo account (creates it on expo.dev the first time) and point the app at its update server. Both only
+      # edit app.json inside this run.
+      - name: Link the project to Expo
+        run: |
+          eas init --non-interactive --force
+          eas update:configure --platform all --non-interactive
+
+      - name: Publish the update
+        run: eas update --branch main --platform all --non-interactive --message "$(git log -1 --pretty=%s)"
