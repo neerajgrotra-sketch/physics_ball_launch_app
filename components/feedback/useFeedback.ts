@@ -16,6 +16,7 @@ const SOUNDS = {
   boing: require('../../assets/sounds/boing.wav'),
   warp: require('../../assets/sounds/warp.wav'),
   clunk: require('../../assets/sounds/clunk.wav'),
+  thock: require('../../assets/sounds/thock.wav'),
   star: require('../../assets/sounds/star.wav'),
   burst: require('../../assets/sounds/burst.wav'),
   fuse: require('../../assets/sounds/fuse.wav'),
@@ -86,7 +87,7 @@ class Pool {
  * the bundled source as before.
  */
 let pools: Record<SoundName, Pool> | null = null;
-const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 3, wall: 3, glass: 3, star: 3, chime: 4, spark: 3, clunk: 3 };
+const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 3, wall: 3, glass: 3, star: 3, chime: 4, spark: 3, clunk: 3, thock: 3 };
 const makePools = (src: (name: SoundName) => number | { uri: string }) => Object.fromEntries(
   (Object.keys(SOUNDS) as SoundName[]).map((name) => [name, new Pool(src(name), POOL_SIZE[name] ?? 2)]),
 ) as Record<SoundName, Pool>;
@@ -168,7 +169,9 @@ export function useFeedback() {
      */
     jammed() {
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);
-      play('clunk', 0.9, clunks++ % 2 ? 0.92 : 1);
+      // ASMR mode: a soft thock instead, stepping between two of the chimes' notes (E and D, a whole tone apart).
+      if (feedbackPrefs.asmr) play('thock', 0.75, clunks++ % 2 ? 0.891 : 1);
+      else play('clunk', 0.9, clunks++ % 2 ? 0.92 : 1);
     },
     warped() {
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);

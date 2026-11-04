@@ -104,7 +104,7 @@ reference/    prototype.html, the behaviour and look to match
   turns red and snaps back to its last allowed spot on release; rotation never turns a bar into anything: −/+ goes one degree or
   stops (never leaping round to the next free angle), the slider refuses, and either says what's in the way ("Clunk! Bar 2 bumps the
   glass…", `turnBlockage`/`blockage` in game/placement.ts, `jamText` in game/jam.ts, a `FadeToast` on the half of the board away
-  from the bump, `Board`'s `jam` ring where it touches, `clunk.wav` on every refused press); a new bar
+  from the bump, `Board`'s `jam` ring where it touches, `clunk.wav` on every refused press; ASMR mode: `thock.wav`, "rests against" wording and a neon halo on the ring); a new bar
   lands on the nearest allowed spot. Pieces can't be edited mid-flight. (The prototype removed a bar by re-tapping its chip.)
 - **Trails:** keep the last 3 launches by default, oldest faintest (`trailOpacity`); Settings "Trails kept" picks 1, 2, 3, 5 or 8
   (`game/trails.ts`, `BallSkin`'s `trailCount`, `TRAILS_KEY`). A successful trail is drawn in red. Clear (eraser icon) wipes them and the bounce numbers;

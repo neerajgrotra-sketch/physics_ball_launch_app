@@ -86,5 +86,6 @@ describe('jam message', () => {
     expect(jamText(1, { what: 'bar', other: 2 }, '+')).toBe('Clunk! Bar 1 bumps Bar 2. Move one of them to make room. It still turns the other way (+).');
     expect(jamText(3, { what: 'spikes' })).toMatch(/^Careful! Bar 3 would touch the spikes\./);
     expect(jamText(1, { what: 'floor' })).toContain('Lift it up');
+    expect(jamText(2, { what: 'glass' }, null, true)).toBe('Bar 2 rests against the glass. Slide it clear to turn it further.');
   });
 });

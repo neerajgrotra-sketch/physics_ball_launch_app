@@ -228,7 +228,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     const b = turnBlockage(level, slots, k, shown);
     if (!b) return;
     const back = by == null ? null : rotateLegal(level, slots, k, by === 1 ? -1 : 1) !== slots ? (by === 1 ? '−' : '+') : null;
-    const text = jamText(k + 1, b.blocker, back);
+    const text = jamText(k + 1, b.blocker, back, asmr);
     const now = Date.now(), clock = jamClock.current;
     // Every refused press clunks (a held −/+ stops at the first, so taps are what repeat); a slider pushed on fires many times a
     // second, so it clunks at most every 180 ms. The card and the ring restart only every so often, so they don't flicker.

@@ -477,7 +477,7 @@ export function Board(props: BoardProps) {
                 {flight && flightPath && asmr && <CometTail flight={flight} path={flightPath} color={c.pencil} />}
                 {flash && asmr && <BounceFlash t={flash.t} x={flash.x} y={flash.y} color={c.pencil} />}
 
-                {jam && <JamMark key={jam.n} x={jam.x} y={jam.y} color={c.red} />}
+                {jam && <JamMark key={jam.n} x={jam.x} y={jam.y} color={c.red} glow={asmr} />}
 
                 {/* ball */}
                 {asmr && <BallGlow x={flight ? flight.x : ball[0]} y={flight ? flight.y : ball[1]} color={c.pencil} />}
@@ -949,10 +949,11 @@ function BounceFlash({ t, x, y, color }: { t: SharedValue<number>; x: SharedValu
 }
 
 /**
- * Where a bar turned into something bumps it: a red dot and two rings knocking outward, like a clunk, gone in 0.8 s. Remounted (new
+ * Where a bar turned into something bumps it: a red dot and two rings knocking outward, like a clunk, gone in 0.8 s (ASMR mode
+ * adds a soft neon halo). Remounted (new
  * key) for each bump, so it starts from the top; no blur, it's drawn every frame while it plays.
  */
-function JamMark({ x, y, color }: { x: number; y: number; color: string }) {
+function JamMark({ x, y, color, glow = false }: { x: number; y: number; color: string; glow?: boolean }) {
   const t = useSharedValue(0);
   useEffect(() => { t.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.quad) }); }, [t]);
   const r1 = useDerivedValue(() => 5 + 20 * Math.min(1, t.value * 1.6));
@@ -960,8 +961,13 @@ function JamMark({ x, y, color }: { x: number; y: number; color: string }) {
   const r2 = useDerivedValue(() => 5 + 20 * Math.max(0, t.value * 1.6 - 0.6));
   const o2 = useDerivedValue(() => (t.value < 0.375 ? 0 : 0.8 * (1 - t.value)));
   const dot = useDerivedValue(() => 0.9 * (1 - t.value));
+  const halo1 = useDerivedValue(() => o1.value * 0.15);
+  const halo2 = useDerivedValue(() => o1.value * 0.25);
   return (
     <Group>
+      {/* ASMR mode: a soft neon halo round the first ring, as plain wide translucent bands (no blur: it's drawn every frame). */}
+      {glow && <Circle cx={x} cy={y} r={r1} color={color} style="stroke" strokeWidth={12} opacity={halo1} />}
+      {glow && <Circle cx={x} cy={y} r={r1} color={color} style="stroke" strokeWidth={7} opacity={halo2} />}
       <Circle cx={x} cy={y} r={r1} color={color} style="stroke" strokeWidth={3} opacity={o1} />
       <Circle cx={x} cy={y} r={r2} color={color} style="stroke" strokeWidth={2} opacity={o2} />
       <Circle cx={x} cy={y} r={4.5} color={color} opacity={dot} />

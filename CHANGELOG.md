@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.59.2
+
+- ASMR mode has its own version of the blocked-rotation feedback. The sound is a soft, muffled wooden thock with a faint glassy ping
+  (`thock.wav`) instead of the clunk, stepping between two of the bounce chimes' notes on repeated presses. The card says "Bar 2
+  rests against the glass." instead of "Clunk!", and the red ring gets a soft neon halo (plain bands, no blur).
+
 ## 0.59.1
 
 - Every press of −/+ against something that blocks the bar now clunks (`clunk.wav`, a new solid knock), alternating between two

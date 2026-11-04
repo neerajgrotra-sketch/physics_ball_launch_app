@@ -31,10 +31,12 @@ function remedy(b: Blocker): string {
 
 /**
  * The card over the board: "Clunk! Bar 2 bumps the glass. Slide it clear to turn it further." Spikes get a warning instead of the
- * clunk. `otherWay`: the button that still turns it, if one does (− or +), so the player knows they aren't stuck.
+ * clunk. `otherWay`: the button that still turns it, if one does (− or +), so the player knows they aren't stuck. `calm` (ASMR
+ * mode, where the sound is a soft thock): "Bar 2 rests against the glass." instead of the clunk.
  */
-export function jamText(bar: number, b: Blocker, otherWay: '−' | '+' | null = null): string {
-  const hit = b.what === 'spikes' ? `Careful! Bar ${bar} would touch the spikes.` : `Clunk! Bar ${bar} bumps ${blockerName(b)}.`;
+export function jamText(bar: number, b: Blocker, otherWay: '−' | '+' | null = null, calm = false): string {
+  const hit = b.what === 'spikes' ? `Careful! Bar ${bar} would touch the spikes.`
+    : calm ? `Bar ${bar} rests against ${blockerName(b)}.` : `Clunk! Bar ${bar} bumps ${blockerName(b)}.`;
   const back = otherWay ? ` It still turns the other way (${otherWay}).` : '';
   return `${hit} ${remedy(b)}${back}`;
 }

@@ -252,6 +252,13 @@ const sounds = {
     scale(crack(0.04, 0.005), 0.3),
     partials(0.2, [[520, 0.18, 0.012]], { attack: 0.001, start: 0.055 }),
   ),
+  // ASMR mode's clunk: a soft, muffled wooden thock (a felt mallet on a block) with a faint glassy ping inside it (E6, one of the
+  // bounce chimes' notes), slow to start and quick to fade, so a run of blocked presses taps gently instead of knocking.
+  thock: mix(
+    scale(thud(0.3, 165, 95, 0.06), 0.8),
+    partials(0.3, [[330, 0.55, 0.06], [660, 0.12, 0.03]], { attack: 0.004 }),
+    partials(0.45, [[1318.5, 0.12, 0.16], [2637, 0.03, 0.08]], { attack: 0.006, start: 0.01 }),
+  ),
   // A portal: a soft whoosh in, a rising shimmer out, glassy overtones.
   warp: mix(
     scale(zap(0.5, 220, 1100, 0.25, 0.16), 0.55),

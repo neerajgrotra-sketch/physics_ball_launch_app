@@ -17,6 +17,7 @@ const SOUNDS = {
   boing: require('../../assets/sounds/boing.wav'),
   warp: require('../../assets/sounds/warp.wav'),
   clunk: require('../../assets/sounds/clunk.wav'),
+  thock: require('../../assets/sounds/thock.wav'),
   star: require('../../assets/sounds/star.wav'),
   burst: require('../../assets/sounds/burst.wav'),
   fuse: require('../../assets/sounds/fuse.wav'),
@@ -106,7 +107,9 @@ export function useFeedback() {
      * clunks; successive ones swap between two pitches a touch apart, so a run of presses knocks rather than drones.
      */
     jammed() {
-      play('clunk', 0.9, clunks++ % 2 ? 0.92 : 1);
+      // ASMR mode: a soft thock instead, stepping between two of the chimes' notes (E and D, a whole tone apart).
+      if (feedbackPrefs.asmr) play('thock', 0.75, clunks++ % 2 ? 0.891 : 1);
+      else play('clunk', 0.9, clunks++ % 2 ? 0.92 : 1);
     },
     warped() {
       play('warp', 0.8);
