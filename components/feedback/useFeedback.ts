@@ -3,7 +3,8 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useRef } from 'react';
 import type { Hit } from '../../physics';
 import { asmrRate } from '../../game/asmr';
-import { feedbackPrefs } from './SoundSettings';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { EFFECTS_KEY, effectsListeners, feedbackPrefs } from './SoundSettings';
 import { localSound, setAudioModeOnce, sourceOf } from './localAudio';
 
 // Sounds come from scripts/make-sounds.mjs. Re-run it to change them.
@@ -66,6 +67,11 @@ class Pool {
     });
   }
 
+  /** Frees the native players (each loaded one holds an audio pipeline on the phone). */
+  release() {
+    this.voices.forEach((v) => { try { v.player.remove(); } catch { /* already gone */ } });
+  }
+
   play(volume: number, rate: number) {
     // A free voice if there is one; otherwise cut the one that started longest ago (it has to rewind first, so wait for that).
     const free = this.voices.find((v) => !v.busy);
@@ -83,22 +89,35 @@ class Pool {
 
 /**
  * One set of players for the whole app (every screen shares them). warmSounds() makes them at app start from files on the phone
- * (localAudio.ts), before any music plays, so ~25 players aren't being created mid-level; a sound needed before that is ready uses
+ * (localAudio.ts), before any music plays, so they aren't being created mid-level; a sound needed before that is ready uses
  * the bundled source as before.
+ *
+ * As few as possible: every loaded player holds its own audio pipeline on the iPhone, and with 43 of them the music stalled for a
+ * moment whenever iOS reset them all (a press of the volume buttons, unlocking the phone, and just after they loaded, 2 to 3 s into a
+ * level). One per sound, and a second only for the sounds that come in quick runs (bounces off bars and walls, the ASMR chimes). None
+ * at all while Sound effects is off: they're released, and made again when it's turned back on (setEffectsOn).
  */
 let pools: Record<SoundName, Pool> | null = null;
-const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 3, wall: 3, glass: 3, star: 3, chime: 4, spark: 3, clunk: 3, thock: 3 };
+const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 2, wall: 2, chime: 2 };
 const makePools = (src: (name: SoundName) => number | { uri: string }) => Object.fromEntries(
-  (Object.keys(SOUNDS) as SoundName[]).map((name) => [name, new Pool(src(name), POOL_SIZE[name] ?? 2)]),
+  (Object.keys(SOUNDS) as SoundName[]).map((name) => [name, new Pool(src(name), POOL_SIZE[name] ?? 1)]),
 ) as Record<SoundName, Pool>;
 function sounds(): Record<SoundName, Pool> {
   if (!pools) pools = makePools((name) => SOUNDS[name]);
   return pools;
 }
 let warming: Promise<void> | null = null;
+let readSwitch = false;
 export function warmSounds(): Promise<void> {
   warming ??= (async () => {
     setAudioModeOnce();
+    // The switch is read here too: at app start the settings provider may not have loaded it yet, and with effects off there
+    // should be no players at all.
+    if (!readSwitch) {
+      readSwitch = true; // only at app start: later the switch itself says (setEffectsOn), and its save may not have landed yet
+      if ((await AsyncStorage.getItem(EFFECTS_KEY).catch(() => null)) === 'off') feedbackPrefs.effects = false;
+    }
+    if (!feedbackPrefs.effects) { warming = null; return; }
     const names = Object.keys(SOUNDS) as SoundName[];
     const files = await Promise.all(names.map((n) => localSound(SOUNDS[n])));
     if (!pools) pools = makePools((name) => sourceOf(files[names.indexOf(name)]));
@@ -205,3 +224,13 @@ function play(name: SoundName, volume: number, rate = 1) {
 function buzz<T>(fn: (style: T) => Promise<void>, style: T) {
   if (feedbackPrefs.haptics) fn(style).catch(() => {});
 }
+
+/** Sound effects switched on or off (Settings): off releases every effect player; on makes them again. */
+export function setEffectsOn(on: boolean) {
+  feedbackPrefs.effects = on;
+  if (on) { warmSounds().catch(() => {}); return; }
+  if (pools) Object.values(pools).forEach((p) => p.release());
+  pools = null;
+  warming = null;
+}
+effectsListeners.add(setEffectsOn);

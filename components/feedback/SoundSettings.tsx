@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
 const MUSIC_KEY = 'bank-shot/music';
-const EFFECTS_KEY = 'bank-shot/effects';
+export const EFFECTS_KEY = 'bank-shot/effects';
 const HAPTICS_KEY = 'bank-shot/haptics';
 
 interface SoundSettings {
@@ -23,6 +23,8 @@ interface SoundSettings {
  */
 /** Read by the sound code as each effect plays. `asmr`: ASMR mode (components/settings/Theme.tsx) swaps the effects for calm notes. */
 export const feedbackPrefs = { effects: true, haptics: true, asmr: false };
+/** Told when Sound effects is switched (or loaded) on or off: the phone's sound code frees or makes its effect players. */
+export const effectsListeners = new Set<(on: boolean) => void>();
 
 const SoundSettingsContext = createContext<SoundSettings>({
   musicOn: true, toggleMusic: () => {}, effectsOn: true, toggleEffects: () => {}, hapticsOn: true, toggleHaptics: () => {},
@@ -48,7 +50,7 @@ function useSwitch(key: string, onChange?: (on: boolean) => void): [boolean, () 
 
 export function SoundSettingsProvider({ children }: { children: ReactNode }) {
   const [musicOn, toggleMusic] = useSwitch(MUSIC_KEY);
-  const [effectsOn, toggleEffects] = useSwitch(EFFECTS_KEY, (on) => { feedbackPrefs.effects = on; });
+  const [effectsOn, toggleEffects] = useSwitch(EFFECTS_KEY, (on) => { feedbackPrefs.effects = on; effectsListeners.forEach((f) => f(on)); });
   const [hapticsOn, toggleHaptics] = useSwitch(HAPTICS_KEY, (on) => { feedbackPrefs.haptics = on; });
   return (
     <SoundSettingsContext.Provider value={{ musicOn, toggleMusic, effectsOn, toggleEffects, hapticsOn, toggleHaptics }}>

@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.62.5
+
+- Fewer sound-effect players on phones, to stop the music's remaining pauses: a moment 2 to 4 s after a level opens or the phone
+  is unlocked, and on every press of the volume buttons. Each loaded player holds its own audio pipeline on the iPhone, and the game
+  kept 43 of them ready; when iOS reset them all, the music stalled. Now there is one per sound and a second only for the sounds that
+  come in quick runs (bounces off bars and walls, the ASMR chimes), 20 in all. With Sound effects off in Settings there are none: they
+  are released, and made again when it's switched back on.
+
 ## 0.62.4
 
 - Music on phones, take three: no more pauses. The iPhone's player stalls for a moment whenever it sets a file up: at each loop
