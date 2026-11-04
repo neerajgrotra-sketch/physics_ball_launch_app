@@ -44,7 +44,7 @@ describe('winText', () => {
   });
 
   it('offers to play the last level again', () => {
-    expect(winText({ ...base, last: true }).go).toBe('Play again');
+    expect(winText({ ...base, last: true }).go).toBe('All levels');
   });
 });
 

@@ -70,7 +70,9 @@ export function winText(opts: {
 }): WinText {
   const { assisted, tries, bounces, par, last } = opts;
   const help = opts.help ?? 0;
-  const go = last ? 'Play again' : 'Next level';
+  // The last level has no next one. Its right-hand button goes back to the level list (stars, total, a level to improve); it used to
+  // read "Play again" and reset the level, the same as the left-hand Reset level.
+  const go = last ? 'All levels' : 'Next level';
   const capped = cappedBounces(bounces, par, help);
   const capNote = help > 0 ? ` · solved with help, max ${'★'.repeat(starCap(help))}` : '';
   if (assisted === 'solve') {

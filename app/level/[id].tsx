@@ -1103,7 +1103,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
             onAgain={() => startOver(false)}
             onRetry={keepPlaying}
             onClose={keepPlaying}
-            onGo={() => (daily ? daily.onShare(snapshot.current, { bounces: winShot.bounces, stars: helped || solved ? 0 : starsFor(winShot.bounces, par), tries, helped: helped || solved }) : challenge ? sendChallenge() : last ? startOver(false) : goTo(index + 1))}
+            onGo={() => (daily ? daily.onShare(snapshot.current, { bounces: winShot.bounces, stars: helped || solved ? 0 : starsFor(winShot.bounces, par), tries, helped: helped || solved }) : challenge ? sendChallenge() : last ? router.dismissTo('/') : goTo(index + 1))}
             onShare={daily || challenge ? undefined : shareWin}
             extras={challenge
               ? [{ label: `👀 Watch ${senderName(challenge.from)}’s shot`, onPress: watchTheirs }, { label: challenge.next.label, onPress: challenge.next.go }]

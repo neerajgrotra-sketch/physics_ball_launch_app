@@ -4,6 +4,11 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.60.1
+
+- On the last level, the win card's right-hand button reads "All levels" and goes back to the level list. It read "Play again" and
+  reset the level, which did the same as "Reset level" beside it.
+
 ## 0.60.0
 
 - Launching an unchanged setup no longer counts as a try. The physics is deterministic, so the same bars, angle and power always give
