@@ -10,6 +10,7 @@ import { Board, type TouchPhase, type Trail } from '../../components/board/Board
 import { usePlayback } from '../../components/board/usePlayback';
 import { HelpCard } from '../../components/board/HelpCard';
 import { FadeToast } from '../../components/board/FadeToast';
+import { jamText } from '../../game/jam';
 import { aimHintNotice, solvedNudge, hintLabel, nextHint, stepsLeft } from '../../game/help';
 import { STAR_REWARD, WORLD_REWARD, solutionCost } from '../../game/wallet';
 import { WORLDS } from '../../game/worlds';
@@ -33,7 +34,7 @@ import { useProgress, useUnlocked } from '../../components/progress/ProgressProv
 import { worthKeeping, type Draft, type DraftShot } from '../../game/drafts';
 import { aimBy, swingTo } from '../../game/aim';
 import {
-  boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal,
+  boardIndex, boardNumbers, boardPieces, dragTo, emptySlots, illegalBars, pressAt, removeBar, rotateLegal, rotateToLegal, turnBlockage,
   OPEN_DRAG, TRASH_GRAB, trashObstacles, atSolution, hintSlots, leverEnd, shotPieces, shotSlots, shownAngle, slotsLegal, solutionSlots, tapChip, type Drag, type End, type Slot,
 } from '../../game/pieces';
 import { BLAST_MS } from '../../game/muzzle';
@@ -216,6 +217,28 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   const [helped, setHelped] = useState(draft?.helped ?? false);
   /** Bumped when Solve is tapped with the answer already on the board: the button shakes and solvedNudge's line fades in over the board. */
   const [solvedTaps, setSolvedTaps] = useState(0);
+  // A bar turned into something (the −/+ or the slider pushed against the glass, a wall, another bar…): a card says what's in the
+  // way (game/jam.ts) and a red ring pulses on the board where it bumps (`jamAt`, unmounted once it has played).
+  const [jamToast, setJamToast] = useState({ n: 0, text: '', y: 0 });
+  const [jamAt, setJamAt] = useState<{ x: number; y: number; n: number } | null>(null);
+  const jamClock = useRef({ at: 0, text: '', timer: undefined as ReturnType<typeof setTimeout> | undefined });
+  useEffect(() => () => clearTimeout(jamClock.current.timer), []);
+  /** Bar k can't turn to `shown`: say why. `by`: the −/+ step that was refused (so it can tell whether the other way is free). */
+  const jammed = (k: number, shown: number, by: 1 | -1 | null) => {
+    const b = turnBlockage(level, slots, k, shown);
+    if (!b) return;
+    const back = by == null ? null : rotateLegal(level, slots, k, by === 1 ? -1 : 1) !== slots ? (by === 1 ? '−' : '+') : null;
+    const text = jamText(k + 1, b.blocker, back);
+    const now = Date.now(), clock = jamClock.current;
+    // Held −/+ or a slider pressed on: repeat the knock and the ring every so often, not 15 times a second.
+    if (text === clock.text && now - clock.at < 600) return;
+    clock.at = now; clock.text = text;
+    setJamToast((t) => ({ n: t.n + 1, text, y: b.at[1] }));
+    setJamAt((j) => ({ x: b.at[0], y: b.at[1], n: (j?.n ?? 0) + 1 }));
+    clearTimeout(clock.timer);
+    clock.timer = setTimeout(() => setJamAt(null), 900);
+    feedback.jammed();
+  };
   /** The Solve button's help card (hint or full solution) is open. */
   const [help, setHelp] = useState(false);
   /** Scored bounces of the shot in flight (ticking up live) or the last shot; null before the first. */
@@ -669,7 +692,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     poke();
     if (flying || done) return;
     setNotice(null);
-    // Backstop: drags snap back and rotation skips clipping angles, so this shouldn't trigger.
+    // Backstop: drags snap back and rotation stops at anything in the way, so this shouldn't trigger.
     if (!slotsLegal(level, slots)) {
       setNotice('A bar is touching the glass, the launcher or another bar. Move it first.');
       return;
@@ -973,10 +996,13 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       <SettingsSheet visible={settings} onClose={() => setSettings(false)} onMusicTap={primeAudio} onReplayTutorial={replayTutorial} />
       <View ref={stageRef} style={styles.stage}>
         <FadeToast trigger={solvedTaps} text={solvedNudge(done)} />
+        {/* Over the half of the board away from the bump, so the ring and what it hit stay in view. */}
+        <FadeToast trigger={jamToast.n} text={jamToast.text} place={jamToast.y < WORLD.ground / 2 ? 'bottom' : 'top'} />
         <Board
           level={level}
           pieces={boardPieces(slots)}
           marks={shownMarkList}
+          jam={jamAt}
           numbers={boardNumbers(slots)}
           illegal={illegalBars(level, slots)}
           // During a shot the selected bar's handles, arms and trash badge are hidden so the flight is clear; the selection itself
@@ -1075,10 +1101,16 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
             onAngle={(a) => {
               // false when the bar can't turn that far (it would clip something): the slider pulls back and shakes.
               const ok = rotateToLegal(level, slots, selectedBar, a) !== slots;
+              if (!ok) { jammed(selectedBar, a, null); return false; }
               rotate((s) => rotateToLegal(level, s, selectedBar, a));
-              return ok;
+              return true;
             }}
-            onNudge={(by) => rotate((s) => rotateLegal(level, s, selectedBar, by))}
+            onNudge={(by) => {
+              // One degree, or nothing if that would clip something: then the row shakes and the board says what's in the way.
+              if (rotateLegal(level, slots, selectedBar, by) === slots) { jammed(selectedBar, shownAngle(slots[selectedBar].deg) + by, by); return false; }
+              rotate((s) => rotateLegal(level, s, selectedBar, by));
+              return true;
+            }}
             disabled={flying}
           />
           </View>

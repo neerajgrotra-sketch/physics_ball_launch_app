@@ -101,7 +101,10 @@ reference/    prototype.html, the behaviour and look to match
   `selected={flying ? null : …}`) and come back when the ball stops. An undo button before
   Launch steps the bars and the aim back (game/history.ts: each change is a step, a drag or held slider is one, 30 deep; not during a shot). Bars must keep a ball's width (18) from the glass, walls, launcher and each other
   (`game/placement.ts`, the same rule the level generator uses): a bar dragged somewhere it isn't allowed
-  turns red and snaps back to its last allowed spot on release; rotation skips clipping angles; a new bar
+  turns red and snaps back to its last allowed spot on release; rotation never turns a bar into anything: −/+ goes one degree or
+  stops (never leaping round to the next free angle), the slider refuses, and either says what's in the way ("Clunk! Bar 2 bumps the
+  glass…", `turnBlockage`/`blockage` in game/placement.ts, `jamText` in game/jam.ts, a `FadeToast` on the half of the board away
+  from the bump, `Board`'s `jam` ring where it touches, a low knock); a new bar
   lands on the nearest allowed spot. Pieces can't be edited mid-flight. (The prototype removed a bar by re-tapping its chip.)
 - **Trails:** keep the last 3 launches by default, oldest faintest (`trailOpacity`); Settings "Trails kept" picks 1, 2, 3, 5 or 8
   (`game/trails.ts`, `BallSkin`'s `trailCount`, `TRAILS_KEY`). A successful trail is drawn in red. Clear (eraser icon) wipes them and the bounce numbers;

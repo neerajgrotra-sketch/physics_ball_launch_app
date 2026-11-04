@@ -6,9 +6,10 @@ import { FONTS, useColors } from '../../theme/colors';
 /**
  * A short message over the middle of whatever it's placed in: each change of `trigger` (after the first) fades it in, holds it, and
  * fades it away. It floats over everything, so nothing on screen moves, and never takes a touch. `tone` red for "no", pencil for news.
+ * `place`: the middle by default, or the top or bottom quarter, to keep clear of what it's talking about.
  * Once faded it is removed, not left at zero opacity: iPhone Safari can keep painting a transparent box's border and shadow.
  */
-export function FadeToast({ trigger, text, tone = 'red' }: { trigger: number; text: string; tone?: 'red' | 'pencil' }) {
+export function FadeToast({ trigger, text, tone = 'red', place = 'middle' }: { trigger: number; text: string; tone?: 'red' | 'pencil'; place?: 'top' | 'middle' | 'bottom' }) {
   const c = useColors();
   const shown = useSharedValue(0);
   const [live, setLive] = useState(false);
@@ -25,7 +26,7 @@ export function FadeToast({ trigger, text, tone = 'red' }: { trigger: number; te
   if (!trigger || !live) return null;
   const color = tone === 'red' ? c.red : c.pencil;
   return (
-    <View style={styles.wrap} pointerEvents="none">
+    <View style={[styles.wrap, place !== 'middle' && { justifyContent: place === 'top' ? 'flex-start' : 'flex-end', paddingVertical: 28 }]} pointerEvents="none">
       <Animated.View style={[styles.toast, { backgroundColor: c.paper, borderColor: color }, style]}>
         <Text accessibilityLiveRegion="polite" style={[styles.text, { color }]}>{text}</Text>
       </Animated.View>

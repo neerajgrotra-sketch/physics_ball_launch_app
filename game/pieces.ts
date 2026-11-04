@@ -1,6 +1,6 @@
 import { LAUNCHER, PLATE_OVERHANG, PORTAL_RADIUS, WORLD, blockCorners, glassBox, hazardReach, pieceEnds, type Level, type PlacedPiece } from '../physics';
 import { grabAimLine, nearLauncher, type LineGrab } from './aim';
-import { illegalPieces, legalPlacement } from './placement';
+import { blockage, illegalPieces, legalPlacement, type Blockage } from './placement';
 
 // Piece tray and placement, as in reference/prototype.html. Pure: no UI imports, so Vitest covers it.
 // Every function returns new values and never mutates its inputs.
@@ -385,13 +385,26 @@ export function dropSpot(level: Level, slots: Slot[], k: number): { x: number; y
   return home; // nowhere fits: show it (red) at home rather than not at all
 }
 
-/** rotateBy, skipping any angle where bar k would break the rule. Unchanged if none fits. */
+/**
+ * rotateBy one degree, if bar k is allowed there; otherwise unchanged (the same array), so the caller can tell it was refused.
+ * It used to skip on round to the next angle that fit, which made a bar jammed against the glass leap 60° at one tap of −.
+ */
 export function rotateLegal(level: Level, slots: Slot[], k: number, by: 1 | -1): Slot[] {
-  for (let step = 1; step < 180; step++) {
-    const next = rotateBy(slots, k, by * step);
-    if (slotsLegal(level, next)) return next;
-  }
-  return slots;
+  const next = rotateBy(slots, k, by);
+  return slotsLegal(level, next) ? next : slots;
+}
+
+/**
+ * What stops bar k turning to shown angle `shown` (and about where it would touch), or null if it can turn there. The other bar,
+ * if that's what's in the way, comes back as its bar number (1-based, as on the chips).
+ */
+export function turnBlockage(level: Level, slots: Slot[], k: number, shown: number): Blockage | null {
+  const next = rotateTo(slots, k, shown);
+  if (slotsLegal(level, next)) return null;
+  const order = slots.flatMap((s, i) => (s.onBoard ? [i] : []));
+  const b = blockage(level, boardPieces(next), order.indexOf(k));
+  if (!b) return null;
+  return b.blocker.what === 'bar' ? { ...b, blocker: { what: 'bar', other: order[b.blocker.other] + 1 } } : b;
 }
 
 /** rotateTo, but only if bar k is allowed there; otherwise it stays where it was. */

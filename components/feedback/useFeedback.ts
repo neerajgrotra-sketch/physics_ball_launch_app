@@ -160,6 +160,11 @@ export function useFeedback() {
       play('stamp', 0.9);
       if (feedbackPrefs.asmr) play('chime', 0.45, 2);
     },
+    /** A bar turned into something: a dull, low knock (the wall tok, slowed down), and a light buzz. */
+    jammed() {
+      buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);
+      play('wall', 0.8, 0.55);
+    },
     warped() {
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);
       play('warp', 0.8);

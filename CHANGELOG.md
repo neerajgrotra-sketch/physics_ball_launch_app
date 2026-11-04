@@ -4,6 +4,17 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.59.0
+
+- A bar turned into something now stops and says so. Pressing − or + used to skip on round to the next angle that fit, so a bar
+  standing against the glass leapt from 107° to 46° at one tap. Now −/+ turns it one degree or not at all, and when it's blocked:
+  - a card over the board names what's in the way and what to do, for example "Clunk! Bar 2 bumps the glass. Slide it clear to
+    turn it further. It still turns the other way (+)." It names the other bar, the cannon, the floor, an edge, a block, a spring
+    pad, a portal or a wall, and warns about spikes. The card sits on the half of the board away from the bump;
+  - a red ring knocks outward where the bar touches the obstacle;
+  - the rotation row shakes red, a dull knock plays (with a light buzz on phones), and a held −/+ stops pushing.
+  The slider, which already refused blocked angles, now shows the same card.
+
 ## 0.58.1
 
 - Settings scrolls properly on phones. The sheet's scroll view sat inside two `Pressable`s, the backdrop (tap to close) and an

@@ -99,6 +99,10 @@ export function useFeedback() {
       play('stamp', 0.9);
       if (feedbackPrefs.asmr) play('chime', 0.45, 2);
     },
+    /** A bar turned into something: a dull, low knock (the wall tok, slowed down). */
+    jammed() {
+      play('wall', 0.8, 0.55);
+    },
     warped() {
       play('warp', 0.8);
     },

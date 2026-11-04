@@ -78,6 +78,8 @@ export interface BoardProps {
   struck?: number;
   /** The latest trip through a portal: `t` runs 0 → 1 for the ring where the ball comes out. */
   warp?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
+  /** A bar was turned into something: a red ring pulses where it bumps (a new `n` plays it again). Unmount it once played. */
+  jam?: { x: number; y: number; n: number } | null;
   /** The level is won: the ball rests where the last trail ended. */
   done?: boolean;
   /** Touches on the board, in world units. One drag is a 'down', any number of 'move's, then an 'up'. */
@@ -96,7 +98,7 @@ const condensed500 = require('@expo-google-fonts/barlow-condensed/500Medium/Barl
  * Pure rendering: everything it shows comes from props (and the player's ball skin, from Settings). Matches draw() in reference/prototype.html.
  */
 export function Board(props: BoardProps) {
-  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, hud = true, barLabels = true, marks = [], flight = null, charge, dropZone = 'off', celebrate = null, kick, flash, blast, struck = -1, warp, done = false, onTouch, snapshot } = props;
+  const { level, pieces, numbers = [], illegal = [], selected = null, lever = 2, ghosts = [], trails, angle, power, tries, hud = true, barLabels = true, marks = [], flight = null, charge, dropZone = 'off', celebrate = null, kick, flash, blast, struck = -1, warp, jam = null, done = false, onTouch, snapshot } = props;
   // ASMR mode (game/asmr.ts): neon glow under the walls, glass, bars and ball, a comet tail on the flight, a ring at each bounce.
   const [asmr] = useAsmr();
   const c = useColors();
@@ -474,6 +476,8 @@ export function Board(props: BoardProps) {
                 )}
                 {flight && flightPath && asmr && <CometTail flight={flight} path={flightPath} color={c.pencil} />}
                 {flash && asmr && <BounceFlash t={flash.t} x={flash.x} y={flash.y} color={c.pencil} />}
+
+                {jam && <JamMark key={jam.n} x={jam.x} y={jam.y} color={c.red} />}
 
                 {/* ball */}
                 {asmr && <BallGlow x={flight ? flight.x : ball[0]} y={flight ? flight.y : ball[1]} color={c.pencil} />}
@@ -940,6 +944,27 @@ function BounceFlash({ t, x, y, color }: { t: SharedValue<number>; x: SharedValu
       <Circle cx={x} cy={y} r={7} color="#ffffff" opacity={core}>
         <BlurMask blur={5} style="normal" />
       </Circle>
+    </Group>
+  );
+}
+
+/**
+ * Where a bar turned into something bumps it: a red dot and two rings knocking outward, like a clunk, gone in 0.8 s. Remounted (new
+ * key) for each bump, so it starts from the top; no blur, it's drawn every frame while it plays.
+ */
+function JamMark({ x, y, color }: { x: number; y: number; color: string }) {
+  const t = useSharedValue(0);
+  useEffect(() => { t.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.quad) }); }, [t]);
+  const r1 = useDerivedValue(() => 5 + 20 * Math.min(1, t.value * 1.6));
+  const o1 = useDerivedValue(() => 0.9 * Math.max(0, 1 - t.value * 1.6));
+  const r2 = useDerivedValue(() => 5 + 20 * Math.max(0, t.value * 1.6 - 0.6));
+  const o2 = useDerivedValue(() => (t.value < 0.375 ? 0 : 0.8 * (1 - t.value)));
+  const dot = useDerivedValue(() => 0.9 * (1 - t.value));
+  return (
+    <Group>
+      <Circle cx={x} cy={y} r={r1} color={color} style="stroke" strokeWidth={3} opacity={o1} />
+      <Circle cx={x} cy={y} r={r2} color={color} style="stroke" strokeWidth={2} opacity={o2} />
+      <Circle cx={x} cy={y} r={4.5} color={color} opacity={dot} />
     </Group>
   );
 }

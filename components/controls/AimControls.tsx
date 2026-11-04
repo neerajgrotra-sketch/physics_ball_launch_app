@@ -60,7 +60,8 @@ interface RotateProps {
   angle: number;
   /** Returns false when the bar can't go to that angle (the slider then pulls back and shakes). */
   onAngle: (shown: number) => boolean;
-  onNudge: (by: 1 | -1) => void;
+  /** One degree; returns false when something is in the way (the row then shakes and turns red, and a held button stops). */
+  onNudge: (by: 1 | -1) => boolean;
   disabled?: boolean;
 }
 
@@ -93,7 +94,8 @@ interface RowProps {
   max: number;
   step: number;
   onChange: (v: number) => void | boolean;
-  onNudge: (dir: 1 | -1) => void;
+  /** May answer false (not allowed), like onChange: the row shakes, and a held button stops repeating. */
+  onNudge: (dir: 1 | -1) => void | boolean;
   onDone?: (v: number) => void;
   trackRef?: Ref<ViewRef>;
   /** onChange may answer false (not allowed): the thumb goes back to `value`, and the row shakes and turns red. */
@@ -121,6 +123,11 @@ function Row({ label, value, readout, min, max, step, onChange, onNudge, onDone,
     Animated.sequence([6, -6, 4, -4, 0].map((to) => Animated.timing(shake, { toValue: to, duration: 45, useNativeDriver: true }))).start();
   };
   const name = label.toLowerCase();
+  const nudge = (dir: 1 | -1) => {
+    if (onNudge(dir) !== false || !rejectable) return true;
+    refuse();
+    return false;
+  };
   // While a finger is on the slider it owns its value: the app's value is only taken back once the finger lifts.
   // (Fed both ways on every redraw, the web slider could be handed a value a step behind the finger, most
   // often during a flight when the screen redraws constantly, and snap back to it.)
@@ -130,7 +137,7 @@ function Row({ label, value, readout, min, max, step, onChange, onNudge, onDone,
   return (
     <View style={styles.row}>
       <Text style={[styles.label, { color: c.muted }]}>{label}</Text>
-      <Nudge text="−" onStep={() => onNudge(-1)} a11y={`Decrease ${name}`} />
+      <Nudge text="−" onStep={() => nudge(-1)} a11y={`Decrease ${name}`} />
       <Animated.View style={{ flex: 1, transform: [{ translateX: shake }] }}>
       <View ref={trackRef} style={[styles.track, Platform.OS === 'web' && ({ touchAction: 'none' } as object)]} onStartShouldSetResponderCapture={remeasureSliders}>
       <Slider
@@ -162,7 +169,7 @@ function Row({ label, value, readout, min, max, step, onChange, onNudge, onDone,
       />
       </View>
       </Animated.View>
-      <Nudge text="+" onStep={() => onNudge(1)} a11y={`Increase ${name}`} />
+      <Nudge text="+" onStep={() => nudge(1)} a11y={`Increase ${name}`} />
       <Text style={[styles.readout, { color: c.ink }]}>{readout}</Text>
     </View>
   );
@@ -172,7 +179,7 @@ function Row({ label, value, readout, min, max, step, onChange, onNudge, onDone,
  * One step on tap; hold to keep stepping (about 15 steps a second). A tap uses onPress, which fires
  * reliably for quick taps on web (onPressIn didn't); a hold starts repeating via onLongPress.
  */
-function Nudge({ text, onStep, a11y }: { text: string; onStep: () => void; a11y: string }) {
+function Nudge({ text, onStep, a11y }: { text: string; onStep: () => boolean | void; a11y: string }) {
   const c = useColors();
   const step = useRef(onStep);
   step.current = onStep;
@@ -187,8 +194,8 @@ function Nudge({ text, onStep, a11y }: { text: string; onStep: () => void; a11y:
       onPress={() => step.current()}
       delayLongPress={350}
       onLongPress={() => {
-        step.current();
-        repeat.current = setInterval(() => step.current(), 65);
+        if (step.current() === false) return; // blocked: don't keep pushing
+        repeat.current = setInterval(() => { if (step.current() === false) stop(); }, 65);
       }}
       onPressOut={stop}
       accessibilityRole="button"
