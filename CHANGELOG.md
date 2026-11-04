@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.64.0
+
+- Pick the background music. Settings has a **Track** picker under Background music: **Mix** (the default: each visit plays the next
+  track, as before) or any of the four tracks by name, which then plays every time. ASMR mode lists its own four tracks and keeps its
+  own pick. In a level the music switches as soon as a track is tapped, on phones and the web, and the pick is remembered.
+
 ## 0.63.0
 
 - Settings: "Music" is now **Background music**, with a **Volume** slider under it (0 to 150% of the game's level, 100% by default).

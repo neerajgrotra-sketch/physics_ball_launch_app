@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useAsmr } from '../settings/Theme';
-import { loadMusicLevel, musicReady, musicVolume, onMusicLevel, trackFor, useMusicTurn, type Track } from './music';
+import { loadMusicLevel, musicReady, musicVolume, onMusicLevel, trackFor, useMusicPick, useMusicTurn, type Track } from './music';
 import { audioContext, buffer, generation, onRunning, resume, running } from './webAudio';
 
 /**
@@ -80,6 +80,7 @@ export function useLevelMusic(levelId: string, on: boolean, duck = false) {
   // This session's tracks settle a moment after start (each session plays the next one); `start` waits for that, so it has to be a new
   // function once they have, or the effects below never call it again when the track happens to be the same.
   const turnReady = useMusicTurn();
+  useMusicPick(asmr); // the player's own pick (Settings): re-renders with the new track, which fades in over the old
   const track = trackFor(levelId, asmr);
   const holding = useRef(false);
   duckedNow = duck;

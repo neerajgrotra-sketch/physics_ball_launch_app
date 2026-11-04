@@ -6,7 +6,7 @@ import { GENDERS, PROFILE_KEY, emptyProfile, parseAge, parseProfile, type Profil
 import { FONTS, useColors } from '../../theme/colors';
 import { useTips } from '../coach/Tips';
 import { useSoundSettings } from '../feedback/SoundSettings';
-import { MUSIC_LEVEL_MAX, setMusicLevel, useMusicLevel } from '../feedback/music';
+import { MUSIC_LEVEL_MAX, setMusicLevel, setMusicPick, trackTitle, tracksFor, useMusicLevel, useMusicPick } from '../feedback/music';
 import { useProgress } from '../progress/ProgressProvider';
 import { VERSION_LABEL } from '../version';
 import { BallPicker } from './BallPicker';
@@ -59,6 +59,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
               />
             </View>
             <MusicVolume disabled={!musicOn} />
+            <MusicPicker disabled={!musicOn} />
             <View style={[styles.row, { borderColor: c.line }]}>
               <Text style={[styles.label, { color: c.ink }]}>Sound effects</Text>
               <Switch
@@ -283,6 +284,39 @@ function MusicVolume({ disabled }: { disabled: boolean }) {
   );
 }
 
+/**
+ * Which track plays (music.ts setMusicPick), for the mode the player is in: "Mix" (each visit plays the next one, the default) or
+ * one by name. ASMR mode has its own tracks and its own pick. In a level the music switches at once, so the player hears the pick.
+ */
+function MusicPicker({ disabled }: { disabled: boolean }) {
+  const c = useColors();
+  const [asmr] = useAsmr();
+  const pick = useMusicPick(asmr);
+  const choices: { id: string | null; label: string }[] = [{ id: null, label: 'Mix' }, ...tracksFor(asmr).map((t) => ({ id: t.id, label: trackTitle(t) }))];
+  return (
+    <View style={[styles.pickBox, disabled && { opacity: 0.4 }]} pointerEvents={disabled ? 'none' : 'auto'}>
+      <Text style={[styles.volumeLabel, { color: c.muted }]}>Track</Text>
+      <View style={styles.chips}>
+        {choices.map(({ id, label }) => {
+          const on = pick === id;
+          return (
+            <Pressable
+              key={label} onPress={() => setMusicPick(asmr, id)} accessibilityRole="button" accessibilityState={{ selected: on }}
+              accessibilityLabel={id ? `Play ${label}` : 'Mix: a different track each visit'}
+              style={[styles.chip, { borderColor: c.pencil }, on && { backgroundColor: c.pencil }]}
+            >
+              <Text style={[styles.chipText, { color: on ? c.paper : c.pencil }]}>{label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Text style={[styles.note, { color: c.muted }]}>
+        {pick ? 'Plays every time' : 'A different track each visit'}{asmr ? ' (ASMR mode has its own tracks)' : ''}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   // Shorter than the screen, so there's backdrop to tap above and below it too.
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 64 },
@@ -292,6 +326,7 @@ const styles = StyleSheet.create({
   body: { padding: 20, gap: 14 },
   title: { fontSize: 28, fontFamily: FONTS.condensedBold, textAlign: 'center' },
   section: { fontSize: 20, fontFamily: FONTS.condensedBold, marginTop: 4 },
+  pickBox: { gap: 8, paddingBottom: 8 },
   volumeRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 6, marginTop: -4 },
   volumeLabel: { fontSize: 15, fontFamily: FONTS.bodySemi, width: 62 },
   volumeTrack: { flex: 1 },

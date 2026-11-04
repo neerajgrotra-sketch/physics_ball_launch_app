@@ -53,8 +53,52 @@ export function useMusicTurn(): boolean {
   return isReady;
 }
 
-/** The track to play: the session's track for the mode. The level id is kept for a possible per-level override later. */
-export const trackFor = (_levelId: string, asmr = false): Track => (asmr ? session.asmr : session.regular);
+// The player's own pick of track (Settings, under Background music), one per mode: a track's id, or null for "Mix" (each session plays
+// the next track, as above). Remembered on the device; the players listen and switch at once.
+export const MUSIC_PICK_KEY = 'bank-shot/music-pick';
+type Picks = { regular: string | null; asmr: string | null };
+let picks: Picks = { regular: null, asmr: null };
+const pickListeners = new Set<() => void>();
+let picksLoading: Promise<void> | null = null;
+/** Reads the saved picks once per app run (the players and Settings call it). */
+export function loadMusicPicks(): Promise<void> {
+  picksLoading ??= AsyncStorage.getItem(MUSIC_PICK_KEY).then((raw) => {
+    const o = raw ? JSON.parse(raw) : null;
+    const ok = (id: unknown, asmr: boolean) => (typeof id === 'string' && PLAYLIST.some((t) => t.id === id && t.asmr === asmr) ? id : null);
+    if (o && typeof o === 'object') { picks = { regular: ok(o.regular, false), asmr: ok(o.asmr, true) }; pickListeners.forEach((f) => f()); }
+  }).catch(() => {});
+  return picksLoading;
+}
+/** Picks a track for a mode (null: Mix). */
+export function setMusicPick(asmr: boolean, id: string | null) {
+  picks = { ...picks, [asmr ? 'asmr' : 'regular']: id };
+  pickListeners.forEach((f) => f());
+  AsyncStorage.setItem(MUSIC_PICK_KEY, JSON.stringify(picks)).catch(() => {});
+}
+export const musicPick = (asmr: boolean) => (asmr ? picks.asmr : picks.regular);
+/** The pick for a mode, re-rendering when any pick changes (and once the saved ones are read). */
+export function useMusicPick(asmr: boolean): string | null {
+  const [, bump] = useState(0);
+  useEffect(() => {
+    const f = () => bump((n) => n + 1);
+    pickListeners.add(f);
+    loadMusicPicks().then(f);
+    return () => { pickListeners.delete(f); };
+  }, []);
+  return musicPick(asmr);
+}
+
+/** A track's name for people: its title ("graph-paper" is Graph Paper, "asmr-felt-glass" is Felt Glass). */
+export const trackTitle = (t: Track) =>
+  t.id.replace(/^asmr-/, '').split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+/** The tracks a mode can pick from, in name order. */
+export const tracksFor = (asmr: boolean) => PLAYLIST.filter((t) => t.asmr === asmr);
+
+/** The track to play: the player's pick for the mode, else the session's track. The level id is kept for a possible per-level override. */
+export const trackFor = (_levelId: string, asmr = false): Track => {
+  const id = musicPick(asmr);
+  return (id && PLAYLIST.find((t) => t.id === id)) || (asmr ? session.asmr : session.regular);
+};
 
 /** Music sits well under the effects, and dips further while the ball is flying so bounces cut through. */
 export const MUSIC_VOLUME = 0.18;

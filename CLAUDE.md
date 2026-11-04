@@ -330,7 +330,9 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
   `effectsListeners`) (0.62.5). It starts when a level opens.
   Settings has Background music, Sound effects and Vibration switches (`SoundSettings.tsx`, remembered; Vibration only in the app; effects and
   vibration are read from `feedbackPrefs` as they play), and a background-music Volume slider under the first (0–150% of the game's level,
-  100% by default; `music.ts` `musicVolume`/`setMusicLevel`, `MUSIC_LEVEL_KEY`; both players follow it live). One music player for the whole app: level screens hold it (`useLevelMusic`,
+  100% by default; `music.ts` `musicVolume`/`setMusicLevel`, `MUSIC_LEVEL_KEY`; both players follow it live), then a Track picker: "Mix"
+  (the session rotation, the default) or one track by name, kept per mode (`setMusicPick`, `MUSIC_PICK_KEY`, `trackFor` prefers it; ASMR mode
+  lists its own tracks, `tracksFor`, titles from ids by `trackTitle`); both players switch at once. One music player for the whole app: level screens hold it (`useLevelMusic`,
   `musicDemand.ts`) and it pauses 0.7 s after the last lets go, so moving to the next level never restarts the track. On phones it
   lives in `MusicHost` (root layout) with `useAudioPlayer`, so React releases it on any reload; never make the music with
   `createAudioPlayer` in a module variable (0.39.0–0.39.2 did: a reload left the old player playing beside a new one, and the
