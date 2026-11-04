@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useAsmr } from '../settings/Theme';
-import { musicReady, trackFor, useMusicTurn, MUSIC_DUCKED, MUSIC_VOLUME, type Track } from './music';
+import { loadMusicLevel, musicReady, musicVolume, onMusicLevel, trackFor, useMusicTurn, type Track } from './music';
 import { audioContext, buffer, generation, onRunning, resume, running } from './webAudio';
 
 /**
@@ -91,7 +91,7 @@ export function useLevelMusic(levelId: string, on: boolean, duck = false) {
     if (!buf || !holding.current || !running() || (live() && current!.track === track)) return;
     // A different track playing (ASMR mode toggled) fades out as this one fades in; one left on a replaced context just stops.
     stopNow(live() ? FADE : 0);
-    current = startLoop(track, buf, duckedNow ? MUSIC_DUCKED : MUSIC_VOLUME);
+    current = startLoop(track, buf, musicVolume(duckedNow));
   }, [track, turnReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Decode the track right away so starting is instant, and start as soon as audio is unlocked.
@@ -118,10 +118,15 @@ export function useLevelMusic(levelId: string, on: boolean, duck = false) {
     };
   }, [on, start]);
 
-  // Dip while the ball flies, with a short glide so it doesn't click.
+  // Dip while the ball flies, and follow the player's own volume (Settings), with a short glide so it doesn't click.
   useEffect(() => {
-    const ac = audioContext();
-    if (ac && live()) current!.gain.gain.setTargetAtTime(duck ? MUSIC_DUCKED : MUSIC_VOLUME, ac.currentTime, 0.08);
+    const glide = () => {
+      const ac = audioContext();
+      if (ac && live()) current!.gain.gain.setTargetAtTime(musicVolume(duckedNow), ac.currentTime, 0.08);
+    };
+    glide();
+    loadMusicLevel().then(glide);
+    return onMusicLevel(glide);
   }, [duck]);
 
   return {

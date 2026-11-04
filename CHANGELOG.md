@@ -4,6 +4,16 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.63.0
+
+- Settings: "Music" is now **Background music**, with a **Volume** slider under it (0 to 150% of the game's level, 100% by default).
+  The music follows the slider as it moves, on phones and the web, and the level is remembered. The dip during a shot still applies.
+- Settings has a **✕** in its top corner that stays put however far the list scrolls, and the sheet stops short of the top and bottom
+  of the screen, so there's backdrop to tap too. Players found no way out of the tall sheet.
+- The win card no longer cuts the ASMR light bloom short. The celebration's clock now starts once the effect is on screen, and the
+  card comes when that clock says it has finished, plus a pause, instead of on a separate timer. On phones the bloom took a moment to
+  appear, ran behind its clock, and the card came up over its last white glow.
+
 ## 0.62.5
 
 - Fewer sound-effect players on phones, to stop the music's remaining pauses: a moment 2 to 4 s after a level opens or the phone

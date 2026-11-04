@@ -255,7 +255,8 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   Link previews: Open Graph tags in `public/index.html` with `public/og.png` (`NODE_PATH=$(npm root -g) node scripts/make-og.mjs`);
   their URLs are absolute, so change them with `SITE_URL` if the address changes. `SHARE_LINK` is `SITE_URL` (the public Vercel address) until a store link exists.
 - **Sheets** (settings, shop, world info): the backdrop is a full-size `Pressable` *behind* the sheet, never a `Pressable` wrapped
-  round it. A Pressable round a `ScrollView` fights it for the finger on iPhone, so the sheet scrolled only now and then (0.58.1).
+  round it. Settings also has a ✕ pinned at its top corner (outside the scroll) and stops 64 short of the screen's top and bottom, so there's
+  always a way out. A Pressable round a `ScrollView` fights it for the finger on iPhone, so the sheet scrolled only now and then (0.58.1).
 - **Level header:** ⚙ (settings sheet: music, sound effects, vibration, version) and ••• (back to the levels, also from a deep link)
   on the left, level name in the middle, ‹ › on the right. No back arrow.
 - Level locks are on (`LOCK_LEVELS`): a level opens when the one before is won, and level 2 once the tutorial is finished or skipped
@@ -279,7 +280,9 @@ whatever theme is picked (the picked one comes back when it's off), and the boar
 bars, ball and newest trail, a `CometTail` on the flight and a `BounceFlash` ring at each hit (`LevelGame`'s `flash`). Sound:
 `feedbackPrefs.asmr` swaps each bounce for `chime.wav` stepped along `asmrStep` (major pentatonic, up then down) and the landing
 for `bloom.wav`. Its win is the light bloom (`game/bloom.ts` `BLOOM_MS`, phases in `BLOOM_PHASES`, `Board`'s `Bloom`: the light
-runs the path, the glass fills, spirograph mandalas, ripples, a light column, fireflies spiralling in); the win card waits for it.
+runs the path, the glass fills, spirograph mandalas, ripples, a light column, fireflies spiralling in); the win card waits for it: the
+celebration's clock starts once it's mounted (`celePending`, an effect on `cele`) and the card follows the clock's finish (`celeDone`, a longer
+pause after the bloom), never a separate timer (on phones the bloom appeared late and the card cut its last glow).
 Blocks are violet neon glass in ASMR mode (`NEON_BLOCK`), and the bar or block a bounce strikes flares up (`hitTarget`, the flash's
 `what`, `Board`'s `HitFlare`). Guns get a neon edge in ASMR mode (`GunArt`'s `glow`: dark guns vanished on the black board). Every launch, in any mode, plays the
 muzzle blast (`game/muzzle.ts`: recoil, flash, shock ring, sparks, smoke along the aim; `LevelGame`'s `blast`, `launched(angle)`) and the
@@ -325,8 +328,9 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
   bounce, wall and chime, 20 in all): each loaded iPhone player holds an audio pipeline, and with 43 the music stalled whenever iOS
   reset them (volume buttons, unlocking, just after they loaded). With Sound effects off there are none (`setEffectsOn`, told through
   `effectsListeners`) (0.62.5). It starts when a level opens.
-  Settings has Music, Sound effects and Vibration switches (`SoundSettings.tsx`, remembered; Vibration only in the app; effects and
-  vibration are read from `feedbackPrefs` as they play). One music player for the whole app: level screens hold it (`useLevelMusic`,
+  Settings has Background music, Sound effects and Vibration switches (`SoundSettings.tsx`, remembered; Vibration only in the app; effects and
+  vibration are read from `feedbackPrefs` as they play), and a background-music Volume slider under the first (0–150% of the game's level,
+  100% by default; `music.ts` `musicVolume`/`setMusicLevel`, `MUSIC_LEVEL_KEY`; both players follow it live). One music player for the whole app: level screens hold it (`useLevelMusic`,
   `musicDemand.ts`) and it pauses 0.7 s after the last lets go, so moving to the next level never restarts the track. On phones it
   lives in `MusicHost` (root layout) with `useAudioPlayer`, so React releases it on any reload; never make the music with
   `createAudioPlayer` in a module variable (0.39.0–0.39.2 did: a reload left the old player playing beside a new one, and the

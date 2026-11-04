@@ -52,7 +52,7 @@ import { bounceMarks, type Mark } from '../../game/marks';
 import { useBallSkin } from '../../components/settings/BallSkin';
 import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 import { WORLD, buildWorld, glassBox, pieceEnds, simulate, type Hit, type Level, type Vec } from '../../physics';
 import type { DailyResult } from '../../game/daily';
 import { shareCard, shareMessage } from '../../game/share';
@@ -347,24 +347,41 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     setCele(null);
     setCardReady(true);
   };
+  // What the celebration about to start needs once it's on screen (its length and the fuse's ticks).
+  const celePending = useRef<{ dur: number; ticks: number[]; asmr: boolean } | null>(null);
   const celebrate = (res: { path: Vec[]; jumps: number[]; hits: Hit[]; bounces: number }, stars: number, assisted: boolean) => {
     stopCelebration();
     const burst = burstFor(stars, assisted);
     // ASMR mode plays the longer light bloom (game/bloom.ts) instead of the fuse and confetti.
     const dur = asmr ? BLOOM_MS : CELEBRATION_MS;
+    celePending.current = { dur, ticks: asmr ? [] : fuseTicks(res.path, res.jumps, res.hits), asmr };
     setCele({ path: res.path, jumps: res.jumps, ...burst, bloom: asmr ? bloomFor(stars, assisted) : undefined });
     setCardReady(false);
-    celeT.value = 0;
-    celeT.value = withTiming(1, { duration: dur, easing: Easing.linear });
-    // Normal mode: the fuse fizzes as the spark runs the path, with a tick at each bounce it passes (the bloom's sound has its own run).
-    if (!asmr) feedback.fuse();
-    celeTimers.current = [
-      ...(asmr ? [] : fuseTicks(res.path, res.jumps, res.hits).map((f, k) => setTimeout(() => feedback.spark(k), f * FUSE_SHARE * dur))),
-      setTimeout(() => feedback.burst(), dur * FUSE_SHARE),
-      // The card only comes once the whole celebration has played out (players found it cut the burst short).
-      setTimeout(() => { setCele(null); setCardReady(true); }, dur + CARD_PAUSE_MS),
-    ];
+    celeT.value = 0; // held at the start until the effect is on screen (below)
   };
+  // The card comes once the celebration's clock has run out, plus a pause (longer after the bloom, so its last glow has faded).
+  const celeDone = (wasAsmr: boolean) => {
+    celeTimers.current.push(setTimeout(() => { setCele(null); setCardReady(true); }, wasAsmr ? CARD_PAUSE_MS + 450 : CARD_PAUSE_MS));
+  };
+  // The celebration's clock starts only once it's drawn, and the card waits for the clock to say it has finished. Both used to run
+  // from the moment of the win on separate timers: on a phone the heavy ASMR bloom took a moment to appear, ran behind its clock,
+  // and the card came up over its last white glow.
+  useEffect(() => {
+    const p = celePending.current;
+    if (!cele || !p) return;
+    celePending.current = null;
+    const { dur, ticks, asmr: wasAsmr } = p;
+    celeT.value = withTiming(1, { duration: dur, easing: Easing.linear }, (finished) => { if (finished) runOnJS(celeDone)(wasAsmr); });
+    // Normal mode: the fuse fizzes as the spark runs the path, with a tick at each bounce it passes (the bloom's sound has its own run).
+    if (!wasAsmr) feedback.fuse();
+    celeTimers.current = [
+      ...ticks.map((f, k) => setTimeout(() => feedback.spark(k), f * FUSE_SHARE * dur)),
+      setTimeout(() => feedback.burst(), dur * FUSE_SHARE),
+      // A backstop, should the clock's signal never come: the card can't be left waiting.
+      setTimeout(() => { setCele(null); setCardReady(true); }, dur + 2500),
+    ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cele]);
   useEffect(() => () => celeTimers.current.forEach(clearTimeout), []);
   // The live bounce counter takes the top corner that covers the least of the level (game/counter).
   const spot = counterSpot(level);

@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Slider from '@react-native-community/slider';
 import { useEffect, useState } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { GENDERS, PROFILE_KEY, emptyProfile, parseAge, parseProfile, type Profile } from '../../game/profile';
 import { FONTS, useColors } from '../../theme/colors';
 import { useTips } from '../coach/Tips';
 import { useSoundSettings } from '../feedback/SoundSettings';
+import { MUSIC_LEVEL_MAX, setMusicLevel, useMusicLevel } from '../feedback/music';
 import { useProgress } from '../progress/ProgressProvider';
 import { VERSION_LABEL } from '../version';
 import { BallPicker } from './BallPicker';
@@ -41,17 +43,22 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close settings" />
         <View style={[styles.sheet, { backgroundColor: c.paper, borderColor: c.line }]}>
+          {/* Always in reach, however far the list is scrolled (players found no way out of the tall sheet). */}
+          <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" hitSlop={12} style={[styles.close, { backgroundColor: c.paper, borderColor: c.line }]}>
+            <Text style={[styles.closeText, { color: c.ink }]}>✕</Text>
+          </Pressable>
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             <Text style={[styles.title, { color: c.ink }]}>Settings</Text>
             <View style={[styles.row, { borderColor: c.line }]}>
-              <Text style={[styles.label, { color: c.ink }]}>Music</Text>
+              <Text style={[styles.label, { color: c.ink }]}>Background music</Text>
               <Switch
                 value={musicOn}
                 onValueChange={() => { onMusicTap?.(); toggleMusic(); }}
                 trackColor={{ true: c.pencil, false: c.line }}
-                accessibilityLabel="Music"
+                accessibilityLabel="Background music"
               />
             </View>
+            <MusicVolume disabled={!musicOn} />
             <View style={[styles.row, { borderColor: c.line }]}>
               <Text style={[styles.label, { color: c.ink }]}>Sound effects</Text>
               <Switch
@@ -243,12 +250,53 @@ function AboutYou() {
   );
 }
 
+/**
+ * The background music's volume (music.ts setMusicLevel): 0 to 150% of the game's level, 100% by default. It follows the finger at
+ * once and is saved when the finger lifts. Greyed while the music is off.
+ */
+function MusicVolume({ disabled }: { disabled: boolean }) {
+  const c = useColors();
+  const level = useMusicLevel();
+  // Web sliders measure their place once; a touch first sends the resize they listen for (as AimControls does), since this one
+  // lives in a sheet that slides in.
+  const remeasure = () => { if (Platform.OS === 'web' && typeof window !== 'undefined') window.dispatchEvent(new Event('resize')); return false; };
+  return (
+    <View style={[styles.volumeRow, disabled && { opacity: 0.4 }]} pointerEvents={disabled ? 'none' : 'auto'}>
+      <Text style={[styles.volumeLabel, { color: c.muted }]}>Volume</Text>
+      <View style={styles.volumeTrack} onStartShouldSetResponderCapture={remeasure}>
+        <Slider
+          style={styles.volumeSlider}
+          value={level}
+          minimumValue={0}
+          maximumValue={MUSIC_LEVEL_MAX}
+          step={0.05}
+          onValueChange={(v) => setMusicLevel(v, false)}
+          onSlidingComplete={(v) => setMusicLevel(v)}
+          minimumTrackTintColor={c.pencil}
+          maximumTrackTintColor={c.line}
+          thumbTintColor={c.pencil}
+          accessibilityLabel="Background music volume"
+        />
+      </View>
+      <Text style={[styles.volumeValue, { color: c.ink }]}>{Math.round(level * 100)}%</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center', padding: 28 },
-  sheet: { borderRadius: 14, borderWidth: 1.5, maxWidth: 420, maxHeight: '88%', width: '100%', alignSelf: 'center', overflow: 'hidden' },
+  // Shorter than the screen, so there's backdrop to tap above and below it too.
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 64 },
+  sheet: { borderRadius: 14, borderWidth: 1.5, maxWidth: 420, maxHeight: '100%', width: '100%', alignSelf: 'center', overflow: 'hidden' },
+  close: { position: 'absolute', top: 10, right: 10, zIndex: 2, width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  closeText: { fontSize: 18, fontFamily: FONTS.bodySemi, marginTop: -1 },
   body: { padding: 20, gap: 14 },
   title: { fontSize: 28, fontFamily: FONTS.condensedBold, textAlign: 'center' },
   section: { fontSize: 20, fontFamily: FONTS.condensedBold, marginTop: 4 },
+  volumeRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 6, marginTop: -4 },
+  volumeLabel: { fontSize: 15, fontFamily: FONTS.bodySemi, width: 62 },
+  volumeTrack: { flex: 1 },
+  volumeSlider: { width: '100%', height: 36 },
+  volumeValue: { fontSize: 15, fontFamily: FONTS.bodySemi, width: 48, textAlign: 'right' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1 },
   labelBox: { flex: 1, gap: 2 },
   label: { fontSize: 18, fontFamily: FONTS.bodySemi },

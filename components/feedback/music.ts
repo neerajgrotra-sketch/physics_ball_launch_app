@@ -59,3 +59,44 @@ export const trackFor = (_levelId: string, asmr = false): Track => (asmr ? sessi
 /** Music sits well under the effects, and dips further while the ball is flying so bounces cut through. */
 export const MUSIC_VOLUME = 0.18;
 export const MUSIC_DUCKED = 0.06;
+
+// The player's own level for the background music (Settings, "Background music" volume): a share of the game's level, 0 to 1.5, 1
+// (today's level) by default. Remembered on the device; the players listen and follow it at once, during a drag too.
+export const MUSIC_LEVEL_KEY = 'bank-shot/music-level';
+export const MUSIC_LEVEL_MAX = 1.5;
+let level = 1;
+const levelListeners = new Set<() => void>();
+let levelLoading: Promise<void> | null = null;
+
+/** The background music's volume right now, for the player: the game's level (dipped during a shot) times the player's own. */
+export const musicVolume = (ducked: boolean) => (ducked ? MUSIC_DUCKED : MUSIC_VOLUME) * level;
+export const musicLevel = () => level;
+/** Reads the saved level once per app run (the players call this when they start). */
+export function loadMusicLevel(): Promise<void> {
+  levelLoading ??= AsyncStorage.getItem(MUSIC_LEVEL_KEY).then((raw) => {
+    const v = raw == null ? NaN : Number(raw);
+    if (Number.isFinite(v)) { level = Math.max(0, Math.min(MUSIC_LEVEL_MAX, v)); levelListeners.forEach((f) => f()); }
+  }).catch(() => {});
+  return levelLoading;
+}
+/** Sets the level (the players follow at once); `save` writes it, done when a drag ends rather than on every step. */
+export function setMusicLevel(v: number, save = true) {
+  level = Math.max(0, Math.min(MUSIC_LEVEL_MAX, v));
+  levelListeners.forEach((f) => f());
+  if (save) AsyncStorage.setItem(MUSIC_LEVEL_KEY, String(level)).catch(() => {});
+}
+export function onMusicLevel(f: () => void): () => void {
+  levelListeners.add(f);
+  return () => { levelListeners.delete(f); };
+}
+/** The level, re-rendering when it changes (for the Settings slider). */
+export function useMusicLevel(): number {
+  const [v, setV] = useState(level);
+  useEffect(() => {
+    const f = () => setV(level);
+    levelListeners.add(f);
+    loadMusicLevel().then(f);
+    return () => { levelListeners.delete(f); };
+  }, []);
+  return v;
+}

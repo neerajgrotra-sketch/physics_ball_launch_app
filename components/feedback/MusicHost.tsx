@@ -2,7 +2,7 @@ import { useAudioPlayer } from 'expo-audio';
 import { useEffect, useState } from 'react';
 import { localSound, setAudioModeOnce, sourceOf } from './localAudio';
 import { warmSounds } from './useFeedback';
-import { MUSIC_DUCKED, MUSIC_VOLUME, trackFor, useMusicTurn } from './music';
+import { loadMusicLevel, musicVolume, onMusicLevel, trackFor, useMusicTurn } from './music';
 import { musicDemand, onMusicDemand } from './musicDemand';
 import { useAsmr } from '../settings/Theme';
 
@@ -51,7 +51,7 @@ function useDemand(p: { playing: boolean; volume: number; play(): void; pause():
     const apply = () => {
       const { wanted, ducked } = musicDemand();
       try {
-        p.volume = ducked ? MUSIC_DUCKED : MUSIC_VOLUME;
+        p.volume = musicVolume(ducked);
         if (wanted && !p.playing) p.play();
         if (!wanted && p.playing) p.pause();
       } catch {
@@ -60,7 +60,9 @@ function useDemand(p: { playing: boolean; volume: number; play(): void; pause():
     };
     apply();
     const off = onMusicDemand(apply);
-    return () => { off(); try { p.pause(); } catch { /* released */ } };
+    const offLevel = onMusicLevel(apply); // the player's own volume (Settings)
+    loadMusicLevel().then(apply);
+    return () => { off(); offLevel(); try { p.pause(); } catch { /* released */ } };
   }, [p]);
 }
 
