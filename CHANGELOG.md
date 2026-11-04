@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.62.3
+
+- Music loops without the gap on phones, take two. 0.62.2's two players cross-fading at the loop point still left a gap on the
+  iPhone. Now the track plays as a playlist of copies of itself (expo-audio's `useAudioPlaylist`, about 20 minutes of copies,
+  looping). The iPhone's queue player gets the next copy ready while one plays and moves on without a gap, the way Apple's own
+  gapless looper works. Only the restart of the whole queue, about every 20 minutes, can leave one small gap.
+- The phone WAVs are back to the exact loops (no 2 s tail), byte for byte as before 0.62.2.
+
 ## 0.62.2
 
 - Music loops smoothly on phones. The iPhone's player can't loop without a gap: at the end of the file it seeks back to the start,

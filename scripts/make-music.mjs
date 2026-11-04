@@ -17,7 +17,7 @@
 //   assets/music/<name>.mp3        the web copy: one pass plus its tail (the web player starts a repeat every loop length and
 //                                  lets the tail overlap, so an MP3's few ms of encoder padding can't make a gap)
 //   assets/music/<name>.json       { loop: seconds } for that player
-//   assets/music/loops/<name>.wav  the phones' copy: the wrapped loop plus a copy of its first 2 s (two players take turns, MusicHost.tsx)
+//   assets/music/loops/<name>.wav  the phones' copy: the wrapped loop itself (expo-audio loops the whole file)
 // Deterministic (seeded): re-running it gives the same music. Needs ffmpeg for the MP3. Run: node scripts/make-music.mjs [name]
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -973,13 +973,9 @@ for (const [file, make] of [['graph-paper', graphPaper], ['asmr-neon-drift', neo
   for (let i = 1; i < looped.n; i++) typical += Math.abs(looped.l[i] - looped.l[i - 1]);
   typical /= looped.n - 1;
   const seam = Math.abs(looped.l[0] - looped.l[looped.n - 1]);
-  // Phones: the wrapped loop, stereo at 32 kHz (plenty for soft music, and half the size of CD quality), followed by its own first
-  // OVERLAP seconds. The iPhone's player doesn't loop without a gap, so the app plays two players in turn (MusicHost.tsx): the next
-  // one starts at the loop point while this one plays on into the copy of the start, and they cross-fade, so there's no gap.
-  const OVERLAP = 2;
-  const withTail = (ch) => { const out = new Float32Array(looped.n + OVERLAP * SR); out.set(ch); out.set(ch.subarray(0, OVERLAP * SR), looped.n); return out; };
+  // Phones: the wrapped loop, stereo at 32 kHz (plenty for soft music, and half the size of CD quality).
   fs.mkdirSync(path.join(MUSIC, 'loops'), { recursive: true });
-  fs.writeFileSync(path.join(MUSIC, 'loops', `${name}.wav`), wav(withTail(looped.l), withTail(looped.r), gain, 32000, 2));
+  fs.writeFileSync(path.join(MUSIC, 'loops', `${name}.wav`), wav(looped.l, looped.r, gain, 32000, 2));
   // Web: one pass plus its tail, as MP3 (via a temporary WAV).
   const tmp = path.join(MUSIC, `.${name}.tmp.wav`);
   fs.writeFileSync(tmp, wav(bus.l, bus.r, gain, SR, 2));

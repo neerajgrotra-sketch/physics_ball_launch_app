@@ -3,7 +3,7 @@
     "name": "Bank Shot",
     "slug": "bank-shot",
     "owner": "ngrotra",
-    "version": "0.62.2",
+    "version": "0.62.3",
     "runtimeVersion": { "policy": "sdkVersion" },
     "scheme": "bankshot",
     "orientation": "portrait",
