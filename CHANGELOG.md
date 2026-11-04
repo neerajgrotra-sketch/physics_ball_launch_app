@@ -4,6 +4,19 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.60.0
+
+- Launching an unchanged setup no longer counts as a try. The physics is deterministic, so the same bars, angle and power always give
+  the same path. Pressing Launch again without changing anything replays the last shot instead: it plays, leaves its trail, and isn't
+  counted or scored (`game/tries.ts`). This applies after a miss too.
+  - The button reads "Replay ▶" whenever the board matches the last try's setup, and "Launch" as soon as a bar or the aim changes.
+    Undo back to that setup shows "Replay ▶" again.
+  - The first replay in a visit shows a short note: "Same bars, same aim, same shot. Replays don't count as a try: move a bar or
+    change the aim for a new one."
+  - It holds when a level is reopened: the setup comes from the newest trail the level saved.
+  - Reported case: after a win, closing the card (tap outside or ✕) turned the button back to "Launch", and pressing it added a try
+    for the very same shot.
+
 ## 0.59.2
 
 - ASMR mode has its own version of the blocked-rotation feedback. The sound is a soft, muffled wooden thock with a faint glassy ping

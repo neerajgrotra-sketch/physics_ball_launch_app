@@ -127,6 +127,10 @@ reference/    prototype.html, the behaviour and look to match
   `fuse.wav` fizzing and a `spark.wav` tick a step higher at each bounce it passes (`fuseTicks`; normal mode, ASMR mode plays the bloom),
   then the glass bursts. Show "In the glass in N tries", then
   unlock the next level and save progress locally.
+  **A try is a new setup** (`game/tries.ts`): launching the bars and aim the last try was fired from (`setupKey`, `lastFired`, taken
+  from the newest saved trail on resume) only replays it, since physics gives the same path: no try, no score, a pencil note the first
+  time a visit (`RERUN_NOTE`). Launch reads "Replay ▶" whenever the board matches that setup, win or miss, and "Launch" again after
+  any change (Undo back to it shows Replay again).
   After a win, Launch becomes "Replay ▶": it replays the winning shot exactly (bars restored to where
   they were, same angle and power) without resetting or counting a try. The card's left button is
   "Reset level" (or "Try it yourself" after Solve), which resets the level, and beside it "Try again" closes the card keeping

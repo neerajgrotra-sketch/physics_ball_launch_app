@@ -11,6 +11,7 @@ import { usePlayback } from '../../components/board/usePlayback';
 import { HelpCard } from '../../components/board/HelpCard';
 import { FadeToast } from '../../components/board/FadeToast';
 import { jamText } from '../../game/jam';
+import { RERUN_NOTE, isRerun, setupKey } from '../../game/tries';
 import { aimHintNotice, solvedNudge, hintLabel, nextHint, stepsLeft } from '../../game/help';
 import { STAR_REWARD, WORLD_REWARD, solutionCost } from '../../game/wallet';
 import { WORLDS } from '../../game/worlds';
@@ -123,9 +124,6 @@ export interface ChallengeMode {
   next: { label: string; go: () => void };
 }
 
-/** The bars on the board and the aim, as a string: what a shot's bounce markers belong to. */
-const setupKey = (pieces: { x: number; y: number; deg: number }[], angle: number, power: number) =>
-  `${pieces.map((p) => `${p.x},${p.y},${p.deg}`).join(';')}|${angle.toFixed(1)}|${power.toFixed(1)}`;
 
 /** Where a challenge link points: this site on the web (so a preview links to itself), the public site from the app. */
 const siteUrl = () => (Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : SITE_URL);
@@ -210,6 +208,13 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     lastSetup.current = { slots, angle, power };
   }, [slots, angle, power]);
   const [tries, setTries] = useState(draft?.tries ?? 0);
+  // The setup the last try was fired from (game/tries.ts). Launching it again unchanged only replays it: same path, not a try. A
+  // level reopened mid-way takes it from the newest trail it saved, and a replayed saved shot from that shot.
+  const [lastFired, setLastFired] = useState(() => {
+    const l = shot ? { pieces: shotPieces(level, shot), angle: shot.angle, power: shot.power } : draft?.launches?.[draft.launches.length - 1];
+    return l ? setupKey(l.pieces, l.angle, l.power) : '';
+  });
+  const [rerunNote, setRerunNote] = useState(0);
   const [done, setDone] = useState(false);
   /** The Solve button took the winning shot, which changes the win card's wording. */
   const [solved, setSolved] = useState(false);
@@ -452,6 +457,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     const res = simulate(buildWorld(level, placed), a, p);
     const tryNo = tries + 1;
     setTries(tryNo);
+    setLastFired(setupKey(placed, a, p));
     setBounces(0);
     const finished = () => {
       charge.value = withTiming(0, { duration: 500 });
@@ -689,6 +695,21 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     setNotice(null);
   };
 
+  // The board still matches the last try: Launch only replays it (it reads "Replay ▶"), uncounted and unscored. The first time in a
+  // visit a note says why.
+  const rerun = () => {
+    const placed = boardPieces(slots);
+    const res = simulate(buildWorld(level, placed), angle, power);
+    if (rerunNote === 0) setRerunNote(1);
+    launched(angle);
+    playShot(res, () => {
+      setBounces(res.bounces);
+      trailShots.current.set(res.path, { pieces: placed, angle, power });
+      setTrails((ts) => withReplayTrail(ts, res, trailCount));
+      if (res.success) feedback.landed();
+    }, true, setupKey(placed, angle, power));
+  };
+
   const launch = () => {
     poke();
     if (flying || done) return;
@@ -699,6 +720,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       return;
     }
     primeAudio();
+    if (isRerun(lastFired, setupKey(boardPieces(slots), angle, power))) { rerun(); return; }
     // The bar being adjusted stays selected through the shot, so its rotation slider is still under the finger afterwards
     // (the aim sliders come back with Done, or by touching the dotted aim line).
     fire(slots, angle, power);
@@ -770,7 +792,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   };
 
   // After a win, any edit (board touch, bar chip, slider, rotation) or the card's ✕ goes back to normal play:
-  // the card closes and Launch launches again. Bars, trails and tries stay; the level stays won.
+  // the card closes and Launch launches again (as a replay while nothing has changed, game/tries.ts). Bars, trails and tries stay; the level stays won.
   const keepPlaying = () => {
     poke();
     setNotice(null); // any edit also closes a near-miss card
@@ -998,6 +1020,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       <View ref={stageRef} style={styles.stage}>
         <FadeToast trigger={solvedTaps} text={solvedNudge(done)} />
         {/* Over the half of the board away from the bump, so the ring and what it hit stay in view. */}
+        <FadeToast trigger={rerunNote} text={RERUN_NOTE} tone="pencil" />
         <FadeToast trigger={jamToast.n} text={jamToast.text} place={jamToast.y < WORLD.ground / 2 ? 'bottom' : 'top'} />
         <Board
           level={level}
@@ -1146,7 +1169,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
             accessibilityRole="button"
             style={[styles.launch, { backgroundColor: c.red }]}
           >
-            <Text style={styles.launchText}>{flying ? 'Skip ›' : done ? 'Replay ▶︎' : 'Launch'}</Text>
+            <Text style={styles.launchText}>{flying ? 'Skip ›' : done || isRerun(lastFired, setupKey(boardPieces(slots), angle, power)) ? 'Replay ▶︎' : 'Launch'}</Text>
           </Pressable>
         </View>
       </View>
