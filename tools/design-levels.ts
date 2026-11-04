@@ -151,6 +151,41 @@ const designs: Omit<Level, 'solution' | 'par'>[] = [
     hint: 'High and in the middle. Every bar has to be part of the shot.' },
   { id: '05-four-millimetres', name: 'Four millimetres', glass: { x: 330, w: 20, h: 58 }, fixed: [], pieces: [{ len: 90 }, { len: 70 }, { len: 70 }],
     hint: 'Barely wider than the ball, and all three bars count. Small changes matter.' },
+  // ---- 0.61.0: every world brought up to six levels (player feedback: Blocks, Springs and Portals had four each).
+  // Ledge (Blocks): the glass on a pillar, an overhang above the way in, so a high lob is stopped and the ball has to be banked up to it.
+  { id: '26-ledge', name: 'Ledge', glass: { x: 330, w: 40, h: 54, base: 330 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }, { len: 70 }],
+    blocks: [{ x: 330, y: 435, w: 46, h: 210 }, { x: 240, y: 170, w: 150, h: 20 }],
+    hint: 'The glass stands on a pillar, and a block hangs over the way in. Bank the ball up to it with all three bars.' },
+  // Chimney (Blocks): the glass at the bottom of a narrow shaft between two tall blocks, and a wall in front of the cannon, so the only way in
+  // is straight down the chimney.
+  { id: '27-chimney', name: 'Chimney', glass: { x: 335, w: 38, h: 54 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }, { len: 70 }],
+    blocks: [{ x: 300, y: 425, w: 16, h: 230 }, { x: 372, y: 425, w: 16, h: 230 }, { x: 180, y: 450, w: 22, h: 180 }],
+    hint: 'The glass is at the bottom of a narrow chimney. Get over the wall and drop the ball straight down the shaft, using all three bars.' },
+  // Rebound (Springs): a gentle one. A golden pad set into the right wall throws the ball back across the board to the glass, tucked behind a
+  // low wall on the left. Every pad has to be touched, so the bounce off the wall is part of the answer.
+  { id: '28-rebound', name: 'Rebound', glass: { x: 230, w: 40, h: 54 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }],
+    blocks: [{ x: 300, y: 470, w: 20, h: 140 }],
+    pads: [{ x: 391, y: 300, w: 12, h: 140 }],
+    hint: 'The golden pad on the right wall is a spring. Send the ball into it and let it throw the ball back over the wall into the glass, off both bars.' },
+  // Stepping stones (Springs, second in the world: many ways in, found 5573): two pads as steps, one on the floor and one on top of a low block, and the glass high on a pillar on the
+  // right under a spiked ceiling, so a throw that is too strong dies. Both pads count: floor pad, step pad, then up to the glass.
+  { id: '29-stepping-stones', name: 'Stepping stones', glass: { x: 352, w: 46, h: 54, base: 250 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }, { len: 70 }],
+    blocks: [{ x: 352, y: 395, w: 46, h: 290 }, { x: 240, y: 490, w: 80, h: 100 }],
+    pads: [{ x: 140, y: 530, w: 70, h: 12 }, { x: 240, y: 434, w: 80, h: 12 }],
+    hazards: [{ x: 320, y: 36, w: 160, h: 12 }],
+    hint: 'Two golden spring pads, one on the floor and one on the step: bounce off both on the way up to the glass on the pillar. Mind the spiked ceiling.' },
+  // Keyhole (Portals): a gentle one. A wall from floor to ceiling splits the board, and the portal is the only way through to the glass.
+  { id: '30-keyhole', name: 'Keyhole', glass: { x: 330, w: 38, h: 54 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }],
+    blocks: [{ x: 245, y: 270, w: 20, h: 540 }],
+    portals: [{ a: { x: 140, y: 220 }, b: { x: 320, y: 220 }, oneWay: true }],
+    hint: 'A wall splits the board in two. The portal is the only way through: send the ball into the blue ring and it comes out of the orange one, still moving the same way.' },
+  // Elevator (Portals): the glass high on a pillar at the top left, a spiked floor on the right, and a portal whose blue end is low on the
+  // right and orange end high in the middle: the bars have to send the ball into it heading left, so it comes out flying over to the glass.
+  { id: '31-elevator', name: 'Elevator', glass: { x: 85, w: 38, h: 54, base: 230 }, fixed: [], pieces: [{ len: 90 }, { len: 80 }, { len: 70 }],
+    blocks: [{ x: 85, y: 385, w: 44, h: 310 }, { x: 200, y: 330, w: 120, h: 18 }],
+    hazards: [{ x: 300, y: 528, w: 180, h: 24 }, { x: 140, y: 40, w: 200, h: 12 }],
+    portals: [{ a: { x: 320, y: 420 }, b: { x: 220, y: 110 }, oneWay: true }],
+    hint: 'The glass is up on a pillar. The blue ring low on the right lifts the ball to the orange ring up high: send it in heading left and it flies over to the glass. Keep clear of the spiked floor.' },
 ];
 
 const only = process.argv[2];

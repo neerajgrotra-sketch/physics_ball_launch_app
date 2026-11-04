@@ -41,6 +41,12 @@ Each new idea is introduced on its own, then mixed. Order agreed so far:
 - **Hazards** (built, 0.10.0): spiked rectangles; next, a slanted or triangular hazard and a hazard that the solution must pass close to.
 - Later: springs (energy in), moving or spinning parts (needs a time-aware solver), grey dead hazards used sparingly and clearly marked.
 
+- **"Everything" world (player feedback):** springs vanish after their world, and no level ever mixes springs with portals, so the
+  game never brings its ideas back together. A sixth world after Portals, as the game's ending, rising: (1) a spring pad throws the
+  ball into a portal (the two ideas that never met), (2) a portal is the only safe way past a spiked moat, with a spring to regain
+  height, (3) a relay through blocks, spikes, one pad and one portal pair with three bars, (4) a grand finale with four bars and every
+  element, at the top of the toughness scale. Existing progress is untouched; the new levels open after Relay.
+
 ## Level order and difficulty curve
 
 Assessment of the first 12 levels (`tools/assess-levels.ts`, "toughness" 0 to 10 = how rarely a random search finds a way in):

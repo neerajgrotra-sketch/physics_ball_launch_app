@@ -4,6 +4,21 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.61.0
+
+- Every world now has six levels. Blocks, Springs and Portals had four each, against Bars' six and Hazards' eight. Six new levels,
+  each placed in its world by measured difficulty (`tools/assess-levels.ts`), so every world still rises from a gentle start:
+  - **Blocks:** Chimney (the glass at the bottom of a narrow shaft behind a wall, par 4) and Ledge (the glass on a pillar, an
+    overhang over the way in, par 3), between Switchback and Gauntlet.
+  - **Springs:** Stepping stones (a floor pad and a pad on a step, up to a high glass under a spiked ceiling, par 10) and Rebound (a
+    spring pad in the right wall throws the ball back over a wall into the glass, par 5), after Bounce house.
+  - **Portals:** Keyhole (a wall from floor to ceiling, the portal the only way through, par 2), after Wormhole, and Elevator (a
+    portal lifts the ball to a glass high on a pillar, over a spiked floor, par 7), the new last level of the game.
+- Existing progress carries over. The saved furthest level is worked out again from the results (`ORDER_VERSION` worlds-2), so
+  everything open stays open. New levels behind a player's furthest point show as new on the level list (empty stars and their par),
+  not as won.
+- BACKLOG: an "Everything" world that brings every element back together as the game's ending.
+
 ## 0.60.1
 
 - On the last level, the win card's right-hand button reads "All levels" and goes back to the level list. It read "Play again" and

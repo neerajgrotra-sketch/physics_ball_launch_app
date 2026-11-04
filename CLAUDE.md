@@ -175,7 +175,10 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
 
 - **Worlds** (`game/worlds.ts`): the levels are grouped by the new idea they bring (Bars, Blocks, Hazards, Springs, Portals), the level list
   shows a header at each world's first level, and the order in `levels/index.ts` must match (a test checks it). Inside a world the toughness rises
-  and the first level is a gentle introduction; a new level goes at its place in its world.
+  and the first level is a gentle introduction; a new level goes at its place in its world. Every world has at least six levels (player
+  feedback, 0.61.0). Inserting a level mid-order shifts the saved "furthest level" index, so bump `ORDER_VERSION` in ProgressProvider
+  (it is then worked out again from the results), and a level behind the frontier that was never won shows as new ('open' in
+  `cardStates`, via `played`), not as won.
 
 - **Guided tour** (`game/tour.ts` content, `components/tour/Tour.tsx`; pictures are live scenes on the real board, `TourScene.tsx` playing `scenes.ts` on real levels with real shots, sounds and a scripted ghost finger; the pieces page plays one small demo board per piece, `PIECE_DEMOS`): shown once after the intro, over whatever screen the app opened on (`TourGate` in the root layout, mounted as the intro starts fading (`onLeaving`) so the fade reveals the tour, never a flash of the level list), before the tutorial; it first asks "What should we call you?" and greets the player by first name (`withName`, saved in the About you profile):
   eight short screens with live scenes (the game, the goal, aiming, bars, stars, the pieces, help, then a hand-off into Learn the

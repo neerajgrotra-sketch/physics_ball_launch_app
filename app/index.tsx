@@ -51,7 +51,7 @@ export default function LevelSelect() {
   const tile = Math.floor((Math.min(width, 560) - 2 * 18 - (COLUMNS - 1) * GAP) / COLUMNS);
   // Each card's look comes from the real unlocks (game/progress.ts cardStates), not from saved stars alone: a win with a hint or
   // Solve saves no stars but does unlock the next level, and the list used to show that level locked (while › opened it).
-  const states = cardStates(LEVELS.map((l) => l.id), (id) => !!best[id], Math.max(frontier, tutorialDone ? Math.min(1, LEVELS.length - 1) : 0), unlocked, tutorialDone);
+  const states = cardStates(LEVELS.map((l) => l.id), (id) => !!best[id], Math.max(frontier, tutorialDone ? Math.min(1, LEVELS.length - 1) : 0), unlocked, tutorialDone, (id) => !!shots[id] || !!help[id]);
   const nextUp = states.indexOf('next');
 
   // Open on the level to play next, not the top of the list: once the grid and that card have been laid out, scroll so the card sits

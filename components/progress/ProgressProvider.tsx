@@ -10,7 +10,9 @@ import { TIPS_KEY, useTips } from '../coach/Tips';
 
 /** Marks that the saved unlock was worked out for the levels in worlds (0.18.0). */
 const ORDER_KEY = 'bank-shot/order';
-const ORDER_VERSION = 'worlds-1';
+// Bumped whenever levels are inserted mid-order (worlds-2: 0.61.0 brought every world to six), so the furthest level is worked out
+// again from the results below.
+const ORDER_VERSION = 'worlds-2';
 
 interface Progress {
   /** Index of the furthest level the player can open (every level while the Testing switch is on). */
@@ -93,7 +95,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       setUnlockAllState(all === '1');
       let open = parseUnlocked(u, LEVELS.length);
       if (order !== ORDER_VERSION) {
-        // The levels were put in worlds (0.18.0): the saved "furthest level" counted the old order, so work it out again from the results.
+        // The order changed (worlds in 0.18.0, new levels inside worlds in 0.61.0): the saved "furthest level" counted the old order, so
+        // work it out again from the results.
         const won = LEVELS.map((l, i) => (saved[l.id] || parseShots(s)[l.id] ? i : -1));
         open = Math.min(LEVELS.length - 1, Math.max(-1, ...won) + 1);
         AsyncStorage.setItem(UNLOCKED_KEY, String(open)).catch(() => {});

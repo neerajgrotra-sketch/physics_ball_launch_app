@@ -1,0 +1,59 @@
+{
+  "id": "26-ledge",
+  "name": "Ledge",
+  "glass": {
+    "x": 330,
+    "w": 40,
+    "h": 54,
+    "base": 330
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 330,
+      "y": 435,
+      "w": 46,
+      "h": 210
+    },
+    {
+      "x": 240,
+      "y": 170,
+      "w": 150,
+      "h": 20
+    }
+  ],
+  "hint": "The glass stands on a pillar, and a block hangs over the way in. Bank the ball up to it with all three bars.",
+  "par": 3,
+  "solution": {
+    "pieces": [
+      {
+        "x": 164,
+        "y": 372,
+        "deg": 4
+      },
+      {
+        "x": 193,
+        "y": 469,
+        "deg": 172
+      },
+      {
+        "x": 334,
+        "y": 212,
+        "deg": 0
+      }
+    ],
+    "angle": 58,
+    "power": 82.4
+  }
+}

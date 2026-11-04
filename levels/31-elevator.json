@@ -1,0 +1,86 @@
+{
+  "id": "31-elevator",
+  "name": "Elevator",
+  "glass": {
+    "x": 85,
+    "w": 38,
+    "h": 54,
+    "base": 230
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 85,
+      "y": 385,
+      "w": 44,
+      "h": 310
+    },
+    {
+      "x": 200,
+      "y": 330,
+      "w": 120,
+      "h": 18
+    }
+  ],
+  "hazards": [
+    {
+      "x": 300,
+      "y": 528,
+      "w": 180,
+      "h": 24
+    },
+    {
+      "x": 140,
+      "y": 40,
+      "w": 200,
+      "h": 12
+    }
+  ],
+  "portals": [
+    {
+      "a": {
+        "x": 320,
+        "y": 420
+      },
+      "b": {
+        "x": 220,
+        "y": 110
+      },
+      "oneWay": true
+    }
+  ],
+  "hint": "The glass is up on a pillar. The blue ring low on the right lifts the ball to the orange ring up high: send it in heading left and it flies over to the glass. Keep clear of the spiked floor.",
+  "par": 7,
+  "solution": {
+    "pieces": [
+      {
+        "x": 307,
+        "y": 206,
+        "deg": 49
+      },
+      {
+        "x": 282,
+        "y": 311,
+        "deg": 60
+      },
+      {
+        "x": 359,
+        "y": 360,
+        "deg": 76
+      }
+    ],
+    "angle": 70.2,
+    "power": 81.6
+  }
+}

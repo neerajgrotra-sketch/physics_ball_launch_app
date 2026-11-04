@@ -1,0 +1,81 @@
+{
+  "id": "29-stepping-stones",
+  "name": "Stepping stones",
+  "glass": {
+    "x": 352,
+    "w": 46,
+    "h": 54,
+    "base": 250
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    },
+    {
+      "len": 70
+    }
+  ],
+  "blocks": [
+    {
+      "x": 352,
+      "y": 395,
+      "w": 46,
+      "h": 290
+    },
+    {
+      "x": 240,
+      "y": 490,
+      "w": 80,
+      "h": 100
+    }
+  ],
+  "pads": [
+    {
+      "x": 140,
+      "y": 530,
+      "w": 70,
+      "h": 12
+    },
+    {
+      "x": 240,
+      "y": 434,
+      "w": 80,
+      "h": 12
+    }
+  ],
+  "hazards": [
+    {
+      "x": 320,
+      "y": 36,
+      "w": 160,
+      "h": 12
+    }
+  ],
+  "hint": "Two golden spring pads, one on the floor and one on the step: bounce off both on the way up to the glass on the pillar. Mind the spiked ceiling.",
+  "par": 10,
+  "solution": {
+    "pieces": [
+      {
+        "x": 131,
+        "y": 164,
+        "deg": 93
+      },
+      {
+        "x": 132,
+        "y": 88,
+        "deg": 172
+      },
+      {
+        "x": 270,
+        "y": 273,
+        "deg": 2
+      }
+    ],
+    "angle": 31.7,
+    "power": 89.6
+  }
+}

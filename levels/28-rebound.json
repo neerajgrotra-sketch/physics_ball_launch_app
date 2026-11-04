@@ -1,0 +1,52 @@
+{
+  "id": "28-rebound",
+  "name": "Rebound",
+  "glass": {
+    "x": 230,
+    "w": 40,
+    "h": 54
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 300,
+      "y": 470,
+      "w": 20,
+      "h": 140
+    }
+  ],
+  "pads": [
+    {
+      "x": 391,
+      "y": 300,
+      "w": 12,
+      "h": 140
+    }
+  ],
+  "hint": "The golden pad on the right wall is a spring. Send the ball into it and let it throw the ball back over the wall into the glass, off both bars.",
+  "par": 5,
+  "solution": {
+    "pieces": [
+      {
+        "x": 66,
+        "y": 180,
+        "deg": 114
+      },
+      {
+        "x": 281,
+        "y": 65,
+        "deg": 18
+      }
+    ],
+    "angle": 87.6,
+    "power": 91.8
+  }
+}

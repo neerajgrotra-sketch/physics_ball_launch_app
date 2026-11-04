@@ -34,7 +34,7 @@ export const WORLDS: World[] = [
   },
   {
     name: 'Blocks', blurb: 'Solid walls to bank off.',
-    ids: ['07-slalom', '06-roadblock', '08-switchback', '09-gauntlet'],
+    ids: ['07-slalom', '06-roadblock', '08-switchback', '27-chimney', '26-ledge', '09-gauntlet'],
     tagline: 'Walls in the way? Use them.',
     pitch: 'Grey blocks stand between you and the glass. The ball bounces off them softly, so a good banker turns a wall into a free bounce.',
     features: [
@@ -55,7 +55,7 @@ export const WORLDS: World[] = [
   },
   {
     name: 'Springs', blurb: 'Gold pads and bars throw the ball back harder.',
-    ids: ['25-bounce-house', '18-springboard', '19-pinball', '20-trampoline'],
+    ids: ['25-bounce-house', '29-stepping-stones', '28-rebound', '18-springboard', '19-pinball', '20-trampoline'],
     tagline: 'Boing.',
     pitch: 'Gold means extra bounce. Springs fling the ball back faster than it came, so a gentle shot can fly across the board.',
     features: [
@@ -66,7 +66,7 @@ export const WORLDS: World[] = [
   },
   {
     name: 'Portals', blurb: 'In one end, out the other.',
-    ids: ['21-wormhole', '23-turnstile', '22-slingshot', '24-relay'],
+    ids: ['21-wormhole', '30-keyhole', '23-turnstile', '22-slingshot', '24-relay', '31-elevator'],
     tagline: 'Now you see it.',
     pitch: 'In one ring, out of its partner. The ball keeps its speed through a portal, and some portals turn it as it comes out.',
     features: [

@@ -1,0 +1,57 @@
+{
+  "id": "30-keyhole",
+  "name": "Keyhole",
+  "glass": {
+    "x": 330,
+    "w": 38,
+    "h": 54
+  },
+  "fixed": [],
+  "pieces": [
+    {
+      "len": 90
+    },
+    {
+      "len": 80
+    }
+  ],
+  "blocks": [
+    {
+      "x": 245,
+      "y": 270,
+      "w": 20,
+      "h": 540
+    }
+  ],
+  "portals": [
+    {
+      "a": {
+        "x": 140,
+        "y": 220
+      },
+      "b": {
+        "x": 320,
+        "y": 220
+      },
+      "oneWay": true
+    }
+  ],
+  "hint": "A wall splits the board in two. The portal is the only way through: send the ball into the blue ring and it comes out of the orange one, still moving the same way.",
+  "par": 2,
+  "solution": {
+    "pieces": [
+      {
+        "x": 77,
+        "y": 423,
+        "deg": 64
+      },
+      {
+        "x": 131,
+        "y": 482,
+        "deg": 92
+      }
+    ],
+    "angle": 31,
+    "power": 74.9
+  }
+}

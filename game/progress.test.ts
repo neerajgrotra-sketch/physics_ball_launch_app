@@ -86,6 +86,8 @@ describe('cardStates', () => {
   });
   it('has no next level once the last is won', () => {
     expect(cardStates(ids, () => true, 4, 4, true)).not.toContain('next');
+    // A level added to a world the player had already passed: behind the frontier but never won, so it's new ('open'), not 'helped'.
+    expect(cardStates(ids, (id) => id === 'a', 3, 3, true, (id) => id !== 'b')).toEqual(['won', 'won', 'open', 'next', 'locked']);
   });
 });
 
