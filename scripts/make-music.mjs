@@ -6,6 +6,8 @@
 //   asmr-felt-glass  ASMR mode: minimalist ambient, ~60 BPM, felt piano, airy pads, sustained tones, soft shimmer, no beat
 //   protractor       regular mode: 100 BPM straight eighths, D minor into F major, marimba arpeggios, a whistled tune, rim-and-hat groove
 //   asmr-paper-lanterns  ASMR mode: 64 BPM, kalimba in a lilting 3+3+2, warm low pads, a held root, faint rain and water drops
+//   set-square       regular mode: a lilting 6/8 in G major, celesta tune, oom-pah-pah of plucked bass and strummed chords, whistle
+//   asmr-tidewater   ASMR mode: 56 BPM, no beat, waves rolling in, glass-harmonica tones, a low bowed drone, gentle harp rolls
 // The game plays one track per mode each session, the next one the session after (components/feedback/music.ts), so play stays fresh.
 // Each is an exact number of bars. It's rendered once with its reverb and echo tails running past the end, then those tails are
 // wrapped onto the start, which is exactly what the music sounds like looping forever: no gap, click or cut at the seam. Tones that
@@ -276,6 +278,46 @@ function drop(freq) {
     out[i] = Math.sin(ph) * Math.exp(-t / 0.018) * Math.min(1, t / 0.001);
   }
   return out;
+}
+
+/** A celesta: a bright, bell-like FM tone with a quick shimmer that settles into a pure ring (higher and shorter than bell()). */
+function celesta(freq, dur, { tau = 0.9 } = {}) {
+  const n = Math.round(dur * SR), out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / SR, I = 1.4 * Math.exp(-t / 0.12);
+    const v = Math.sin(2 * Math.PI * freq * t + I * Math.sin(2 * Math.PI * freq * 4 * t)) + 0.18 * Math.sin(2 * Math.PI * freq * 2 * t) * Math.exp(-t / 0.2);
+    out[i] = v * env(i, n, 0.002, tau);
+  }
+  return lowpass(out, 6000);
+}
+
+/** A glass harmonica: near-pure tones (a whisper of the octave and twelfth) that swell in slowly, with a slow shimmer of vibrato. */
+function glassHarp(freq, dur, { attack = 2.2, release = 2.8, seed = 41 } = {}) {
+  const n = Math.round(dur * SR), out = new Float32Array(n), rand = rng(seed + Math.round(freq));
+  const rate = 4 + rand() * 1.2, ph = rand() * 6.28;
+  let p = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / SR, f = freq * (1 + 0.0025 * Math.sin(2 * Math.PI * rate * t + ph));
+    p += (2 * Math.PI * f) / SR;
+    const e = Math.min(1, t / attack) * Math.min(1, (n - i) / (release * SR));
+    out[i] = (Math.sin(p) + 0.12 * Math.sin(2 * p) + 0.04 * Math.sin(3 * p)) * e * e;
+  }
+  return out;
+}
+
+/** A low bowed string: a few soft harmonics, a slow bow-in and out, a gentle breath of bow noise, kept dark. */
+function bowed(freq, dur, { attack = 1.6, release = 2.2, seed = 51 } = {}) {
+  const n = Math.round(dur * SR), out = new Float32Array(n), rand = rng(seed + Math.round(freq));
+  let nz = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    let v = 0;
+    for (let h = 1; h <= 6; h++) v += Math.sin(2 * Math.PI * freq * h * t + h * 0.7) / (h * 1.4);
+    nz += 0.05 * ((rand() * 2 - 1) - nz);
+    const e = Math.min(1, t / attack) * Math.min(1, (n - i) / (release * SR));
+    out[i] = (v * (1 + 0.04 * Math.sin(2 * Math.PI * 0.3 * t)) + nz * 0.6) * e * e;
+  }
+  return lowpass(lowpass(out, 900), 1400);
 }
 
 // ---------------------------------------------------------------- effects
@@ -734,6 +776,150 @@ function paperLanterns() {
   return { name: 'asmr-paper-lanterns', L, bus: dry };
 }
 
+/**
+ * Regular mode: "Set Square". A lilting 6/8 (the other regular tracks are all 4/4), dotted quarter at 72 BPM, 32 bars (about 53 s),
+ * G major. An oom-pah-pah: a plucked bass on each beat and strummed chords on the off-eighths; a celesta tune that changes each
+ * section, a whistled counter-tune in the last one, soft snaps on the second beat and a shaker on every eighth.
+ */
+function setSquare() {
+  const e8 = 60 / (72 * 3), bar = 6 * e8, bars = 32, L = bars * bar;
+  const total = L + TAIL;
+  const dry = new Bus(total, L), send = new Bus(total, L), echo = new Bus(total, L);
+  const at = (barNo, e) => barNo * bar + e * e8;
+  const G = [[55, 59, 62, 67], 43], Em = [[55, 59, 64, 67], 40], C = [[55, 60, 64, 67], 36], D = [[54, 57, 62, 66], 38];
+  const Bm = [[54, 59, 62, 66], 35], Am = [[57, 60, 64, 69], 33];
+  const sections = [
+    [G, Em, C, D, G, Em, Am, D],   // the tune
+    [C, D, Bm, Em, Am, D, G, G],   // it lifts
+    [G, Em, C, D, G, Bm, C, D],    // the tune again, a little different
+    [Em, C, G, D, Am, C, D, G],    // the whistle answers, home
+  ];
+  const SCALE = [67, 69, 71, 74, 76, 79, 81]; // G major pentatonic: G4 A4 B4 D5 E5 G5 A5
+  sections.forEach((chords, sec) => {
+    const rand = rng(6800 + sec * 17);
+    // The tune: a long-short lilt (eighths 0, 2, 3, 5 mostly), one motif per section with small changes on odd bars.
+    const motif = [0, 1, 2, 3, 4, 5].map((e) => (rand() < ([0, 3].includes(e) ? 0.9 : e === 2 || e === 5 ? 0.6 : 0.2) ? Math.floor(rand() * SCALE.length) : -1));
+    chords.forEach(([voicing, root], k) => {
+      const i = sec * 8 + k;
+      const pcs = voicing.map((m) => m % 12);
+      // Oom: plucked bass on beats 1 and 2 (eighths 0 and 3), root then fifth, up an octave for phones.
+      dry.add(pluck(midi(root + 12), 0.9, { bright: 0.25, decay: 0.993, seed: 3000 + i }), at(i, 0), 0.75);
+      dry.add(pluck(midi(root + 19), 0.8, { bright: 0.25, decay: 0.993, seed: 3100 + i }), at(i, 3), 0.62);
+      // A soft chord bed under it all, so the lilt has some warmth.
+      voicing.slice(0, 3).forEach((m, v) => {
+        const sg = pad(midi(m), bar + 1.2, { attack: 0.3, release: 0.9, cutoff: 900, seed: 3500 + i * 3 + v });
+        dry.add(sg, at(i, 0), 0.3, (v - 1) * 0.5);
+        send.add(sg, at(i, 0), 0.08);
+      });
+      // Pah-pah: strummed chords on the off-eighths, each string a few ms after the last.
+      for (const e of [1, 2, 4, 5]) voicing.forEach((m, v) => {
+        const sg = pluck(midi(m), 0.6, { bright: 0.4, decay: 0.994, seed: 3300 + i * 40 + e * 5 + v });
+        dry.add(sg, at(i, e) + v * 0.008, e === 1 || e === 4 ? 0.24 : 0.17, (v - 1.5) * 0.3);
+        send.add(sg, at(i, e) + v * 0.008, 0.04);
+      });
+      // Drums: a soft kick on beat 1, a snap on beat 2, a shaker on every eighth (the beats a touch louder).
+      dry.add(kick(), at(i, 0), 0.22);
+      { const sg = noiseHit('snap', 9500 + i); dry.add(sg, at(i, 3), 0.18, 0.1); send.add(sg, at(i, 3), 0.05); }
+      for (let e = 0; e < 6; e++) dry.add(noiseHit('shaker', 9700 + i * 10 + e), at(i, e), e % 3 === 0 ? 0.07 : 0.04, 0.4);
+      // Celesta tune, nudged onto chord tones on the beats; the last section leaves room for the whistle.
+      motif.forEach((idx, e) => {
+        if (idx < 0 || (sec === 3 && e > 2)) return;
+        let j = Math.min(SCALE.length - 1, idx + (k % 2 && e >= 3 ? 1 : 0));
+        if ((e === 0 || e === 3) && !pcs.includes(SCALE[j] % 12)) {
+          const near = SCALE.map((m, q) => (pcs.includes(m % 12) ? q : -1)).filter((q) => q >= 0);
+          if (near.length) j = near.reduce((a, q) => (Math.abs(q - j) < Math.abs(a - j) ? q : a), near[0]);
+        }
+        const sg = celesta(midi(SCALE[j]), 1.4, { tau: 0.7 });
+        dry.add(sg, at(i, e), 0.22, 0.15);
+        send.add(sg, at(i, e), 0.1);
+        echo.add(sg, at(i, e), 0.06);
+      });
+      // Section 4: a whistled counter-tune, one long note a bar from the chord, answering the celesta.
+      if (sec === 3) {
+        const tones = SCALE.filter((m) => pcs.includes(m % 12));
+        const w = whistle(midi((tones[k % tones.length] ?? SCALE[2]) + 12), 2.6 * e8, { seed: 7000 + i });
+        dry.add(w, at(i, 3), 0.16, -0.2); echo.add(w, at(i, 3), 0.07); send.add(w, at(i, 3), 0.07);
+      }
+    });
+  });
+  const wetE = pingPong(echo, 3 * e8, 0.3, 3200);
+  wetE.mixInto(dry, 0.7);
+  const wet = reverb(send, { room: 0.78, damp: 0.42 });
+  wet.mixInto(dry, 1);
+  return { name: 'set-square', L, bus: dry };
+}
+
+/**
+ * ASMR mode: "Tidewater". 56 BPM, 16 bars of 4/4 (about 69 s), no beat. Waves roll in and draw back every 8.6 s (eight to a loop, so
+ * they meet at the seam); long glass-harmonica tones cross-fade from chord to chord over a low bowed drone; a harp rolls gently up
+ * the chord's pentatonic notes (the ASMR bounce chimes' notes) at each change, and now and then a single high note.
+ */
+function tidewater() {
+  const bpm = 56, beat = 60 / bpm, bar = 4 * beat, bars = 16, L = bars * bar;
+  const total = L + TAIL + 2;
+  const dry = new Bus(total, L), send = new Bus(total, L);
+  const PENTA = new Set([0, 2, 4, 7, 9]);
+  const chords = [
+    [[57, 64, 67, 72], 33], // Am7
+    [[57, 64, 69, 72], 29], // Fmaj7
+    [[55, 64, 67, 72], 36], // C
+    [[55, 62, 67, 71], 31], // G (B only in the glass, never the harp)
+    [[57, 64, 67, 74], 33], // Am(add 9)
+    [[55, 62, 67, 71], 28], // Em7
+    [[57, 64, 69, 72], 29], // Fmaj7
+    [[55, 62, 67, 74], 31], // Gsus
+  ];
+  const rand = rng(5656);
+  chords.forEach(([voicing, root], c) => {
+    const t0 = c * 2 * bar - 2.2;
+    // Glass harmonica: the chord's upper three notes, held across the two bars and swelling under the next.
+    voicing.slice(1).forEach((m, k) => {
+      const sg = glassHarp(midi(m), 2 * bar + 5, { attack: 2.4, release: 3.2, seed: 700 + c * 5 + k });
+      dry.add(sg, t0, 0.11, (k - 1) * 0.55);
+      send.add(sg, t0, 0.14, (k - 1) * 0.55);
+    });
+    // A low bowed drone on the root and fifth.
+    dry.add(bowed(midi(root + 12), 2 * bar + 4.5, { seed: 800 + c }), t0, 0.1, -0.15);
+    dry.add(bowed(midi(root + 19), 2 * bar + 4.5, { seed: 820 + c }), t0 + 0.6, 0.05, 0.2);
+    // Harp: a gentle roll up the chord's pentatonic notes at the change, loosely timed.
+    const tones = [...new Set(voicing.flatMap((m) => [m, m + 12]))].filter((m) => PENTA.has(m % 12) && m >= 57 && m <= 86).sort((a, b) => a - b);
+    const start = c * 2 * bar + 0.15;
+    tones.slice(0, 4 + Math.floor(rand() * 2)).forEach((m, q) => {
+      const sg = pluck(midi(m), 3.2, { bright: 0.3, decay: 0.9985, seed: 4000 + c * 10 + q, attack: 0.003 });
+      const when = start + q * 0.17 + rand() * 0.03;
+      dry.add(sg, when, 0.2, -0.3 + q * 0.15);
+      send.add(sg, when, 0.16);
+    });
+    // Now and then one high harp note in the second bar.
+    if (rand() < 0.7) {
+      const m = tones[tones.length - 1 - Math.floor(rand() * 2)] + 12;
+      const sg = pluck(midi(m), 3.5, { bright: 0.35, decay: 0.9985, seed: 4500 + c, attack: 0.003 });
+      const when = c * 2 * bar + bar + (1 + rand() * 2) * beat;
+      dry.add(sg, when, 0.12, rand() * 0.8 - 0.4);
+      send.add(sg, when, 0.14);
+    }
+  });
+  // Waves: soft noise that swells in and draws back, eight times a loop, a little brighter at each crest, slightly different each side.
+  const nL = Math.round(L * SR);
+  for (const [side, seed, lag] of [[-0.35, 91, 0], [0.35, 92, 0.18]]) {
+    const wave = new Float32Array(nL), r = rng(seed);
+    let lo = 0, hi = 0;
+    for (let i = 0; i < nL; i++) {
+      const ph = ((i / nL) * 8 + lag) % 1;
+      const swell = Math.pow(Math.sin(Math.PI * ph), 2) * (0.6 + 0.4 * Math.sin(Math.PI * ph));
+      const w = r() * 2 - 1;
+      lo += (0.02 + 0.06 * swell) * (w - lo);
+      hi += 0.3 * (w - hi);
+      wave[i] = (lo * 2.2 + (w - hi) * 0.25 * swell) * (0.15 + swell);
+    }
+    dry.add(wave, 0, 0.05, side);
+    send.add(wave, 0, 0.02, side);
+  }
+  const wet = reverb(send, { room: 0.93, damp: 0.5 });
+  wet.mixInto(dry, 1.25);
+  return { name: 'asmr-tidewater', L, bus: dry };
+}
+
 // ---------------------------------------------------------------- output
 
 /** A gentle low cut (one-pole high-pass) on a bus, in place: rumble no phone speaker plays, which only eats headroom. */
@@ -770,7 +956,7 @@ function wav(l, r, gain, rate, channels) {
 }
 
 const only = process.argv[2];
-for (const [file, make] of [['graph-paper', graphPaper], ['asmr-neon-drift', neonDrift], ['sketchbook', sketchbook], ['asmr-felt-glass', feltGlass], ['protractor', protractor], ['asmr-paper-lanterns', paperLanterns]]) {
+for (const [file, make] of [['graph-paper', graphPaper], ['asmr-neon-drift', neonDrift], ['sketchbook', sketchbook], ['asmr-felt-glass', feltGlass], ['protractor', protractor], ['asmr-paper-lanterns', paperLanterns], ['set-square', setSquare], ['asmr-tidewater', tidewater]]) {
   if (only && !file.includes(only)) continue; // skipped before rendering, so one track takes seconds
   const { name, L, bus } = make();
   lowCut(bus, 70);

@@ -6,7 +6,9 @@ export const PLAYLIST: Track[] = [
   { src: require('../../assets/music/asmr-felt-glass.mp3'), loop: 64, asmr: true },
   { src: require('../../assets/music/asmr-neon-drift.mp3'), loop: 41.142857, asmr: true },
   { src: require('../../assets/music/asmr-paper-lanterns.mp3'), loop: 60, asmr: true },
+  { src: require('../../assets/music/asmr-tidewater.mp3'), loop: 68.571429, asmr: true },
   { src: require('../../assets/music/graph-paper.mp3'), loop: 40, asmr: false },
   { src: require('../../assets/music/protractor.mp3'), loop: 57.6, asmr: false },
+  { src: require('../../assets/music/set-square.mp3'), loop: 53.333333, asmr: false },
   { src: require('../../assets/music/sketchbook.mp3'), loop: 68.571429, asmr: false },
 ];

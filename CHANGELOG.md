@@ -4,6 +4,17 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.62.0
+
+- Two more tracks of the game's own music (`scripts/make-music.mjs`), so each mode now takes turns between four:
+  - **Set Square** (regular mode): a lilting 6/8 in G major (the other regular tracks are all 4/4), 32 bars (about 53 s). An
+    oom-pah-pah of plucked bass and strummed chords over a soft chord bed, a celesta tune that changes each section, snaps and a
+    shaker, and a whistled counter-tune in the last section.
+  - **Tidewater** (ASMR mode): 56 BPM, 16 bars (about 69 s), no beat. Waves roll in and draw back eight times a loop, long
+    glass-harmonica tones cross-fade from chord to chord over a low bowed drone, and a harp rolls gently up the bounce chimes' notes
+    at each change.
+  - New instruments (celesta, glass harmonica, bowed string) leave the six earlier tracks byte for byte as they were.
+
 ## 0.61.0
 
 - Every world now has six levels. Blocks, Springs and Portals had four each, against Bars' six and Hazards' eight. Six new levels,
