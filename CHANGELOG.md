@@ -4,6 +4,15 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.62.4
+
+- Music on phones, take three: no more pauses. The iPhone's player stalls for a moment whenever it sets a file up: at each loop
+  (the original gap), when a second player took over (0.62.2), and when the queue readied its next copy (0.62.3, a pause 2 to 3 s
+  after the music started, also after unlocking the phone). Phones now play one long file per track (`assets/music/long/*.m4a`):
+  the loop repeated sample for sample to about ten minutes in AAC, made by `scripts/make-playlist.mjs`. One player and one file,
+  with nothing set up mid-track; it only loops at the ten-minute mark. Same size as before (about 59 MB for all eight). The music
+  and the web MP3s are unchanged.
+
 ## 0.62.3
 
 - Music loops without the gap on phones, take two. 0.62.2's two players cross-fading at the loop point still left a gap on the

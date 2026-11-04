@@ -1,4 +1,4 @@
-import { useAudioPlayer, useAudioPlaylist } from 'expo-audio';
+import { useAudioPlayer } from 'expo-audio';
 import { useEffect, useState } from 'react';
 import { localSound, setAudioModeOnce, sourceOf } from './localAudio';
 import { warmSounds } from './useFeedback';
@@ -35,22 +35,17 @@ export function MusicHost() {
   return track == null ? null : <MusicPlayer key={String(track)} source={sourceOf(track)} loop={loop} />;
 }
 
-/** About how long the queue of copies runs before it starts over (seconds). */
-const QUEUE_SECONDS = 20 * 60;
-
 /**
- * The player itself, made once the track is a file on the phone. The iPhone's player can't loop a file without a gap: at the end it
- * seeks back to the start, and the music stopped for a moment each time round (0.62.2 tried two players taking turns, and players
- * still heard the gap). So the track is played as a playlist of copies of itself (about 20 minutes of them): iOS's queue player
- * readies the next item while one plays and moves on without a gap, the way Apple's own gapless looper works. The phone file is the
- * exact loop (scripts/make-music.mjs), so copy follows copy seamlessly; only when the whole queue starts over can there be one small
- * gap, about every 20 minutes. A track with no known loop length plays as a single looping file.
+ * The player itself, made once the track is a file on the phone. The iPhone's player stalls for a moment whenever it sets a file up:
+ * at a loop (it seeks back to the start), on handing over to a second player (0.62.2), and as a queue readies its next copy (0.62.3,
+ * a pause 2 to 3 s after the music started). So phones play one long file (assets/music/long/*.m4a, scripts/make-playlist.mjs): the
+ * loop repeated, seamlessly, for about ten minutes. One player, one file, nothing set up mid-track; it only loops at the end.
  */
-function MusicPlayer({ source, loop }: { source: number | { uri: string }; loop: number | null }) {
-  return loop ? <QueuedMusic source={source} copies={Math.max(2, Math.ceil(QUEUE_SECONDS / loop))} /> : <LoopedMusic source={source} />;
+function MusicPlayer({ source }: { source: number | { uri: string }; loop: number | null }) {
+  return <LoopedMusic source={source} />;
 }
 
-/** Plays a player (or playlist) while a level screen wants music, ducked during a shot (musicDemand.ts). */
+/** Plays the player while a level screen wants music, ducked during a shot (musicDemand.ts). */
 function useDemand(p: { playing: boolean; volume: number; play(): void; pause(): void }) {
   useEffect(() => {
     const apply = () => {
@@ -67,13 +62,6 @@ function useDemand(p: { playing: boolean; volume: number; play(): void; pause():
     const off = onMusicDemand(apply);
     return () => { off(); try { p.pause(); } catch { /* released */ } };
   }, [p]);
-}
-
-function QueuedMusic({ source, copies }: { source: number | { uri: string }; copies: number }) {
-  const [sources] = useState(() => Array.from({ length: copies }, () => source));
-  const playlist = useAudioPlaylist({ sources, loop: 'all' });
-  useDemand(playlist);
-  return null;
 }
 
 function LoopedMusic({ source }: { source: number | { uri: string } }) {
