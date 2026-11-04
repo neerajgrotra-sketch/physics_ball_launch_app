@@ -316,7 +316,9 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
   (`trackFor(levelId, asmr)`; toggling ASMR mode swaps it). The playlist
   (`playlist.ts`) is generated from every MP3/M4A in `assets/music` by `scripts/make-playlist.mjs`, which runs before each web build;
   to add music, add a file there. Phones play seamless WAV copies (`assets/music/loops`, `playlist.native.ts`, made by the same script
-  with ffmpeg: an MP3's encoder padding made the iOS loop hiccup); the web keeps the MP3. It starts when a level opens.
+  with ffmpeg: an MP3's encoder padding made the iOS loop hiccup); the web keeps the MP3. The iPhone player still gaps when it loops a
+  file (it seeks back to the start), so each phone WAV is the loop plus a copy of its first 2 s, and `MusicHost` plays two players of it
+  in turn: at the loop point the other starts from the matching spot and they cross-fade over `XFADE` (0.25 s) (0.62.2). It starts when a level opens.
   Settings has Music, Sound effects and Vibration switches (`SoundSettings.tsx`, remembered; Vibration only in the app; effects and
   vibration are read from `feedbackPrefs` as they play). One music player for the whole app: level screens hold it (`useLevelMusic`,
   `musicDemand.ts`) and it pauses 0.7 s after the last lets go, so moving to the next level never restarts the track. On phones it

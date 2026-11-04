@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.62.2
+
+- Music loops smoothly on phones. The iPhone's player can't loop without a gap: at the end of the file it seeks back to the start,
+  and the music stopped for a moment each time round. Now two players of the track take turns (`MusicHost.tsx`). Each phone WAV is
+  the loop plus a copy of its first 2 s (`scripts/make-music.mjs`), and when the playing one reaches the loop point the other starts
+  from the matching spot and they cross-fade over a quarter of a second. The music is unchanged: the loop audio in each WAV is the
+  same, and the web MP3s are byte for byte the same.
+
 ## 0.62.1
 
 - Expo Go testing without the laptop. A GitHub Action (`.github/workflows/expo-update.yml`) publishes every push to `main` to Expo's
