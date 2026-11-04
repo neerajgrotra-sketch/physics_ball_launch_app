@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.64.1
+
+- The background music plays on the level list too, once the intro and the guided tour are out of the way, so the Track picker in
+  Settings can be tried from there. It carries straight on into a level and back.
+- Opening a level no longer cuts the music for a moment and starts it again from the top. When the list lost focus, nothing held
+  the music for an instant and it was stopped at once; now only switching the music off stops it at once, and a screen that goes out
+  of view lets go with the usual short grace. The same applied on phones.
+
 ## 0.64.0
 
 - Pick the background music. Settings has a **Track** picker under Background music: **Mix** (the default: each visit plays the next

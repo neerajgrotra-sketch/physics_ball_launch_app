@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useAsmr } from '../settings/Theme';
+import { useSoundSettings } from './SoundSettings';
 import { loadMusicLevel, musicReady, musicVolume, onMusicLevel, trackFor, useMusicPick, useMusicTurn, type Track } from './music';
 import { audioContext, buffer, generation, onRunning, resume, running } from './webAudio';
 
@@ -101,9 +102,12 @@ export function useLevelMusic(levelId: string, on: boolean, duck = false) {
     return onRunning(start);
   }, [track, start]);
 
+  const { musicOn } = useSoundSettings();
   useEffect(() => {
+    // Only switching the music off stops it at once; a screen losing focus to the next one has already let go with the grace below
+    // (stopping here restarted the track from the top between the level list and a level).
     if (!on) {
-      if (holders === 0) stopNow();
+      if (!musicOn && holders === 0) stopNow();
       return;
     }
     holding.current = true;
@@ -117,7 +121,7 @@ export function useLevelMusic(levelId: string, on: boolean, duck = false) {
       clearTimeout(stopTimer);
       stopTimer = setTimeout(() => { if (holders === 0) stopNow(); }, GRACE_MS);
     };
-  }, [on, start]);
+  }, [on, start, musicOn]);
 
   // Dip while the ball flies, and follow the player's own volume (Settings), with a short glide so it doesn't click.
   useEffect(() => {

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Link, Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Link, Redirect, useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
 import { Fragment, useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,9 @@ import { ShotThumbnail } from '../components/levels/ShotThumbnail';
 import { WorldInfo } from '../components/levels/WorldInfo';
 import { SettingsSheet } from '../components/settings/SettingsSheet';
 import { useTips } from '../components/coach/Tips';
+import { useSoundSettings } from '../components/feedback/SoundSettings';
+import { useLevelMusic } from '../components/feedback/useLevelMusic';
+import { useIntroDone } from '../components/splash/introState';
 import { useProgress, useUnlocked } from '../components/progress/ProgressProvider';
 import { TUTORIAL_ID } from '../game/coach';
 import { VERSION_LABEL } from '../components/version';
@@ -32,6 +35,12 @@ export default function LevelSelect() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { tipsOn, tutorialDone, restartTutorial, tourSeen, restartTour } = useTips();
+  // The background music plays here too, so the track picker in Settings can be tried from the list; it carries straight on into a
+  // level (one shared player). It waits for the intro and the guided tour to be gone: they play their own sounds.
+  const { musicOn } = useSoundSettings();
+  const introDone = useIntroDone();
+  const focused = useIsFocused();
+  const music = useLevelMusic('levels', musicOn && focused && introDone && tourSeen);
   // The guided tour (components/tour/TourGate, in the root layout) shows once, before anything else; Settings can show it again.
   const openTutorial = () => router.push({ pathname: '/level/[id]', params: { id: TUTORIAL_ID } });
   const { best, shots, frontier, help } = useProgress();
@@ -83,7 +92,7 @@ export default function LevelSelect() {
     <View style={styles.screen}>
     <ScrollView ref={scroller} contentContainerStyle={[styles.page, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18 }]}>
       <SettingsSheet
-        visible={settings} onClose={() => setSettings(false)}
+        visible={settings} onClose={() => setSettings(false)} onMusicTap={music.prime}
         onReplayTutorial={() => { setSettings(false); restartTutorial(); openTutorial(); }}
         onShowTour={() => { setSettings(false); restartTour(); }}
       />

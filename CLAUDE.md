@@ -327,7 +327,10 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
   the short file or queueing copies on phones. Keep the effect players few (`POOL_SIZE` in `useFeedback.ts`: one per sound, two for
   bounce, wall and chime, 20 in all): each loaded iPhone player holds an audio pipeline, and with 43 the music stalled whenever iOS
   reset them (volume buttons, unlocking, just after they loaded). With Sound effects off there are none (`setEffectsOn`, told through
-  `effectsListeners`) (0.62.5). It starts when a level opens.
+  `effectsListeners`) (0.62.5). It plays on the level list too (once the intro and the guided tour are gone, `useIntroDone`, `tourSeen`), so
+  the Settings track picker can be tried there, and carries straight on into a level. A screen that loses focus only lets go with the grace;
+  only switching the music off stops it at once (`useLevelMusic`'s `!on` branch checks `musicOn`: stopping at once there restarted the track
+  between the list and a level).
   Settings has Background music, Sound effects and Vibration switches (`SoundSettings.tsx`, remembered; Vibration only in the app; effects and
   vibration are read from `feedbackPrefs` as they play), and a background-music Volume slider under the first (0–150% of the game's level,
   100% by default; `music.ts` `musicVolume`/`setMusicLevel`, `MUSIC_LEVEL_KEY`; both players follow it live), then a Track picker: "Mix"
