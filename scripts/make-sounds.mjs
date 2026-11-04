@@ -244,6 +244,14 @@ const sounds = {
     partials(0.18, [[2637, 0.6, 0.05], [3951, 0.3, 0.03], [5274, 0.15, 0.02]], { attack: 0.001 }),
     scale(crack(0.03, 0.004), 0.25),
   ),
+  // A bar turned into something it can't pass (game/jam.ts): a solid clunk. A dull knock of the bar's body, a short wooden-metal
+  // tok on top and a tiny rattle as it settles back, all over in a fifth of a second so repeated presses stay crisp.
+  clunk: mix(
+    scale(thud(0.22, 210, 85, 0.045), 1.0),
+    partials(0.2, [[430, 0.7, 0.03], [910, 0.35, 0.018], [1730, 0.14, 0.008]], { attack: 0.0008 }),
+    scale(crack(0.04, 0.005), 0.3),
+    partials(0.2, [[520, 0.18, 0.012]], { attack: 0.001, start: 0.055 }),
+  ),
   // A portal: a soft whoosh in, a rising shimmer out, glassy overtones.
   warp: mix(
     scale(zap(0.5, 220, 1100, 0.25, 0.16), 0.55),

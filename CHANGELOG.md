@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.59.1
+
+- Every press of −/+ against something that blocks the bar now clunks (`clunk.wav`, a new solid knock), alternating between two
+  pitches a touch apart so a run of presses knocks rather than drones. Before, only the first press in 0.6 s made a sound, and it
+  was the wall tok slowed down. A slider pushed on clunks at most every 180 ms. The card and the ring still restart only every so
+  often, so they don't flicker.
+
 ## 0.59.0
 
 - A bar turned into something now stops and says so. Pressing − or + used to skip on round to the next angle that fit, so a bar

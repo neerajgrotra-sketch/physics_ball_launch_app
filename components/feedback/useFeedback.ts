@@ -15,6 +15,7 @@ const SOUNDS = {
   land: require('../../assets/sounds/land.wav'),
   boing: require('../../assets/sounds/boing.wav'),
   warp: require('../../assets/sounds/warp.wav'),
+  clunk: require('../../assets/sounds/clunk.wav'),
   star: require('../../assets/sounds/star.wav'),
   burst: require('../../assets/sounds/burst.wav'),
   fuse: require('../../assets/sounds/fuse.wav'),
@@ -36,6 +37,7 @@ const HARD_HIT = 700;
  */
 /** Each bar hit in a shot climbs a major arpeggio (semitones), so a chain sounds like it's building up. */
 const ARPEGGIO = [0, 4, 7, 12, 16, 19, 24];
+let clunks = 0;
 const pitch = (n: number) => 2 ** (ARPEGGIO[Math.min(n, ARPEGGIO.length - 1)] / 12);
 
 type SoundName = keyof typeof SOUNDS;
@@ -84,7 +86,7 @@ class Pool {
  * the bundled source as before.
  */
 let pools: Record<SoundName, Pool> | null = null;
-const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 3, wall: 3, glass: 3, star: 3, chime: 4, spark: 3 };
+const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 3, wall: 3, glass: 3, star: 3, chime: 4, spark: 3, clunk: 3 };
 const makePools = (src: (name: SoundName) => number | { uri: string }) => Object.fromEntries(
   (Object.keys(SOUNDS) as SoundName[]).map((name) => [name, new Pool(src(name), POOL_SIZE[name] ?? 2)]),
 ) as Record<SoundName, Pool>;
@@ -160,10 +162,13 @@ export function useFeedback() {
       play('stamp', 0.9);
       if (feedbackPrefs.asmr) play('chime', 0.45, 2);
     },
-    /** A bar turned into something: a dull, low knock (the wall tok, slowed down), and a light buzz. */
+    /**
+     * A bar turned into something (each refused −/+ press, or the slider pushed on): a solid clunk, and a light buzz. Every press
+     * clunks; successive ones swap between two pitches a touch apart, so a run of presses knocks rather than drones.
+     */
     jammed() {
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);
-      play('wall', 0.8, 0.55);
+      play('clunk', 0.9, clunks++ % 2 ? 0.92 : 1);
     },
     warped() {
       buzz(Haptics.impactAsync, Haptics.ImpactFeedbackStyle.Light);

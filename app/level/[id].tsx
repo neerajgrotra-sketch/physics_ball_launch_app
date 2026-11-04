@@ -221,7 +221,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   // way (game/jam.ts) and a red ring pulses on the board where it bumps (`jamAt`, unmounted once it has played).
   const [jamToast, setJamToast] = useState({ n: 0, text: '', y: 0 });
   const [jamAt, setJamAt] = useState<{ x: number; y: number; n: number } | null>(null);
-  const jamClock = useRef({ at: 0, text: '', timer: undefined as ReturnType<typeof setTimeout> | undefined });
+  const jamClock = useRef({ at: 0, sound: 0, text: '', timer: undefined as ReturnType<typeof setTimeout> | undefined });
   useEffect(() => () => clearTimeout(jamClock.current.timer), []);
   /** Bar k can't turn to `shown`: say why. `by`: the −/+ step that was refused (so it can tell whether the other way is free). */
   const jammed = (k: number, shown: number, by: 1 | -1 | null) => {
@@ -230,14 +230,15 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     const back = by == null ? null : rotateLegal(level, slots, k, by === 1 ? -1 : 1) !== slots ? (by === 1 ? '−' : '+') : null;
     const text = jamText(k + 1, b.blocker, back);
     const now = Date.now(), clock = jamClock.current;
-    // Held −/+ or a slider pressed on: repeat the knock and the ring every so often, not 15 times a second.
+    // Every refused press clunks (a held −/+ stops at the first, so taps are what repeat); a slider pushed on fires many times a
+    // second, so it clunks at most every 180 ms. The card and the ring restart only every so often, so they don't flicker.
+    if (by != null || now - clock.sound > 180) { clock.sound = now; feedback.jammed(); }
     if (text === clock.text && now - clock.at < 600) return;
     clock.at = now; clock.text = text;
     setJamToast((t) => ({ n: t.n + 1, text, y: b.at[1] }));
     setJamAt((j) => ({ x: b.at[0], y: b.at[1], n: (j?.n ?? 0) + 1 }));
     clearTimeout(clock.timer);
     clock.timer = setTimeout(() => setJamAt(null), 900);
-    feedback.jammed();
   };
   /** The Solve button's help card (hint or full solution) is open. */
   const [help, setHelp] = useState(false);
