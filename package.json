@@ -1,6 +1,6 @@
 {
   "name": "bank-shot",
-  "version": "0.69.0",
+  "version": "0.70.0",
   "private": true,
   "type": "module",
   "main": "index",
@@ -31,6 +31,7 @@
     "expo-font": "~58.0.9",
     "expo-haptics": "~58.0.7",
     "expo-linking": "~58.0.14",
+    "expo-notifications": "~58.1.6",
     "expo-router": "~58.0.25",
     "expo-splash-screen": "~58.0.11",
     "expo-status-bar": "~58.0.4",

@@ -141,7 +141,7 @@ the ceiling of this layout; the sensible next step for variety is a *different* 
 - Accounts and a verified online leaderboard: the app submits a shot's inputs, the server re-runs the
   deterministic physics and computes the score (Supabase edge function running `physics/`).
 - **Daily Shot:** done in 0.31.0 (daily puzzle, streak, hint rewards, share). Still to do: a ranking (server re-runs the shot),
-  more puzzles before the 28-day pool repeats (from 2026-11-23), and a reminder notification.
+  more puzzles before the 28-day pool repeats (from 2026-11-23). (Reminder notifications shipped in 0.70.0.)
 - **Animated share (proposed, not built).** Share a short looping GIF or video of the winning shot bouncing in (the poster's board,
   with the ball flying the path and the stamp thumping down at the end), instead of the still poster. Needs frames drawn off screen
   (the same drawing as `shareCard.ts`), an encoder (a small pure-JS GIF encoder works on the web and phones; MP4 needs a native

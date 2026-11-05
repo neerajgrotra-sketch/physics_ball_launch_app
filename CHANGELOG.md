@@ -4,6 +4,23 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.70.0
+
+- Reminder notifications, local to the phone (no server; `expo-notifications`; plan in `game/reminders.ts`, phone side in
+  `components/notifications/`):
+  - **Daily puzzle:** a morning teaser at the player's chosen time (8 am, 9 am, noon or 6 pm). Its opening line is picked by the
+    puzzle's toughness and number ("🧩 Looks hard, has a way"), with the puzzle's own one-line hint, never a spoiler.
+  - **Streak:** at 7:30 pm, only with a streak going and today's puzzle not done ("🔥 Your 5-day streak ends at midnight"). It
+    replaces that day's teaser, so there's at most one a day, and none once the day's puzzle is done.
+  - Tapping one opens today's daily (after the intro).
+  - Off until the player says yes. The daily card asks once, after a daily win ("🔔 Want a nudge when tomorrow's puzzle is
+    ready?"), not at first launch. Settings has a Reminders section with both switches and the time. If the phone refuses
+    permission, it says where to turn notifications on.
+  - The plan is redone on every app start, every return to the app, every daily win and every settings change, and covers only
+    the next 4 days, so a player who stops playing hears from the game a few more mornings, then not again.
+  - Settings, Testing: "Send a test notification" (in 5 seconds).
+  - Phones only; the web has none. In Expo Go they show under Expo Go's name and icon; the game's own build shows its own.
+
 ## 0.69.0
 
 - Two new ASMR tracks from the owner's brief: a quiet moonlit room, mellow analog pads, a gentle two-note motif with long gaps,

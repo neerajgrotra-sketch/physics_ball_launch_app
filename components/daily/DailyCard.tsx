@@ -9,6 +9,8 @@ import { useTips } from '../coach/Tips';
 import { FONTS, useColors } from '../../theme/colors';
 import { ShotThumbnail } from '../levels/ShotThumbnail';
 import { todaysDaily, useDaily } from './DailyProvider';
+import { ensurePermission, remindersSupported } from '../notifications/Reminders';
+import { setReminderPrefs, useReminderPrefs } from '../notifications/reminderPrefs';
 
 /**
  * The daily puzzle's card at the top of the levels screen: today's puzzle (number, toughness, a drawing), the result once it's won,
@@ -21,6 +23,7 @@ export function DailyCard({ width }: { width: number }) {
   const router = useRouter();
   const { state: saved, share, markStamped } = useDaily();
   const feedback = useFeedback();
+  const reminders = useReminderPrefs();
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30_000);
@@ -76,6 +79,26 @@ export function DailyCard({ width }: { width: number }) {
           </Text>
         </View>
       </Pressable>
+      {remindersSupported && !reminders.asked && Object.keys(state.days).length > 0 && (
+        // Asked once, after the player's first daily win (not at first launch, when most people say no).
+        <View style={[styles.ask, { borderColor: c.line, backgroundColor: c.paper }]}>
+          <Text style={[styles.askText, { color: c.ink }]}>🔔 Want a nudge when tomorrow's puzzle is ready?</Text>
+          <View style={styles.askRow}>
+            <Pressable
+              onPress={() => setReminderPrefs({ asked: true })} accessibilityRole="button" hitSlop={6}
+              style={[styles.askBtn, { borderColor: c.line }]}
+            >
+              <Text style={[styles.askBtnText, { color: c.muted }]}>No thanks</Text>
+            </Pressable>
+            <Pressable
+              onPress={async () => { const ok = await ensurePermission(); setReminderPrefs({ asked: true, daily: ok, streak: ok }); }}
+              accessibilityRole="button" hitSlop={6} style={[styles.askBtn, { backgroundColor: c.pencil, borderColor: c.pencil }]}
+            >
+              <Text style={[styles.askBtnText, { color: '#fff' }]}>Yes please</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
       {result ? (
         <Pressable
           onPress={() => share(day)} accessibilityRole="button" accessibilityLabel="Share today's result" hitSlop={6}
@@ -107,4 +130,9 @@ const styles = StyleSheet.create({
   line: { fontSize: 14, fontFamily: FONTS.bodyMedium },
   pill: { position: 'absolute', right: 12, top: 10, height: 28, paddingHorizontal: 12, borderRadius: 14, justifyContent: 'center' },
   pillText: { color: '#fff', fontSize: 14, fontFamily: FONTS.condensedBold },
+  ask: { marginTop: 8, borderWidth: 1, borderRadius: 12, padding: 10, gap: 8 },
+  askText: { fontSize: 15, fontFamily: FONTS.bodyMedium, textAlign: 'center' },
+  askRow: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
+  askBtn: { borderWidth: 1.5, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 7 },
+  askBtnText: { fontSize: 15, fontFamily: FONTS.condensedBold },
 });

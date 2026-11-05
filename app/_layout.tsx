@@ -14,6 +14,7 @@ import { RewardedAdsProvider } from '../components/ads/RewardedAds';
 import { TipsProvider } from '../components/coach/Tips';
 import { SoundSettingsProvider } from '../components/feedback/SoundSettings';
 import { MusicHost } from '../components/feedback/MusicHost';
+import { RemindersHost } from '../components/notifications/RemindersHost';
 import { BallSkinProvider } from '../components/settings/BallSkin';
 import { HintWalletProvider } from '../components/hints/HintWallet';
 import { DailyProvider } from '../components/daily/DailyProvider';
@@ -85,6 +86,7 @@ function AppRoot() {
             </Stack>
             <TourGate hidden={intro && !leaving} />
             <MusicHost />
+            <RemindersHost />
               </TipsProvider>
               </DailyProvider>
               </IntroDone.Provider>
