@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.64.2
+
+- Bounce sounds keep up with the ball again on phones. Since 0.62.5 cut the effect players to 20, a quick run of bounces often found
+  every player for the sound still marked busy: a player was only freed when iOS reported it had finished, and those reports come only
+  about every half second. The next bounce then had to cut a playing one (rewind, then play), so its sound came late or not at all.
+  Each player is now rewound and freed on a timer of its own sound's length, and the sounds that come in runs get a few more players
+  (bounces off bars and walls 3 each, glass 2, ASMR chimes 3, fuse ticks 2): 25 in all, still well under the old 43.
+
 ## 0.64.1
 
 - The background music plays on the level list too, once the intro and the guided tour are out of the way, so the Track picker in

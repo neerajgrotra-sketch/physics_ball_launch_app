@@ -48,8 +48,14 @@ type SoundName = keyof typeof SOUNDS;
  * A few players for one sound, so quick repeats (a fast run of bounces) each get their own instead of cutting each other off.
  * Every player rewinds as soon as it finishes, so starting one is a plain play() from the top. Rewinding just before playing raced
  * on iOS: the seek was still pending when play() ran, so a sound could stay silent and then fire late, doubled with the next one.
+ *
+ * A player is rewound and freed on a timer of its own sound's length, not when iOS reports it finished: that report comes with the
+ * player's status updates, only about every half second, so a long-finished player still counted as busy, the next bounce had to cut
+ * a playing one (rewind, then play), and the sound came late or not at all (0.62.5 to 0.64.1, once the players were cut to 20).
  */
-interface Voice { player: AudioPlayer; busy: boolean; started: number }
+interface Voice { player: AudioPlayer; busy: boolean; started: number; timer?: ReturnType<typeof setTimeout> }
+/** A sound's length when its player can't say yet (seconds): the longest effects (the bloom, the shatter) are longer, the rest shorter. */
+const FALLBACK_SECONDS = 0.6;
 class Pool {
   private voices: Voice[];
   constructor(source: number | { uri: string }, size: number) {
@@ -58,18 +64,24 @@ class Pool {
       // up again), and these pause after every sound.
       const player = createAudioPlayer(source, { keepAudioSessionActive: true });
       const voice: Voice = { player, busy: false, started: 0 };
-      player.addListener('playbackStatusUpdate', (st) => {
-        if (!st.didJustFinish) return;
-        player.pause();
-        player.seekTo(0).catch(() => {}).finally(() => { voice.busy = false; });
-      });
+      // A backstop: if iOS says it finished before the timer does, rewind now.
+      player.addListener('playbackStatusUpdate', (st) => { if (st.didJustFinish) this.rewind(voice); });
       return voice;
     });
   }
 
+  /** Stops the voice at the start, ready to play, and frees it once the rewind has landed. */
+  private rewind(voice: Voice) {
+    clearTimeout(voice.timer);
+    voice.timer = undefined;
+    const { player } = voice;
+    try { player.pause(); } catch { /* released */ }
+    player.seekTo(0).catch(() => {}).finally(() => { voice.busy = false; });
+  }
+
   /** Frees the native players (each loaded one holds an audio pipeline on the phone). */
   release() {
-    this.voices.forEach((v) => { try { v.player.remove(); } catch { /* already gone */ } });
+    this.voices.forEach((v) => { clearTimeout(v.timer); try { v.player.remove(); } catch { /* already gone */ } });
   }
 
   play(volume: number, rate: number) {
@@ -82,8 +94,15 @@ class Pool {
     player.volume = volume;
     player.shouldCorrectPitch = false; // varispeed: a faster rate also raises the pitch, for the arpeggio
     player.setPlaybackRate(rate);
-    if (free) player.play();
-    else { player.pause(); player.seekTo(0).catch(() => {}).finally(() => player.play()); }
+    // Free it again as soon as the sound is over (at this rate), plus a hair for the player to get going.
+    const seconds = player.duration > 0 ? player.duration : FALLBACK_SECONDS;
+    const arm = () => { clearTimeout(voice.timer); voice.timer = setTimeout(() => this.rewind(voice), (seconds / Math.max(0.25, rate)) * 1000 + 40); };
+    if (free) { player.play(); arm(); }
+    else {
+      clearTimeout(voice.timer);
+      player.pause();
+      player.seekTo(0).catch(() => {}).finally(() => { player.play(); arm(); });
+    }
   }
 }
 
@@ -94,11 +113,12 @@ class Pool {
  *
  * As few as possible: every loaded player holds its own audio pipeline on the iPhone, and with 43 of them the music stalled for a
  * moment whenever iOS reset them all (a press of the volume buttons, unlocking the phone, and just after they loaded, 2 to 3 s into a
- * level). One per sound, and a second only for the sounds that come in quick runs (bounces off bars and walls, the ASMR chimes). None
+ * level). One per sound, and two or three only for the sounds that come in quick runs (bounces off bars and walls, glass rattles, the ASMR
+ * chimes, the fuse's ticks): 25 in all. None
  * at all while Sound effects is off: they're released, and made again when it's turned back on (setEffectsOn).
  */
 let pools: Record<SoundName, Pool> | null = null;
-const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 2, wall: 2, chime: 2 };
+const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 3, wall: 3, glass: 2, chime: 3, spark: 2 };
 const makePools = (src: (name: SoundName) => number | { uri: string }) => Object.fromEntries(
   (Object.keys(SOUNDS) as SoundName[]).map((name) => [name, new Pool(src(name), POOL_SIZE[name] ?? 1)]),
 ) as Record<SoundName, Pool>;

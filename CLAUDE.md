@@ -324,8 +324,9 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
   queue readying its next copy in 0.62.3: a pause 2 to 3 s after the music started). So phones play `assets/music/long/<name>.m4a`
   (`playlist.native.ts`): the exact loop repeated sample for sample to about ten minutes (`LONG_SECONDS`) in one AAC file, made by
   `scripts/make-playlist.mjs` with ffmpeg from the loop WAV. One player, one file; it only loops at the end. Don't go back to looping
-  the short file or queueing copies on phones. Keep the effect players few (`POOL_SIZE` in `useFeedback.ts`: one per sound, two for
-  bounce, wall and chime, 20 in all): each loaded iPhone player holds an audio pipeline, and with 43 the music stalled whenever iOS
+  the short file or queueing copies on phones. Keep the effect players few (`POOL_SIZE` in `useFeedback.ts`: one per sound, more only for
+  the sounds that come in runs, 25 in all; each is rewound and freed on a timer of its sound's length, never by waiting for iOS's
+  "finished" report, which comes only every ~0.5 s and made bounce sounds late or missing in 0.62.5–0.64.1): each loaded iPhone player holds an audio pipeline, and with 43 the music stalled whenever iOS
   reset them (volume buttons, unlocking, just after they loaded). With Sound effects off there are none (`setEffectsOn`, told through
   `effectsListeners`) (0.62.5). It plays on the level list too (once the intro and the guided tour are gone, `useIntroDone`, `tourSeen`), so
   the Settings track picker can be tried there, and carries straight on into a level. A screen that loses focus only lets go with the grace;
