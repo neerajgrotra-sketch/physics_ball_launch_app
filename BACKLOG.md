@@ -18,6 +18,18 @@ Agreed work that isn't built yet, roughly in priority order. Move an item to CHA
   played, newest first, with the current and best streak, full weeks and total stamps; a "share my week" grid in the Wordle style
   (`★★★ ★★ ✓ ✗ …`) beside the daily's Share; and a holographic stamp for a perfect week (seven three-star days).
 
+- **Interaction sounds** (user feedback; designed with the owner; build only once the audio log has pinned down the start-up and
+  music stutter on iPhone, so new players can't be confused with it). Short, quiet sounds for deliberate actions, never every move:
+  - **Gun:** detent ticks every few degrees, not a motor loop (a loop wears thin, and starting and stopping players is what stalls the
+    iPhone's audio). Pitch rises with the angle; power is a rising creak of tension; each tick also gets a selection haptic; a dull
+    stop at 0° and 90°; one tick per −/+ press. In ASMR mode the ticks are glassy notes on the bounce chimes' pentatonic scale.
+  - **Bars:** one thump and a medium haptic when placed from the tray. Silent while dragged (users: a sound on every move would
+    annoy), and at most a light haptic on release. Turning ticks every 15°, sparser and quieter than the gun; a blocked turn keeps
+    its clunk. A short soft pop when removed (trash or dragged off the floor). Spring pieces, if ever placed, get the thump with a
+    spring wobble.
+  - **Mix:** well under the bounces and the win, under 0.15 s with no tail, at most ~15 ticks a second, none during a flight. A
+    separate "Interface sounds" switch under Sound effects.
+  - **Phones:** three new sounds only (tick, place, remove), varied by playback rate, to keep the effect players few.
 - **Reset button** (user feedback): a clear "start over" on the board that takes every bar back to the tray and clears the trails (and
   the try count) without leaving the level. Today the Clear button only wipes the ghost trails, and Start over only shows after a win.
   Decide whether it keeps the aim, and whether it asks first when several bars are placed.
