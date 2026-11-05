@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.65.1
+
+- Show touches draws an actual finger: the tutorial's pointing hand (👆, Apple's own on an iPhone), with its fingertip on the touch
+  and the hand below so what's pressed stays in view, plus a small ring at the point of contact. It presses in as the finger lands,
+  follows drags and fades on lift. It was a plain disc.
+
 ## 0.65.0
 
 - **Show touches** (Settings, off by default): a soft fingertip appears wherever you touch, follows your finger as you drag and fades

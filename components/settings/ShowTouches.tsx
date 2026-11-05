@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Platform, StyleSheet, View, type GestureResponderEvent } from 'react-native';
+import { Platform, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 
-// "Show touches" (Settings, off by default): a soft fingertip wherever the player touches, following the finger and fading when it
+// "Show touches" (Settings, off by default): a finger (the tutorial's 👆) wherever the player touches, following the finger and fading when it
 // lifts, so a screen recording shows what was done (for the tutorial, investors and testers; iPhone recordings show no touches).
 // The whole app is covered by TouchesOverlay (raw touch events on phones, pointer events on the web). On phones the board's drags are
 // taken over by the gesture handler, which cuts the raw events off, so the board draws the same fingertip itself (`TouchSpot`, fed
@@ -44,17 +44,24 @@ export function useShowTouches(): boolean {
   return on;
 }
 
-const SIZE = 46;
+const RING = 30;
 
-/** The fingertip: a soft translucent disc with a darker rim and a small core, so it reads on light and dark boards alike. */
+/**
+ * The finger: the tutorial's ghost finger (👆, Apple's own hand on an iPhone) with its fingertip on the touch, the hand below it so
+ * what's pressed stays in view, and a small ring at the point of contact. It presses in a touch as the finger lands and fades on lift.
+ */
 export function TouchSpot({ x, y, shown }: { x: SharedValue<number>; y: SharedValue<number>; shown: SharedValue<number> }) {
   const style = useAnimatedStyle(() => ({
     opacity: shown.value,
-    transform: [{ translateX: x.value - SIZE / 2 }, { translateY: y.value - SIZE / 2 }, { scale: 0.8 + 0.2 * shown.value }],
+    transform: [{ translateX: x.value }, { translateY: y.value }],
   }));
+  const press = useAnimatedStyle(() => ({ transform: [{ scale: 1.08 - 0.08 * shown.value }] }));
   return (
-    <Animated.View pointerEvents="none" style={[styles.spot, style]}>
-      <View style={styles.core} />
+    <Animated.View pointerEvents="none" style={[styles.at, style]}>
+      <View style={styles.ring} />
+      <Animated.View style={[styles.handBox, press]}>
+        <Text style={styles.hand}>👆</Text>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -117,10 +124,13 @@ export function TouchesOverlay({ children }: { children: ReactNode }) {
 const styles = StyleSheet.create({
   // Stands in for the root's own layout (it sits inside the root, which centres the 560-wide column): full width, centring its children.
   fill: { flex: 1, alignSelf: 'stretch', alignItems: 'center' },
-  spot: {
-    position: 'absolute', left: 0, top: 0, width: SIZE, height: SIZE, borderRadius: SIZE / 2,
-    backgroundColor: 'rgba(255,255,255,0.38)', borderWidth: 2, borderColor: 'rgba(40,40,40,0.45)',
-    alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+  // A zero-size anchor at the touch point; the ring is centred on it and the hand hangs below with its fingertip on it (the same
+  // offsets as the tutorial's ghost finger).
+  at: { position: 'absolute', left: 0, top: 0, width: 0, height: 0 },
+  ring: {
+    position: 'absolute', left: -RING / 2, top: -RING / 2, width: RING, height: RING, borderRadius: RING / 2,
+    borderWidth: 2.5, borderColor: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(40,40,40,0.18)',
   },
-  core: { width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(40,40,40,0.35)' },
+  handBox: { position: 'absolute', left: -15, top: -2, transformOrigin: '15px 2px' },
+  hand: { fontSize: 40, lineHeight: 46, textShadowColor: 'rgba(0,0,0,0.3)', textShadowRadius: 6, textShadowOffset: { width: 0, height: 2 } },
 });

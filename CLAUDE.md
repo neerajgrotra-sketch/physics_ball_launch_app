@@ -197,8 +197,8 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   win is marked assisted (no stars or score), and the tutorial level never scores however it is played (replayed
   shots, "Try it yourself": no stars, points or best) and its Solve button just solves it, with no ad. It runs once: "Skip tutorial" on the caption, finishing it, or
   Tips off in settings ends it for good; ⚙ has "Replay the tutorial".
-- **Show touches** (Settings, off by default, `components/settings/ShowTouches.tsx`, `SHOW_TOUCHES_KEY`): a soft fingertip follows the
-  player's finger and fades when it lifts, for screen recordings (iPhone recordings show no touches). `TouchesOverlay` wraps the app in the
+- **Show touches** (Settings, off by default, `components/settings/ShowTouches.tsx`, `SHOW_TOUCHES_KEY`): a finger (the tutorial's 👆, its tip on the
+  touch, the hand below it, with a small ring at the point of contact) follows the player's finger and fades when it lifts, for screen recordings (iPhone recordings show no touches). `TouchesOverlay` wraps the app in the
   root layout (raw touch events on phones, which never take a touch; page-wide pointer events on the web, board included). On phones the
   gesture handler takes the board's drags from the raw events, so `Board` draws the same `TouchSpot` from its own drag positions and calls
   `setBoardTouching` so the overlay steps aside. The wrapper must keep the root's layout (full width, centring), or the column collapses.
