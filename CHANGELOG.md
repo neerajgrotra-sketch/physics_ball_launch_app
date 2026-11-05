@@ -4,6 +4,16 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.64.3
+
+- Crisper bounce sounds in long runs on phones.
+  - Every effect player is warmed at app start: played once silently, one at a time, during the intro. An iPhone player is slow to
+    start the first time, so the first bounces of a session came late and only got better with replays.
+  - The same sound started twice within 45 ms plays once. Two hits a hair apart (a corner, or two events let through in one late
+    frame) used to double.
+  - More voices for the sounds that overlap most: the ASMR chime, which rings for 1.4 s, gets 5 and bar bounces 4 (28 players in
+    all, still under the old 43), so a fast run rarely has to cut one short and rewind it.
+
 ## 0.64.2
 
 - Bounce sounds keep up with the ball again on phones. Since 0.62.5 cut the effect players to 20, a quick run of bounces often found

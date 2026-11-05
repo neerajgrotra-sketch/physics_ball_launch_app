@@ -54,6 +54,8 @@ type SoundName = keyof typeof SOUNDS;
  * a playing one (rewind, then play), and the sound came late or not at all (0.62.5 to 0.64.1, once the players were cut to 20).
  */
 interface Voice { player: AudioPlayer; busy: boolean; started: number; timer?: ReturnType<typeof setTimeout> }
+/** The same sound started again within this many ms is merged into the first. */
+const MERGE_MS = 45;
 /** A sound's length when its player can't say yet (seconds): the longest effects (the bloom, the shatter) are longer, the rest shorter. */
 const FALLBACK_SECONDS = 0.6;
 class Pool {
@@ -84,7 +86,28 @@ class Pool {
     this.voices.forEach((v) => { clearTimeout(v.timer); try { v.player.remove(); } catch { /* already gone */ } });
   }
 
+  /** When this sound last started (ms). */
+  private last = 0;
+
+  /**
+   * Plays each voice once, silently, then rewinds it: an iPhone player is slow to start the first time, so the first bounces of a
+   * session came late (and got better with replays). Done a voice at a time at app start (`warmUp`), never all at once.
+   */
+  warmVoices(): Promise<void> {
+    return this.voices.reduce((chain, voice) => chain.then(() => new Promise<void>((done) => {
+      const { player } = voice;
+      if (voice.busy) { done(); return; }
+      voice.busy = true;
+      try { player.volume = 0; player.play(); } catch { /* not loaded yet */ }
+      setTimeout(() => { this.rewind(voice); setTimeout(done, 30); }, 90);
+    })), Promise.resolve());
+  }
+
   play(volume: number, rate: number) {
+    // Two hits a hair apart (a corner, or two events let through in one late frame) are one sound: played twice, they doubled.
+    const now = Date.now();
+    if (now - this.last < MERGE_MS) return;
+    this.last = now;
     // A free voice if there is one; otherwise cut the one that started longest ago (it has to rewind first, so wait for that).
     const free = this.voices.find((v) => !v.busy);
     const voice = free ?? this.voices.reduce((a, b) => (a.started <= b.started ? a : b));
@@ -114,11 +137,11 @@ class Pool {
  * As few as possible: every loaded player holds its own audio pipeline on the iPhone, and with 43 of them the music stalled for a
  * moment whenever iOS reset them all (a press of the volume buttons, unlocking the phone, and just after they loaded, 2 to 3 s into a
  * level). One per sound, and two or three only for the sounds that come in quick runs (bounces off bars and walls, glass rattles, the ASMR
- * chimes, the fuse's ticks): 25 in all. None
+ * chimes, which ring for 1.4 s, the fuse's ticks): 28 in all. None
  * at all while Sound effects is off: they're released, and made again when it's turned back on (setEffectsOn).
  */
 let pools: Record<SoundName, Pool> | null = null;
-const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 3, wall: 3, glass: 2, chime: 3, spark: 2 };
+const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 4, wall: 3, glass: 2, chime: 5, spark: 2 };
 const makePools = (src: (name: SoundName) => number | { uri: string }) => Object.fromEntries(
   (Object.keys(SOUNDS) as SoundName[]).map((name) => [name, new Pool(src(name), POOL_SIZE[name] ?? 1)]),
 ) as Record<SoundName, Pool>;
@@ -140,7 +163,15 @@ export function warmSounds(): Promise<void> {
     if (!feedbackPrefs.effects) { warming = null; return; }
     const names = Object.keys(SOUNDS) as SoundName[];
     const files = await Promise.all(names.map((n) => localSound(SOUNDS[n])));
-    if (!pools) pools = makePools((name) => sourceOf(files[names.indexOf(name)]));
+    if (!pools) {
+      pools = makePools((name) => sourceOf(files[names.indexOf(name)]));
+      // Warm every voice, one after another (during the intro), so the first bounces start as quickly as later ones.
+      const made = pools;
+      (async () => {
+        await new Promise((r) => setTimeout(r, 800)); // let the players load first
+        for (const pool of Object.values(made)) { if (pools !== made) return; await pool.warmVoices(); }
+      })().catch(() => {});
+    }
   })();
   return warming;
 }
