@@ -5,9 +5,11 @@ export interface Track { id: string; src: number; loop: number | null; asmr: boo
 
 export const PLAYLIST: Track[] = [
   { id: 'asmr-felt-glass', src: require('../../assets/music/long/asmr-felt-glass.m4a'), loop: null, asmr: true },
+  { id: 'asmr-moonwell', src: require('../../assets/music/long/asmr-moonwell.m4a'), loop: null, asmr: true },
   { id: 'asmr-neon-drift', src: require('../../assets/music/long/asmr-neon-drift.m4a'), loop: null, asmr: true },
   { id: 'asmr-paper-lanterns', src: require('../../assets/music/long/asmr-paper-lanterns.m4a'), loop: null, asmr: true },
   { id: 'asmr-tidewater', src: require('../../assets/music/long/asmr-tidewater.m4a'), loop: null, asmr: true },
+  { id: 'compass', src: require('../../assets/music/long/compass.m4a'), loop: null, asmr: false },
   { id: 'graph-paper', src: require('../../assets/music/long/graph-paper.m4a'), loop: null, asmr: false },
   { id: 'protractor', src: require('../../assets/music/long/protractor.m4a'), loop: null, asmr: false },
   { id: 'set-square', src: require('../../assets/music/long/set-square.m4a'), loop: null, asmr: false },

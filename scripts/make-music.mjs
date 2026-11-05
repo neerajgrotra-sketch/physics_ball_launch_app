@@ -8,6 +8,8 @@
 //   asmr-paper-lanterns  ASMR mode: 64 BPM, kalimba in a lilting 3+3+2, warm low pads, a held root, faint rain and water drops
 //   set-square       regular mode: a lilting 6/8 in G major, celesta tune, oom-pah-pah of plucked bass and strummed chords, whistle
 //   asmr-tidewater   ASMR mode: 56 BPM, no beat, waves rolling in, glass-harmonica tones, a low bowed drone, gentle harp rolls
+//   compass          regular mode: a gentle swing at 92 BPM in F major, e-piano off-beat chords, walking bass, vibes tune, whistle
+//   asmr-moonwell    ASMR mode: 60 BPM, no beat, a slow music box (celesta) in C pentatonic, airy pads, a low C, water drops
 // The game plays one track per mode each session, the next one the session after (components/feedback/music.ts), so play stays fresh.
 // Each is an exact number of bars. It's rendered once with its reverb and echo tails running past the end, then those tails are
 // wrapped onto the start, which is exactly what the music sounds like looping forever: no gap, click or cut at the seam. Tones that
@@ -920,6 +922,146 @@ function tidewater() {
   return { name: 'asmr-tidewater', L, bus: dry };
 }
 
+/**
+ * Regular mode: "Compass". A gentle swing (the other regular tracks are straight), 92 BPM, 24 bars of 4/4 (about 63 s), F major.
+ * Electric-piano chords pushed onto the off-beats, a walking plucked bass, soft vibes (a light FM bell with a slow wobble) playing a
+ * swung tune that changes each section, a brushed groove of kick, snap and swung shaker. Three sections of eight bars: the tune, a
+ * lift to B-flat, the tune again with a whistled answer on top.
+ */
+function compass() {
+  const bpm = 92, beat = 60 / bpm, bar = 4 * beat, bars = 24, L = bars * bar;
+  const total = L + TAIL;
+  const dry = new Bus(total, L), send = new Bus(total, L), echo = new Bus(total, L);
+  // Swung eighths: the off-beat lands two thirds of the way through the beat.
+  const at = (b, q) => b * bar + Math.floor(q) * beat + (q % 1 ? (2 / 3) * beat : 0);
+  const F = [[57, 60, 64, 65], 41], Dm = [[57, 60, 62, 65], 38], Gm = [[58, 62, 65, 67], 43], C7 = [[58, 60, 64, 67], 36];
+  const Am = [[57, 60, 64, 67], 33], Bb = [[57, 58, 62, 65], 34], Gm7 = [[58, 62, 65, 69], 43], Csus = [[58, 60, 65, 67], 36];
+  const sections = [
+    [F, Dm, Gm, C7, F, Am, Gm, C7],
+    [Bb, Bb, Am, Dm, Gm7, C7, F, Csus],
+    [F, Dm, Gm, C7, Am, Dm, Gm7, C7],
+  ];
+  const SCALE = [65, 67, 69, 72, 74, 77, 79, 81]; // F major pentatonic: F4 G4 A4 C5 D5 F5 G5 A5
+  sections.forEach((chords, sec) => {
+    const rand = rng(9200 + sec * 31);
+    // The tune: a motif on the swung eighths (beat, and-of-beat), picked once per section.
+    const motif = Array.from({ length: 8 }, (_, e) => (rand() < (e % 2 ? 0.45 : 0.75) ? Math.floor(rand() * SCALE.length) : -1));
+    chords.forEach(([voicing, root], k) => {
+      const i = sec * 8 + k;
+      const pcs = voicing.map((m) => m % 12);
+      // Walking bass: root, fifth, octave-ish, a step towards the next chord, on the beats (up an octave for phones).
+      const next = (sections[sec][k + 1] ?? sections[(sec + 1) % 3][0])[1];
+      const walk = [root, root + 7, root + 12, next + (next > root ? -1 : 1)];
+      walk.forEach((m, q) => dry.add(pluck(midi(m + 12), 0.7, { bright: 0.22, decay: 0.992, seed: 5000 + i * 4 + q }), at(i, q), q ? 0.58 : 0.72));
+      // E-piano comping: a short chord on the and-of-2 and a longer one on 4 (the Charleston push).
+      for (const [q, len, g] of [[1.5, 0.35, 0.16], [3, 0.9, 0.2]]) voicing.forEach((m, v) => {
+        const sg = epiano(midi(m), len + 0.4, { tau: 0.7, index: 1.2 });
+        dry.add(sg, at(i, q) + v * 0.006, g, (v - 1.5) * 0.35);
+        send.add(sg, at(i, q), 0.05);
+      });
+      // Brushed groove: kick on 1 and 3, snap on 2 and 4, a swung shaker on every eighth.
+      dry.add(kick(), at(i, 0), 0.24); dry.add(kick(), at(i, 2), 0.16);
+      for (const q of [1, 3]) { const sg = noiseHit('snap', 8100 + i * 4 + q); dry.add(sg, at(i, q), 0.16, -0.1); send.add(sg, at(i, q), 0.05); }
+      for (let e = 0; e < 8; e++) dry.add(noiseHit('shaker', 8300 + i * 10 + e), at(i, e / 2), e % 2 ? 0.035 : 0.06, 0.35);
+      // Vibes: the motif, nudged onto chord tones on the beats, resting on the last bar of each section.
+      if (k < 7) motif.forEach((idx, e) => {
+        if (idx < 0) return;
+        let j = Math.min(SCALE.length - 1, idx + (k % 4 === 3 ? 1 : 0));
+        if (e % 2 === 0 && !pcs.includes(SCALE[j] % 12)) {
+          const near = SCALE.map((m, q) => (pcs.includes(m % 12) ? q : -1)).filter((q) => q >= 0);
+          if (near.length) j = near.reduce((a, q) => (Math.abs(q - j) < Math.abs(a - j) ? q : a), near[0]);
+        }
+        const sg = bell(midi(SCALE[j]), 1.6, { tau: 0.8, index: 0.45 });
+        const t = at(i, e / 2);
+        dry.add(sg, t, 0.22, 0.2); send.add(sg, t, 0.09); echo.add(sg, t, 0.05);
+      });
+      // Last section: a whistled answer, one long note in the second half of every other bar.
+      if (sec === 2 && k % 2 === 1) {
+        const tones = SCALE.filter((m) => pcs.includes(m % 12));
+        const w = whistle(midi((tones[(k >> 1) % tones.length] ?? 72) + 12), 1.6 * beat, { seed: 8800 + i });
+        dry.add(w, at(i, 2), 0.14, -0.25); echo.add(w, at(i, 2), 0.06); send.add(w, at(i, 2), 0.06);
+      }
+    });
+  });
+  const wetE = pingPong(echo, (2 / 3) * beat * 3, 0.3, 3000);
+  wetE.mixInto(dry, 0.7);
+  const wet = reverb(send, { room: 0.76, damp: 0.45 });
+  wet.mixInto(dry, 1);
+  return { name: 'compass', L, bus: dry };
+}
+
+/**
+ * ASMR mode: "Moonwell". 60 BPM, 16 bars of 4/4 (64 s), no beat. A music box turning slowly: a celesta figure of eight notes over two
+ * bars, from the ASMR bounce chimes' pentatonic notes (C D E G A), changing with the chords; airy pads underneath, a low sustained
+ * C breathing through the whole loop (tuned to meet itself at the seam), a high shimmer now and then, and water drops into a still well.
+ */
+function moonwell() {
+  const bpm = 60, beat = 60 / bpm, bar = 4 * beat, bars = 16, L = bars * bar;
+  const total = L + TAIL + 2;
+  const dry = new Bus(total, L), send = new Bus(total, L), echo = new Bus(total, L);
+  const loopTuned = (f) => Math.round(f * L) / L;
+  const PENTA = new Set([0, 2, 4, 7, 9]);
+  const chords = [
+    [60, 64, 67, 74], // C(add9)
+    [57, 64, 67, 72], // Am7
+    [55, 62, 67, 69], // G6sus
+    [57, 60, 64, 69], // Am
+    [60, 64, 67, 74], // C(add9)
+    [52, 57, 64, 67], // Am/E
+    [55, 60, 62, 67], // Gsus
+    [55, 60, 64, 67], // C/G
+  ];
+  const rand = rng(6161);
+  chords.forEach((voicing, c) => {
+    const t0 = c * 2 * bar - 1.8;
+    // Airy pads, swelling in under each change.
+    voicing.slice(0, 3).forEach((m, k) => {
+      const sg = airPad(midi(m), 2 * bar + 4, { attack: 2.6, release: 3.2, seed: 600 + c * 5 + k });
+      dry.add(sg, t0, 0.16, (k - 1) * 0.5);
+      send.add(sg, t0, 0.14, (k - 1) * 0.5);
+    });
+    // The music box: eight celesta notes over the two bars, up and back down the chord's pentatonic notes, gently uneven.
+    const tones = [...new Set(voicing.flatMap((m) => [m + 12, m + 24]))].filter((m) => PENTA.has(m % 12) && m >= 72 && m <= 91).sort((a, b) => a - b);
+    const shape = [0, 2, 1, 3, 2, 4, 3, 1];
+    shape.forEach((q, e) => {
+      if (e > 0 && rand() < 0.12) return; // a missing tooth now and then
+      const m = tones[q % tones.length];
+      const sg = celesta(midi(m), 2.6, { tau: 1.4 });
+      const t = c * 2 * bar + e * beat + (rand() - 0.5) * 0.03;
+      dry.add(sg, t, 0.15, Math.sin(e) * 0.4);
+      echo.add(sg, t, 0.08);
+      send.add(sg, t, 0.12);
+    });
+    // Water drops into the well, two or three a change, at loose times.
+    for (let d = 0; d < 2 + (c % 2); d++) {
+      const t = c * 2 * bar + rand() * 2 * bar;
+      const sg = drop(1400 + rand() * 900);
+      dry.add(sg, t, 0.12, rand() * 1.4 - 0.7);
+      send.add(sg, t, 0.2);
+    }
+    // Every other change, a high shimmer drifting over the top.
+    if (c % 2 === 1) {
+      const sg = shimmer(midi(voicing[3] + 12), 2 * bar + 2, { seed: 900 + c });
+      dry.add(sg, c * 2 * bar, 0.06, 0.3);
+      send.add(sg, c * 2 * bar, 0.08);
+    }
+  });
+  // A low C (with its octave, for phone speakers), breathing through the whole loop.
+  const nL = Math.round(L * SR), low = new Float32Array(nL);
+  const f1 = loopTuned(midi(48)), breath = loopTuned(1 / (2 * bar));
+  for (let i = 0; i < nL; i++) {
+    const t = i / SR;
+    low[i] = (Math.sin(2 * Math.PI * f1 * t) + 0.5 * Math.sin(4 * Math.PI * f1 * t)) * (0.7 + 0.3 * Math.sin(2 * Math.PI * breath * t));
+  }
+  dry.add(low, 0, 0.05);
+  const wetE = pingPong(echo, 1.5 * beat, 0.42, 2400);
+  wetE.mixInto(dry, 0.75);
+  wetE.mixInto(send, 0.35);
+  const wet = reverb(send, { room: 0.92, damp: 0.4 });
+  wet.mixInto(dry, 1.2);
+  return { name: 'asmr-moonwell', L, bus: dry };
+}
+
 // ---------------------------------------------------------------- output
 
 /** A gentle low cut (one-pole high-pass) on a bus, in place: rumble no phone speaker plays, which only eats headroom. */
@@ -956,7 +1098,7 @@ function wav(l, r, gain, rate, channels) {
 }
 
 const only = process.argv[2];
-for (const [file, make] of [['graph-paper', graphPaper], ['asmr-neon-drift', neonDrift], ['sketchbook', sketchbook], ['asmr-felt-glass', feltGlass], ['protractor', protractor], ['asmr-paper-lanterns', paperLanterns], ['set-square', setSquare], ['asmr-tidewater', tidewater]]) {
+for (const [file, make] of [['graph-paper', graphPaper], ['asmr-neon-drift', neonDrift], ['sketchbook', sketchbook], ['asmr-felt-glass', feltGlass], ['protractor', protractor], ['asmr-paper-lanterns', paperLanterns], ['set-square', setSquare], ['asmr-tidewater', tidewater], ['compass', compass], ['asmr-moonwell', moonwell]]) {
   if (only && !file.includes(only)) continue; // skipped before rendering, so one track takes seconds
   const { name, L, bus } = make();
   lowCut(bus, 70);

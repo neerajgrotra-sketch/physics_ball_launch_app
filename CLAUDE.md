@@ -322,7 +322,7 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
   Store builds bump `expo.ios.buildNumber` / `expo.android.versionCode`. The level list shows the version
   and the git commit (`components/version.ts`; Vercel passes `EXPO_PUBLIC_COMMIT`).
 - Music is the game's own, composed in code by `scripts/make-music.mjs` (nothing licensed): "Graph Paper", "Sketchbook", "Protractor" and
-  "Set Square" for regular mode, "Neon Drift", "Felt Glass", "Paper Lanterns" and "Tidewater" (`asmr-` file names) for ASMR mode, exact seamless loops with their tails wrapped. Each session
+  "Set Square" and "Compass" for regular mode, "Neon Drift", "Felt Glass", "Paper Lanterns", "Tidewater" and "Moonwell" (`asmr-` file names) for ASMR mode, exact seamless loops with their tails wrapped. Each session
   plays the next one per mode (`game/musicTurn.ts`, `MUSIC_TURN_KEY`; `music.ts` `loadMusicTurn`/`useMusicTurn`, the players wait for it). A track the owner approved must keep re-rendering byte for byte: change a shared instrument through a new option
   (as `pluck`'s `attack`), not its defaults. Re-run it to change the music
   (`node scripts/make-music.mjs [name]`); it writes the MP3, the phones' WAV loop and a `<name>.json` loop length. The web player books

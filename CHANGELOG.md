@@ -4,6 +4,15 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.67.0
+
+- Two new background tracks, composed in code like the rest (`scripts/make-music.mjs`):
+  - **Compass** (regular mode): a gentle swing, the first track that isn't straight. 92 BPM in F major: electric-piano chords on
+    the off-beats, a walking plucked bass, a swung vibes tune that changes each section, brushes, and a whistled answer at the end.
+  - **Moonwell** (ASMR mode): a slow music box. 60 BPM with no beat: a celesta figure on the bounce chimes' pentatonic notes, airy
+    pads, a low breathing C, a high shimmer now and then, and water drops into a still well.
+  Each mode now has five tracks, in the session rotation (Mix) and the Track picker. The existing tracks re-render byte for byte.
+
 ## 0.66.5
 
 - Daily results can no longer be wiped. The daily record started empty and was read from storage in the background; anything saved
