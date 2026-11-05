@@ -1,11 +1,11 @@
 // Background music: a playlist of looping tracks (playlist.ts, generated from assets/music by scripts/make-playlist.mjs). The game's
 // own tracks are composed by scripts/make-music.mjs: "Graph Paper", "Sketchbook", "Protractor" and "Set Square" for regular play,
-// "Neon Drift", "Felt Glass", "Paper Lanterns" and "Tidewater" for ASMR mode (files named asmr-…). Each session plays one track per mode, on every level, and the next session plays the next one
-// (game/musicTurn.ts), so each visit sounds different; toggling ASMR mode swaps to that mode's track. To add a track, put an MP3 or M4A
+// "Neon Drift", "Felt Glass", "Paper Lanterns" and "Tidewater" for ASMR mode (files named asmr-…), and more since. In Mix, each session starts on the next
+// track per mode (game/musicTurn.ts), and each different level that opens moves on to the next one; toggling ASMR mode swaps to that mode's track. To add a track, put an MP3 or M4A
 // in assets/music (an asmr- name for ASMR mode).
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { MUSIC_TURN_KEY, parseTurn, trackForTurn } from '../../game/musicTurn';
+import { MUSIC_TURN_KEY, mixStepFor, parseTurn, trackForTurn } from '../../game/musicTurn';
 import { PLAYLIST, type Track } from './playlist';
 
 export type { Track };
@@ -17,8 +17,11 @@ const forTurn = (turn: number) => ({
   asmr: trackForTurn(ASMR, turn) ?? trackForTurn(REGULAR, turn) ?? PLAYLIST[0],
 });
 
-// This session's tracks. Until the saved turn is read (a moment after start) they're turn 0's; then this session's, once.
+// This session's tracks. Until the saved turn is read (a moment after start) they're turn 0's; then this session's, once. In Mix, each
+// different level that opens moves on one more track (`mix`, game/musicTurn.ts mixStepFor).
+let turn0 = 0;
 let session = forTurn(0);
+let mix = { step: 0, last: null as string | null };
 let ready = false;
 const listeners = new Set<() => void>();
 let loading: Promise<void> | null = null;
@@ -29,7 +32,8 @@ export function loadMusicTurn(): Promise<void> {
     .then((raw) => parseTurn(raw))
     .catch(() => 0)
     .then((turn) => {
-      session = forTurn(turn);
+      turn0 = turn;
+      session = forTurn(turn + mix.step);
       ready = true;
       listeners.forEach((f) => f());
       AsyncStorage.setItem(MUSIC_TURN_KEY, String(turn + 1)).catch(() => {});
@@ -76,7 +80,19 @@ export function setMusicPick(asmr: boolean, id: string | null) {
   AsyncStorage.setItem(MUSIC_PICK_KEY, JSON.stringify(picks)).catch(() => {});
 }
 export const musicPick = (asmr: boolean) => (asmr ? picks.asmr : picks.regular);
-/** The pick for a mode, re-rendering when any pick changes (and once the saved ones are read). */
+
+/** A level screen opened (`levels` for the list): in Mix, a different level from the last moves the music on to the next track. */
+export function musicLevelOpened(levelId: string) {
+  const next = mixStepFor(mix.step, mix.last, levelId);
+  const moved = next.step !== mix.step;
+  mix = next;
+  if (!moved) return;
+  session = forTurn(turn0 + mix.step);
+  pickListeners.forEach((f) => f()); // the players re-pick (only a Mix mode's track changes)
+}
+/** How far Mix has moved this session (the native player re-picks its track when it changes). */
+export const mixStep = () => mix.step;
+/** The pick for a mode, re-rendering when any pick changes (and once the saved ones are read), or Mix moves on. */
 export function useMusicPick(asmr: boolean): string | null {
   const [, bump] = useState(0);
   useEffect(() => {

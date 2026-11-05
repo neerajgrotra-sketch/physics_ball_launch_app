@@ -327,8 +327,9 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
   (as `pluck`'s `attack`), not its defaults. Re-run it to change the music
   (`node scripts/make-music.mjs [name]`); it writes the MP3, the phones' WAV loop and a `<name>.json` loop length. The web player books
   a repeat every loop length on the audio clock (`useLevelMusic.web.ts` `startLoop`) so MP3 padding can't gap the seam.
-- Music: a session playlist (`components/feedback/music.ts`): one track per mode is picked at app start and plays on every level
-  (`trackFor(levelId, asmr)`; toggling ASMR mode swaps it). The playlist
+- Music: a session playlist (`components/feedback/music.ts`): each session starts on the next track per mode, and in Mix each different
+  level that opens moves on to the next one (`musicLevelOpened`, `mixStepFor`: the first level keeps the levels screen's track, the same
+  level again changes nothing) (`trackFor(levelId, asmr)`; toggling ASMR mode swaps it). The playlist
   (`playlist.ts`) is generated from every MP3/M4A in `assets/music` by `scripts/make-playlist.mjs`, which runs before each web build;
   to add music, add a file there. Phones play seamless WAV copies (`assets/music/loops`, `playlist.native.ts`, made by the same script
   with ffmpeg: an MP3's encoder padding made the iOS loop hiccup); the web keeps the MP3. The iPhone player still gaps when it loops a

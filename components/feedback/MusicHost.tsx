@@ -5,7 +5,7 @@ import { AppState } from 'react-native';
 import { localSound, setAudioModeOnce, sourceOf } from './localAudio';
 import { warmSounds } from './useFeedback';
 import { audioPartReady, whenLoaded } from './audioReady';
-import { loadMusicLevel, musicVolume, onMusicLevel, trackFor, useMusicPick, useMusicTurn } from './music';
+import { loadMusicLevel, mixStep, musicVolume, onMusicLevel, trackFor, useMusicPick, useMusicTurn } from './music';
 import { musicDemand, onMusicDemand } from './musicDemand';
 import { useAsmr } from '../settings/Theme';
 
@@ -23,6 +23,7 @@ export function MusicHost() {
   const [asmr] = useAsmr();
   const turnReady = useMusicTurn(); // this session's tracks (each session plays the next one)
   const pick = useMusicPick(asmr); // or the player's own pick (Settings), which switches the track at once
+  const step = mixStep(); // Mix moves on a track at each different level (re-rendered through useMusicPick)
   const [track, setTrack] = useState<string | number | null>(null);
   const [loop, setLoop] = useState<number | null>(null);
   useEffect(() => {
@@ -40,7 +41,7 @@ export function MusicHost() {
     alog(`music: track ${t.id}, getting file`);
     localSound(t.src).then((f) => { alog(`music: track file ready (${typeof f === 'string' ? 'local' : 'bundled'})`); if (live) { setLoop(t.loop); setTrack(f); } });
     return () => { live = false; };
-  }, [asmr, turnReady, pick]);
+  }, [asmr, turnReady, pick, step]);
   return track == null ? null : <MusicPlayer key={String(track)} source={sourceOf(track)} loop={loop} />;
 }
 

@@ -299,7 +299,7 @@ function MusicVolume({ disabled }: { disabled: boolean }) {
 }
 
 /**
- * Which track plays (music.ts setMusicPick), for the mode the player is in: "Mix" (each visit plays the next one, the default) or
+ * Which track plays (music.ts setMusicPick), for the mode the player is in: "Mix" (the next track at each new level, the default) or
  * one by name. ASMR mode has its own tracks and its own pick. In a level the music switches at once, so the player hears the pick.
  */
 function MusicPicker({ disabled }: { disabled: boolean }) {
@@ -316,7 +316,7 @@ function MusicPicker({ disabled }: { disabled: boolean }) {
           return (
             <Pressable
               key={label} onPress={() => setMusicPick(asmr, id)} accessibilityRole="button" accessibilityState={{ selected: on }}
-              accessibilityLabel={id ? `Play ${label}` : 'Mix: a different track each visit'}
+              accessibilityLabel={id ? `Play ${label}` : 'Mix: the next track at each new level'}
               style={[styles.chip, { borderColor: c.pencil }, on && { backgroundColor: c.pencil }]}
             >
               <Text style={[styles.chipText, { color: on ? c.paper : c.pencil }]}>{label}</Text>
@@ -325,7 +325,7 @@ function MusicPicker({ disabled }: { disabled: boolean }) {
         })}
       </View>
       <Text style={[styles.note, { color: c.muted }]}>
-        {pick ? 'Plays every time' : 'A different track each visit'}{asmr ? ' (ASMR mode has its own tracks)' : ''}
+        {pick ? 'Plays every time' : 'A new track at each new level'}{asmr ? ' (ASMR mode has its own tracks)' : ''}
       </Text>
     </View>
   );

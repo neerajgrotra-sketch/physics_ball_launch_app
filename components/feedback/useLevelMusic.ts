@@ -2,6 +2,7 @@ import { alog } from './audioLog';
 import { useEffect, useRef } from 'react';
 import { useSoundSettings } from './SoundSettings';
 import { holdMusic, musicOffNow, setMusicDucked } from './musicDemand';
+import { musicLevelOpened } from './music';
 
 /**
  * A level screen's music: holds the app's one music player (MusicHost, in the root layout) while the level is open and music is on,
@@ -9,6 +10,8 @@ import { holdMusic, musicOffNow, setMusicDucked } from './musicDemand';
  * useLevelMusic.web.ts. `prime` is for web's user-gesture rule; nothing to do here.
  */
 export function useLevelMusic(levelId: string, on: boolean, duck = false) {
+  // Mix moves on to the next track when a different level opens (music.ts musicLevelOpened).
+  useEffect(() => { if (on) musicLevelOpened(levelId); }, [levelId, on]);
   const { musicOn } = useSoundSettings();
   useEffect(() => {
     // Only switching the music off stops it at once. A screen that merely stops wanting it (it lost focus because the next one is

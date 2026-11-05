@@ -4,6 +4,15 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.68.0
+
+- Mix moves on to the next track at each new level (player feedback; `game/musicTurn.ts` `mixStepFor`, `music.ts`
+  `musicLevelOpened`). The first level of a session keeps the track already playing on the levels screen, so it carries straight
+  on. Each different level after that (Next level, the ‹ › arrows, or one picked from the list) brings the next track in the mode's
+  list. Re-opening the same level, or coming back from Settings, changes nothing. Each session still starts on the next track
+  after the last session's. A track picked by name in Settings plays everywhere, as before. Settings' note under Track now reads
+  "A new track at each new level".
+
 ## 0.67.0
 
 - Two new background tracks, composed in code like the rest (`scripts/make-music.mjs`):

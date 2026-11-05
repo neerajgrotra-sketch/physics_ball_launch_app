@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useAsmr } from '../settings/Theme';
 import { useSoundSettings } from './SoundSettings';
-import { loadMusicLevel, musicReady, musicVolume, onMusicLevel, trackFor, useMusicPick, useMusicTurn, type Track } from './music';
+import { loadMusicLevel, musicLevelOpened, musicReady, musicVolume, onMusicLevel, trackFor, useMusicPick, useMusicTurn, type Track } from './music';
 import { audioContext, buffer, generation, onRunning, resume, running } from './webAudio';
 
 /**
@@ -77,6 +77,8 @@ function startLoop(track: Track, buf: AudioBuffer, volume: number): Playing | nu
 }
 
 export function useLevelMusic(levelId: string, on: boolean, duck = false) {
+  // Mix moves on to the next track when a different level opens (music.ts musicLevelOpened).
+  useEffect(() => { if (on) musicLevelOpened(levelId); }, [levelId, on]);
   const [asmr] = useAsmr();
   // This session's tracks settle a moment after start (each session plays the next one); `start` waits for that, so it has to be a new
   // function once they have, or the effects below never call it again when the track happens to be the same.

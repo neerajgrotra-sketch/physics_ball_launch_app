@@ -13,3 +13,13 @@ export function parseTurn(raw: string | null | undefined): number {
 export function trackForTurn<T>(tracks: T[], turn: number): T | undefined {
   return tracks.length ? tracks[turn % tracks.length] : undefined;
 }
+
+/**
+ * Mix moves on a track each time a different level opens (player feedback, 0.68.0). `last` is the level that last opened (null before
+ * any this session). The first level of a session keeps the track already playing on the levels screen, and opening the same level
+ * again (or coming back to it from Settings) changes nothing. The levels screen itself never moves it.
+ */
+export function mixStepFor(step: number, last: string | null, levelId: string): { step: number; last: string | null } {
+  if (levelId === 'levels') return { step, last };
+  return { step: last !== null && levelId !== last ? step + 1 : step, last: levelId };
+}
