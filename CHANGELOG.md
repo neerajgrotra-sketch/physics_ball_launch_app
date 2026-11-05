@@ -4,6 +4,15 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.66.1
+
+- Phones: the start-up warm-up no longer cuts sounds off. Since 0.64.3 every effect player is warmed (played silently for a moment)
+  one at a time while the intro plays. If a real sound took a player mid-warm-up, the warm-up's timer stopped it 90 ms in, which made
+  the intro's launch, bounce and landing sounds jerky and unfinished. A real sound now takes over a warming player, and the warm-up
+  leaves it alone.
+- Phones are back to 28 effect players: the 2- and 1-star win sounds reuse the bloom's player and fade out early (`playCut`). Two
+  more loaded players risked bringing back the music stalls. The web keeps `bloom2.wav` and `bloom1.wav`.
+
 ## 0.66.0
 
 - ASMR mode's win now depends on the stars, so the full light show is a reward (game/bloom.ts `BLOOM_TIERS`, `bloomFor`):

@@ -25,8 +25,6 @@ const SOUNDS = {
   chime: require('../../assets/sounds/chime.wav'),
   shatter: require('../../assets/sounds/shatter.wav'),
   bloom: require('../../assets/sounds/bloom.wav'),
-  bloom2: require('../../assets/sounds/bloom2.wav'),
-  bloom1: require('../../assets/sounds/bloom1.wav'),
   stamp: require('../../assets/sounds/stamp.wav'),
 };
 
@@ -55,7 +53,7 @@ type SoundName = keyof typeof SOUNDS;
  * player's status updates, only about every half second, so a long-finished player still counted as busy, the next bounce had to cut
  * a playing one (rewind, then play), and the sound came late or not at all (0.62.5 to 0.64.1, once the players were cut to 20).
  */
-interface Voice { player: AudioPlayer; busy: boolean; started: number; timer?: ReturnType<typeof setTimeout> }
+interface Voice { player: AudioPlayer; busy: boolean; started: number; timer?: ReturnType<typeof setTimeout>; fades?: ReturnType<typeof setTimeout>[]; warming?: boolean }
 /** The same sound started again within this many ms is merged into the first. */
 const MERGE_MS = 45;
 /** A sound's length when its player can't say yet (seconds): the longest effects (the bloom, the shatter) are longer, the rest shorter. */
@@ -78,6 +76,9 @@ class Pool {
   private rewind(voice: Voice) {
     clearTimeout(voice.timer);
     voice.timer = undefined;
+    voice.fades?.forEach(clearTimeout);
+    voice.fades = undefined;
+    voice.warming = false;
     const { player } = voice;
     try { player.pause(); } catch { /* released */ }
     player.seekTo(0).catch(() => {}).finally(() => { voice.busy = false; });
@@ -100,21 +101,29 @@ class Pool {
       const { player } = voice;
       if (voice.busy) { done(); return; }
       voice.busy = true;
+      voice.warming = true;
       try { player.volume = 0; player.play(); } catch { /* not loaded yet */ }
-      setTimeout(() => { this.rewind(voice); setTimeout(done, 30); }, 90);
+      // Only stop it if it's still warming: a real sound may have taken it meanwhile (the intro plays during the warm-up, and this
+      // used to cut its sounds off 90 ms in, 0.64.3 to 0.66.0).
+      setTimeout(() => { if (voice.warming) this.rewind(voice); setTimeout(done, 30); }, 90);
     })), Promise.resolve());
   }
 
-  play(volume: number, rate: number) {
+  play(volume: number, rate: number): Voice | null {
     // Two hits a hair apart (a corner, or two events let through in one late frame) are one sound: played twice, they doubled.
     const now = Date.now();
-    if (now - this.last < MERGE_MS) return;
+    if (now - this.last < MERGE_MS) return null;
     this.last = now;
-    // A free voice if there is one; otherwise cut the one that started longest ago (it has to rewind first, so wait for that).
-    const free = this.voices.find((v) => !v.busy);
+    // A free voice if there is one, or one only being warmed (taken over); otherwise cut the one that started longest ago (it has
+    // to rewind first, so wait for that).
+    const free = this.voices.find((v) => !v.busy) ?? this.voices.find((v) => v.warming);
+    const wasWarming = !!free?.warming;
     const voice = free ?? this.voices.reduce((a, b) => (a.started <= b.started ? a : b));
     const { player } = voice;
     voice.busy = true;
+    voice.warming = false;
+    voice.fades?.forEach(clearTimeout);
+    voice.fades = undefined;
     voice.started = Date.now();
     player.volume = volume;
     player.shouldCorrectPitch = false; // varispeed: a faster rate also raises the pitch, for the arpeggio
@@ -122,12 +131,27 @@ class Pool {
     // Free it again as soon as the sound is over (at this rate), plus a hair for the player to get going.
     const seconds = player.duration > 0 ? player.duration : FALLBACK_SECONDS;
     const arm = () => { clearTimeout(voice.timer); voice.timer = setTimeout(() => this.rewind(voice), (seconds / Math.max(0.25, rate)) * 1000 + 40); };
-    if (free) { player.play(); arm(); }
+    if (free && !wasWarming) { player.play(); arm(); }
     else {
       clearTimeout(voice.timer);
       player.pause();
       player.seekTo(0).catch(() => {}).finally(() => { player.play(); arm(); });
     }
+    return voice;
+  }
+
+  /**
+   * Plays the sound, then fades it out from `fadeAt` over `fadeFor` seconds and stops it: a shorter version of a long sound without
+   * another player (the 2- and 1-star blooms on phones; each extra loaded player risks the music stalling).
+   */
+  playCut(volume: number, fadeAt: number, fadeFor: number) {
+    const voice = this.play(volume, 1);
+    if (!voice) return;
+    const steps = 8;
+    voice.fades = Array.from({ length: steps }, (_, k) => setTimeout(() => {
+      try { voice.player.volume = volume * (1 - (k + 1) / steps); } catch { /* released */ }
+      if (k === steps - 1) this.rewind(voice);
+    }, (fadeAt + (fadeFor * (k + 1)) / steps) * 1000));
   }
 }
 
@@ -139,7 +163,7 @@ class Pool {
  * As few as possible: every loaded player holds its own audio pipeline on the iPhone, and with 43 of them the music stalled for a
  * moment whenever iOS reset them all (a press of the volume buttons, unlocking the phone, and just after they loaded, 2 to 3 s into a
  * level). One per sound, and two or three only for the sounds that come in quick runs (bounces off bars and walls, glass rattles, the ASMR
- * chimes, which ring for 1.4 s, the fuse's ticks): 30 in all. None
+ * chimes, which ring for 1.4 s, the fuse's ticks): 28 in all. The shorter 2- and 1-star blooms reuse the bloom's player, faded out early. None
  * at all while Sound effects is off: they're released, and made again when it's turned back on (setEffectsOn).
  */
 let pools: Record<SoundName, Pool> | null = null;
@@ -210,7 +234,11 @@ export function useFeedback() {
     /** The ball is in: in ASMR mode the bloom's sound for the win (game/bloom.ts: the full run for three stars, shorter for fewer). */
     landed(bloom: 'bloom' | 'bloom2' | 'bloom1' = 'bloom') {
       buzz(Haptics.notificationAsync, Haptics.NotificationFeedbackType.Success);
-      if (feedbackPrefs.asmr) play(bloom, 0.95); // the light bloom's harp run and chord
+      // The light bloom's harp run and chord; the shorter 2- and 1-star blooms are the same sound faded out early (no extra players).
+      if (feedbackPrefs.asmr) {
+        if (bloom === 'bloom') play('bloom', 0.95);
+        else if (feedbackPrefs.effects) { try { sounds().bloom.playCut(0.95, bloom === 'bloom2' ? 2.6 : 1.6, 0.9); } catch { /* a nicety */ } }
+      }
       else play('land', 1);
     },
     star(k: number) {
