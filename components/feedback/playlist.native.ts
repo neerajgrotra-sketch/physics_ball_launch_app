@@ -5,6 +5,8 @@ export interface Track { id: string; src: number; loop: number | null; asmr: boo
 
 export const PLAYLIST: Track[] = [
   { id: 'asmr-felt-glass', src: require('../../assets/music/long/asmr-felt-glass.m4a'), loop: null, asmr: true },
+  { id: 'asmr-lamplight', src: require('../../assets/music/long/asmr-lamplight.m4a'), loop: null, asmr: true },
+  { id: 'asmr-moonlit-room', src: require('../../assets/music/long/asmr-moonlit-room.m4a'), loop: null, asmr: true },
   { id: 'asmr-moonwell', src: require('../../assets/music/long/asmr-moonwell.m4a'), loop: null, asmr: true },
   { id: 'asmr-neon-drift', src: require('../../assets/music/long/asmr-neon-drift.m4a'), loop: null, asmr: true },
   { id: 'asmr-paper-lanterns', src: require('../../assets/music/long/asmr-paper-lanterns.m4a'), loop: null, asmr: true },

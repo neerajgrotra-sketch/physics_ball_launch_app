@@ -10,6 +10,8 @@
 //   asmr-tidewater   ASMR mode: 56 BPM, no beat, waves rolling in, glass-harmonica tones, a low bowed drone, gentle harp rolls
 //   compass          regular mode: a gentle swing at 92 BPM in F major, e-piano off-beat chords, walking bass, vibes tune, whistle
 //   asmr-moonwell    ASMR mode: 60 BPM, no beat, a slow music box (celesta) in C pentatonic, airy pads, a low C, water drops
+//   asmr-moonlit-room  ASMR mode: mellow analog pads, a falling two-note motif with long gaps, very slow chords, dark and close
+//   asmr-lamplight   ASMR mode: warmer breathing analog pads, a rising two-note "question" sometimes answered, 24 s chords
 // The game plays one track per mode each session, the next one the session after (components/feedback/music.ts), so play stays fresh.
 // Each is an exact number of bars. It's rendered once with its reverb and echo tails running past the end, then those tails are
 // wrapped onto the start, which is exactly what the music sounds like looping forever: no gap, click or cut at the seam. Tones that
@@ -323,6 +325,45 @@ function bowed(freq, dur, { attack = 1.6, release = 2.2, seed = 51 } = {}) {
 }
 
 // ---------------------------------------------------------------- effects
+
+/**
+ * A mellow analog-style pad: four detuned saw-like voices (harmonics falling as 1/h, so warm rather than buzzy), a long rounded swell
+ * in and out (a raised-cosine curve, no corner at either end), each voice's pitch drifting a hair, then low-passed twice so the treble
+ * stays subdued. For the moonlit ASMR tracks.
+ */
+function analogPad(freq, dur, { attack = 3.5, release = 4.5, cutoff = 850, seed = 61 } = {}) {
+  const n = Math.round(dur * SR), out = new Float32Array(n), rand = rng(seed + Math.round(freq * 10));
+  const voices = [-9, -3, 4, 10].map((cents) => ({ f: freq * 2 ** (cents / 1200), ph: rand() * Math.PI * 2, drift: 0.05 + rand() * 0.07, dph: rand() * 6 }));
+  const H = Math.max(1, Math.min(8, Math.floor(2600 / freq)));
+  const ease = (x) => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, x)));
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    let v = 0;
+    for (const { f, ph, drift, dph } of voices) {
+      const w = 2 * Math.PI * f * t * (1 + 0.0007 * Math.sin(2 * Math.PI * drift * t + dph)) + ph;
+      for (let h = 1; h <= H; h++) v += Math.sin(w * h) / h;
+    }
+    out[i] = v * ease(t / attack) * ease((n - i) / (release * SR)) * 0.06;
+  }
+  return lowpass(lowpass(out, cutoff), cutoff * 1.5);
+}
+
+/**
+ * A soft keyed tone for the ASMR motifs: a near-sine with a little of its odd harmonics (hollow, not bell-like: no inharmonic partials),
+ * a rounded attack, a long gentle decay and a slow fade at the end, a second voice a few cents up for warmth, kept dark.
+ */
+function softKey(freq, dur, { attack = 0.12, tau = 2.4, cutoff = 1500 } = {}) {
+  const n = Math.round(dur * SR), out = new Float32Array(n), f2 = freq * 2 ** (4 / 1200);
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    const a = t < attack ? 0.5 - 0.5 * Math.cos((Math.PI * t) / attack) : 1;
+    const tail = Math.min(1, (n - i) / (0.8 * SR));
+    const w1 = 2 * Math.PI * freq * t, w2 = 2 * Math.PI * f2 * t;
+    const tone = Math.sin(w1) + 0.12 * Math.sin(3 * w1) + 0.03 * Math.sin(5 * w1) + 0.6 * (Math.sin(w2) + 0.1 * Math.sin(3 * w2));
+    out[i] = tone * a * Math.exp(-t / tau) * tail * 0.6;
+  }
+  return lowpass(out, cutoff);
+}
 
 /** A small Freeverb: parallel damped combs into series all-passes, per channel. Returns a new wet bus. */
 function reverb(bus, { room = 0.82, damp = 0.35 } = {}) {
@@ -1062,6 +1103,104 @@ function moonwell() {
   return { name: 'asmr-moonwell', L, bus: dry };
 }
 
+/**
+ * ASMR mode: "Moonlit Room". A quiet room lit by moonlight: mellow analog pads moving very slowly (one chord every 16 s, 64 s in all),
+ * a soft hum on the chord's root (never deep), and a falling two-note motif on a soft keyed tone that drifts in and out with long
+ * gaps. Every pitch is from C D E G A, the ASMR bounce chimes' notes, so the game's chimes and glass clink sit on top in tune and in
+ * the space left for them. No drums, bells or glass, no heavy bass, no build: the texture is the same from start to seam.
+ */
+function moonlitRoom() {
+  const beat = 1, bar = 4 * beat, bars = 16, L = bars * bar; // 64 s
+  const total = L + TAIL + 3;
+  const dry = new Bus(total, L), send = new Bus(total, L), echo = new Bus(total, L);
+  const chords = [
+    [[57, 60, 64, 67], 57], // Am7
+    [[55, 60, 64, 74], 60], // C(add9)/G
+    [[57, 62, 64, 67], 57], // Am7(add11)
+    [[55, 57, 62, 64], 55], // G6/9
+  ];
+  const span = 4 * bar;
+  chords.forEach(([voicing, root], c) => {
+    const t0 = c * span - 3; // each chord swells in under the last, so the texture never thins
+    voicing.forEach((m, k) => {
+      const sg = analogPad(midi(m), span + 7, { attack: 5, release: 5.5, cutoff: 820, seed: 7100 + c * 7 + k });
+      dry.add(sg, t0, 0.5, (k - 1.5) * 0.45);
+      send.add(sg, t0, 0.18, (k - 1.5) * 0.45);
+    });
+    const hum = sustain(midi(root - 12), span + 7, { attack: 5, release: 5.5, breathe: 0.1 });
+    dry.add(hum, t0, 0.06);
+  });
+  // The motif: a falling two-note figure (a third or a fourth) from the chord's tones, about every 8 s, one now and then left out.
+  const rand = rng(7373);
+  for (let k = 0; k < bars / 2; k++) {
+    if (k % 4 === 3 && rand() < 0.6) continue;
+    const [voicing] = chords[Math.floor((k * 2 * bar) / span)];
+    const tones = voicing.map((m) => m + 12).filter((m) => m <= 76).sort((a, b) => b - a);
+    const hi = tones[Math.floor(rand() * Math.min(2, tones.length))], lo = tones.find((m) => m < hi && hi - m >= 3) ?? hi - 5;
+    const t = k * 2 * bar + 1.5 + rand() * 2.5, pan = rand() * 0.8 - 0.4;
+    for (const [m, dt, g] of [[hi, 0, 0.2], [lo, 1.4 + rand() * 0.5, 0.17]]) {
+      const sg = softKey(midi(m), 6, { attack: 0.14, tau: 2.6, cutoff: 1400 });
+      dry.add(sg, t + dt, g, pan); send.add(sg, t + dt, 0.12, pan); echo.add(sg, t + dt, 0.05, -pan);
+    }
+  }
+  const wetE = pingPong(echo, 1.25, 0.35, 1800);
+  wetE.mixInto(dry, 0.7);
+  const wet = reverb(send, { room: 0.84, damp: 0.6 });
+  wet.mixInto(dry, 0.9);
+  return { name: 'asmr-moonlit-room', L, bus: dry };
+}
+
+/**
+ * ASMR mode: "Lamplight". The same room with a lamp on: warmer pads that breathe very slowly (one chord every 24 s, 72 s in all), and
+ * a rising two-note motif, a small curious question, now and then answered by a falling one, with long gaps between. All from C D E G A
+ * like the bounce chimes; no drums, bells, glass, deep bass or build.
+ */
+function lamplight() {
+  const bars = 18, L = bars * 4; // 72 s
+  const total = L + TAIL + 3;
+  const dry = new Bus(total, L), send = new Bus(total, L), echo = new Bus(total, L);
+  const loopTuned = (f) => Math.round(f * L) / L;
+  const chords = [
+    [[60, 64, 67, 74], 60], // C(add9)
+    [[57, 62, 64, 69], 57], // Asus(add9) colour: A D E A
+    [[55, 60, 62, 67], 55], // Gsus2/4
+  ];
+  const span = 24;
+  chords.forEach(([voicing, root], c) => {
+    const t0 = c * span - 4;
+    voicing.forEach((m, k) => {
+      const sg = analogPad(midi(m), span + 9, { attack: 6, release: 6.5, cutoff: 950, seed: 7600 + c * 7 + k });
+      dry.add(sg, t0, 0.48, (k - 1.5) * 0.5);
+      send.add(sg, t0, 0.16, (k - 1.5) * 0.5);
+    });
+    dry.add(sustain(midi(root - 12), span + 9, { attack: 6, release: 6.5, breathe: 0.12 }), t0, 0.055);
+  });
+  // A very slow breath over the whole bed: two swells a loop, tuned to meet at the seam (warmth, not a build).
+  const breath = loopTuned(2 / L);
+  for (let i = 0; i < dry.n; i++) { const g = 0.9 + 0.1 * Math.sin(2 * Math.PI * breath * (i / SR)); dry.l[i] *= g; dry.r[i] *= g; }
+  // The motif: up a step or a third, every ~9 s; after every other one, sometimes an answer falling back.
+  const rand = rng(7676);
+  for (let k = 0; k < 8; k++) {
+    const t = k * 9 + 2 + rand() * 3;
+    const [voicing] = chords[Math.min(2, Math.floor(t / span))];
+    const tones = voicing.map((m) => m + 12).filter((m) => m >= 64 && m <= 79).sort((a, b) => a - b);
+    const lo = tones[Math.floor(rand() * Math.max(1, tones.length - 1))];
+    const hi = [lo + 2, lo + 3, lo + 4, lo + 5].find((m) => [0, 2, 4, 7, 9].includes(m % 12)) ?? lo + 5;
+    const pan = rand() * 0.8 - 0.4;
+    const notes = [[lo, 0, 0.18], [hi, 1.3 + rand() * 0.4, 0.2]];
+    if (k % 2 === 1 && rand() < 0.6) notes.push([lo, 4.2 + rand() * 0.8, 0.13]);
+    for (const [m, dt, g] of notes) {
+      const sg = softKey(midi(m), 6, { attack: 0.16, tau: 2.8, cutoff: 1500 });
+      dry.add(sg, t + dt, g, pan); send.add(sg, t + dt, 0.13, pan); echo.add(sg, t + dt, 0.05, -pan);
+    }
+  }
+  const wetE = pingPong(echo, 1.5, 0.32, 1700);
+  wetE.mixInto(dry, 0.7);
+  const wet = reverb(send, { room: 0.82, damp: 0.62 });
+  wet.mixInto(dry, 0.9);
+  return { name: 'asmr-lamplight', L, bus: dry };
+}
+
 // ---------------------------------------------------------------- output
 
 /** A gentle low cut (one-pole high-pass) on a bus, in place: rumble no phone speaker plays, which only eats headroom. */
@@ -1098,7 +1237,7 @@ function wav(l, r, gain, rate, channels) {
 }
 
 const only = process.argv[2];
-for (const [file, make] of [['graph-paper', graphPaper], ['asmr-neon-drift', neonDrift], ['sketchbook', sketchbook], ['asmr-felt-glass', feltGlass], ['protractor', protractor], ['asmr-paper-lanterns', paperLanterns], ['set-square', setSquare], ['asmr-tidewater', tidewater], ['compass', compass], ['asmr-moonwell', moonwell]]) {
+for (const [file, make] of [['graph-paper', graphPaper], ['asmr-neon-drift', neonDrift], ['sketchbook', sketchbook], ['asmr-felt-glass', feltGlass], ['protractor', protractor], ['asmr-paper-lanterns', paperLanterns], ['set-square', setSquare], ['asmr-tidewater', tidewater], ['compass', compass], ['asmr-moonwell', moonwell], ['asmr-moonlit-room', moonlitRoom], ['asmr-lamplight', lamplight]]) {
   if (only && !file.includes(only)) continue; // skipped before rendering, so one track takes seconds
   const { name, L, bus } = make();
   lowCut(bus, 70);
@@ -1107,7 +1246,7 @@ for (const [file, make] of [['graph-paper', graphPaper], ['asmr-neon-drift', neo
   // (The game sets the music's overall volume itself.)
   let peak = 0, sum = 0;
   for (let i = 0; i < looped.n; i++) { peak = Math.max(peak, Math.abs(looped.l[i]), Math.abs(looped.r[i])); sum += looped.l[i] ** 2 + looped.r[i] ** 2; }
-  const target = name === 'asmr-felt-glass' ? -21 : name.startsWith('asmr') ? -20 : -18; // dBFS RMS: Felt Glass is the quietest
+  const target = ['asmr-felt-glass', 'asmr-moonlit-room', 'asmr-lamplight'].includes(name) ? -21 : name.startsWith('asmr') ? -20 : -18; // dBFS RMS: Felt Glass is the quietest
   const gain = Math.min(0.89 / peak, 10 ** (target / 20) / Math.sqrt(sum / (2 * looped.n)));
   const rms = Math.sqrt(sum / (2 * looped.n)) * gain;
   // Seam check: how big the step is from the loop's last sample to its first, against a typical sample-to-sample step.

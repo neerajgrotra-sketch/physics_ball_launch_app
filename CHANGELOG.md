@@ -4,6 +4,16 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.69.0
+
+- Two new ASMR tracks from the owner's brief: a quiet moonlit room, mellow analog pads, a gentle two-note motif with long gaps,
+  rounded attacks, dark treble, very slow chords and a steady texture. No drums, bells, glass, heavy bass or builds; every pitch is
+  from the bounce chimes' C D E G A, leaving room for the chimes and the glass clink.
+  - **Moonlit Room**: cool and still, a chord every 16 s (64 s loop), a falling two-note motif about every 8 s.
+  - **Lamplight**: warmer, breathing pads, a chord every 24 s (72 s loop), a rising two-note "question", sometimes answered.
+  Two new instruments in `scripts/make-music.mjs` (`analogPad`, `softKey`); the existing tracks re-render byte for byte. ASMR mode now
+  has seven tracks, in Mix and the Track picker.
+
 ## 0.68.0
 
 - Mix moves on to the next track at each new level (player feedback; `game/musicTurn.ts` `mixStepFor`, `music.ts`
