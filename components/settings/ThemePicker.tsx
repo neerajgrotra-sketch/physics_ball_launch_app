@@ -6,13 +6,13 @@ import { useThemeChoice } from './Theme';
  * "Board theme" in Settings: Auto (the phone's light or dark setting) and each theme in theme/colors.ts, each shown as a tiny board
  * in its own colours (grid, a bar, a gold spring, the glass and the ball) so the player sees what they're picking. Saved at once.
  */
-export function ThemePicker() {
+export function ThemePicker({ bare = false }: { bare?: boolean }) {
   const c = useColors();
   const [choice, setChoice] = useThemeChoice();
   const options = [{ id: AUTO_THEME, name: 'Auto' }, ...THEMES.map(({ id, name }) => ({ id, name }))];
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.section, { color: c.ink }]}>Board theme</Text>
+      {!bare && <Text style={[styles.section, { color: c.ink }]}>Board theme</Text>}
       <View style={styles.grid}>
         {options.map((o) => {
           const on = o.id === choice;

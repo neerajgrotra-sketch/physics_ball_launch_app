@@ -1,11 +1,14 @@
 import { RemindersSettings, TestReminder } from './RemindersSettings';
+import { remindersSupported } from '../notifications/Reminders';
+import { useReminderPrefs } from '../notifications/reminderPrefs';
+import { timeLabel } from '../../game/reminders';
 import { AudioLog } from './AudioLog';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Slider from '@react-native-community/slider';
-import { useEffect, useState } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { useEffect, useState, type ReactNode } from 'react';
+import { LayoutAnimation, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, UIManager, View } from 'react-native';
 import { GENDERS, PROFILE_KEY, emptyProfile, parseAge, parseProfile, type Profile } from '../../game/profile';
-import { FONTS, useColors } from '../../theme/colors';
+import { AUTO_THEME, FONTS, THEMES, useColors } from '../../theme/colors';
 import { useTips } from '../coach/Tips';
 import { useSoundSettings } from '../feedback/SoundSettings';
 import { MUSIC_LEVEL_MAX, setMusicLevel, setMusicPick, trackTitle, tracksFor, useMusicLevel, useMusicPick } from '../feedback/music';
@@ -15,15 +18,19 @@ import { BallPicker } from './BallPicker';
 import { GunPicker } from './GunPicker';
 import { ThemePicker } from './ThemePicker';
 import { TRAIL_CHOICES } from '../../game/trails';
-import { useAsmr } from './Theme';
+import { useAsmr, useThemeChoice } from './Theme';
 import { setShowTouches, useShowTouches } from './ShowTouches';
 import { useBallSkin } from './BallSkin';
 import { useDaily } from '../daily/DailyProvider';
 import { useHintWallet } from '../hints/HintWallet';
 
+// Android needs this for LayoutAnimation (the groups' slide open and shut); iOS and the web have it already.
+if (Platform.OS === 'android') UIManager.setLayoutAnimationEnabledExperimental?.(true);
+
 /**
- * The ⚙ sheet: music, tips, the tutorial, the ball's look (BallPicker), the gun's (GunPicker), the board theme (ThemePicker), "About you" (optional details kept on this device, game/profile.ts) and a Testing section
- * (open every level, or start over from level 1). The full settings screen is in BACKLOG.md.
+ * The ⚙ sheet, in collapsible groups (`Group`, one open at a time, each with a summary line): Sound & music, Look (ASMR mode, board
+ * theme), Your ball (BallPicker), Your gun (GunPicker), Play helpers, Reminders (phones), Hints, About you (game/profile.ts), and apart
+ * below a divider, Testing (unlock all, show touches, reset, test notification, audio log).
  */
 export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, onShowTour }: {
   visible: boolean; onClose: () => void; onMusicTap?: () => void; onReplayTutorial?: () => void; onShowTour?: () => void;
@@ -39,6 +46,20 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
   const daily = useDaily();
   const [confirmReset, setConfirmReset] = useState(false);
   useEffect(() => { if (!visible) setConfirmReset(false); }, [visible]);
+  // One group open at a time, all closed each time the sheet opens. A group's insides are only built while it's open (the ball and gun
+  // pickers' canvases came up blank when built with the sheet on iPhone, 0.71.2, and the long sheet was hard to find things in).
+  const [open, setOpen] = useState<string | null>(null);
+  useEffect(() => { if (!visible) setOpen(null); }, [visible]);
+  const toggle = (id: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setOpen((o) => (o === id ? null : id));
+  };
+  const { skin, gun } = useBallSkin();
+  const [themeChoice] = useThemeChoice();
+  const themeName = themeChoice === AUTO_THEME ? 'Auto' : THEMES.find((t) => t.id === themeChoice)?.name ?? 'Auto';
+  const musicPick = useMusicPick(asmr);
+  const trackLabel = musicPick ? trackTitle(tracksFor(asmr).find((t) => t.id === musicPick) ?? tracksFor(asmr)[0]) : 'Mix';
+  const reminders = useReminderPrefs();
 
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
@@ -53,149 +74,184 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
           </Pressable>
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             <Text style={[styles.title, { color: c.ink }]}>Settings</Text>
-            <View style={[styles.row, { borderColor: c.line }]}>
-              <Text style={[styles.label, { color: c.ink }]}>Background music</Text>
-              <Switch
-                value={musicOn}
-                onValueChange={() => { onMusicTap?.(); toggleMusic(); }}
-                trackColor={{ true: c.pencil, false: c.line }}
-                accessibilityLabel="Background music"
-              />
-            </View>
-            <MusicVolume disabled={!musicOn} />
-            <MusicPicker disabled={!musicOn} />
-            <View style={[styles.row, { borderColor: c.line }]}>
-              <Text style={[styles.label, { color: c.ink }]}>Sound effects</Text>
-              <Switch
-                value={effectsOn} onValueChange={() => { onMusicTap?.(); toggleEffects(); }}
-                trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Sound effects"
-              />
-            </View>
-            {Platform.OS !== 'web' && (
-              // A web page can't vibrate an iPhone, so the switch only shows in the app.
-              <View style={[styles.row, { borderColor: c.line }]}>
-                <Text style={[styles.label, { color: c.ink }]}>Vibration</Text>
+
+            <Group id="sound" icon="🎵" title="Sound & music" open={open} onToggle={toggle}
+              summary={`${musicOn ? `Music on · ${trackLabel}` : 'Music off'} · effects ${effectsOn ? 'on' : 'off'}`}>
+              <View style={styles.line}>
+                <Text style={[styles.label, { color: c.ink }]}>Background music</Text>
                 <Switch
-                  value={hapticsOn} onValueChange={toggleHaptics}
-                  trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Vibration"
+                  value={musicOn}
+                  onValueChange={() => { onMusicTap?.(); toggleMusic(); }}
+                  trackColor={{ true: c.pencil, false: c.line }}
+                  accessibilityLabel="Background music"
                 />
               </View>
+              <MusicVolume disabled={!musicOn} />
+              <MusicPicker disabled={!musicOn} />
+              <View style={[styles.line, styles.divided, { borderColor: c.line }]}>
+                <Text style={[styles.label, { color: c.ink }]}>Sound effects</Text>
+                <Switch
+                  value={effectsOn} onValueChange={() => { onMusicTap?.(); toggleEffects(); }}
+                  trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Sound effects"
+                />
+              </View>
+              {Platform.OS !== 'web' && (
+                // A web page can't vibrate an iPhone, so the switch only shows in the app.
+                <View style={[styles.line, styles.divided, { borderColor: c.line }]}>
+                  <Text style={[styles.label, { color: c.ink }]}>Vibration</Text>
+                  <Switch
+                    value={hapticsOn} onValueChange={toggleHaptics}
+                    trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Vibration"
+                  />
+                </View>
+              )}
+            </Group>
+
+            <Group id="look" icon="✨" title="Look" open={open} onToggle={toggle} summary={asmr ? 'ASMR mode on' : `${themeName} board`}>
+              <View style={styles.line}>
+                <View style={styles.labelBox}>
+                  <Text style={[styles.label, { color: c.ink }]}>ASMR mode ✨</Text>
+                  <Text style={[styles.note, { color: c.muted }]}>Neon glow, comet trails and a calm musical note on every bounce</Text>
+                </View>
+                <Switch
+                  value={asmr} onValueChange={(on) => { onMusicTap?.(); setAsmr(on); }}
+                  trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="ASMR mode"
+                />
+              </View>
+              <Text style={[styles.sub, { color: c.ink }]}>Board theme</Text>
+              <ThemePicker bare />
+            </Group>
+
+            <Group id="ball" icon="⚪" title="Your ball" open={open} onToggle={toggle} summary={skin.name}>
+              <BallPicker bare />
+            </Group>
+
+            <Group id="gun" icon="🎯" title="Your gun" open={open} onToggle={toggle} summary={gun.name}>
+              <GunPicker bare />
+            </Group>
+
+            <Group id="help" icon="🧭" title="Play helpers" open={open} onToggle={toggle}
+              summary={`Numbers ${bounceMarks ? 'on' : 'off'} · ${trailCount} trail${trailCount === 1 ? '' : 's'} · tips ${tipsOn ? 'on' : 'off'}`}>
+              <View style={styles.line}>
+                <View style={styles.labelBox}>
+                  <Text style={[styles.label, { color: c.ink }]}>Show bounce numbers</Text>
+                  <Text style={[styles.note, { color: c.muted }]}>Numbers each bounce on the board, so you can see how the count adds up</Text>
+                </View>
+                <Switch
+                  value={bounceMarks} onValueChange={setBounceMarks}
+                  trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Show bounce numbers"
+                />
+              </View>
+              <View style={[styles.divided, { borderColor: c.line, gap: 8 }]}>
+                <View style={styles.labelBox}>
+                  <Text style={[styles.label, { color: c.ink }]}>Trails kept</Text>
+                  <Text style={[styles.note, { color: c.muted }]}>How many of your last shots stay on the board, oldest faintest</Text>
+                </View>
+                <View style={styles.chips}>
+                  {TRAIL_CHOICES.map((n) => {
+                    const on = trailCount === n;
+                    return (
+                      <Pressable
+                        key={n} onPress={() => setTrailCount(n)} accessibilityRole="button" accessibilityState={{ selected: on }}
+                        accessibilityLabel={`Keep ${n} trail${n === 1 ? '' : 's'}`}
+                        style={[styles.chip, styles.trailChip, { borderColor: c.pencil }, on && { backgroundColor: c.pencil }]}
+                      >
+                        <Text style={[styles.chipText, { color: on ? c.paper : c.pencil }]}>{n}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+              <View style={[styles.line, styles.divided, { borderColor: c.line }]}>
+                <Text style={[styles.label, { color: c.ink }]}>Tips (ghost finger)</Text>
+                <Switch
+                  value={tipsOn} onValueChange={setTipsOn}
+                  trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Tips"
+                />
+              </View>
+              {onReplayTutorial && (
+                <Pressable onPress={onReplayTutorial} accessibilityRole="button" style={[styles.outline, { borderColor: c.pencil }]}>
+                  <Text style={[styles.outlineText, { color: c.pencil }]}>Replay the tutorial</Text>
+                </Pressable>
+              )}
+              {onShowTour && (
+                <Pressable onPress={onShowTour} accessibilityRole="button" style={[styles.outline, { borderColor: c.pencil }]}>
+                  <Text style={[styles.outlineText, { color: c.pencil }]}>How to play (the tour)</Text>
+                </Pressable>
+              )}
+            </Group>
+
+            {remindersSupported && (
+              <Group id="remind" icon="🔔" title="Reminders" open={open} onToggle={toggle}
+                summary={reminders.daily || reminders.streak
+                  ? [reminders.daily && `Daily at ${timeLabel(reminders.time)}`, reminders.streak && 'streak'].filter(Boolean).join(' · ')
+                  : 'Off'}>
+                <RemindersSettings bare />
+              </Group>
             )}
-            <View style={[styles.row, { borderColor: c.line }]}>
-              <View style={styles.labelBox}>
-                <Text style={[styles.label, { color: c.ink }]}>ASMR mode ✨</Text>
-                <Text style={[styles.note, { color: c.muted }]}>Neon glow, comet trails and a calm musical note on every bounce</Text>
+
+            <Group id="hints" icon="💡" title="Hints" open={open} onToggle={toggle} summary={`${wallet.hints} left`}>
+              <View style={styles.line}>
+                <View style={styles.labelBox}>
+                  <Text style={[styles.label, { color: c.ink }]}>Hints: {wallet.hints} 💡</Text>
+                  <Text style={[styles.note, { color: c.muted }]}>For Solve's hints and solutions.</Text>
+                </View>
+                <Pressable onPress={() => { onClose(); setTimeout(wallet.openShop, 350); }} accessibilityRole="button" style={[styles.small, { borderColor: c.pencil }]}>
+                  <Text style={[styles.smallText, { color: c.pencil }]}>Get more</Text>
+                </Pressable>
               </View>
-              <Switch
-                value={asmr} onValueChange={(on) => { onMusicTap?.(); setAsmr(on); }}
-                trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="ASMR mode"
-              />
+            </Group>
+
+            <Group id="you" icon="👤" title="About you" open={open} onToggle={toggle} summary="Optional, stays on this phone">
+              <AboutYou />
+            </Group>
+
+            {/* Testing stays apart from the player's settings, below a divider. */}
+            <View style={styles.testDivider}>
+              <View style={[styles.rule, { backgroundColor: c.line }]} />
+              <Text style={[styles.testLabel, { color: c.muted }]}>FOR TESTING</Text>
+              <View style={[styles.rule, { backgroundColor: c.line }]} />
             </View>
-            <View style={[styles.row, { borderColor: c.line }]}>
-              <View style={styles.labelBox}>
-                <Text style={[styles.label, { color: c.ink }]}>Show bounce numbers</Text>
-                <Text style={[styles.note, { color: c.muted }]}>Numbers each bounce on the board, so you can see how the count adds up</Text>
+            <Group id="test" icon="🧪" title="Testing" open={open} onToggle={toggle} dashed
+              summary={unlockAll ? 'All levels unlocked' : 'Unlock, reset, logs'}>
+              <View style={styles.line}>
+                <View style={styles.labelBox}>
+                  <Text style={[styles.label, { color: c.ink }]}>Unlock all levels</Text>
+                  <Text style={[styles.note, { color: c.muted }]}>Open every level without winning the one before.</Text>
+                </View>
+                <Switch
+                  value={unlockAll} onValueChange={setUnlockAll}
+                  trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Unlock all levels"
+                />
               </View>
-              <Switch
-                value={bounceMarks} onValueChange={setBounceMarks}
-                trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Show bounce numbers"
-              />
-            </View>
-            <View style={[styles.row, styles.stack, { borderColor: c.line }]}>
-              <View style={styles.labelBox}>
-                <Text style={[styles.label, { color: c.ink }]}>Trails kept</Text>
-                <Text style={[styles.note, { color: c.muted }]}>How many of your last shots stay on the board, oldest faintest</Text>
+              <View style={[styles.line, styles.divided, { borderColor: c.line }]}>
+                <View style={styles.labelBox}>
+                  <Text style={[styles.label, { color: c.ink }]}>Show touches</Text>
+                  <Text style={[styles.note, { color: c.muted }]}>A fingertip follows your finger, so screen recordings show what you did</Text>
+                </View>
+                <Switch
+                  value={showTouches} onValueChange={setShowTouches}
+                  trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Show touches"
+                />
               </View>
-              <View style={styles.chips}>
-                {TRAIL_CHOICES.map((n) => {
-                  const on = trailCount === n;
-                  return (
-                    <Pressable
-                      key={n} onPress={() => setTrailCount(n)} accessibilityRole="button" accessibilityState={{ selected: on }}
-                      accessibilityLabel={`Keep ${n} trail${n === 1 ? '' : 's'}`}
-                      style={[styles.chip, styles.trailChip, { borderColor: c.pencil }, on && { backgroundColor: c.pencil }]}
-                    >
-                      <Text style={[styles.chipText, { color: on ? c.paper : c.pencil }]}>{n}</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-            <View style={[styles.row, { borderColor: c.line }]}>
-              <View style={styles.labelBox}>
-                <Text style={[styles.label, { color: c.ink }]}>Show touches</Text>
-                <Text style={[styles.note, { color: c.muted }]}>A fingertip follows your finger, so screen recordings show what you did</Text>
-              </View>
-              <Switch
-                value={showTouches} onValueChange={setShowTouches}
-                trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Show touches"
-              />
-            </View>
-            <View style={[styles.row, { borderColor: c.line }]}>
-              <Text style={[styles.label, { color: c.ink }]}>Tips (ghost finger)</Text>
-              <Switch
-                value={tipsOn} onValueChange={setTipsOn}
-                trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Tips"
-              />
-            </View>
-            {onReplayTutorial && (
-              <Pressable onPress={onReplayTutorial} accessibilityRole="button" style={[styles.outline, { borderColor: c.pencil }]}>
-                <Text style={[styles.outlineText, { color: c.pencil }]}>Replay the tutorial</Text>
+              <Pressable
+                onPress={() => {
+                  if (!confirmReset) { setConfirmReset(true); return; }
+                  resetProgress();
+                  wallet.reset();
+                  daily.reset();
+                  restartTutorial();
+                  restartTour();
+                  setConfirmReset(false);
+                }}
+                accessibilityRole="button"
+                style={[styles.outline, { borderColor: c.red }]}
+              >
+                <Text style={[styles.outlineText, { color: c.red }]}>{confirmReset ? 'Tap again to wipe all progress' : 'Reset progress (start fresh)'}</Text>
               </Pressable>
-            )}
-
-            {onShowTour && (
-              <Pressable onPress={onShowTour} accessibilityRole="button" style={[styles.outline, { borderColor: c.pencil }]}>
-                <Text style={[styles.outlineText, { color: c.pencil }]}>How to play (the tour)</Text>
-              </Pressable>
-            )}
-
-            <View style={[styles.row, { borderColor: c.line }]}>
-              <View style={styles.labelBox}>
-                <Text style={[styles.label, { color: c.ink }]}>Hints: {wallet.hints} 💡</Text>
-                <Text style={[styles.note, { color: c.muted }]}>For Solve's hints and solutions.</Text>
-              </View>
-              <Pressable onPress={() => { onClose(); setTimeout(wallet.openShop, 350); }} accessibilityRole="button" style={[styles.small, { borderColor: c.pencil }]}>
-                <Text style={[styles.smallText, { color: c.pencil }]}>Get more</Text>
-              </Pressable>
-            </View>
-
-            <RemindersSettings />
-            <BallPicker />
-            <GunPicker />
-
-            <ThemePicker />
-
-            <AboutYou />
-
-            <Text style={[styles.section, { color: c.ink }]}>Testing</Text>
-            <View style={[styles.row, { borderColor: c.line }]}>
-              <View style={styles.labelBox}>
-                <Text style={[styles.label, { color: c.ink }]}>Unlock all levels</Text>
-                <Text style={[styles.note, { color: c.muted }]}>For testing: open every level without winning the one before.</Text>
-              </View>
-              <Switch
-                value={unlockAll} onValueChange={setUnlockAll}
-                trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Unlock all levels"
-              />
-            </View>
-            <Pressable
-              onPress={() => {
-                if (!confirmReset) { setConfirmReset(true); return; }
-                resetProgress();
-                wallet.reset();
-                daily.reset();
-                restartTutorial();
-                restartTour();
-                setConfirmReset(false);
-              }}
-              accessibilityRole="button"
-              style={[styles.outline, { borderColor: c.red }]}
-            >
-              <Text style={[styles.outlineText, { color: c.red }]}>{confirmReset ? 'Tap again to wipe all progress' : 'Reset progress (start fresh)'}</Text>
-            </Pressable>
-            <TestReminder />
-            <AudioLog />
+              <TestReminder />
+              <AudioLog />
+            </Group>
 
             <Pressable onPress={onClose} accessibilityRole="button" style={[styles.done, { backgroundColor: c.pencil }]}>
               <Text style={styles.doneText}>Done</Text>
@@ -208,10 +264,38 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
   );
 }
 
+/**
+ * One collapsible group of the sheet: a card with an icon, a title and a one-line summary of what's set inside, so the player can read
+ * their settings without opening anything. Its insides are built only while it's open. `dashed`: the testing group, kept apart.
+ */
+function Group({ id, icon, title, summary, open, onToggle, dashed, children }: {
+  id: string; icon: string; title: string; summary: string; open: string | null; onToggle: (id: string) => void; dashed?: boolean; children: ReactNode;
+}) {
+  const c = useColors();
+  const isOpen = open === id;
+  return (
+    <View style={[styles.group, { borderColor: isOpen ? c.pencil : c.line, borderStyle: dashed ? 'dashed' : 'solid' }]}>
+      <Pressable
+        onPress={() => onToggle(id)} accessibilityRole="button" accessibilityState={{ expanded: isOpen }} accessibilityLabel={`${title}: ${summary}`}
+        style={styles.groupHead}
+      >
+        <View style={[styles.badge, { backgroundColor: isOpen ? c.pencil : c.line }]}>
+          <Text style={styles.badgeText}>{icon}</Text>
+        </View>
+        <View style={styles.labelBox}>
+          <Text style={[styles.groupTitle, { color: c.ink }]}>{title}</Text>
+          <Text style={[styles.note, { color: c.muted }]} numberOfLines={1}>{summary}</Text>
+        </View>
+        <Text style={[styles.chevron, { color: isOpen ? c.pencil : c.muted, transform: [{ rotate: isOpen ? '90deg' : '0deg' }] }]}>›</Text>
+      </Pressable>
+      {isOpen && <View style={[styles.groupBody, { borderColor: c.line }]}>{children}</View>}
+    </View>
+  );
+}
+
 /** "About you": name, age, gender and country, all optional, saved on this device as they are typed. */
 function AboutYou() {
   const c = useColors();
-  const [open, setOpen] = useState(false);
   const [p, setP] = useState<Profile>(emptyProfile());
   const [ageText, setAgeText] = useState('');
   useEffect(() => {
@@ -228,11 +312,7 @@ function AboutYou() {
   const field = { borderColor: c.line, color: c.ink };
   return (
     <View style={styles.about}>
-      <Pressable onPress={() => setOpen((o) => !o)} accessibilityRole="button" style={styles.aboutHead}>
-        <Text style={[styles.section, { color: c.ink }]}>About you</Text>
-        <Text style={[styles.label, { color: c.muted }]}>{open ? '▲' : '▼'}</Text>
-      </Pressable>
-      {open && (
+      {(
         <View style={styles.aboutBody}>
           <Text style={[styles.note, { color: c.muted }]}>Optional. Stays on this phone; nothing is sent anywhere.</Text>
           <TextInput
@@ -366,6 +446,19 @@ const styles = StyleSheet.create({
   stack: { flexDirection: 'column', alignItems: 'stretch' },
   trailChip: { minWidth: 44, height: 36, borderRadius: 18, paddingHorizontal: 0, alignItems: 'center' },
   chipText: { fontSize: 14, fontFamily: FONTS.bodySemi },
+  group: { borderWidth: 1.5, borderRadius: 14, overflow: 'hidden' },
+  groupHead: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 10 },
+  groupBody: { borderTopWidth: 1, paddingHorizontal: 14, paddingVertical: 12, gap: 12 },
+  groupTitle: { fontSize: 19, fontFamily: FONTS.condensedBold },
+  badge: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontSize: 18 },
+  chevron: { fontSize: 28, fontFamily: FONTS.bodySemi, width: 18, textAlign: 'center' },
+  line: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  divided: { borderTopWidth: 1, paddingTop: 12 },
+  sub: { fontSize: 17, fontFamily: FONTS.condensedBold },
+  testDivider: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
+  rule: { flex: 1, height: 1 },
+  testLabel: { fontSize: 11, letterSpacing: 1.5, fontFamily: FONTS.bodySemi },
   done: { height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
   doneText: { color: '#fff', fontSize: 19, fontFamily: FONTS.condensedBold },
   version: { fontSize: 12, fontFamily: FONTS.body, textAlign: 'center' },

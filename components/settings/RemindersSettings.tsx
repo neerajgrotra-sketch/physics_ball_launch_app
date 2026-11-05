@@ -10,7 +10,7 @@ import { setReminderPrefs, useReminderPrefs } from '../notifications/reminderPre
  * nudge. Turning either on asks for permission if it hasn't been given; if the phone says no, the switch stays off and says where to
  * turn notifications on.
  */
-export function RemindersSettings() {
+export function RemindersSettings({ bare = false }: { bare?: boolean }) {
   const c = useColors();
   const prefs = useReminderPrefs();
   const [blocked, setBlocked] = useState(false);
@@ -23,7 +23,7 @@ export function RemindersSettings() {
   };
   return (
     <View>
-      <Text style={[styles.section, { color: c.ink }]}>Reminders</Text>
+      {!bare && <Text style={[styles.section, { color: c.ink }]}>Reminders</Text>}
       <View style={[styles.row, { borderColor: c.line }]}>
         <View style={styles.labelBox}>
           <Text style={[styles.label, { color: c.ink }]}>Daily puzzle</Text>

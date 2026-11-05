@@ -1,6 +1,6 @@
 import { Canvas, Group, RoundedRect, Skia, useCanvasRef } from '@shopify/react-native-skia';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LAUNCHER, WORLD } from '../../physics';
 import { GUNS } from '../../game/guns';
 import { FONTS, useColors } from '../../theme/colors';
@@ -17,15 +17,16 @@ const VIEW = { w: 130, h: 80 };
  * canvas (a canvas per gun would use up the browser's WebGL contexts), with a tap target over each. The chosen one is framed and
  * named; the choice is saved at once.
  */
-export function GunPicker() {
+export function GunPicker({ bare = false }: { bare?: boolean }) {
   const c = useColors();
   const { skin, gun, setGun } = useBallSkin();
   const [w, setW] = useState(0);
   const cellW = w / COLS, cellH = (cellW * VIEW.h) / VIEW.w;
   const rows = Math.ceil(GUNS.length / COLS);
   const canvasRef = useCanvasRef();
+  // Redrawn a few times once laid out, on phones too (the canvas came up blank in the Settings sheet on iPhone, 0.71.2).
   useEffect(() => {
-    if (Platform.OS !== 'web' || !w) return;
+    if (!w) return;
     const timers = [50, 250, 750].map((ms) => setTimeout(() => canvasRef.current?.redraw(), ms));
     return () => timers.forEach(clearTimeout);
   }, [w, gun.id, canvasRef]);
@@ -36,10 +37,12 @@ export function GunPicker() {
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.head}>
-        <Text style={[styles.section, { color: c.ink }]}>Your gun</Text>
-        <Text style={[styles.name, { color: c.pencil }]}>{gun.name}</Text>
-      </View>
+      {!bare && (
+        <View style={styles.head}>
+          <Text style={[styles.section, { color: c.ink }]}>Your gun</Text>
+          <Text style={[styles.name, { color: c.pencil }]}>{gun.name}</Text>
+        </View>
+      )}
       <Text style={[styles.note, { color: c.muted }]}>Just a look: every gun fires exactly the same shot.</Text>
       <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ height: cellH * rows || undefined }}>
         {w > 0 && (

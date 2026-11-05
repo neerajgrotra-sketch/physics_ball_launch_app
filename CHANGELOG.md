@@ -4,6 +4,23 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.72.0
+
+- Settings is grouped into collapsible cards, one open at a time (`Group` in `components/settings/SettingsSheet.tsx`). Each shows an
+  icon and a one-line summary of what's set, so the sheet fits on one screen and can be read without opening anything:
+  - **🎵 Sound & music:** background music, volume and track, sound effects, vibration.
+  - **✨ Look:** ASMR mode and board theme.
+  - **⚪ Your ball** and **🎯 Your gun:** the pickers.
+  - **🧭 Play helpers:** bounce numbers, trails kept, tips, replay the tutorial, the tour.
+  - **🔔 Reminders** (phones).
+  - **💡 Hints.**
+  - **👤 About you.**
+  - **🧪 Testing**, apart below a "For testing" divider: unlock all levels, show touches, reset progress, test notification, audio log.
+  All groups start closed when the sheet opens.
+- The ball and gun pickers no longer come up blank on iPhone. Their canvases were built with the sheet, before it was on screen,
+  and only the web asked them to redraw. Now a group's insides are built only when it opens, and the pickers redraw a few times on
+  phones too.
+
 ## 0.71.2
 
 - A replayed shot that hits a hazard plays the shatter's sound and buzz, as a try does. Replays drew the shatter but stayed silent

@@ -1,6 +1,6 @@
 import { Canvas, Circle, Group, useCanvasRef } from '@shopify/react-native-skia';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BALL_RADIUS } from '../../physics';
 import { SKINS } from '../../game/skins';
 import { FONTS, useColors } from '../../theme/colors';
@@ -15,26 +15,29 @@ const ZOOM = 2.3;
  * "Your ball" in Settings: every skin (game/skins.ts) drawn exactly as on the board, in one Skia canvas (a canvas per ball would use
  * up the browser's WebGL contexts), with a tap target over each. The chosen one is ringed and named; the choice is saved at once.
  */
-export function BallPicker() {
+export function BallPicker({ bare = false }: { bare?: boolean }) {
   const c = useColors();
   const { skin, setSkin } = useBallSkin();
   const [w, setW] = useState(0);
   const cell = w / COLS;
   const rows = Math.ceil(SKINS.length / COLS);
   const canvasRef = useCanvasRef();
-  // Safari can draw a new Skia canvas before its surface is ready (see Board.tsx): ask for a few more frames once it's laid out.
+  // A new Skia canvas can draw before its surface is ready (Safari, see Board.tsx; and on iPhone inside the Settings sheet, where
+  // the pickers came up blank, 0.71.2): ask for a few more frames once it's laid out.
   useEffect(() => {
-    if (Platform.OS !== 'web' || !w) return;
+    if (!w) return;
     const timers = [50, 250, 750].map((ms) => setTimeout(() => canvasRef.current?.redraw(), ms));
     return () => timers.forEach(clearTimeout);
   }, [w, skin.id, canvasRef]);
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.head}>
-        <Text style={[styles.section, { color: c.ink }]}>Your ball</Text>
-        <Text style={[styles.name, { color: c.pencil }]}>{skin.name}</Text>
-      </View>
+      {!bare && (
+        <View style={styles.head}>
+          <Text style={[styles.section, { color: c.ink }]}>Your ball</Text>
+          <Text style={[styles.name, { color: c.pencil }]}>{skin.name}</Text>
+        </View>
+      )}
       <Text style={[styles.note, { color: c.muted }]}>Just a look: every ball bounces exactly the same.</Text>
       <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ height: cell * rows || undefined }}>
         {w > 0 && (

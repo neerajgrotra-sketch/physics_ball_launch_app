@@ -268,6 +268,11 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   through a challenge (`WEB_GUEST_KEY`, set only if it had no progress) is redirected from the levels screen to /get (`/?full=1` lifts it). The tour (`TourGate`) skips /challenge.
   Link previews: Open Graph tags in `public/index.html` with `public/og.png` (`NODE_PATH=$(npm root -g) node scripts/make-og.mjs`);
   their URLs are absolute, so change them with `SITE_URL` if the address changes. `SHARE_LINK` is `SITE_URL` (the public Vercel address) until a store link exists.
+- **Settings** (`components/settings/SettingsSheet.tsx`): collapsible groups (`Group`: icon, title, one-line summary of what's set; one
+  open at a time, all closed each time the sheet opens; a group's insides are built only while it's open). The groups are Sound & music,
+  Look (ASMR, board theme), Your ball, Your gun, Play helpers, Reminders (phones), Hints and About you, then Testing apart below a "For
+  testing" divider. The pickers take `bare` (no heading of their own inside a group). Skia canvases in the sheet redraw a few times once
+  laid out, on phones too: built with the sheet on iPhone, they came up blank (0.71.2).
 - **Sheets** (settings, shop, world info): the backdrop is a full-size `Pressable` *behind* the sheet, never a `Pressable` wrapped
   round it. Settings also has a ✕ pinned at its top corner (outside the scroll) and stops 64 short of the screen's top and bottom, so there's
   always a way out. A Pressable round a `ScrollView` fights it for the finger on iPhone, so the sheet scrolled only now and then (0.58.1).
