@@ -237,7 +237,8 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   helped 💡, frozen ❄, missed ✗, today breathing, the rest dotted, Sunday gold). Today's stamp thumps in once (`stamped`, `markStamped`,
   `stamp.wav`) when the levels screen is in view and the intro (`useIntroDone`) and tour are gone. A full week gives `WEEK_BONUS` hints and a
   streak freeze (`MAX_FREEZES` 2, earned, never sold); `applyFreezes` spends them on missed days once they're over (provider: on load and
-  every minute), only when they cover the whole gap. The stamp book and week sharing are next (BACKLOG.md).
+  every minute), only when they cover the whole gap. The provider saves only after the saved record has loaded, and merges every save into what's stored (`mergeDaily`), so a
+  win can never be overwritten (0.66.5: an early save wrote an empty record over earlier days). The stamp book and week sharing are next (BACKLOG.md).
 - **Sharing** (`game/share.ts` `shareMessage`, `components/share.ts`): a level's win card has "📣 Share" and the daily's
   Share uses the same message: a hook picked by how the shot went (seeded, so a win always shares the same words), the level, stars,
   bounces, par and tries, a dare, and `SHARE_LINK` (a placeholder until the store link exists). A poster goes with it (`Board`'s

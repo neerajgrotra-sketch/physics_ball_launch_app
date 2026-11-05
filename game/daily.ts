@@ -84,6 +84,26 @@ export function parseDaily(raw: string | null | undefined): DailyState {
   }
 }
 
+/**
+ * The saved record and a newer one combined, so a save can never lose a day: every day won in either is kept (the better result where
+ * both have it: more stars, then fewer bounces), and so are frozen days and full weeks; the best streak is the higher. Freezes left and
+ * the last stamped day are the newer record's (spending a freeze is a real change). 0.54.0 to 0.66.4 could overwrite the saved
+ * record with an empty one if something saved before it had loaded, wiping earlier days.
+ */
+export function mergeDaily(saved: DailyState, next: DailyState): DailyState {
+  const days: Record<string, DailyResult> = { ...saved.days };
+  for (const [day, r] of Object.entries(next.days)) {
+    const had = days[day];
+    days[day] = !had || r.stars > had.stars || (r.stars === had.stars && r.bounces <= had.bounces) ? r : had;
+  }
+  const union = (a: string[], b: string[]) => [...new Set([...a, ...b])].sort();
+  return {
+    days, best: Math.max(saved.best, next.best), freezes: next.freezes,
+    frozen: union(saved.frozen, next.frozen).filter((d) => !days[d]), weeks: union(saved.weeks, next.weeks),
+    stamped: next.stamped || saved.stamped,
+  };
+}
+
 /** The day before a YYYY-MM-DD. */
 export function dayBefore(day: string): string {
   const [y, m, d] = day.split('-').map(Number);

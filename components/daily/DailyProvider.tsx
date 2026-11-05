@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { CELEBRATION_MS } from '../../game/celebration';
-import { DAILY_KEY, applyFreezes, dailyFor, emptyDaily, parseDaily, streak, winDaily, type DailyResult, type DailyState } from '../../game/daily';
+import { DAILY_KEY, applyFreezes, dailyFor, emptyDaily, mergeDaily, parseDaily, streak, winDaily, type DailyResult, type DailyState } from '../../game/daily';
 import { dayOf } from '../../game/wallet';
 import { DAILIES, type DailyLevel } from '../../levels/daily';
 import { useHintWallet } from '../hints/HintWallet';
@@ -38,31 +38,45 @@ export function DailyProvider({ children }: { children: ReactNode }) {
   const wallet = useHintWallet();
   const [state, setState] = useState<DailyState>(emptyDaily());
   const live = useRef(state);
-  const save = (next: DailyState) => {
+  // Nothing is saved until the saved record has loaded, and every save is merged into what's stored (mergeDaily), one at a time.
+  // Before 0.66.5 a save made before the load finished (today's stamp, a win) wrote an empty record over the saved days.
+  const loaded = useRef<Promise<void> | null>(null);
+  const writes = useRef<Promise<void>>(Promise.resolve());
+  const save = (next: DailyState, reset = false) => {
     live.current = next;
     setState(next);
-    AsyncStorage.setItem(DAILY_KEY, JSON.stringify(next)).catch(() => {});
+    writes.current = writes.current.then(async () => {
+      const stored = reset ? emptyDaily() : parseDaily(await AsyncStorage.getItem(DAILY_KEY));
+      const merged = reset ? next : mergeDaily(stored, next);
+      await AsyncStorage.setItem(DAILY_KEY, JSON.stringify(merged));
+    }).catch(() => {});
   };
+  /** Runs `f` once the saved record is in (at once if it already is). */
+  const afterLoad = (f: () => void) => { (loaded.current ?? Promise.resolve()).then(f); };
   // Streak freezes are spent once a missed day is over (game/daily.ts applyFreezes): on load, and as the clock passes midnight.
   const freeze = () => {
     const next = applyFreezes(live.current, dayOf(new Date()));
     if (next !== live.current) save(next);
   };
   useEffect(() => {
-    AsyncStorage.getItem(DAILY_KEY).then((raw) => { live.current = parseDaily(raw); setState(live.current); freeze(); }).catch(() => {});
+    // A record that can't be read stays unknown: the app carries on, and saves still merge into whatever is there.
+    loaded.current = AsyncStorage.getItem(DAILY_KEY)
+      .then((raw) => { live.current = mergeDaily(parseDaily(raw), live.current); setState(live.current); })
+      .catch(() => {})
+      .then(() => freeze());
     const t = setInterval(freeze, 60_000);
     return () => clearInterval(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const value: Daily = {
     state,
     today: () => todaysDaily(),
-    won: (day, result) => {
+    won: (day, result) => afterLoad(() => {
       const { state: next, hints, reasons } = winDaily(live.current, day, result);
       if (next !== live.current) save(next);
       if (!hints) return;
       // Said once the win celebration is over, like a level's rewards.
       setTimeout(() => wallet.give(hints, reasons.join('\n')), CELEBRATION_MS + 600);
-    },
+    }),
     // `shown`: the win on screen (the share card is about that shot, not the day's first win).
     share: (day, picture, shown) => {
       const result = shown ?? live.current.days[day];
@@ -72,8 +86,8 @@ export function DailyProvider({ children }: { children: ReactNode }) {
       const what = { kind: 'daily' as const, number, name: level.name, streak: streak(live.current, day) }, par = level.par ?? 0;
       shareText(shareMessage(what, result, par), wallet.announce, picture?.(shareCard(what, result, par)));
     },
-    markStamped: (day) => { if (live.current.stamped !== day) save({ ...live.current, stamped: day }); },
-    reset: () => save(emptyDaily()),
+    markStamped: (day) => afterLoad(() => { if (live.current.stamped !== day) save({ ...live.current, stamped: day }); }),
+    reset: () => afterLoad(() => save(emptyDaily(), true)),
   };
   return <DailyContext.Provider value={value}>{children}</DailyContext.Provider>;
 }

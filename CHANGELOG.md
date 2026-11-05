@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.66.5
+
+- Daily results can no longer be wiped. The daily record started empty and was read from storage in the background; anything saved
+  before that read finished (today's stamp on the card, a win), or after a read that failed, wrote the empty record over the saved
+  one, and earlier days were lost (a player's Monday and Tuesday three-star days vanished). Now nothing is saved until the record has
+  loaded, and every save is merged into what is stored (`mergeDaily`): every day won in either is kept, with the better result.
+
 ## 0.66.4
 
 - The audio log covers the music everywhere:

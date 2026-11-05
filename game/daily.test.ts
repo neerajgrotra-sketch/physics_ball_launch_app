@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   MAX_FREEZES, WEEK_BONUS, addDays, applyFreezes, fullWeek, weekOf, weekSlots,
-  DAILY_EPOCH, DAILY_HELPED_WIN, DAILY_THREE_STARS, DAILY_TIERS, DAILY_WIN, dailyFor, dayBefore, daysBetween, emptyDaily, parseDaily,
+  DAILY_EPOCH, DAILY_HELPED_WIN, DAILY_THREE_STARS, DAILY_TIERS, DAILY_WIN, dailyFor, dayBefore, daysBetween, emptyDaily, mergeDaily, parseDaily,
   streak, untilTomorrow, winDaily, type DailyState,
 } from './daily';
 
@@ -140,3 +140,22 @@ describe('daily puzzle: the week stamp card', () => {
     expect(s.freezes).toBe(MAX_FREEZES);
   });
 });
+
+describe('saving the daily record', () => {
+  const win = (stars: number, bounces: number) => ({ bounces, stars, tries: 1, helped: false });
+  it('never loses a day won in either record', () => {
+    const saved = { ...emptyDaily(), days: { '2026-11-02': win(3, 2), '2026-11-03': win(3, 2) }, best: 2 };
+    // An empty record that only knows today (what a save made before the load used to write).
+    const next = { ...emptyDaily(), days: { '2026-11-04': win(3, 2) }, best: 1, stamped: '2026-11-04' };
+    const m = mergeDaily(saved, next);
+    expect(Object.keys(m.days).sort()).toEqual(['2026-11-02', '2026-11-03', '2026-11-04']);
+    expect(m.best).toBe(2);
+    expect(m.stamped).toBe('2026-11-04');
+  });
+  it('keeps the better result of a day in both', () => {
+    const a = { ...emptyDaily(), days: { d: win(3, 2) } }, b = { ...emptyDaily(), days: { d: win(2, 4) } };
+    expect(mergeDaily(a, b).days.d.stars).toBe(3);
+    expect(mergeDaily(b, a).days.d.stars).toBe(3);
+  });
+});
+
