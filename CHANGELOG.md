@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.71.2
+
+- A replayed shot that hits a hazard plays the shatter's sound and buzz, as a try does. Replays drew the shatter but stayed silent
+  (the audio log showed `play shatter` on every try that hit the spikes and never on a replay). This covers Replay ▶, a level
+  card's Replay and a friend's shot.
+
 ## 0.71.1
 
 - The win card comes back after a replayed win (stars, result, Share, Challenge a friend, Next level), as after the win itself:

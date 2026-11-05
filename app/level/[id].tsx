@@ -530,6 +530,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
         setBounces(res.bounces);
         setTrails([{ path: res.path, ok: res.success, end: res.end, jumps: res.jumps }]);
         if (res.success) replayWin(res, { slots: shotSlots(level, shot), angle: shot.angle, power: shot.power });
+        else if (res.end === 'dead') feedback.died(); // the shatter's sound and buzz, as on a try (replays were silent)
       }, true, setupKey(shotPieces(level, shot), shot.angle, shot.power));
     }, 500);
     return () => clearTimeout(timer);
@@ -679,6 +680,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     playShot(res, () => {
       setTrails((ts) => withReplayTrail(ts, res, trailCount));
       if (res.success) replayWin(res);
+      else if (res.end === 'dead') feedback.died(); // the shatter's sound and buzz, as on a try (replays were silent)
     }, false, setupKey(boardPieces(theirs), challenge.shot.angle, challenge.shot.power));
   };
 
@@ -700,6 +702,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       trailShots.current.set(res.path, { pieces: boardPieces(shot), angle: a, power: p });
       setTrails((ts) => withReplayTrail(ts, res, trailCount));
       if (res.success) replayWin(res, { slots: shot, angle: a, power: p });
+      else if (res.end === 'dead') feedback.died(); // the shatter's sound and buzz, as on a try (replays were silent)
     }, false, setupKey(boardPieces(shot), a, p));
   };
 
@@ -743,6 +746,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       trailShots.current.set(res.path, { pieces: placed, angle, power });
       setTrails((ts) => withReplayTrail(ts, res, trailCount));
       if (res.success) replayWin(res, { slots, angle, power });
+      else if (res.end === 'dead') feedback.died(); // the shatter's sound and buzz, as on a try (replays were silent)
     }, true, setupKey(placed, angle, power));
   };
 
