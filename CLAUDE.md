@@ -300,7 +300,8 @@ growing with the stars: two stars get the constellation (each bounce lights up a
 `fuseTicks`, the stars join up, the glass fills, a flower of light from two `rose` curves, fireflies, a soft halo); one star, or a helped
 win, gets the embers (a fountain rising out of the glass, `embers`/`emberAt`, a warm glow, one ripple). Keep the mandalas, the light
 column and the white glow for three stars, and never make a lower tier just the top one with parts removed (players noticed).
-Replays of a winning shot celebrate too (`replayWin`: Replay ▶, a card's Replay, a friend's shot), unscored and with no card. The win card waits for it: the
+Replays of a winning shot celebrate too (`replayWin`: Replay ▶, a card's Replay, a friend's shot), unscored; the player's own
+shot then brings the win card back (`replayWin`'s `shot`: `winShot`, `done`), a friend's shot doesn't. The win card waits for it: the
 celebration's clock starts once it's mounted (`celePending`, an effect on `cele`) and the card follows the clock's finish (`celeDone`, a longer
 pause after the bloom), never a separate timer (on phones the bloom appeared late and the card cut its last glow).
 Blocks are violet neon glass in ASMR mode (`NEON_BLOCK`), and the bar or block a bounce strikes flares up (`hitTarget`, the flash's

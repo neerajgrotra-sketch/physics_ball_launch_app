@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.71.1
+
+- The win card comes back after a replayed win (stars, result, Share, Challenge a friend, Next level), as after the win itself:
+  Replay ▶ (also after reopening a won level) and a level card's Replay. It's still a replay: nothing is saved and no try is counted.
+  A friend's shot ("Watch <name>'s shot") celebrates without bringing the card back (its card would compare the friend's shot with
+  itself).
+
 ## 0.71.0
 
 - Replaying a win celebrates again. Replay ▶ (also after reopening a won level), a level card's Replay and "Watch <name>'s shot"

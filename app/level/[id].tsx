@@ -529,7 +529,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       playShot(res, () => {
         setBounces(res.bounces);
         setTrails([{ path: res.path, ok: res.success, end: res.end, jumps: res.jumps }]);
-        if (res.success) replayWin(res);
+        if (res.success) replayWin(res, { slots: shotSlots(level, shot), angle: shot.angle, power: shot.power });
       }, true, setupKey(shotPieces(level, shot), shot.angle, shot.power));
     }, 500);
     return () => clearTimeout(timer);
@@ -699,7 +699,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     playShot(res, () => {
       trailShots.current.set(res.path, { pieces: boardPieces(shot), angle: a, power: p });
       setTrails((ts) => withReplayTrail(ts, res, trailCount));
-      if (res.success) replayWin(res);
+      if (res.success) replayWin(res, { slots: shot, angle: a, power: p });
     }, false, setupKey(boardPieces(shot), a, p));
   };
 
@@ -720,12 +720,15 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   };
 
   // A replayed shot that lands (Replay ▶, a level card's Replay, a friend's shot) gets its celebration too, at the stars that shot earns,
-  // unscored: nothing is saved and no card comes up (the board isn't `done`). 0.70.0 and before only played the landing sound.
-  const replayWin = (res: { path: Vec[]; jumps: number[]; hits: Hit[]; bounces: number }) => {
+  // unscored: nothing is saved and it isn't a try. With `shot` (the player's own shot) the win card comes back after it, as after the
+  // win itself (stars, Share, Next level); a friend's shot passes none, since its card would compare their shot with itself.
+  // 0.70.0 and before only played the landing sound.
+  const replayWin = (res: { path: Vec[]; jumps: number[]; hits: Hit[]; bounces: number }, shot?: { slots: Slot[]; angle: number; power: number }) => {
     const assisted = practice || ((!!daily || !!challenge) && helped);
     const stars = assisted ? 0 : starsFor(cappedBounces(res.bounces, par, levelHelp), par);
     feedback.landed(bloomFor(stars, assisted).sound);
     celebrate(res, stars, assisted);
+    if (shot) { setWinShot({ ...shot, bounces: res.bounces }); setDone(true); }
   };
 
   // The board still matches the last try: Launch only replays it (it reads "Replay ▶"), uncounted and unscored. The first time in a
@@ -739,7 +742,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       setBounces(res.bounces);
       trailShots.current.set(res.path, { pieces: placed, angle, power });
       setTrails((ts) => withReplayTrail(ts, res, trailCount));
-      if (res.success) replayWin(res);
+      if (res.success) replayWin(res, { slots, angle, power });
     }, true, setupKey(placed, angle, power));
   };
 
