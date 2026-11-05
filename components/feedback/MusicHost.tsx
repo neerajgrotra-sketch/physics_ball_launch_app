@@ -2,6 +2,7 @@ import { useAudioPlayer } from 'expo-audio';
 import { useEffect, useState } from 'react';
 import { localSound, setAudioModeOnce, sourceOf } from './localAudio';
 import { warmSounds } from './useFeedback';
+import { audioPartReady, whenLoaded } from './audioReady';
 import { loadMusicLevel, musicVolume, onMusicLevel, trackFor, useMusicPick, useMusicTurn } from './music';
 import { musicDemand, onMusicDemand } from './musicDemand';
 import { useAsmr } from '../settings/Theme';
@@ -70,6 +71,8 @@ function useDemand(p: { playing: boolean; volume: number; play(): void; pause():
 function LoopedMusic({ source }: { source: number | { uri: string } }) {
   const player = useAudioPlayer(source, { keepAudioSessionActive: true });
   useEffect(() => { try { player.loop = true; } catch { /* not loaded yet */ } }, [player]);
+  // The intro's shot waits for this (audioReady.ts): the music player is set up before any sound is heard.
+  useEffect(() => { whenLoaded([player], 4000).then(() => audioPartReady('music')); }, [player]);
   useDemand(player);
   return null;
 }

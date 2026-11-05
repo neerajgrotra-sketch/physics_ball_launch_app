@@ -1,3 +1,4 @@
+import { whenAudioReady } from '../feedback/audioReady';
 import { useEffect, useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, {
@@ -20,6 +21,9 @@ import { BALL, BAR, CONTACT, FLOOR, GLASS, GO_BUTTON, INTRO_MS, LAUNCHER, TITLE,
  * Every frame is a function of one clock (`t`, in ms), timeline in introPath.ts.
  */
 /** `onLeaving` fires as the fade-out starts, so what comes next (the tour, for a new player) is already there for it to reveal. */
+/** The longest the intro's shot waits for the audio to be set up (ms). */
+const AUDIO_WAIT_MS = 3000;
+
 export function Intro({ onDone, onShown, onLeaving }: { onDone: () => void; onShown: () => void; onLeaving?: () => void }) {
   const c = useColors();
   const { skin } = useBallSkin();
@@ -53,15 +57,21 @@ export function Intro({ onDone, onShown, onLeaving }: { onDone: () => void; onSh
   };
 
   useEffect(() => {
-    t.value = withTiming(INTRO_MS, { duration: reduced ? 900 : INTRO_MS, easing: Easing.linear });
-    const timer = setTimeout(() => setReady(true), reduced ? 900 : INTRO_MS);
-    if (!reduced) {
-      const at = (ms: number, f: () => void) => sounds.current.push(setTimeout(f, ms));
-      at(BALL.launch, () => feedback.launched());
-      at(BALL.hitBar, () => feedback.hit({ i: 0, kind: 'piece', speed: 650, counts: true }));
-      at(BALL.land, () => { feedback.hit({ i: 0, kind: 'glass', speed: 420, counts: false }); feedback.landed(); });
-    }
-    return () => { clearTimeout(timer); stopSounds(); };
+    // On phones the shot waits on the opening picture until the audio is set up (audioReady.ts: a player set up while a sound plays
+    // makes it stutter), at most AUDIO_WAIT_MS.
+    let live = true, timer: ReturnType<typeof setTimeout> | undefined;
+    whenAudioReady(AUDIO_WAIT_MS).then(() => {
+      if (!live || t.value >= INTRO_MS) return; // tapped through meanwhile
+      t.value = withTiming(INTRO_MS, { duration: reduced ? 900 : INTRO_MS, easing: Easing.linear });
+      timer = setTimeout(() => setReady(true), reduced ? 900 : INTRO_MS);
+      if (!reduced) {
+        const at = (ms: number, f: () => void) => sounds.current.push(setTimeout(f, ms));
+        at(BALL.launch, () => feedback.launched());
+        at(BALL.hitBar, () => feedback.hit({ i: 0, kind: 'piece', speed: 650, counts: true }));
+        at(BALL.land, () => { feedback.hit({ i: 0, kind: 'glass', speed: 420, counts: false }); feedback.landed(); });
+      }
+    });
+    return () => { live = false; clearTimeout(timer); stopSounds(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -5,6 +5,7 @@ import type { Hit } from '../../physics';
 import { asmrRate } from '../../game/asmr';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EFFECTS_KEY, effectsListeners, feedbackPrefs } from './SoundSettings';
+import { audioPartReady, whenLoaded } from './audioReady';
 import { localSound, setAudioModeOnce, sourceOf } from './localAudio';
 
 // Sounds come from scripts/make-sounds.mjs. Re-run it to change them.
@@ -89,12 +90,16 @@ class Pool {
     this.voices.forEach((v) => { clearTimeout(v.timer); try { v.player.remove(); } catch { /* already gone */ } });
   }
 
+  /** The players, to wait for them to load. */
+  get players() { return this.voices.map((v) => v.player); }
+
   /** When this sound last started (ms). */
   private last = 0;
 
   /**
    * Plays each voice once, silently, then rewinds it: an iPhone player is slow to start the first time, so the first bounces of a
-   * session came late (and got better with replays). Done a voice at a time at app start (`warmUp`), never all at once.
+   * session came late (and got better with replays). Done at app start before the intro's shot, while nothing can be heard
+   * (audioReady.ts), the pools a few at a time (`warmSounds`).
    */
   warmVoices(): Promise<void> {
     return this.voices.reduce((chain, voice) => chain.then(() => new Promise<void>((done) => {
@@ -186,18 +191,22 @@ export function warmSounds(): Promise<void> {
       readSwitch = true; // only at app start: later the switch itself says (setEffectsOn), and its save may not have landed yet
       if ((await AsyncStorage.getItem(EFFECTS_KEY).catch(() => null)) === 'off') feedbackPrefs.effects = false;
     }
-    if (!feedbackPrefs.effects) { warming = null; return; }
+    if (!feedbackPrefs.effects) { warming = null; audioPartReady('effects'); return; }
     const names = Object.keys(SOUNDS) as SoundName[];
     const files = await Promise.all(names.map((n) => localSound(SOUNDS[n])));
     if (!pools) {
       pools = makePools((name) => sourceOf(files[names.indexOf(name)]));
-      // Warm every voice, one after another (during the intro), so the first bounces start as quickly as later ones.
+      // Let them load, then warm every voice, a few pools at a time, so the first bounces start as quickly as later ones. All of it
+      // before the intro's shot (audioReady.ts): a player set up or first played while a sound plays makes that sound stutter.
       const made = pools;
-      (async () => {
-        await new Promise((r) => setTimeout(r, 800)); // let the players load first
-        for (const pool of Object.values(made)) { if (pools !== made) return; await pool.warmVoices(); }
-      })().catch(() => {});
+      const list = Object.values(made);
+      await whenLoaded(list.flatMap((p) => p.players), 2000);
+      for (let i = 0; i < list.length; i += 4) {
+        if (pools !== made) break;
+        await Promise.all(list.slice(i, i + 4).map((p) => p.warmVoices()));
+      }
     }
+    audioPartReady('effects');
   })();
   return warming;
 }

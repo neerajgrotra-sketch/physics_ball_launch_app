@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.66.2
+
+- Phones: the intro's sounds no longer stutter. The iPhone's audio stalls for a moment whenever a player is set up or first played,
+  and the 28 effect players and the music player were all loading, and the effects warming up, while the intro's shot played. Now
+  all of that happens first, while the intro still shows its opening picture (`components/feedback/audioReady.ts`: `whenAudioReady`,
+  at most 3 s). The effects load (`whenLoaded`) and warm a few pools at a time, the music player loads, and only then does the shot
+  start. Nothing is set up while a sound plays. The web doesn't wait.
+
 ## 0.66.1
 
 - Phones: the start-up warm-up no longer cuts sounds off. Since 0.64.3 every effect player is warmed (played silently for a moment)

@@ -310,6 +310,8 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
   off a bar into the glass, the title drops in, then a "Let's go" button with the version under it. The shot plays the launch, bar and glass sounds. It waits there (no auto-advance, so
   the title can be read); "Let's go" or a tap anywhere opens the levels. A tap mid-animation jumps to the
   finished picture. Every cold start; reduced motion just fades in.
+  On phones the shot waits on the opening picture until the audio is set up (`components/feedback/audioReady.ts` `whenAudioReady`, at most 3 s):
+  the effect players load and warm and the music player loads first, because a player set up while a sound plays makes it stutter (0.66.2).
   Built with plain Reanimated views (no Skia), one clock driving every frame. Expo Go shows its own launch
   screen; the real one appears in development and store builds.
 
