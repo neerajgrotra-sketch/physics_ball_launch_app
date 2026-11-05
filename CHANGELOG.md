@@ -4,6 +4,23 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.71.0
+
+- Replaying a win celebrates again. Replay ▶ (also after reopening a won level), a level card's Replay and "Watch <name>'s shot"
+  play the celebration at the stars that shot earns (`replayWin`), unscored, with no win card. They only played the landing sound.
+- The "Replays don't count as a try" note is only for a replay that misses: a replayed win needs no explaining (players replaying a
+  won level got it).
+- The ASMR win effects for two stars and one star are redesigned, each with its own idea and growing with the stars; three stars
+  is unchanged:
+  - **2★, the constellation:** each bounce of the shot lights up as a gold star as the light runs past it, the stars join into the
+    shot's constellation, the glass fills, a large flower of light (two rose curves turning opposite ways) draws its petals over
+    it, with fireflies, three ripples and a soft coloured halo (3.6 s).
+  - **1★, the embers** (also a helped win): the light runs the path, the glass warms half full, a fountain of 24 embers rises out
+    of it, flickering and drifting, over a warm glow at the glass's mouth, with one ripple and a warm halo (2.8 s). Before, it was
+    two faint ripples and looked unfinished.
+  - The mandalas, the column of light and the white glow stay three-star only. `game/bloom.ts` `rose`, `embers`, `emberAt`;
+    `Board`'s `BounceStar`, `RisingEmberDot`.
+
 ## 0.70.0
 
 - Reminder notifications, local to the phone (no server; `expo-notifications`; plan in `game/reminders.ts`, phone side in

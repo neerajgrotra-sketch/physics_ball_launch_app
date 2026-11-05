@@ -337,7 +337,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   useEffect(() => { if (capsHelp && draft?.helped && !levelHelp) markHelp(level.id, 1); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // The win celebration (game/celebration): a spark runs the winning shot and the glass bursts; the win card waits for the burst.
   const celeT = useSharedValue(1);
-  const [cele, setCele] = useState<{ path: Vec[]; jumps: number[]; confetti: number; rings: number; bloom?: BloomTier } | null>(null);
+  const [cele, setCele] = useState<{ path: Vec[]; jumps: number[]; confetti: number; rings: number; bloom?: BloomTier; points?: { x: number; y: number; f: number }[] } | null>(null);
   const [cardReady, setCardReady] = useState(true);
   const celeTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const stopCelebration = () => {
@@ -356,7 +356,13 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     const bloom = bloomFor(stars, assisted);
     const dur = asmr ? bloom.ms : CELEBRATION_MS;
     celePending.current = { dur, ticks: asmr ? [] : fuseTicks(res.path, res.jumps, res.hits), asmr };
-    setCele({ path: res.path, jumps: res.jumps, ...burst, bloom: asmr ? bloom : undefined });
+    // The bounces, where they happened and when the echo's light reaches them (the 2-star constellation).
+    const ticks = fuseTicks(res.path, res.jumps, res.hits);
+    const points = res.hits.filter((h) => h.counts).map((h, k) => {
+      const [x, y] = res.path[Math.min(h.i, res.path.length - 1)];
+      return { x, y, f: ticks[k] ?? 1 };
+    });
+    setCele({ path: res.path, jumps: res.jumps, ...burst, bloom: asmr ? bloom : undefined, points });
     setCardReady(false);
     celeT.value = 0; // held at the start until the effect is on screen (below)
   };
@@ -523,7 +529,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       playShot(res, () => {
         setBounces(res.bounces);
         setTrails([{ path: res.path, ok: res.success, end: res.end, jumps: res.jumps }]);
-        if (res.success) feedback.landed();
+        if (res.success) replayWin(res);
       }, true, setupKey(shotPieces(level, shot), shot.angle, shot.power));
     }, 500);
     return () => clearTimeout(timer);
@@ -672,7 +678,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     launched(challenge.shot.angle);
     playShot(res, () => {
       setTrails((ts) => withReplayTrail(ts, res, trailCount));
-      if (res.success) feedback.landed();
+      if (res.success) replayWin(res);
     }, false, setupKey(boardPieces(theirs), challenge.shot.angle, challenge.shot.power));
   };
 
@@ -693,7 +699,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     playShot(res, () => {
       trailShots.current.set(res.path, { pieces: boardPieces(shot), angle: a, power: p });
       setTrails((ts) => withReplayTrail(ts, res, trailCount));
-      if (res.success) feedback.landed();
+      if (res.success) replayWin(res);
     }, false, setupKey(boardPieces(shot), a, p));
   };
 
@@ -713,18 +719,27 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     setNotice(null);
   };
 
+  // A replayed shot that lands (Replay ▶, a level card's Replay, a friend's shot) gets its celebration too, at the stars that shot earns,
+  // unscored: nothing is saved and no card comes up (the board isn't `done`). 0.70.0 and before only played the landing sound.
+  const replayWin = (res: { path: Vec[]; jumps: number[]; hits: Hit[]; bounces: number }) => {
+    const assisted = practice || ((!!daily || !!challenge) && helped);
+    const stars = assisted ? 0 : starsFor(cappedBounces(res.bounces, par, levelHelp), par);
+    feedback.landed(bloomFor(stars, assisted).sound);
+    celebrate(res, stars, assisted);
+  };
+
   // The board still matches the last try: Launch only replays it (it reads "Replay ▶"), uncounted and unscored. The first time in a
-  // visit a note says why.
+  // visit a replay that misses gets a note saying why it isn't a new try (a replayed win needs no explaining: the button says Replay).
   const rerun = () => {
     const placed = boardPieces(slots);
     const res = simulate(buildWorld(level, placed), angle, power);
-    if (rerunNote === 0) setRerunNote(1);
+    if (rerunNote === 0 && !res.success) setRerunNote(1);
     launched(angle);
     playShot(res, () => {
       setBounces(res.bounces);
       trailShots.current.set(res.path, { pieces: placed, angle, power });
       setTrails((ts) => withReplayTrail(ts, res, trailCount));
-      if (res.success) feedback.landed();
+      if (res.success) replayWin(res);
     }, true, setupKey(placed, angle, power));
   };
 

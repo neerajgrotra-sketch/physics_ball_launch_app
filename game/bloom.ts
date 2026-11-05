@@ -15,6 +15,9 @@ export const BLOOM_PHASES = {
   beam: [0.4, 0.95],   // a column of light over the glass
   fireflies: [0.3, 0.92],
   breath: [0.88, 1],   // a last soft pulse from the glass
+  constellation: [0.3, 0.55], // 2 stars: the bounce stars join up into the shot's constellation
+  flower: [0.32, 0.8],  // 2 stars: a flower of light draws its petals over the glass
+  embers: [0.2, 0.95],  // 1 star: embers rise out of the glass
 } as const;
 
 /** 0 before a phase, 1 after it, rising linearly through it. */
@@ -61,10 +64,13 @@ export function fireflyAt(f: Firefly, cx: number, cy: number, p: number): [numbe
 }
 
 /**
- * A win's bloom, by how good it was, so the full show stays a reward:
- * - 3 stars, the light bloom: everything, ending in the column of white light and the glass breathing out a white glow.
- * - 2 stars, the glow: the path, the glass filled, one mandala, ripples and fireflies, ending in a soft coloured halo. No white light.
- * - 1 star (or a helped win), the ember: the path and the glass half filled, a couple of ripples. Short and quiet.
+ * A win's bloom, by how good it was: each step up is longer and richer, and each has something its own (player feedback: the 2-star one
+ * looked like the 3-star one with a part missing, and the 1-star one hardly showed).
+ * - 3 stars, the light bloom: two spirograph mandalas, every ripple and firefly, the column of light and the white glow. Kept for three.
+ * - 2 stars, the constellation: each bounce lights up as a star as the light runs past it, the stars join into the shot's constellation,
+ *   the glass fills, a flower of light draws its petals over it, fireflies and a few ripples, a soft coloured halo.
+ * - 1 star (or a helped win), the embers: the light runs the path, the glass warms half full, a fountain of embers rises out of it and
+ *   drifts up flickering, one bright ripple, a warm glow.
  * `ms` is how long it runs (the win card waits for it); its parts keep BLOOM_PHASES' shares of it. `sound` is its landing sound.
  */
 export interface BloomTier {
@@ -72,22 +78,61 @@ export interface BloomTier {
   ms: number;
   rings: number;
   flies: number;
-  /** How many spirograph mandalas draw themselves. */
-  mandalas: 0 | 1 | 2;
+  /** How many spirograph mandalas draw themselves (3 stars only). */
+  mandalas: 0 | 2;
+  /** The bounce stars and their constellation (2 stars). */
+  constellation: boolean;
+  /** The flower of light over the glass (2 stars). */
+  flower: boolean;
+  /** Embers rising out of the glass (1 star). */
+  embers: number;
   /** How full the glass of light gets (share of its height). */
   fill: number;
-  /** The column of light over the glass. */
+  /** The column of light over the glass (3 stars only). */
   beam: boolean;
-  /** The last glow out of the glass: white (3 stars), soft and coloured (2), or none. */
-  halo: 'white' | 'soft' | null;
+  /** The last glow out of the glass: white (3 stars only), soft and coloured (2), warm and small (1). */
+  halo: 'white' | 'soft' | 'warm';
   sound: 'bloom' | 'bloom2' | 'bloom1';
 }
 
 export const BLOOM_TIERS: Record<1 | 2 | 3, BloomTier> = {
-  3: { tier: 3, ms: BLOOM_MS, rings: 7, flies: 28, mandalas: 2, fill: 1, beam: true, halo: 'white', sound: 'bloom' },
-  2: { tier: 2, ms: 3400, rings: 4, flies: 14, mandalas: 1, fill: 1, beam: false, halo: 'soft', sound: 'bloom2' },
-  1: { tier: 1, ms: 2600, rings: 2, flies: 0, mandalas: 0, fill: 0.5, beam: false, halo: null, sound: 'bloom1' },
+  3: { tier: 3, ms: BLOOM_MS, rings: 7, flies: 28, mandalas: 2, constellation: false, flower: false, embers: 0, fill: 1, beam: true, halo: 'white', sound: 'bloom' },
+  2: { tier: 2, ms: 3600, rings: 3, flies: 12, mandalas: 0, constellation: true, flower: true, embers: 0, fill: 1, beam: false, halo: 'soft', sound: 'bloom2' },
+  1: { tier: 1, ms: 2800, rings: 1, flies: 0, mandalas: 0, constellation: false, flower: false, embers: 24, fill: 0.55, beam: false, halo: 'warm', sound: 'bloom1' },
 };
+
+/** A rose curve (r = cos(kθ)): `k` odd gives k petals. Scaled to reach `size`; drawn as one line, so it can draw itself. */
+export function rose(k: number, size: number, steps = 240): Vec[] {
+  return Array.from({ length: steps + 1 }, (_, i) => {
+    const t = (i / steps) * Math.PI;
+    const r = size * Math.cos(k * t);
+    return [r * Math.cos(t), r * Math.sin(t)] as Vec;
+  });
+}
+
+/** One ember: leaves the glass's mouth at `delay` (share of its phase), rising at an angle `a` from straight up, for `life`. */
+export interface Ember { delay: number; a: number; rise: number; life: number; size: number; hue: 0 | 1 | 2; wobble: number }
+
+/** The embers for a 1-star win. Fixed spread (no random numbers), so a win always looks the same. */
+export function embers(n: number): Ember[] {
+  return Array.from({ length: n }, (_, k) => {
+    const j = ((k * 7919) % 23) / 23;
+    return { delay: (k / n) * 0.45, a: (j - 0.5) * 1.1, rise: 140 + j * 120, life: 0.4 + ((k * 31) % 7) / 7 * 0.15, size: 2.2 + (k % 3) * 0.8, hue: (k % 3) as 0 | 1 | 2, wobble: 4 + j * 6 };
+  });
+}
+
+/** Where an ember is at share `p` (0–1) of the embers' phase, from the glass's mouth (x, y): [x, y, opacity]. */
+export function emberAt(e: Ember, x: number, y: number, p: number): [number, number, number] {
+  'worklet';
+  const q = (p - e.delay) / e.life;
+  if (q <= 0 || q >= 1) return [x, y, 0];
+  const ease = 1 - (1 - q) * (1 - q);
+  const up = e.rise * ease;
+  const px = x + Math.sin(e.a) * up + Math.sin(q * 9 + e.a * 5) * e.wobble * q;
+  const py = y - Math.cos(e.a) * up;
+  const flicker = 0.75 + 0.25 * Math.sin(q * 40 + e.a * 11);
+  return [px, py, Math.min(1, q / 0.1) * (1 - q) * flicker];
+}
 
 /** The bloom a win earns: three stars the full light bloom, two the glow, one star or a helped win the ember. */
 export function bloomFor(stars: number, assisted: boolean): BloomTier {

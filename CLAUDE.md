@@ -129,7 +129,7 @@ reference/    prototype.html, the behaviour and look to match
   unlock the next level and save progress locally.
   **A try is a new setup** (`game/tries.ts`): launching the bars and aim the last try was fired from (`setupKey`, `lastFired`, taken
   from the newest saved trail on resume) only replays it, since physics gives the same path: no try, no score, a pencil note the first
-  time a visit (`RERUN_NOTE`). Launch reads "Replay ▶" whenever the board matches that setup, win or miss, and "Launch" again after
+  time a visit, and only when the replay misses (`RERUN_NOTE`; a replayed win just celebrates). Launch reads "Replay ▶" whenever the board matches that setup, win or miss, and "Launch" again after
   any change (Undo back to it shows Replay again).
   After a win, Launch becomes "Replay ▶": it replays the winning shot exactly (bars restored to where
   they were, same angle and power) without resetting or counting a try. The card's left button is
@@ -295,9 +295,12 @@ bars, ball and newest trail, a `CometTail` on the flight and a `BounceFlash` rin
 `feedbackPrefs.asmr` swaps each bounce for `chime.wav` stepped along `asmrStep` (major pentatonic, up then down) and the landing
 for `bloom.wav`. Its win is the light bloom (`game/bloom.ts` `BLOOM_MS`, phases in `BLOOM_PHASES`, `Board`'s `Bloom`: the light
 runs the path, the glass fills, spirograph mandalas, ripples, a light column, fireflies spiralling in). The full bloom is the three-star reward:
-`bloomFor` picks a tier (`BLOOM_TIERS`), each with its own length (`ms`) and landing sound (`sound`: `bloom`, `bloom2`, `bloom1`). Two stars get the
-glow, with one mandala, fewer ripples and fireflies, and a soft coloured halo but no light column or white glow. One star, or a helped win, gets the
-ember: the path, the glass half filled and two ripples. Keep the white light for three stars. The win card waits for it: the
+`bloomFor` picks a tier (`BLOOM_TIERS`), each with its own length (`ms`) and landing sound (`sound`: `bloom`, `bloom2`, `bloom1`). Each tier has its own idea,
+growing with the stars: two stars get the constellation (each bounce lights up as a gold star as the light passes, `cele.points` from
+`fuseTicks`, the stars join up, the glass fills, a flower of light from two `rose` curves, fireflies, a soft halo); one star, or a helped
+win, gets the embers (a fountain rising out of the glass, `embers`/`emberAt`, a warm glow, one ripple). Keep the mandalas, the light
+column and the white glow for three stars, and never make a lower tier just the top one with parts removed (players noticed).
+Replays of a winning shot celebrate too (`replayWin`: Replay ▶, a card's Replay, a friend's shot), unscored and with no card. The win card waits for it: the
 celebration's clock starts once it's mounted (`celePending`, an effect on `cele`) and the card follows the clock's finish (`celeDone`, a longer
 pause after the bloom), never a separate timer (on phones the bloom appeared late and the card cut its last glow).
 Blocks are violet neon glass in ASMR mode (`NEON_BLOCK`), and the bar or block a bounce strikes flares up (`hitTarget`, the flash's
