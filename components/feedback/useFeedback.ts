@@ -1,3 +1,4 @@
+import { alog } from './audioLog';
 import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef } from 'react';
@@ -61,7 +62,7 @@ const MERGE_MS = 45;
 const FALLBACK_SECONDS = 0.6;
 class Pool {
   private voices: Voice[];
-  constructor(source: number | { uri: string }, size: number) {
+  constructor(source: number | { uri: string }, size: number, private name = '') {
     this.voices = Array.from({ length: size }, () => {
       // keepAudioSessionActive: by default every pause() also shuts the iPhone's audio session down (and the next play() starts it
       // up again), and these pause after every sound.
@@ -117,7 +118,7 @@ class Pool {
   play(volume: number, rate: number): Voice | null {
     // Two hits a hair apart (a corner, or two events let through in one late frame) are one sound: played twice, they doubled.
     const now = Date.now();
-    if (now - this.last < MERGE_MS) return null;
+    if (now - this.last < MERGE_MS) { alog(`merged ${this.name}`); return null; }
     this.last = now;
     // A free voice if there is one, or one only being warmed (taken over); otherwise cut the one that started longest ago (it has
     // to rewind first, so wait for that).
@@ -136,6 +137,7 @@ class Pool {
     // Free it again as soon as the sound is over (at this rate), plus a hair for the player to get going.
     const seconds = player.duration > 0 ? player.duration : FALLBACK_SECONDS;
     const arm = () => { clearTimeout(voice.timer); voice.timer = setTimeout(() => this.rewind(voice), (seconds / Math.max(0.25, rate)) * 1000 + 40); };
+    alog(`play ${this.name} #${this.voices.indexOf(voice)}${free ? (wasWarming ? ' (was warming)' : '') : ' (cut a playing one)'}`);
     if (free && !wasWarming) { player.play(); arm(); }
     else {
       clearTimeout(voice.timer);
@@ -174,10 +176,10 @@ class Pool {
 let pools: Record<SoundName, Pool> | null = null;
 const POOL_SIZE: Partial<Record<SoundName, number>> = { bounce: 4, wall: 3, glass: 2, chime: 5, spark: 2 };
 const makePools = (src: (name: SoundName) => number | { uri: string }) => Object.fromEntries(
-  (Object.keys(SOUNDS) as SoundName[]).map((name) => [name, new Pool(src(name), POOL_SIZE[name] ?? 1)]),
+  (Object.keys(SOUNDS) as SoundName[]).map((name) => [name, new Pool(src(name), POOL_SIZE[name] ?? 1, name)]),
 ) as Record<SoundName, Pool>;
 function sounds(): Record<SoundName, Pool> {
-  if (!pools) pools = makePools((name) => SOUNDS[name]);
+  if (!pools) { alog('effects made from bundled files (needed before ready)'); pools = makePools((name) => SOUNDS[name]); }
   return pools;
 }
 let warming: Promise<void> | null = null;
@@ -192,20 +194,26 @@ export function warmSounds(): Promise<void> {
       if ((await AsyncStorage.getItem(EFFECTS_KEY).catch(() => null)) === 'off') feedbackPrefs.effects = false;
     }
     if (!feedbackPrefs.effects) { warming = null; audioPartReady('effects'); return; }
+    alog('effects: getting files');
     const names = Object.keys(SOUNDS) as SoundName[];
     const files = await Promise.all(names.map((n) => localSound(SOUNDS[n])));
+    alog(`effects: files ready (${files.filter((f) => typeof f === 'string').length}/${files.length} local)`);
     if (!pools) {
       pools = makePools((name) => sourceOf(files[names.indexOf(name)]));
       // Let them load, then warm every voice, a few pools at a time, so the first bounces start as quickly as later ones. All of it
       // before the intro's shot (audioReady.ts): a player set up or first played while a sound plays makes that sound stutter.
       const made = pools;
       const list = Object.values(made);
-      await whenLoaded(list.flatMap((p) => p.players), 2000);
+      const all = list.flatMap((p) => p.players);
+      alog(`effects: ${all.length} players made`);
+      await whenLoaded(all, 2000);
+      alog(`effects: ${all.filter((p) => p.isLoaded).length}/${all.length} loaded`);
       for (let i = 0; i < list.length; i += 4) {
         if (pools !== made) break;
         await Promise.all(list.slice(i, i + 4).map((p) => p.warmVoices()));
       }
     }
+    alog('effects: warmed');
     audioPartReady('effects');
   })();
   return warming;

@@ -4,6 +4,18 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.66.3
+
+- Settings, Testing: "Show audio log" (`components/feedback/audioLog.ts`, `components/settings/AudioLog.tsx`). A timeline, in seconds
+  since the app started, of what the audio did:
+  - the effect files and players being got ready, loaded and warmed;
+  - every sound played (a free voice, or one cut short), and merged repeats;
+  - the music's file and player, and its play and pause calls;
+  - every change in the music player's own report (playing or stopped, buffering, media reset);
+  - the phone being locked or unlocked;
+  - when the intro's shot started.
+  It's there to match the stutters still heard on the iPhone at start-up (0.66.2 made no difference) to what happened at that moment.
+
 ## 0.66.2
 
 - Phones: the intro's sounds no longer stutter. The iPhone's audio stalls for a moment whenever a player is set up or first played,

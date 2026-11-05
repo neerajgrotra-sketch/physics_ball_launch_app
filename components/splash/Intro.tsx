@@ -1,3 +1,4 @@
+import { alog } from '../feedback/audioLog';
 import { whenAudioReady } from '../feedback/audioReady';
 import { useEffect, useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -62,6 +63,7 @@ export function Intro({ onDone, onShown, onLeaving }: { onDone: () => void; onSh
     let live = true, timer: ReturnType<typeof setTimeout> | undefined;
     whenAudioReady(AUDIO_WAIT_MS).then(() => {
       if (!live || t.value >= INTRO_MS) return; // tapped through meanwhile
+      alog('intro: shot starts');
       t.value = withTiming(INTRO_MS, { duration: reduced ? 900 : INTRO_MS, easing: Easing.linear });
       timer = setTimeout(() => setReady(true), reduced ? 900 : INTRO_MS);
       if (!reduced) {

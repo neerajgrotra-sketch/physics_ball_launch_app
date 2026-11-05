@@ -1,3 +1,4 @@
+import { alog } from './audioLog';
 import { Platform } from 'react-native';
 
 // Phones: the iPhone's audio stalls for a moment whenever a player is set up, so everything is set up before anything is heard. At
@@ -10,7 +11,9 @@ const listeners = new Set<() => void>();
 
 /** One part of the app's audio is set up ('effects' or 'music'). */
 export function audioPartReady(part: 'effects' | 'music') {
-  if (!waiting.delete(part) || waiting.size) return;
+  if (!waiting.delete(part)) return;
+  alog(`ready: ${part}`);
+  if (waiting.size) return;
   listeners.forEach((f) => f());
   listeners.clear();
 }
@@ -19,7 +22,7 @@ export function audioPartReady(part: 'effects' | 'music') {
 export function whenAudioReady(capMs: number): Promise<void> {
   if (Platform.OS === 'web' || !waiting.size) return Promise.resolve();
   return new Promise((done) => {
-    const timer = setTimeout(() => { listeners.delete(f); done(); }, capMs);
+    const timer = setTimeout(() => { listeners.delete(f); alog(`gave up waiting for ${[...waiting].join(', ')}`); done(); }, capMs);
     const f = () => { clearTimeout(timer); done(); };
     listeners.add(f);
   });

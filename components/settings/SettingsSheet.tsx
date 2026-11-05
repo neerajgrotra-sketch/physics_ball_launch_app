@@ -1,3 +1,4 @@
+import { AudioLog } from './AudioLog';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Slider from '@react-native-community/slider';
 import { useEffect, useState } from 'react';
@@ -191,6 +192,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
             >
               <Text style={[styles.outlineText, { color: c.red }]}>{confirmReset ? 'Tap again to wipe all progress' : 'Reset progress (start fresh)'}</Text>
             </Pressable>
+            <AudioLog />
 
             <Pressable onPress={onClose} accessibilityRole="button" style={[styles.done, { backgroundColor: c.pencil }]}>
               <Text style={styles.doneText}>Done</Text>

@@ -1,5 +1,7 @@
+import { alog } from './audioLog';
 import { useAudioPlayer } from 'expo-audio';
 import { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import { localSound, setAudioModeOnce, sourceOf } from './localAudio';
 import { warmSounds } from './useFeedback';
 import { audioPartReady, whenLoaded } from './audioReady';
@@ -24,14 +26,19 @@ export function MusicHost() {
   const [track, setTrack] = useState<string | number | null>(null);
   const [loop, setLoop] = useState<number | null>(null);
   useEffect(() => {
+    alog('app started');
     setAudioModeOnce();
     warmSounds().catch(() => {});
+    // Locking and unlocking the phone, in the log (the music used to stall just after).
+    const sub = AppState.addEventListener('change', (st) => alog(`app: ${st}`));
+    return () => sub.remove();
   }, []);
   useEffect(() => {
     if (!turnReady) return;
     let live = true;
     const t = trackFor('', asmr);
-    localSound(t.src).then((f) => { if (live) { setLoop(t.loop); setTrack(f); } });
+    alog('music: getting track file');
+    localSound(t.src).then((f) => { alog(`music: track file ready (${typeof f === 'string' ? 'local' : 'bundled'})`); if (live) { setLoop(t.loop); setTrack(f); } });
     return () => { live = false; };
   }, [asmr, turnReady, pick]);
   return track == null ? null : <MusicPlayer key={String(track)} source={sourceOf(track)} loop={loop} />;
@@ -54,8 +61,8 @@ function useDemand(p: { playing: boolean; volume: number; play(): void; pause():
       const { wanted, ducked } = musicDemand();
       try {
         p.volume = musicVolume(ducked);
-        if (wanted && !p.playing) p.play();
-        if (!wanted && p.playing) p.pause();
+        if (wanted && !p.playing) { alog('music: play'); p.play(); }
+        if (!wanted && p.playing) { alog('music: pause'); p.pause(); }
       } catch {
         // Music is a nicety: never let it break the game.
       }
@@ -72,7 +79,17 @@ function LoopedMusic({ source }: { source: number | { uri: string } }) {
   const player = useAudioPlayer(source, { keepAudioSessionActive: true });
   useEffect(() => { try { player.loop = true; } catch { /* not loaded yet */ } }, [player]);
   // The intro's shot waits for this (audioReady.ts): the music player is set up before any sound is heard.
-  useEffect(() => { whenLoaded([player], 4000).then(() => audioPartReady('music')); }, [player]);
+  useEffect(() => {
+    alog('music: player made');
+    whenLoaded([player], 4000).then(() => { alog(`music: ${player.isLoaded ? 'loaded' : 'not loaded after 4 s'}`); audioPartReady('music'); });
+    // The music's own reports, when they change: buffering or stopping mid-track is a stall.
+    let last = '';
+    const sub = player.addListener('playbackStatusUpdate', (st) => {
+      const now = `${st.isLoaded ? 'loaded' : 'not loaded'}, ${st.playing ? 'playing' : 'stopped'}${st.isBuffering ? ', BUFFERING' : ''}${st.mediaServicesDidReset ? ', MEDIA RESET' : ''}`;
+      if (now !== last) { last = now; alog(`music: ${now} at ${st.currentTime.toFixed(1)} s`); }
+    });
+    return () => sub.remove();
+  }, [player]);
   useDemand(player);
   return null;
 }
