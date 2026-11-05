@@ -4,6 +4,16 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.66.4
+
+- The audio log covers the music everywhere:
+  - which screen asks for it and lets it go (`levels`, or the level's id), and when no screen wants it;
+  - the dip during each shot and the return after it;
+  - every volume change;
+  - the track and its file;
+  - the player being made and released.
+  It keeps the last 600 lines and has a "Clear log" button to start a fresh test.
+
 ## 0.66.3
 
 - Settings, Testing: "Show audio log" (`components/feedback/audioLog.ts`, `components/settings/AudioLog.tsx`). A timeline, in seconds

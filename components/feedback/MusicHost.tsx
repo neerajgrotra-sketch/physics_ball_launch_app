@@ -37,7 +37,7 @@ export function MusicHost() {
     if (!turnReady) return;
     let live = true;
     const t = trackFor('', asmr);
-    alog('music: getting track file');
+    alog(`music: track ${t.id}, getting file`);
     localSound(t.src).then((f) => { alog(`music: track file ready (${typeof f === 'string' ? 'local' : 'bundled'})`); if (live) { setLoop(t.loop); setTrack(f); } });
     return () => { live = false; };
   }, [asmr, turnReady, pick]);
@@ -60,7 +60,9 @@ function useDemand(p: { playing: boolean; volume: number; play(): void; pause():
     const apply = () => {
       const { wanted, ducked } = musicDemand();
       try {
-        p.volume = musicVolume(ducked);
+        const v = musicVolume(ducked);
+        if (Math.abs(v - p.volume) > 0.001) alog(`music: volume ${v.toFixed(2)}`);
+        p.volume = v;
         if (wanted && !p.playing) { alog('music: play'); p.play(); }
         if (!wanted && p.playing) { alog('music: pause'); p.pause(); }
       } catch {
@@ -88,7 +90,7 @@ function LoopedMusic({ source }: { source: number | { uri: string } }) {
       const now = `${st.isLoaded ? 'loaded' : 'not loaded'}, ${st.playing ? 'playing' : 'stopped'}${st.isBuffering ? ', BUFFERING' : ''}${st.mediaServicesDidReset ? ', MEDIA RESET' : ''}`;
       if (now !== last) { last = now; alog(`music: ${now} at ${st.currentTime.toFixed(1)} s`); }
     });
-    return () => sub.remove();
+    return () => { alog('music: player released'); sub.remove(); };
   }, [player]);
   useDemand(player);
   return null;

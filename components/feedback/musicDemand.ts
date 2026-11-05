@@ -1,3 +1,4 @@
+import { alog } from './audioLog';
 // Which screens want the music right now, shared by the level screens (useLevelMusic) and the one player that plays it (MusicHost).
 // Level screens hold it while open with music on; the music stops only once nobody has held it for a moment, so moving to the next
 // level carries it on without a gap. Kept on globalThis so a development reload of this file keeps the same count.
@@ -10,7 +11,7 @@ const d: Demand = ((globalThis as { __bankShotMusicDemand?: Demand }).__bankShot
 });
 
 const notify = () => d.listeners.forEach((f) => f());
-const setWanted = (on: boolean) => { if (d.wanted !== on) { d.wanted = on; notify(); } };
+const setWanted = (on: boolean) => { if (d.wanted !== on) { d.wanted = on; alog(on ? 'music: wanted' : 'music: no screen wants it'); notify(); } };
 
 /** A screen starts wanting music. Returns its release, which stops the music after the grace if nobody else wants it. */
 export function holdMusic(): () => void {

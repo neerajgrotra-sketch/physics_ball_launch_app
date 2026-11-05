@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 // to what happened at that moment: players being set up or warmed, sounds played, the music player buffering or stopping. Times
 // are seconds since the app started. Kept in memory only, the last MAX entries.
 
-const MAX = 120;
+const MAX = 600;
 const t0 = Date.now();
 const entries: string[] = [];
 const listeners = new Set<() => void>();
@@ -15,6 +15,12 @@ export function alog(what: string) {
   entries.push(`${sinceStart()}  ${what}`);
   if (entries.length > MAX) entries.shift();
   listeners.forEach((f) => f());
+}
+
+/** Empties the log (Settings), to start a fresh test. */
+export function clearAudioLog() {
+  entries.length = 0;
+  alog('log cleared');
 }
 
 /** The log so far, re-rendering as it grows. */
