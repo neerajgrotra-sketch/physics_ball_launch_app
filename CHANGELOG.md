@@ -4,6 +4,17 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.66.0
+
+- ASMR mode's win now depends on the stars, so the full light show is a reward (game/bloom.ts `BLOOM_TIERS`, `bloomFor`):
+  - Three stars: the full light bloom, with the column of white light and the glass breathing out a white glow (4.6 s).
+  - Two stars, the glow: the path lit, the glass filled, one mandala, ripples and fireflies, ending in a soft coloured halo with no
+    white light (3.4 s).
+  - One star, or a helped win, the ember: the path lit, the glass half filled and two ripples (2.6 s).
+  - Each tier has its own landing sound: `bloom.wav` (unchanged), plus the new `bloom2.wav` (a shorter harp run and chord) and
+    `bloom1.wav` (a few notes and a soft fifth). That makes 30 effect players.
+  - The win card follows each tier's own length.
+
 ## 0.65.1
 
 - Show touches draws an actual finger: the tutorial's pointing hand (👆, Apple's own on an iPhone), with its fingertip on the touch

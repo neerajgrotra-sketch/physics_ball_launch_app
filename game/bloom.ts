@@ -60,8 +60,37 @@ export function fireflyAt(f: Firefly, cx: number, cy: number, p: number): [numbe
   return [cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.8];
 }
 
-/** How big the bloom is for a win: a better result gets more rings and fireflies; a helped win a small one. */
-export function bloomFor(stars: number, assisted: boolean): { rings: number; flies: number } {
-  if (assisted) return { rings: 3, flies: 10 };
-  return stars >= 3 ? { rings: 7, flies: 28 } : stars === 2 ? { rings: 5, flies: 20 } : { rings: 4, flies: 14 };
+/**
+ * A win's bloom, by how good it was, so the full show stays a reward:
+ * - 3 stars, the light bloom: everything, ending in the column of white light and the glass breathing out a white glow.
+ * - 2 stars, the glow: the path, the glass filled, one mandala, ripples and fireflies, ending in a soft coloured halo. No white light.
+ * - 1 star (or a helped win), the ember: the path and the glass half filled, a couple of ripples. Short and quiet.
+ * `ms` is how long it runs (the win card waits for it); its parts keep BLOOM_PHASES' shares of it. `sound` is its landing sound.
+ */
+export interface BloomTier {
+  tier: 1 | 2 | 3;
+  ms: number;
+  rings: number;
+  flies: number;
+  /** How many spirograph mandalas draw themselves. */
+  mandalas: 0 | 1 | 2;
+  /** How full the glass of light gets (share of its height). */
+  fill: number;
+  /** The column of light over the glass. */
+  beam: boolean;
+  /** The last glow out of the glass: white (3 stars), soft and coloured (2), or none. */
+  halo: 'white' | 'soft' | null;
+  sound: 'bloom' | 'bloom2' | 'bloom1';
+}
+
+export const BLOOM_TIERS: Record<1 | 2 | 3, BloomTier> = {
+  3: { tier: 3, ms: BLOOM_MS, rings: 7, flies: 28, mandalas: 2, fill: 1, beam: true, halo: 'white', sound: 'bloom' },
+  2: { tier: 2, ms: 3400, rings: 4, flies: 14, mandalas: 1, fill: 1, beam: false, halo: 'soft', sound: 'bloom2' },
+  1: { tier: 1, ms: 2600, rings: 2, flies: 0, mandalas: 0, fill: 0.5, beam: false, halo: null, sound: 'bloom1' },
+};
+
+/** The bloom a win earns: three stars the full light bloom, two the glow, one star or a helped win the ember. */
+export function bloomFor(stars: number, assisted: boolean): BloomTier {
+  if (assisted) return BLOOM_TIERS[1];
+  return BLOOM_TIERS[stars >= 3 ? 3 : stars === 2 ? 2 : 1];
 }

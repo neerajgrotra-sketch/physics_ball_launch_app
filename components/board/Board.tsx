@@ -27,7 +27,7 @@ import { BLOCK_HIT } from '../../game/asmr';
 import { blastPuffs, blastSparks, muzzle, recoilAt, type Puff as SmokeCloud, type Spark as BlastSpark } from '../../game/muzzle';
 import { SHARD_GRAVITY, SHATTER_MS, SLOW, SHATTER_TIME, shatterPieces, type Ember, type Puff, type Shard } from '../../game/shatter';
 import { FUSE_SHARE, confettiPieces, fuseGeometry } from '../../game/celebration';
-import { BLOOM_PHASES, fireflies, fireflyAt, phase, spirograph, type Firefly } from '../../game/bloom';
+import { BLOOM_PHASES, fireflies, fireflyAt, phase, spirograph, type BloomTier, type Firefly } from '../../game/bloom';
 
 const { width: W, height: H, ground: GROUND } = WORLD;
 const R = BALL_RADIUS;
@@ -68,7 +68,7 @@ export interface BoardProps {
   /** While a bar is being dragged: a strip under the floor to drop it on, and whether the finger is on it ('armed'). */
   dropZone?: 'off' | 'hint' | 'armed';
   /** The win celebration (game/celebration): `t` runs 0 → 1; the winning path to light, and how many confetti pieces to throw. */
-  celebrate?: { t: SharedValue<number>; path: Vec[]; jumps: number[]; confetti: number; rings: number; bloom?: { rings: number; flies: number } } | null;
+  celebrate?: { t: SharedValue<number>; path: Vec[]; jumps: number[]; confetti: number; rings: number; bloom?: BloomTier } | null;
   /** The latest pad kick: `t` runs 0 → 1 for the burst ring and the pad's flash, at (x, y). */
   kick?: { t: SharedValue<number>; x: SharedValue<number>; y: SharedValue<number> };
   /** ASMR mode: the latest bounce, for a soft ring of light where it happened (`t` runs 0 → 1). */
@@ -594,9 +594,10 @@ function loopPath(pts: Vec[], ox = 0, oy = 0): SkPath {
 /**
  * ASMR mode's win, "light bloom" (game/bloom.ts): a pulse of light runs the winning path, the glass fills with liquid light, two
  * spirograph mandalas draw themselves round it turning opposite ways, rings ripple out across the board, a column of light rises,
- * fireflies spiral in and are drawn into the glass, and the glass breathes out one last glow. `t` runs 0 → 1 over BLOOM_MS.
+ * fireflies spiral in and are drawn into the glass, and the glass breathes out one last glow. `t` runs 0 → 1 over the tier's `ms`.
+ * Only a three-star win gets all of it (the column and the white glow); two stars and one get less (game/bloom.ts BloomTier).
  */
-function Bloom({ cele, bloom, glass, c }: { cele: NonNullable<BoardProps['celebrate']>; bloom: { rings: number; flies: number }; glass: { l: number; r: number; rim: number; base: number }; c: Palette }) {
+function Bloom({ cele, bloom, glass, c }: { cele: NonNullable<BoardProps['celebrate']>; bloom: BloomTier; glass: { l: number; r: number; rim: number; base: number }; c: Palette }) {
   const { t, path, jumps } = cele;
   const cx = (glass.l + glass.r) / 2, cy = (glass.rim + glass.base) / 2, gw = glass.r - glass.l, gh = glass.base - glass.rim;
   // The mandalas and fireflies centre a little above the glass, kept on the board (a glass on the floor cut half of them off).
@@ -618,7 +619,7 @@ function Bloom({ cele, bloom, glass, c }: { cele: NonNullable<BoardProps['celebr
   const lineO = useDerivedValue(() => 0.9 * (1 - phase(t.value, [0.55, 0.95])));
   // The fill: liquid light rising in the glass, its surface rippling.
   const fill = useDerivedValue(() => phase(t.value, BLOOM_PHASES.fill));
-  const fillY = useDerivedValue(() => glass.base - gh * (1 - (1 - fill.value) ** 2));
+  const fillY = useDerivedValue(() => glass.base - gh * bloom.fill * (1 - (1 - fill.value) ** 2));
   const fillH = useDerivedValue(() => glass.base - fillY.value);
   const fillO = useDerivedValue(() => (fill.value > 0 ? 0.55 * (1 - 0.6 * phase(t.value, [0.9, 1])) : 0));
   const wave = useMemo(() => {
@@ -646,22 +647,23 @@ function Bloom({ cele, bloom, glass, c }: { cele: NonNullable<BoardProps['celebr
   const coreX = useDerivedValue(() => cx - coreW.value / 2);
   // The breath: one last soft glow out of the glass.
   const breath = useDerivedValue(() => phase(t.value, BLOOM_PHASES.breath));
-  const breathO = useDerivedValue(() => 0.7 * Math.sin(Math.PI * breath.value));
-  const breathR = useDerivedValue(() => 12 + 40 * breath.value);
+  const white = bloom.halo === 'white';
+  const breathO = useDerivedValue(() => (white ? 0.7 : 0.45) * Math.sin(Math.PI * breath.value));
+  const breathR = useDerivedValue(() => 12 + (white ? 40 : 26) * breath.value);
   const flies = useMemo(() => fireflies(bloom.flies), [bloom.flies]);
   return (
     <Group>
-      <Rect x={beamX} y={0} width={beamW} height={glass.rim} color={c.pencil} opacity={beamO}><BlurMask blur={14} style="normal" /></Rect>
-      <Rect x={coreX} y={0} width={coreW} height={glass.rim} color="#ffffff" opacity={beamO}><BlurMask blur={5} style="normal" /></Rect>
+      {bloom.beam && <Rect x={beamX} y={0} width={beamW} height={glass.rim} color={c.pencil} opacity={beamO}><BlurMask blur={14} style="normal" /></Rect>}
+      {bloom.beam && <Rect x={coreX} y={0} width={coreW} height={glass.rim} color="#ffffff" opacity={beamO}><BlurMask blur={5} style="normal" /></Rect>}
       {Array.from({ length: bloom.rings }, (_, i) => <Ripple key={`rp${i}`} t={t} x={cx} y={cy} i={i} color={hues[i % hues.length]} />)}
-      <Group transform={spinA} opacity={mandO}>
+      {bloom.mandalas >= 1 && <Group transform={spinA} opacity={mandO}>
         <Path path={spiroA} end={draw} color={c.pencil} style="stroke" strokeWidth={4} opacity={0.5}><BlurMask blur={4} style="normal" /></Path>
         <Path path={spiroA} end={draw} color={c.pencil} style="stroke" strokeWidth={1.2} />
-      </Group>
-      <Group transform={spinB} opacity={mandO}>
+      </Group>}
+      {bloom.mandalas >= 2 && <Group transform={spinB} opacity={mandO}>
         <Path path={spiroB} end={draw} color={c.red} style="stroke" strokeWidth={4} opacity={0.5}><BlurMask blur={4} style="normal" /></Path>
         <Path path={spiroB} end={draw} color={c.red} style="stroke" strokeWidth={1.2} />
-      </Group>
+      </Group>}
       <Path path={line} end={echo} color={c.pencil} style="stroke" strokeWidth={7} strokeCap="round" strokeJoin="round" opacity={useDerivedValue(() => lineO.value * 0.4)}>
         <BlurMask blur={5} style="normal" />
       </Path>
@@ -673,7 +675,7 @@ function Bloom({ cele, bloom, glass, c }: { cele: NonNullable<BoardProps['celebr
         <Path path={wave} color="#ffffff" style="stroke" strokeWidth={1.6} strokeCap="round"><BlurMask blur={1.5} style="normal" /></Path>
       </Group>
       {flies.map((f, k) => <FireflyDot key={`ff${k}`} t={t} x={cx} y={my} f={f} color={hues[f.hue]} />)}
-      <Circle cx={cx} cy={cy} r={breathR} color="#ffffff" opacity={breathO}><BlurMask blur={12} style="normal" /></Circle>
+      {bloom.halo && <Circle cx={cx} cy={cy} r={breathR} color={white ? '#ffffff' : c.pencil} opacity={breathO}><BlurMask blur={white ? 12 : 9} style="normal" /></Circle>}
     </Group>
   );
 }

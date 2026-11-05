@@ -286,7 +286,10 @@ whatever theme is picked (the picked one comes back when it's off), and the boar
 bars, ball and newest trail, a `CometTail` on the flight and a `BounceFlash` ring at each hit (`LevelGame`'s `flash`). Sound:
 `feedbackPrefs.asmr` swaps each bounce for `chime.wav` stepped along `asmrStep` (major pentatonic, up then down) and the landing
 for `bloom.wav`. Its win is the light bloom (`game/bloom.ts` `BLOOM_MS`, phases in `BLOOM_PHASES`, `Board`'s `Bloom`: the light
-runs the path, the glass fills, spirograph mandalas, ripples, a light column, fireflies spiralling in); the win card waits for it: the
+runs the path, the glass fills, spirograph mandalas, ripples, a light column, fireflies spiralling in). The full bloom is the three-star reward:
+`bloomFor` picks a tier (`BLOOM_TIERS`), each with its own length (`ms`) and landing sound (`sound`: `bloom`, `bloom2`, `bloom1`). Two stars get the
+glow, with one mandala, fewer ripples and fireflies, and a soft coloured halo but no light column or white glow. One star, or a helped win, gets the
+ember: the path, the glass half filled and two ripples. Keep the white light for three stars. The win card waits for it: the
 celebration's clock starts once it's mounted (`celePending`, an effect on `cele`) and the card follows the clock's finish (`celeDone`, a longer
 pause after the bloom), never a separate timer (on phones the bloom appeared late and the card cut its last glow).
 Blocks are violet neon glass in ASMR mode (`NEON_BLOCK`), and the bar or block a bounce strikes flares up (`hitTarget`, the flash's
@@ -331,7 +334,7 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
   (`playlist.native.ts`): the exact loop repeated sample for sample to about ten minutes (`LONG_SECONDS`) in one AAC file, made by
   `scripts/make-playlist.mjs` with ffmpeg from the loop WAV. One player, one file; it only loops at the end. Don't go back to looping
   the short file or queueing copies on phones. Keep the effect players few (`POOL_SIZE` in `useFeedback.ts`: one per sound, more only for
-  the sounds that come in runs, 28 in all; each is warmed (played silently once, a voice at a time, at app start: an iPhone player is
+  the sounds that come in runs, 30 in all; each is warmed (played silently once, a voice at a time, at app start: an iPhone player is
   slow to start the first time), the same sound twice within `MERGE_MS` (45) plays once, and each voice is rewound and freed on a timer of its sound's length, never by waiting for iOS's
   "finished" report, which comes only every ~0.5 s and made bounce sounds late or missing in 0.62.5–0.64.1): each loaded iPhone player holds an audio pipeline, and with 43 the music stalled whenever iOS
   reset them (volume buttons, unlocking, just after they loaded). With Sound effects off there are none (`setEffectsOn`, told through

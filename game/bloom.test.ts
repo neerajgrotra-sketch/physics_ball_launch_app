@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BLOOM_PHASES, bloomFor, fireflies, fireflyAt, phase, spirograph } from './bloom';
+import { BLOOM_MS, BLOOM_PHASES, BLOOM_TIERS, bloomFor, fireflies, fireflyAt, phase, spirograph } from './bloom';
 
 describe('ASMR win bloom', () => {
   it('draws a closed spirograph that reaches its size', () => {
@@ -26,8 +26,20 @@ describe('ASMR win bloom', () => {
     }
   });
 
-  it('grows with the result', () => {
-    expect(bloomFor(3, false).flies).toBeGreaterThan(bloomFor(1, false).flies);
-    expect(bloomFor(3, true).rings).toBeLessThan(bloomFor(1, false).rings);
+  it('keeps the full light bloom for three stars', () => {
+    const [one, two, three] = [bloomFor(1, false), bloomFor(2, false), bloomFor(3, false)];
+    expect(three).toMatchObject({ beam: true, halo: 'white', mandalas: 2, ms: BLOOM_MS, sound: 'bloom' });
+    // Only three stars gets the white light.
+    expect([one.halo, two.halo]).not.toContain('white');
+    expect(one.beam || two.beam).toBe(false);
+    // Each step down is smaller and shorter.
+    for (const k of ['ms', 'rings', 'flies', 'mandalas'] as const) {
+      expect(three[k]).toBeGreaterThan(two[k]);
+      expect(two[k]).toBeGreaterThan(one[k]);
+    }
+    expect(one.fill).toBeLessThan(two.fill);
+    // A helped win, or no stars, gets the smallest.
+    expect(bloomFor(3, true)).toBe(BLOOM_TIERS[1]);
+    expect(bloomFor(0, false)).toBe(BLOOM_TIERS[1]);
   });
 });

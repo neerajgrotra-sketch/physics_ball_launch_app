@@ -25,6 +25,8 @@ const SOUNDS = {
   chime: require('../../assets/sounds/chime.wav'),
   shatter: require('../../assets/sounds/shatter.wav'),
   bloom: require('../../assets/sounds/bloom.wav'),
+  bloom2: require('../../assets/sounds/bloom2.wav'),
+  bloom1: require('../../assets/sounds/bloom1.wav'),
   stamp: require('../../assets/sounds/stamp.wav'),
 };
 
@@ -137,7 +139,7 @@ class Pool {
  * As few as possible: every loaded player holds its own audio pipeline on the iPhone, and with 43 of them the music stalled for a
  * moment whenever iOS reset them all (a press of the volume buttons, unlocking the phone, and just after they loaded, 2 to 3 s into a
  * level). One per sound, and two or three only for the sounds that come in quick runs (bounces off bars and walls, glass rattles, the ASMR
- * chimes, which ring for 1.4 s, the fuse's ticks): 28 in all. None
+ * chimes, which ring for 1.4 s, the fuse's ticks): 30 in all. None
  * at all while Sound effects is off: they're released, and made again when it's turned back on (setEffectsOn).
  */
 let pools: Record<SoundName, Pool> | null = null;
@@ -205,9 +207,10 @@ export function useFeedback() {
       else if (h.kind === 'wall' || h.kind === 'block') play('wall', strength * (h.kind === 'block' ? 0.8 : 0.6));
       else play('bounce', Math.max(0.6, strength), pitch(barHits.current++));
     },
-    landed() {
+    /** The ball is in: in ASMR mode the bloom's sound for the win (game/bloom.ts: the full run for three stars, shorter for fewer). */
+    landed(bloom: 'bloom' | 'bloom2' | 'bloom1' = 'bloom') {
       buzz(Haptics.notificationAsync, Haptics.NotificationFeedbackType.Success);
-      if (feedbackPrefs.asmr) play('bloom', 0.95); // the light bloom's harp run and chord
+      if (feedbackPrefs.asmr) play(bloom, 0.95); // the light bloom's harp run and chord
       else play('land', 1);
     },
     star(k: number) {

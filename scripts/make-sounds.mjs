@@ -295,6 +295,18 @@ const sounds = {
     sparkles(5.6, 18, 1.6, 4.4, 777),
     partials(5.6, [[1046.5, 0.35, 1.2], [1568, 0.2, 0.9], [2093, 0.12, 0.7]], { attack: 0.01, start: 4.05 }),
   ),
+  // The 2-star bloom (game/bloom.ts, shorter, no light column): a shorter harp run and a warm C-E-G chord, a few sparkles.
+  bloom2: mix(
+    glissando(4.2, [261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25, 783.99], 0.1),
+    scale(pad(4.2, [[261.63, 0.45], [329.63, 0.35], [392, 0.3]], { start: 0.9, attack: 0.8, release: 1.8 }), 0.6),
+    scale(pad(4.2, [[130.81, 0.4]], { start: 0.9, attack: 1.0, release: 2.0, tremolo: 0.8 }), 0.5),
+    sparkles(4.2, 8, 1.3, 3.0, 555),
+  ),
+  // The 1-star glow: a few harp notes up the same scale and a soft open fifth (C and G) that fades.
+  bloom1: mix(
+    glissando(3.2, [261.63, 329.63, 392, 523.25, 659.25], 0.12),
+    scale(pad(3.2, [[261.63, 0.4], [392, 0.25]], { start: 0.6, attack: 0.6, release: 1.6 }), 0.5),
+  ),
   // A rubber stamp thumped onto the daily card (components/daily/StampRow.tsx): a soft slap of paper and a firm, low thump.
   stamp: mix(
     scale(crack(0.05, 0.006), 0.35),
