@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.65.0
+
+- **Show touches** (Settings, off by default): a soft fingertip appears wherever you touch, follows your finger as you drag and fades
+  when you lift, so screen recordings show what was done (iPhone recordings show no touches): for the tutorial, investors and testers.
+  It covers buttons, sliders, the level list and the board. On phones the board draws it itself, since its drags are handled
+  separately. Touches inside the pop-up sheets (Settings, the shop) aren't shown on phones.
+
 ## 0.64.3
 
 - Crisper bounce sounds in long runs on phones.

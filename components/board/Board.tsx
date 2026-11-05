@@ -20,6 +20,7 @@ import { GunArt } from './GunArt';
 import { spinAlong, type BallSkin } from '../../game/skins';
 import { useBallSkin } from '../settings/BallSkin';
 import { useAsmr } from '../settings/Theme';
+import { TouchSpot, setBoardTouching, useShowTouches, useSpot } from '../settings/ShowTouches';
 import { leverLine, moveArms, trashObstacles, trashSpot, type End } from '../../game/pieces';
 import { aimPreview } from '../../game/aim';
 import { BLOCK_HIT } from '../../game/asmr';
@@ -181,7 +182,16 @@ export function Board(props: BoardProps) {
   const lastTouch = useRef({ x: 0, y: 0 });
   const touch = useRef({ onTouch, scale });
   touch.current = { onTouch, scale };
+  // "Show touches" (Settings): on phones the gesture handler takes the board's drags from the app-wide fingertip, so the board shows
+  // the same fingertip itself, in its own view's coordinates (the web's page-wide one covers the board already).
+  const showTouches = useShowTouches() && Platform.OS !== 'web';
+  const spot = useSpot();
   const send = (phase: TouchPhase, x?: number, y?: number) => {
+    if (showTouches) {
+      if (phase === 'down' && x != null && y != null) { setBoardTouching(true); spot.down(x, y); }
+      else if (phase === 'move' && x != null && y != null) spot.move(x, y);
+      else if (phase === 'up') { spot.up(); setTimeout(() => setBoardTouching(false), 280); }
+    }
     const { onTouch: handler, scale: s } = touch.current;
     if (x != null && y != null) lastTouch.current = { x: x / s, y: y / s };
     handler?.(phase, lastTouch.current);
@@ -498,6 +508,7 @@ export function Board(props: BoardProps) {
                 )}
               </Group>
             </Canvas>
+            {showTouches && <TouchSpot x={spot.x} y={spot.y} shown={spot.shown} />}
           </View>
         </GestureDetector>
       )}

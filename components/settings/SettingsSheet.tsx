@@ -14,6 +14,7 @@ import { GunPicker } from './GunPicker';
 import { ThemePicker } from './ThemePicker';
 import { TRAIL_CHOICES } from '../../game/trails';
 import { useAsmr } from './Theme';
+import { setShowTouches, useShowTouches } from './ShowTouches';
 import { useBallSkin } from './BallSkin';
 import { useDaily } from '../daily/DailyProvider';
 import { useHintWallet } from '../hints/HintWallet';
@@ -28,6 +29,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
   const c = useColors();
   const { musicOn, toggleMusic, effectsOn, toggleEffects, hapticsOn, toggleHaptics } = useSoundSettings();
   const { tipsOn, setTipsOn, restartTutorial, restartTour } = useTips();
+  const showTouches = useShowTouches();
   const { bounceMarks, setBounceMarks, trailCount, setTrailCount } = useBallSkin();
   const [asmr, setAsmr] = useAsmr();
   const { unlockAll, setUnlockAll, resetProgress } = useProgress();
@@ -116,6 +118,16 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
                   );
                 })}
               </View>
+            </View>
+            <View style={[styles.row, { borderColor: c.line }]}>
+              <View style={styles.labelBox}>
+                <Text style={[styles.label, { color: c.ink }]}>Show touches</Text>
+                <Text style={[styles.note, { color: c.muted }]}>A fingertip follows your finger, so screen recordings show what you did</Text>
+              </View>
+              <Switch
+                value={showTouches} onValueChange={setShowTouches}
+                trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="Show touches"
+              />
             </View>
             <View style={[styles.row, { borderColor: c.line }]}>
               <Text style={[styles.label, { color: c.ink }]}>Tips (ghost finger)</Text>

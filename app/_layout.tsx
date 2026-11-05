@@ -21,6 +21,7 @@ import { ProgressProvider } from '../components/progress/ProgressProvider';
 import { Intro } from '../components/splash/Intro';
 import { IntroDone } from '../components/splash/introState';
 import { TourGate } from '../components/tour/TourGate';
+import { TouchesOverlay } from '../components/settings/ShowTouches';
 import { FONTS, useTheme } from '../theme/colors';
 import { ThemeProvider } from '../components/settings/Theme';
 
@@ -55,6 +56,7 @@ function AppRoot() {
 
   return (
     <GestureHandlerRootView style={[styles.root, { backgroundColor: c.panel }]}>
+      <TouchesOverlay>
       <BallSkinProvider>
       {/* On wide screens (web, iPad) the game keeps the prototype's 560px column. */}
       <View style={styles.column}>
@@ -93,6 +95,7 @@ function AppRoot() {
       </View>
       {intro && <Intro onDone={() => setIntro(false)} onLeaving={() => setLeaving(true)} onShown={() => SplashScreen.hideAsync().catch(() => {})} />}
       </BallSkinProvider>
+      </TouchesOverlay>
     </GestureHandlerRootView>
   );
 }
