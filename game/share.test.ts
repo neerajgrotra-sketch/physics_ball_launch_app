@@ -17,7 +17,7 @@ describe('share message', () => {
   it('brags more for better shots, and owns up to help', () => {
     expect(shareMessage(level, { bounces: 1, stars: 3, tries: 3, helped: false }, 3)).toMatch(/^🤯 EAGLE! 2 under par/);
     expect(shareMessage(level, { bounces: 2, stars: 3, tries: 1, helped: false }, 3)).toMatch(/^🐦 Birdie/);
-    expect(shareMessage(level, { bounces: 3, stars: 3, tries: 1, helped: false }, 3)).toMatch(/^🎯/);
+    expect(shareMessage(level, { bounces: 3, stars: 3, tries: 1, helped: false }, 3)).toMatch(/^⚡/);
     expect(shareMessage(level, { bounces: 9, stars: 1, tries: 2, helped: false }, 3)).toMatch(/^(🙈|🫣)/);
     expect(shareMessage(level, { bounces: 3, stars: 0, tries: 1, helped: true }, 3)).toMatch(/^💡/);
   });

@@ -26,7 +26,7 @@ function hook(r: ShareResult, par: number, seed: string): string {
   const under = par - r.bounces;
   if (under >= 2) return `🤯 ${golfName(r.bounces, par).toUpperCase()}! ${under} under par. I'm not even sorry.`;
   if (under === 1) return pick(['🐦 Birdie! One under par 😎', '🐦 Birdie! Better than the puzzle-maker 😎'], seed);
-  if (r.stars === 3 && r.tries === 1) return pick(['🎯 First try. No big deal 😎', '🎯 Nailed it on the FIRST try!'], seed);
+  if (r.stars === 3 && r.tries === 1) return pick(['⚡ First try. No big deal 😎', '⚡ Nailed it on the FIRST try!'], seed);
   if (r.stars === 3) return pick(['🔥 Wow, I did it!', '🔥 Three stars. A perfect clink!', '🔥 Called it. Off every bar and in!'], seed);
   if (r.stars === 2) return pick(['😅 Wow, I did it… eventually!', '🏀 In the glass! Not pretty, but in!'], seed);
   return pick(["🙈 It went in. Don't ask how.", '🫣 Ugly? Yes. In the glass? ALSO yes.'], seed);

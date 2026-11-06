@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.74.2
+
+- Reminder titles no longer open with a dartboard 🎯 (it didn't fit a bounce puzzle): they use 🧩, ✨ or 🔔 (the clink). The share
+  message's "First try" line uses ⚡ in place of 🎯.
+- In Expo Go a reminder shows Expo Go's name and icon (iOS shows whichever app sent it); Clink's own icon comes with our own build.
+
 ## 0.74.1
 
 - The share poster follows the play mode: in ASMR mode it's a neon poster, as the game was played (`composeShareCard`'s `neon`): a

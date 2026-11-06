@@ -66,7 +66,8 @@ const OPENERS: Record<DailyTier, string[]> = {
   4: ['A proper puzzle today', 'Think before you shoot', 'Not as easy as it looks'],
   5: ["The week's toughest", 'Sunday special: the hard one', 'Bring your best trick shot'],
 };
-const EMOJI = ['🧩', '🎯', '🔑'];
+// Emoji that fit a bounce puzzle (player feedback: a dartboard 🎯 didn't): a puzzle piece, a sparkle, a bell (the clink).
+const EMOJI = ['🧩', '✨', '🔔'];
 
 export function teaser(p: PuzzleInfo): { title: string; body: string } {
   const lines = OPENERS[p.tier];
