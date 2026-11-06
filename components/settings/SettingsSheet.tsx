@@ -32,8 +32,8 @@ import { useHintWallet } from '../hints/HintWallet';
 if (Platform.OS === 'android') UIManager.setLayoutAnimationEnabledExperimental?.(true);
 
 /**
- * The ⚙ sheet, in collapsible groups (`Group`, one open at a time, each with a summary line): Sound & music, Look (ASMR mode, board
- * theme), Ball Themes (BallPicker), Launcher Themes (GunPicker), each badge drawing the player's own pick, Play helpers, Reminders (phones), Hints, About you (game/profile.ts), and apart
+ * The ⚙ sheet, in collapsible groups (`Group`, one open at a time, each with a summary line): Sound & music, Play Mode (Sketchpad or ASMR, each with a switch, one always on; the board
+ * theme under Sketchpad), Ball Themes (BallPicker), Launcher Themes (GunPicker), each badge drawing the player's own pick, Play helpers, Reminders (phones), Hints, About you (game/profile.ts), and apart
  * below a divider, Testing (unlock all, show touches, reset, test notification, audio log).
  */
 export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, onShowTour }: {
@@ -111,19 +111,29 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
               )}
             </Group>
 
-            <Group id="look" icon="✨" title="Look" open={open} onToggle={toggle} summary={asmr ? 'ASMR mode on' : `${themeName} board`}>
-              <View style={styles.line}>
-                <View style={styles.labelBox}>
-                  <Text style={[styles.label, { color: c.ink }]}>ASMR mode ✨</Text>
-                  <Text style={[styles.note, { color: c.muted }]}>Neon glow, comet trails and a calm musical note on every bounce</Text>
+            {/* Play Mode: the game's two moods, each with its own switch, always exactly one on (turning one on turns the other off, and
+                turning the one that's on off switches to the other). The board theme belongs to Sketchpad: ASMR has its own neon look. */}
+            <Group id="mode" icon={asmr ? '✨' : '✏️'} title="Play Mode" open={open} onToggle={toggle}
+              summary={asmr ? 'ASMR ✨' : `Sketchpad · ${themeName} board`}>
+              <ModeRow
+                icon="✏️" name="Sketchpad" on={!asmr}
+                blurb="Graph paper and pencil, crisp metal bounces, the fuse-and-burst win and the upbeat music"
+                onChange={(on) => { onMusicTap?.(); setAsmr(!on); }}
+              />
+              {!asmr && (
+                <View style={[styles.nested, { borderColor: c.line }]}>
+                  <Text style={[styles.sub, { color: c.ink }]}>Board theme</Text>
+                  <ThemePicker bare />
                 </View>
-                <Switch
-                  value={asmr} onValueChange={(on) => { onMusicTap?.(); setAsmr(on); }}
-                  trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel="ASMR mode"
+              )}
+              <View style={[styles.divided, { borderColor: c.line }]}>
+                <ModeRow
+                  icon="✨" name="ASMR" on={asmr}
+                  blurb="Neon glow, comet trails, a calm chime on every bounce, the light bloom and ambient music"
+                  onChange={(on) => { onMusicTap?.(); setAsmr(on); }}
                 />
               </View>
-              <Text style={[styles.sub, { color: c.ink }]}>Board theme</Text>
-              <ThemePicker bare />
+              {asmr && <Text style={[styles.note, { color: c.muted }]}>ASMR has its own neon look, so the board themes are in Sketchpad.</Text>}
             </Group>
 
             <Group id="ball" icon={<BallIcon />} title="Ball Themes" open={open} onToggle={toggle} summary={skin.name}>
@@ -298,6 +308,23 @@ function Group({ id, icon, title, summary, open, onToggle, dashed, children }: {
         <Text style={[styles.chevron, { color: isOpen ? c.pencil : c.muted, transform: [{ rotate: isOpen ? '90deg' : '0deg' }] }]}>›</Text>
       </Pressable>
       {isOpen && <View style={[styles.groupBody, { borderColor: c.line }]}>{children}</View>}
+    </View>
+  );
+}
+
+/** One play mode in the Play Mode group: its badge, name and what it changes, and its switch (lit while it's the mode). */
+function ModeRow({ icon, name, blurb, on, onChange }: { icon: string; name: string; blurb: string; on: boolean; onChange: (on: boolean) => void }) {
+  const c = useColors();
+  return (
+    <View style={styles.line}>
+      <View style={[styles.modeBadge, { backgroundColor: on ? c.pencil : c.line }]}>
+        <Text style={styles.badgeText}>{icon}</Text>
+      </View>
+      <View style={styles.labelBox}>
+        <Text style={[styles.label, { color: c.ink }]}>{name}</Text>
+        <Text style={[styles.note, { color: c.muted }]}>{blurb}</Text>
+      </View>
+      <Switch value={on} onValueChange={onChange} trackColor={{ true: c.pencil, false: c.line }} accessibilityLabel={`${name} mode`} />
     </View>
   );
 }
@@ -500,6 +527,8 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   divided: { borderTopWidth: 1, paddingTop: 12 },
   sub: { fontSize: 17, fontFamily: FONTS.condensedBold },
+  nested: { borderLeftWidth: 2, paddingLeft: 8, marginLeft: 2, gap: 8 },
+  modeBadge: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   testDivider: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
   rule: { flex: 1, height: 1 },
   testLabel: { fontSize: 11, letterSpacing: 1.5, fontFamily: FONTS.bodySemi },

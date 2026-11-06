@@ -271,7 +271,8 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   their URLs are absolute, so change them with `SITE_URL` if the address changes. `SHARE_LINK` is `SITE_URL` (the public Vercel address) until a store link exists.
 - **Settings** (`components/settings/SettingsSheet.tsx`): collapsible groups (`Group`: icon, title, one-line summary of what's set; one
   open at a time, all closed each time the sheet opens; a group's insides are built only while it's open). The groups are Sound & music,
-  Look (ASMR, board theme), Ball Themes and Launcher Themes (their badges draw the player's own ball and launcher, `BallIcon`, `LauncherIcon`, from `gunShapes`), Play helpers, Reminders (phones), Hints and About you, then Testing apart below a "For
+  Play Mode (Sketchpad or ASMR, `ModeRow`: a switch each, exactly one on, so turning one on turns the other off and turning the
+  active one off switches to the other; the board theme picker nests under Sketchpad, since ASMR has its own neon look), Ball Themes and Launcher Themes (their badges draw the player's own ball and launcher, `BallIcon`, `LauncherIcon`, from `gunShapes`), Play helpers, Reminders (phones), Hints and About you, then Testing apart below a "For
   testing" divider. The pickers take `bare` (no heading of their own inside a group). Skia canvases in the sheet redraw a few times once
   laid out, on phones too: built with the sheet on iPhone, they came up blank (0.71.2).
 - **Sheets** (settings, shop, world info): the backdrop is a full-size `Pressable` *behind* the sheet, never a `Pressable` wrapped

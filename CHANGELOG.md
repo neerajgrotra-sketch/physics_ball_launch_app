@@ -4,6 +4,16 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.73.0
+
+- Settings' "Look" is now **Play Mode**: the game's two moods side by side, each with its own switch and a line on what it
+  changes. Exactly one is always on: turning one on turns the other off, and turning the active one off switches to the other.
+  - **✏️ Sketchpad:** graph paper and pencil, crisp metal bounces, the fuse-and-burst win, the upbeat music.
+  - **✨ ASMR:** neon glow, comet trails, calm chimes, the light bloom, ambient music.
+  - The board theme picker sits under Sketchpad, and only shows while Sketchpad is on (ASMR has its own neon look, so the picker
+    did nothing there). With ASMR on, a line says so.
+  - The card's summary reads "Sketchpad · Auto board" or "ASMR ✨", and its badge shows the mode's icon.
+
 ## 0.72.4
 
 - Wall and floor bounces sound on iPhone. The audio log showed every one playing, yet only a couple were heard. Two causes:
