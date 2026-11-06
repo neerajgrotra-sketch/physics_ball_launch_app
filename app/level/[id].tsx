@@ -53,7 +53,7 @@ import { useBallSkin } from '../../components/settings/BallSkin';
 import type { Shot } from '../../game/shots';
 import { LEVELS } from '../../levels';
 import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
-import { WORLD, buildWorld, glassBox, pieceEnds, simulate, type Hit, type Level, type Vec } from '../../physics';
+import { WORLD, buildWorld, glassBox, pieceEnds, simulate, type Hit, type Level, type SimResult, type Vec } from '../../physics';
 import type { DailyResult } from '../../game/daily';
 import { shareCard, shareMessage } from '../../game/share';
 import type { ShareCard } from '../../components/board/shareCard';
@@ -471,12 +471,18 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     charge.value = 1;
     charge.value = withTiming(0.55, { duration: 1400, easing: Easing.out(Easing.quad) });
   };
+  /** The "So close" card for a shot that landed without every bar (or pad, or portal): which ones it missed. Null otherwise. Tries and
+   * replays both show it (replays lost it in 0.71.0). */
+  const missNotice = (res: SimResult, shotSlots: Slot[]) => (res.end === 'skipped'
+    ? skipNotice(level.pieces.length, boardNumbers(shotSlots), res.touched, { pads: { total: (level.pads ?? []).length, touched: res.padsTouched }, portals: { total: (level.portals ?? []).length, used: res.portalsUsed } })
+    : null);
+
   /** `viaSolve`: the Solve button's own shot (the full solution). */
   const fire = (shot: Slot[], a: number, p: number, viaSolve = false) => {
     // No stars at all: the tutorial, and a daily won with help. A level won with help scores, capped by its help.
     const assisted = practice || ((!!daily || !!challenge) && (helped || viaSolve));
     const helpNow = capsHelp && viaSolve ? AFTER_SOLUTION : levelHelp;
-    const placed = boardPieces(shot), numbers = boardNumbers(shot);
+    const placed = boardPieces(shot);
     setGuided(tutorial);
     const res = simulate(buildWorld(level, placed), a, p);
     const tryNo = tries + 1;
@@ -489,7 +495,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       trailShots.current.set(res.path, { pieces: placed, angle: a, power: p });
       setTrails((ts) => [...ts, { path: res.path, ok: res.success, end: res.end, jumps: res.jumps }].slice(-trailCount));
       // A destroyed ball needs no card: the board shows the burst and the sound plays.
-      setNotice(res.end === 'skipped' ? skipNotice(level.pieces.length, numbers, res.touched, { pads: { total: (level.pads ?? []).length, touched: res.padsTouched }, portals: { total: (level.portals ?? []).length, used: res.portalsUsed } }) : null);
+      setNotice(missNotice(res, shot));
       if (res.end === 'dead') feedback.died();
       if (res.success) {
         const stars = assisted ? 0 : starsFor(cappedBounces(res.bounces, par, helpNow), par);
@@ -530,7 +536,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
         setBounces(res.bounces);
         setTrails([{ path: res.path, ok: res.success, end: res.end, jumps: res.jumps }]);
         if (res.success) replayWin(res, { slots: shotSlots(level, shot), angle: shot.angle, power: shot.power });
-        else if (res.end === 'dead') feedback.died(); // the shatter's sound and buzz, as on a try (replays were silent)
+        else { if (res.end === 'dead') feedback.died(); setNotice(missNotice(res, shotSlots(level, shot))); } // the shatter's sound, the "So close" card, as on a try
       }, true, setupKey(shotPieces(level, shot), shot.angle, shot.power));
     }, 500);
     return () => clearTimeout(timer);
@@ -680,7 +686,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     playShot(res, () => {
       setTrails((ts) => withReplayTrail(ts, res, trailCount));
       if (res.success) replayWin(res);
-      else if (res.end === 'dead') feedback.died(); // the shatter's sound and buzz, as on a try (replays were silent)
+      else { if (res.end === 'dead') feedback.died(); setNotice(missNotice(res, theirs)); } // the shatter's sound, the "So close" card, as on a try
     }, false, setupKey(boardPieces(theirs), challenge.shot.angle, challenge.shot.power));
   };
 
@@ -702,7 +708,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
       trailShots.current.set(res.path, { pieces: boardPieces(shot), angle: a, power: p });
       setTrails((ts) => withReplayTrail(ts, res, trailCount));
       if (res.success) replayWin(res, { slots: shot, angle: a, power: p });
-      else if (res.end === 'dead') feedback.died(); // the shatter's sound and buzz, as on a try (replays were silent)
+      else { if (res.end === 'dead') feedback.died(); setNotice(missNotice(res, shot)); } // the shatter's sound, the "So close" card, as on a try
     }, false, setupKey(boardPieces(shot), a, p));
   };
 
@@ -739,14 +745,15 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   const rerun = () => {
     const placed = boardPieces(slots);
     const res = simulate(buildWorld(level, placed), angle, power);
-    if (rerunNote === 0 && !res.success) setRerunNote(1);
+    // (Not over a "So close" card: one message is enough.)
+    if (rerunNote === 0 && !res.success && res.end !== 'skipped') setRerunNote(1);
     launched(angle);
     playShot(res, () => {
       setBounces(res.bounces);
       trailShots.current.set(res.path, { pieces: placed, angle, power });
       setTrails((ts) => withReplayTrail(ts, res, trailCount));
       if (res.success) replayWin(res, { slots, angle, power });
-      else if (res.end === 'dead') feedback.died(); // the shatter's sound and buzz, as on a try (replays were silent)
+      else { if (res.end === 'dead') feedback.died(); setNotice(missNotice(res, slots)); } // the shatter's sound, the "So close" card, as on a try
     }, true, setupKey(placed, angle, power));
   };
 

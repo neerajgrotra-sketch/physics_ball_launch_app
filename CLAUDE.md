@@ -121,7 +121,8 @@ reference/    prototype.html, the behaviour and look to match
   (`WALL_RESTITUTION` 0.7, with a little friction so a rolling ball stops). A shot ends when the ball
   settles in the glass, comes to rest, hits a dead grey surface or a hazard (the ball shatters in slow motion, no popup: `game/shatter.ts` pieces seeded by where it died,
   `Board`'s `Shatter`, `shatter.wav`, a heavy buzz then light taps) if a level has one, or runs out of time
-  (14 s). Landing without every bar placed and hit says so and names any bar it missed (`skipNotice`).
+  (14 s). Landing without every bar placed and hit says so and names any bar it missed (`skipNotice`, through `missNotice`, on tries and on every
+  kind of replay alike).
 - **Dead hits:** when a shot hits a dead surface, mark the spot with a small red ×.
 - **Win:** the ball has to settle inside the glass for 0.35 s. The celebration lights the fuse: a spark runs the winning path, with
   `fuse.wav` fizzing and a `spark.wav` tick a step higher at each bounce it passes (`fuseTicks`; normal mode, ASMR mode plays the bloom),

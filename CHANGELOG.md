@@ -4,6 +4,12 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.72.2
+
+- The "So close!" card is back after a replay that lands without every bar (or pad, or portal): Replay ▶, a level card's Replay and
+  a friend's shot all show it, as a try does (`missNotice`). The replay paths added in 0.71.0 had dropped it. On a replay that gets
+  the card, the "Replays don't count as a try" note doesn't show too, since one message is enough.
+
 ## 0.72.1
 
 - In Settings, "Your ball" is now **Ball Themes** and "Your gun" is **Launcher Themes**, next to Look's board theme. Their badges are
