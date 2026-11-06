@@ -23,6 +23,7 @@ export interface ChallengeShot { pieces: { x: number; y: number; deg: number }[]
 export interface Challenge { levelId: string; from: string; shot: ChallengeShot }
 
 const NAME_MAX = 20;
+// The scramble key stays 'bankshot' from before the rename to Clink: changing it would break challenge links already sent.
 const KEY = 'bankshot';
 
 // A tiny reversible scramble (xor with a fixed key, then base64url), so a link doesn't spell out where the bars go.
@@ -98,7 +99,7 @@ export function challengeGoal(from: string, bounces: number, every: string): str
 export function challengeMessage(opts: { levelNo: number; levelName: string; bounces: number; par: number; url: string }): string {
   const { levelNo, levelName, bounces, par, url } = opts;
   return [
-    `⚔️ I got Bank Shot level ${levelNo} “${levelName}” in ${bounces} bounce${bounces === 1 ? '' : 's'} (par ${par}).`,
+    `⚔️ I got Clink level ${levelNo} “${levelName}” in ${bounces} bounce${bounces === 1 ? '' : 's'} (par ${par}).`,
     'Can you beat me? Tap to play, no download needed:',
     url,
   ].join('\n');

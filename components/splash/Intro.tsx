@@ -162,7 +162,7 @@ export function Intro({ onDone, onShown, onLeaving }: { onDone: () => void; onSh
 
           <Animated.View style={[styles.titleBlock, titleBlock]}>
             <View style={styles.titleRow}>
-              {'BANK SHOT'.split('').map((ch, i) => <Letter key={i} t={t} i={i} ch={ch} color={c.ink} reduced={reduced} />)}
+              {'CLINK'.split('').map((ch, i) => <Letter key={i} t={t} i={i} ch={ch} color={c.ink} reduced={reduced} />)}
             </View>
             <Text style={[styles.tagline, { color: c.muted }]}>Place the bars. Bounce it in.</Text>
           </Animated.View>
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   base: { position: 'absolute', left: -10, right: -10, bottom: -3, height: 6, borderRadius: 3 },
   titleBlock: { alignItems: 'center', marginTop: 28 },
   titleRow: { flexDirection: 'row' },
-  letter: { fontFamily: FONTS.condensedBold, fontSize: 54, lineHeight: 58, letterSpacing: 1 },
+  letter: { fontFamily: FONTS.condensedBold, fontSize: 66, lineHeight: 70, letterSpacing: 6 },
   space: { width: 16 },
   version: { position: 'absolute', left: 0, right: 0, bottom: 34, textAlign: 'center', fontSize: 13, fontFamily: FONTS.body },
   tagline: { fontFamily: FONTS.bodyMedium, fontSize: 17, marginTop: 4 },

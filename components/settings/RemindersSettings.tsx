@@ -57,7 +57,7 @@ export function RemindersSettings({ bare = false }: { bare?: boolean }) {
       </View>
       <Text style={[styles.note, { color: blocked ? c.red : c.muted, marginTop: 6 }]}>
         {blocked
-          ? `Notifications are off for ${inExpoGo ? 'Expo Go' : 'Bank Shot'}: turn them on in the iPhone's Settings, under ${inExpoGo ? 'Expo Go' : 'Bank Shot'}, Notifications.`
+          ? `Notifications are off for ${inExpoGo ? 'Expo Go' : 'Clink'}: turn them on in the iPhone's Settings, under ${inExpoGo ? 'Expo Go' : 'Clink'}, Notifications.`
           : 'At most one a day, and none once the day\'s puzzle is done.'}
         {inExpoGo && !blocked ? ' While testing in Expo Go they show as Expo Go.' : ''}
       </Text>

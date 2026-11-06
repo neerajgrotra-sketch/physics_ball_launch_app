@@ -1,5 +1,5 @@
 /**
- * Bank Shot physics: pure, deterministic, UI-free.
+ * Clink physics: pure, deterministic, UI-free.
  * Rules: no imports from React/Expo/Skia, no Math.random, no Date/performance.
  * Same (level, pieces, angle, power) must always produce the identical path.
  *

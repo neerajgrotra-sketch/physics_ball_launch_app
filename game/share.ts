@@ -27,7 +27,7 @@ function hook(r: ShareResult, par: number, seed: string): string {
   if (under >= 2) return `🤯 ${golfName(r.bounces, par).toUpperCase()}! ${under} under par. I'm not even sorry.`;
   if (under === 1) return pick(['🐦 Birdie! One under par 😎', '🐦 Birdie! Better than the puzzle-maker 😎'], seed);
   if (r.stars === 3 && r.tries === 1) return pick(['🎯 First try. No big deal 😎', '🎯 Nailed it on the FIRST try!'], seed);
-  if (r.stars === 3) return pick(['🔥 Wow, I did it!', '🔥 Three stars. Perfect bank shot!', '🔥 Called it. Off every bar and in!'], seed);
+  if (r.stars === 3) return pick(['🔥 Wow, I did it!', '🔥 Three stars. A perfect clink!', '🔥 Called it. Off every bar and in!'], seed);
   if (r.stars === 2) return pick(['😅 Wow, I did it… eventually!', '🏀 In the glass! Not pretty, but in!'], seed);
   return pick(["🙈 It went in. Don't ask how.", '🫣 Ugly? Yes. In the glass? ALSO yes.'], seed);
 }
@@ -49,8 +49,8 @@ export function resultLine(r: ShareResult, par: number): string {
 export function shareMessage(what: ShareWhat, r: ShareResult, par: number): string {
   const seed = `${what.kind}${what.number}:${r.bounces}:${r.tries}`;
   const where = what.kind === 'daily'
-    ? `Bank Shot Daily #${what.number} · “${what.name}”`
-    : `Level ${what.number} · “${what.name}” in Bank Shot`;
+    ? `Clink Daily #${what.number} · “${what.name}”`
+    : `Level ${what.number} · “${what.name}” in Clink`;
   return [
     hook(r, par, seed),
     `I just banked it into the glass on ${where}`,
@@ -58,7 +58,7 @@ export function shareMessage(what: ShareWhat, r: ShareResult, par: number): stri
     ...(what.kind === 'daily' && what.streak > 1 ? [`🔥 ${what.streak}-day streak`] : []),
     '',
     dare(r, what, seed),
-    `I'm playing the coolest game… you should try it! 👉 Bank Shot ${SHARE_LINK}`,
+    `I'm playing the coolest game… you should try it! 👉 Clink ${SHARE_LINK}`,
   ].join('\n');
 }
 

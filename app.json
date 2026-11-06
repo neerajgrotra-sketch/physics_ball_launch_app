@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "Bank Shot",
+    "name": "Clink",
     "slug": "bank-shot",
     "owner": "ngrotra",
-    "version": "0.73.1",
+    "version": "0.74.0",
     "runtimeVersion": { "policy": "sdkVersion" },
     "scheme": "bankshot",
     "orientation": "portrait",
@@ -39,7 +39,7 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "name": "Bank Shot",
+      "name": "Clink",
       "backgroundColor": "#dfe5d8"
     },
     "icon": "./assets/icon.png",

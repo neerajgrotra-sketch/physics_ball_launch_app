@@ -4,6 +4,20 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.74.0
+
+- The game is now called **Clink**: the sound of the ball landing in the glass. "Bank Shot" clashed with Microsoft's live
+  BANKSHOT BILLIARDS trademark for game software and with an existing game, and testers heard "bank robbery". Renamed everywhere
+  players see it:
+  - the intro title, now a bigger, more spaced CLINK;
+  - the app name and the version line;
+  - the web page title, the Add to Home Screen name and the link-preview image and tags;
+  - share and challenge messages, and the "Get Clink" page;
+  - the tour's welcome line and the notification settings.
+  Two lines that used "bank shot" as a phrase are reworded ("A perfect clink!", "Bring your best trick shot"). Saved-data keys, the
+  Expo project slug, the URL scheme and the challenge scramble key keep the old name on purpose, so no progress is lost and sent
+  challenge links still work.
+
 ## 0.73.1
 
 - After a win with help, the win card says so on its own line under the result, as cause → effect, with the actual help used:

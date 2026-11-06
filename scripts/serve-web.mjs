@@ -32,4 +32,4 @@ createServer((req, res) => {
     'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=3600',
   });
   createReadStream(file).pipe(res);
-}).listen(PORT, () => console.log(`Bank Shot: http://localhost:${PORT}`));
+}).listen(PORT, () => console.log(`Clink: http://localhost:${PORT}`));

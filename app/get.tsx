@@ -24,7 +24,7 @@ export default function GetApp() {
   return (
     <View style={[styles.wrap, { backgroundColor: c.panel }]}>
       <Image source={require('../assets/splash-icon.png')} style={styles.icon} />
-      <Text style={[styles.title, { color: c.ink }]}>Get Bank Shot</Text>
+      <Text style={[styles.title, { color: c.ink }]}>Get Clink</Text>
       <Text style={[styles.body, { color: c.ink }]}>That was one level. The app has all {LEVELS.length} across five worlds, a new puzzle every day, and challenges for your friends.</Text>
       <Text style={[styles.free, { color: c.pencil }]}>Free on iPhone and Android.</Text>
       {store('App Store', APP_STORE_URL)}

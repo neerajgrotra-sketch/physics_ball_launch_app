@@ -64,7 +64,7 @@ const OPENERS: Record<DailyTier, string[]> = {
   2: ['Easy does it', 'A quick one today', 'Two minutes, one glass'],
   3: ['Looks hard, has a way', 'A little trickier today', 'There is a way in'],
   4: ['A proper puzzle today', 'Think before you shoot', 'Not as easy as it looks'],
-  5: ["The week's toughest", 'Sunday special: the hard one', 'Bring your best bank shot'],
+  5: ["The week's toughest", 'Sunday special: the hard one', 'Bring your best trick shot'],
 };
 const EMOJI = ['🧩', '🎯', '🔑'];
 

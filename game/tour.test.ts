@@ -28,8 +28,8 @@ describe('guided tour', () => {
 
 describe('tour personalisation', () => {
   it('puts the name in, or leaves it out neatly', () => {
-    expect(withName('Welcome to Bank Shot{, name}', 'Sam')).toBe('Welcome to Bank Shot, Sam');
-    expect(withName('Welcome to Bank Shot{, name}', '  ')).toBe('Welcome to Bank Shot');
+    expect(withName('Welcome to Clink{, name}', 'Sam')).toBe('Welcome to Clink, Sam');
+    expect(withName('Welcome to Clink{, name}', '  ')).toBe('Welcome to Clink');
     expect(withName('Hi {name}!', '')).toBe('Hi there!');
     expect(withName('Ready{, name}?', 'Alexandria-Rose Montgomery')).toBe('Ready, Alexandria-Rose?');
   });

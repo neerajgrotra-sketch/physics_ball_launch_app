@@ -1,4 +1,10 @@
-# Bank Shot
+# Clink (formerly Bank Shot)
+
+The game is called **Clink** (renamed in 0.74.0: "Bank Shot" clashed with Microsoft's live BANKSHOT BILLIARDS game-software trademark and
+an existing game, and testers heard "bank robbery"). Use Clink in everything players see. Some internal names keep the old one on
+purpose and must not change: the saved-data keys (`bank-shot/...`: renaming them wipes every player's progress), the Expo project slug
+`bank-shot` (it links the Expo account and the EAS updates), the `bankshot` URL scheme, and the challenge links' scramble key
+(`game/challenge.ts` `KEY`: changing it breaks links already sent).
 
 A bounce-puzzle game. The player launches a steel ball, choosing angle and power, and places a few bars
 wherever they like so the ball ricochets into a glass barely wider than itself. **Bounces are true

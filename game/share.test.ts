@@ -6,7 +6,7 @@ const level = { kind: 'level' as const, number: 7, name: 'Four millimetres' };
 describe('share message', () => {
   it('names the level and the result, dares a friend and links the game', () => {
     const m = shareMessage(level, { bounces: 4, stars: 2, tries: 8, helped: false }, 2);
-    expect(m).toContain('Level 7 · “Four millimetres” in Bank Shot');
+    expect(m).toContain('Level 7 · “Four millimetres” in Clink');
     expect(m).toContain('★★☆ · 4 bounces (par 2) · 8 tries');
     expect(m).toContain(SHARE_LINK);
     expect(m).toContain("I'm playing the coolest game");
@@ -29,7 +29,7 @@ describe('share message', () => {
 
   it('daily: the puzzle number and streak, no level number', () => {
     const m = shareMessage({ kind: 'daily', number: 2, name: 'Ricochet', streak: 5 }, { bounces: 2, stars: 3, tries: 1, helped: false }, 2);
-    expect(m).toContain('Bank Shot Daily #2 · “Ricochet”');
+    expect(m).toContain('Clink Daily #2 · “Ricochet”');
     expect(m).toContain('🔥 5-day streak');
     expect(m).toMatch(/today/);
     expect(resultLine({ bounces: 1, stars: 3, tries: 1, helped: false }, 1)).toBe('★★★ · 1 bounce (par 1) · 1 try');

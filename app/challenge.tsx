@@ -52,7 +52,7 @@ export default function ChallengeScreen() {
         <Text style={[styles.title, { color: c.ink }]}>This challenge link doesn’t work</Text>
         <Text style={[styles.body, { color: c.muted }]}>It may have been cut short when it was copied. Ask for it again.</Text>
         <Pressable onPress={() => router.replace(web ? '/get' : '/')} accessibilityRole="button" style={[styles.go, { backgroundColor: c.red }]}>
-          <Text style={styles.goText}>{web ? 'Get Bank Shot' : 'Play Bank Shot'}</Text>
+          <Text style={styles.goText}>{web ? 'Get Clink' : 'Play Clink'}</Text>
         </Pressable>
       </View>
     );

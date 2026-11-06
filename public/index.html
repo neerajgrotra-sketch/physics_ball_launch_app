@@ -5,20 +5,20 @@
     <!-- Phone-app behaviour: fill the screen edge to edge (the app pads for the notch and home bar
          itself), and no pinch or double-tap zoom, so drags on the board aim and move bars instead. -->
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-    <title>Bank Shot</title>
+    <title>Clink</title>
     <meta name="description" content="Place the bars, launch the ball, bounce it into the glass." />
     <!-- The link preview chat apps show under a shared link (WhatsApp, iMessage…): picture from scripts/make-og.mjs. Absolute
          URLs, so keep them on the game's public address (game/challenge.ts SITE_URL). -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Bank Shot" />
-    <meta property="og:title" content="Bank Shot: can you beat my shot?" />
+    <meta property="og:site_name" content="Clink" />
+    <meta property="og:title" content="Clink: can you beat my shot?" />
     <meta property="og:description" content="A bounce puzzle you play right in your browser. Free, no download, no sign-up." />
     <meta property="og:image" content="https://racing-cobalt-ydmy8we-neerajgrotra-7631s-projects.vercel.app/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Bank Shot: a ball banking off three bars into a glass" />
+    <meta property="og:image:alt" content="Clink: a ball bouncing off three bars into a glass" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Bank Shot: can you beat my shot?" />
+    <meta name="twitter:title" content="Clink: can you beat my shot?" />
     <meta name="twitter:description" content="A bounce puzzle you play right in your browser. Free, no download." />
     <meta name="twitter:image" content="https://racing-cobalt-ydmy8we-neerajgrotra-7631s-projects.vercel.app/og.png" />
 
@@ -26,7 +26,7 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Bank Shot" />
+    <meta name="apple-mobile-web-app-title" content="Clink" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="apple-touch-icon" href="/icons/icon-180.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
@@ -83,7 +83,7 @@
             box = document.createElement('div'); box.id = 'boot-error'; document.body.appendChild(box);
             box.addEventListener('click', function () { box.remove(); }); // tap to dismiss
           }
-          box.textContent = 'Bank Shot hit an error (tap to close):\n' + msg + '\n\n' + navigator.userAgent;
+          box.textContent = 'Clink hit an error (tap to close):\n' + msg + '\n\n' + navigator.userAgent;
         }
         window.__bankShotError = function (e) { show((e && (e.stack || e.message)) || String(e)); };
         window.addEventListener('error', function (e) {
@@ -107,7 +107,7 @@
   </head>
 
   <body>
-    <noscript>You need to enable JavaScript to play Bank Shot.</noscript>
-    <div id="root"><div id="boot"><img src="/icons/splash-icon.png" alt="Bank Shot" /><span>Loading…</span></div></div>
+    <noscript>You need to enable JavaScript to play Clink.</noscript>
+    <div id="root"><div id="boot"><img src="/icons/splash-icon.png" alt="Clink" /><span>Loading…</span></div></div>
   </body>
 </html>

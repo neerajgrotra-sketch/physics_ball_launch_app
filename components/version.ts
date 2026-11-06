@@ -6,4 +6,4 @@ import { version } from '../package.json';
 // Store builds also carry ios.buildNumber / android.versionCode in app.json.
 export const APP_VERSION = version;
 export const BUILD = (process.env.EXPO_PUBLIC_COMMIT ?? '').slice(0, 7) || 'dev';
-export const VERSION_LABEL = `Bank Shot v${APP_VERSION} · build ${BUILD}`;
+export const VERSION_LABEL = `Clink v${APP_VERSION} · build ${BUILD}`;

@@ -78,7 +78,7 @@ function AppRoot() {
                 contentStyle: { backgroundColor: c.panel },
               }}
             >
-              <Stack.Screen name="index" options={{ title: 'Bank Shot', headerShown: false }} />
+              <Stack.Screen name="index" options={{ title: 'Clink', headerShown: false }} />
               <Stack.Screen name="level/[id]" options={{ title: '' }} />
               <Stack.Screen name="daily" options={{ title: '' }} />
               <Stack.Screen name="challenge" options={{ title: '' }} />

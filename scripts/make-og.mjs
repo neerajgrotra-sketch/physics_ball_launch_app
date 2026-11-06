@@ -40,7 +40,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
     <circle cx="430" cy="518" r="15" fill="#a7aeb3" stroke="#2c3133" stroke-width="4"/>
   </svg>
   <div class="text">
-    <div class="row"><img src="data:image/png;base64,${icon}"><h1>Bank Shot</h1></div>
+    <div class="row"><img src="data:image/png;base64,${icon}"><h1>Clink</h1></div>
     <h2>Can you beat my shot?</h2>
     <p>A bounce puzzle you play right in your browser. Free, no download.</p>
   </div>

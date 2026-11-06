@@ -19,7 +19,7 @@ export interface TourPage {
 
 export const TOUR: TourPage[] = [
   {
-    picture: 'welcome', kicker: 'Welcome to Bank Shot{, name}', title: 'A game of precision',
+    picture: 'welcome', kicker: 'Welcome to Clink{, name}', title: 'A game of precision',
     body: 'Every bounce is real physics. Set the shot just right and the ball does exactly the same thing every time, so each try teaches you the next.',
   },
   {
