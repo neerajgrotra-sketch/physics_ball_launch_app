@@ -4,6 +4,15 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.74.1
+
+- The share poster follows the play mode: in ASMR mode it's a neon poster, as the game was played (`composeShareCard`'s `neon`): a
+  near-black board and poster, the winning shot glowing magenta, the bars, floor and frame glowing cyan, blocks in violet neon glass,
+  the stamp and dare glowing. Every line gets a soft blurred halo under a crisp core; it's a one-off picture, so the blur costs
+  nothing in play. Sketchpad mode keeps the graph-paper poster.
+- The rename to Clink missed the poster: its top line still read "B A N K   S H O T". It now reads "C L I N K", and the shared picture
+  is saved as `clink.png` (it was `bank-shot.png`).
+
 ## 0.74.0
 
 - The game is now called **Clink**: the sound of the ball landing in the glass. "Bank Shot" clashed with Microsoft's live

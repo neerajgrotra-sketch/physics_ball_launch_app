@@ -3,7 +3,7 @@
     "name": "Clink",
     "slug": "bank-shot",
     "owner": "ngrotra",
-    "version": "0.74.0",
+    "version": "0.74.1",
     "runtimeVersion": { "policy": "sdkVersion" },
     "scheme": "bankshot",
     "orientation": "portrait",

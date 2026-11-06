@@ -5,7 +5,7 @@ function pngFile(base64: string): File | null {
   try {
     const bin = atob(base64), bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return new File([bytes], 'bank-shot.png', { type: 'image/png' });
+    return new File([bytes], 'clink.png', { type: 'image/png' });
   } catch {
     return null;
   }

@@ -259,7 +259,8 @@ the ball and ends the shot as "dead"; bars keep clear of them like any obstacle)
   Share uses the same message: a hook picked by how the shot went (seeded, so a win always shares the same words), the level, stars,
   bounces, par and tries, a dare, and `SHARE_LINK` (a placeholder until the store link exists). A poster goes with it (`Board`'s
   `snapshot`, drawn by `components/board/shareCard.ts` from the level, bars and trails, not a screenshot; words from `game/share.ts`
-  `shareCard`): 1080×1350, always in the standard graph-paper colours (`LIGHT`, whatever board theme is picked), "LEVEL N COMPLETE!" and the result line on top, the board zoomed in on where
+  `shareCard`): 1080×1350, in the standard graph-paper colours in Sketchpad mode (`LIGHT`, whatever board theme is picked), and in ASMR mode
+  the neon palette with every line glowing (`composeShareCard`'s `neon`: a blurred halo under each crisp line; a one-off picture, so blur is fine), the kicker "C L I N K", "LEVEL N COMPLETE!" and the result line on top, the board zoomed in on where
   the round happened (winner bold red with rings at its bounces, misses blue), a tilted rubber stamp with the result and stars
   placed where it covers the fewest shots, and a dare ("CAN YOU BEAT 2 BOUNCES?") at the bottom. The text never says where the bars went.
 - **Challenge a friend** (`game/challenge.ts`, `app/challenge.tsx`, `LevelGame`'s `challenge`): a level's win card has "⚔️ Challenge a
@@ -325,7 +326,7 @@ muzzle blast (`game/muzzle.ts`: recoil, flash, shock ring, sparks, smoke along t
 `launch.wav` boom. Don't add a `BlurMask` to anything drawn every frame, and don't keep effects mounted (hidden at opacity 0) for later: both slow
 phone browsers until sounds run ahead of the picture (0.55.0). Flare only what was struck (`struck`), unmount finished effects
 (the shatter). To compare speed, build in a clean checkout (`git worktree`): the main folder's build is split differently and
-measures ~3× slower. Keep its many small pieces off `BlurMask` (plain translucent halos): blur on dozens of pieces is slow on phones. A look and a sound only, never the physics. The share poster keeps the graph-paper colours.
+measures ~3× slower. Keep its many small pieces off `BlurMask` (plain translucent halos): blur on dozens of pieces is slow on phones. A look and a sound only, never the physics. The share poster follows the mode: graph paper, or glowing neon in ASMR mode.
 
 ## Launch and intro
 

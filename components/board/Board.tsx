@@ -10,7 +10,7 @@ import {
 import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useColors, type Palette } from '../../theme/colors';
 import { composeShareCard, type ShareCard } from './shareCard';
-import { LIGHT } from '../../theme/palettes';
+import { LIGHT, NEON } from '../../theme/palettes';
 import {
   blockPath, padChevrons, crossPath, hazardPaths, deadPaths, gridPaths, handleArcPath, moveIconPath, linePath, polyPath, trashIconPath,
 } from './paths';
@@ -143,8 +143,9 @@ export function Board(props: BoardProps) {
     snapshot.current = (card) => {
       try {
         if (!hudFont || !subFont) return null;
-        // Always the game's own graph-paper look, whatever board theme the player picked: it's the game's calling card.
-        return composeShareCard(level, pieces, trails, card, hudFont, subFont, LIGHT, gun, power);
+        // Sketchpad mode shares the game's own graph-paper look, whatever board theme the player picked (it's the game's calling card);
+        // ASMR mode shares its neon look, glowing, as it was played (player feedback: the poster didn't look like the ASMR game).
+        return composeShareCard(level, pieces, trails, card, hudFont, subFont, asmr ? NEON.palette : LIGHT, gun, power, asmr);
       } catch { return null; }
     };
   }

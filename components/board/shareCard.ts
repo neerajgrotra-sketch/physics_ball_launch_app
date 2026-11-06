@@ -1,4 +1,4 @@
-import { Skia, type SkCanvas, type SkFont, type SkPaint, type SkPath } from '@shopify/react-native-skia';
+import { BlurStyle, Skia, type SkCanvas, type SkFont, type SkPaint, type SkPath } from '@shopify/react-native-skia';
 import {
   BALL_RADIUS, LAUNCHER, PORTAL_RADIUS, SPIKE_LENGTH, WORLD, blockCorners, glassBox, pieceEnds, type Level, type PlacedPiece, type Vec,
 } from '../../physics';
@@ -19,6 +19,8 @@ export interface ShareTrail { path: Vec[]; ok: boolean; jumps?: number[] }
 // A 4:5 poster, the shape chat apps and Instagram show biggest.
 const CW = 1080, CH = 1350;
 const BOARD = { x: 40, y: 250, w: 1000, h: 880 };
+/** ASMR mode's violet neon glass blocks, as on the board. */
+const NEON_BLOCK = '#b18cff';
 
 function star(cx: number, cy: number, r: number): SkPath {
   const p = Skia.PathBuilder.Make();
@@ -72,11 +74,11 @@ function bounceSpots(path: Vec[]): Vec[] {
  * The picture a win shares: a poster in the game's blueprint blue with the title and stars on top, the round's shots on graph
  * paper zoomed in on where they happened (winner in bold red, misses in blue, rings where it bounced), a rubber stamp with the
  * result across it, and a dare along the bottom. Drawn from the level and the shots (not a screenshot), on a CPU surface, so it
- * looks the same on the web and on phones. Returns a base64 PNG.
+ * looks the same on the web and on phones. Returns a base64 PNG. `neon`: ASMR mode's version, in the neon palette with glowing lines.
  */
 export function composeShareCard(
   level: Level, pieces: PlacedPiece[], trails: ShareTrail[], card: ShareCard, bold: SkFont, medium: SkFont, c: Palette,
-  gun: GunSkin = DEFAULT_GUN, power = 45,
+  gun: GunSkin = DEFAULT_GUN, power = 45, neon = false,
 ): string | null {
   const surface = Skia.Surface.Make(CW, CH);
   if (!surface) return null;
@@ -90,6 +92,17 @@ export function composeShareCard(
     p.setStrokeJoin(1); // round
     return p;
   };
+  // ASMR mode's poster (`neon`): the neon palette, and every line drawn twice, a soft blurred halo under a crisp core, as the board
+  // glows in that mode. A one-off picture, so the blur costs nothing during play. Sketchpad mode keeps the plain graph paper.
+  const halo = (p: SkPaint, sigma: number) => { p.setMaskFilter(Skia.MaskFilter.MakeBlur(BlurStyle.Normal, sigma, false)); return p; };
+  const glowPath = (cvs: SkCanvas, path: SkPath, color: string, width: number, alpha = 1) => {
+    if (neon) cvs.drawPath(path, halo(stroke(color, width * 2.4, alpha * 0.7), 9));
+    cvs.drawPath(path, stroke(color, width, alpha));
+  };
+  const glowText = (s: string, x: number, y: number, f: SkFont, size: number, color: string, room: number, alpha = 1) => {
+    if (neon) text(cv, s, x, y, f, size, halo(fill(color, alpha * 0.8), 14), room);
+    text(cv, s, x, y, f, size, fill(color, alpha), room);
+  };
   // The board's own fonts, resized for each line and put back after (a new font from their typeface fails on the web). Long text
   // shrinks to fit rather than run off the picture.
   const sizes = [bold.getSize(), medium.getSize()];
@@ -102,10 +115,12 @@ export function composeShareCard(
   };
 
   // Poster ground and header.
-  cv.drawColor(Skia.Color(c.pencil));
-  text(cv, 'B A N K   S H O T', CW / 2, 64, medium, 30, fill(c.paper, 0.8), 900);
-  text(cv, card.title, CW / 2, 150, bold, 92, fill(c.paper), 1000);
-  text(cv, card.line, CW / 2, 216, medium, 38, fill(c.paper, 0.85), 1000);
+  // Sketchpad: blueprint blue with paper-white type. ASMR: near-black with glowing neon type.
+  const head = neon ? c.ink : c.paper;
+  cv.drawColor(Skia.Color(neon ? c.panel : c.pencil));
+  glowText('C L I N K', CW / 2, 64, medium, 30, neon ? c.pencil : c.paper, 900, 0.85);
+  glowText(card.title, CW / 2, 150, bold, 92, neon ? c.pencil : head, 1000);
+  text(cv, card.line, CW / 2, 216, medium, 38, fill(head, 0.85), 1000);
 
   // The board: graph paper, zoomed to where the round happened.
   const crop = cropFor(level, pieces, trails);
@@ -123,10 +138,17 @@ export function composeShareCard(
   cv.drawPath(grid.major, stroke(c.grid, 1.1));
   // Shots first (under the pieces, as on the board): misses in blue, the winner bold red on top.
   const shots = [...trails].sort((a, b) => Number(a.ok) - Number(b.ok));
-  for (const t of shots) cv.drawPath(polyPath(t.path, t.path.length, t.jumps ?? []), t.ok ? stroke(c.red, 3) : stroke(c.pencil, 2, 0.45));
-  cv.drawPath(linePath(0, WORLD.ground, WORLD.width, WORLD.ground), stroke(c.ink, 4));
+  for (const t of shots) {
+    const tp = polyPath(t.path, t.path.length, t.jumps ?? []);
+    if (t.ok) glowPath(cv, tp, c.red, 3); else cv.drawPath(tp, stroke(c.pencil, 2, 0.45));
+  }
+  glowPath(cv, linePath(0, WORLD.ground, WORLD.width, WORLD.ground), neon ? c.pencil : c.ink, 4, neon ? 0.7 : 1);
   for (const h of level.hazards ?? []) { const hp = hazardPaths(blockCorners(h), SPIKE_LENGTH); cv.drawPath(hp.body, fill(c.red)); cv.drawPath(hp.spikes, fill(c.red)); }
-  for (const b of level.blocks ?? []) { const bp = blockPath(blockCorners(b)); cv.drawPath(bp, fill(c.steel)); cv.drawPath(bp, stroke(c.ink, 2.5)); }
+  for (const b of level.blocks ?? []) {
+    const bp = blockPath(blockCorners(b));
+    // ASMR: violet neon glass, as on the board (Board.tsx NEON_BLOCK).
+    if (neon) { cv.drawPath(bp, fill(NEON_BLOCK, 0.14)); glowPath(cv, bp, NEON_BLOCK, 2.5); } else { cv.drawPath(bp, fill(c.steel)); cv.drawPath(bp, stroke(c.ink, 2.5)); }
+  }
   for (const b of level.pads ?? []) { const bp = blockPath(blockCorners(b)); cv.drawPath(bp, fill('#ffb020', 0.92)); cv.drawPath(bp, stroke(c.ink, 2.5)); }
   const dead = deadPaths(level.fixed);
   cv.drawPath(dead.bars, stroke(c.muted, 6));
@@ -136,10 +158,10 @@ export function composeShareCard(
   }
   const g = glassBox(level.glass);
   cv.drawRect(Skia.XYWHRect(g.l, g.rim, g.r - g.l, g.base - g.rim), fill(c.red, 0.12));
-  cv.drawPath(linePath(g.l, g.rim, g.l, g.base), stroke(c.red, 3));
-  cv.drawPath(linePath(g.r, g.rim, g.r, g.base), stroke(c.red, 3));
-  cv.drawPath(linePath(g.l - 8, g.base, g.r + 8, g.base), stroke(c.red, 3));
-  for (const p of pieces) { const [x1, y1, x2, y2] = pieceEnds(p); cv.drawPath(linePath(x1, y1, x2, y2), stroke(c.pencil, 6)); }
+  glowPath(cv, linePath(g.l, g.rim, g.l, g.base), c.red, 3);
+  glowPath(cv, linePath(g.r, g.rim, g.r, g.base), c.red, 3);
+  glowPath(cv, linePath(g.l - 8, g.base, g.r + 8, g.base), c.red, 3);
+  for (const p of pieces) { const [x1, y1, x2, y2] = pieceEnds(p); glowPath(cv, linePath(x1, y1, x2, y2), c.pencil, 6); }
   // The gun, pointing the way the winning shot left, and the ball resting where it ended.
   // The player's gun (game/guns.ts), pointing the way the winning shot left; then the ball resting where it ended.
   const win = trails.find((t) => t.ok) ?? trails[trails.length - 1];
@@ -164,7 +186,8 @@ export function composeShareCard(
     cv.drawCircle(ex - 2.5, ey - 2.5, 2.2, fill('#ffffff', 0.85));
   }
   cv.restore();
-  cv.drawRRect(frame, stroke(c.ink, 4, 0.5));
+  if (neon) cv.drawRRect(frame, halo(stroke(c.pencil, 8, 0.5), 12));
+  cv.drawRRect(frame, neon ? stroke(c.pencil, 3, 0.9) : stroke(c.ink, 4, 0.5));
 
   // The stamp: tilted across the board like a rubber stamp, with the result and the stars, wherever it covers the fewest shots.
   const sw = 460, sh = card.stars == null ? 150 : 220;
@@ -179,16 +202,18 @@ export function composeShareCard(
   cv.rotate(-11, 0, 0);
   const box = Skia.RRectXY(Skia.XYWHRect(-sw / 2, -sh / 2, sw, sh), 26, 26);
   cv.drawRRect(box, fill(c.paper, 0.9));
+  if (neon) cv.drawRRect(box, halo(stroke(c.red, 18, 0.7), 14));
   cv.drawRRect(box, stroke(c.red, 10));
   cv.drawRRect(Skia.RRectXY(Skia.XYWHRect(-sw / 2 + 16, -sh / 2 + 16, sw - 32, sh - 32), 16, 16), stroke(c.red, 3));
   const wordY = card.stars == null ? 34 : -6;
+  if (neon) text(cv, card.stamp, 0, wordY, bold, 104, halo(fill(c.red, 0.7), 10), sw - 70);
   text(cv, card.stamp, 0, wordY, bold, 104, fill(c.red), sw - 70);
   if (card.stars != null) for (let s = 0; s < 3; s++) cv.drawPath(star((s - 1) * 82, 62, 34), s < card.stars ? fill(c.red) : stroke(c.red, 4, 0.5));
   cv.restore();
 
   // The dare.
-  text(cv, card.dare, CW / 2, 1222, bold, 66, fill(c.paper), 1000);
-  text(cv, 'Bounce it in. Use every bar. Fewest bounces wins.', CW / 2, 1290, medium, 32, fill(c.paper, 0.8), 1000);
+  glowText(card.dare, CW / 2, 1222, bold, 66, neon ? c.red : head, 1000);
+  text(cv, 'Bounce it in. Use every bar. Fewest bounces wins.', CW / 2, 1290, medium, 32, fill(head, 0.8), 1000);
 
   bold.setSize(sizes[0]);
   medium.setSize(sizes[1]);
