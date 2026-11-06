@@ -4,6 +4,15 @@ Agreed work that isn't built yet, roughly in priority order. Move an item to CHA
 
 ## Next up
 
+- **App size: slim the phone music** (decided: wait for the first TestFlight build's real size, then do this). Estimated store
+  download today: ~120–140 MB on iPhone, ~110–125 MB on Android. About 89 MB of that is the 12 ten-minute music files in
+  `assets/music/long` (~7.5 MB each, and every new track adds that much again); the engine (React Native, Hermes, Skia, Expo) is
+  ~30–40 MB, code ~3–5 MB, effects 2 MB.
+  - Plan: make the long files 5 minutes (`LONG_SECONDS` in `scripts/make-playlist.mjs`; the loop seam then comes every 5 min, not 10)
+    and encode them at ~64 kbps. Together that's about 65–75 MB. Keep one long file per track: don't go back to looping or queueing
+    short files on phones (see CLAUDE.md, the 0.62.x stalls).
+  - Later, if the app keeps growing: ship 2–3 tracks and download the rest after install (needs an offline fallback).
+  - Compare the store's real numbers (App Store Connect "App File Sizes", Play Console "App size") before and after.
 - **Daily tracks by progress** (user feedback: the daily should fit the level the player is at; discussed, agreed to park).
   - Proposal: three tracks a day, Rookie (Worlds 1–2: bars, blocks), Pro (adds hazards and springs) and Expert (everything,
     portals too). Each track uses only the mechanics its players have met, and still rises Monday to Sunday.
