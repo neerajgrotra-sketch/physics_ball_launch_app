@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.72.1
+
+- In Settings, "Your ball" is now **Ball Themes** and "Your gun" is **Launcher Themes**, next to Look's board theme. Their badges are
+  drawn, not emoji: Launcher Themes shows the player's own launcher with their ball in it (the same shapes as the board and the
+  level cards, so a Pirate cannon shows a pirate cannon), and Ball Themes shows their ball. Before, the gun group's icon was a
+  target.
+
 ## 0.72.0
 
 - Settings is grouped into collapsible cards, one open at a time (`Group` in `components/settings/SettingsSheet.tsx`). Each shows an

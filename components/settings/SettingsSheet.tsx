@@ -1,3 +1,7 @@
+import Svg, { Circle as SvgCircle, Line as SvgLine, Polygon } from 'react-native-svg';
+import { gunShapes } from '../../game/guns';
+import { skinFill } from '../../game/skins';
+import { BALL_RADIUS, LAUNCHER, WORLD } from '../../physics';
 import { RemindersSettings, TestReminder } from './RemindersSettings';
 import { remindersSupported } from '../notifications/Reminders';
 import { useReminderPrefs } from '../notifications/reminderPrefs';
@@ -29,7 +33,7 @@ if (Platform.OS === 'android') UIManager.setLayoutAnimationEnabledExperimental?.
 
 /**
  * The ⚙ sheet, in collapsible groups (`Group`, one open at a time, each with a summary line): Sound & music, Look (ASMR mode, board
- * theme), Your ball (BallPicker), Your gun (GunPicker), Play helpers, Reminders (phones), Hints, About you (game/profile.ts), and apart
+ * theme), Ball Themes (BallPicker), Launcher Themes (GunPicker), each badge drawing the player's own pick, Play helpers, Reminders (phones), Hints, About you (game/profile.ts), and apart
  * below a divider, Testing (unlock all, show touches, reset, test notification, audio log).
  */
 export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, onShowTour }: {
@@ -122,11 +126,11 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
               <ThemePicker bare />
             </Group>
 
-            <Group id="ball" icon="⚪" title="Your ball" open={open} onToggle={toggle} summary={skin.name}>
+            <Group id="ball" icon={<BallIcon />} title="Ball Themes" open={open} onToggle={toggle} summary={skin.name}>
               <BallPicker bare />
             </Group>
 
-            <Group id="gun" icon="🎯" title="Your gun" open={open} onToggle={toggle} summary={gun.name}>
+            <Group id="gun" icon={<LauncherIcon />} title="Launcher Themes" open={open} onToggle={toggle} summary={gun.name}>
               <GunPicker bare />
             </Group>
 
@@ -269,7 +273,7 @@ export function SettingsSheet({ visible, onClose, onMusicTap, onReplayTutorial, 
  * their settings without opening anything. Its insides are built only while it's open. `dashed`: the testing group, kept apart.
  */
 function Group({ id, icon, title, summary, open, onToggle, dashed, children }: {
-  id: string; icon: string; title: string; summary: string; open: string | null; onToggle: (id: string) => void; dashed?: boolean; children: ReactNode;
+  id: string; icon: string | ReactNode; title: string; summary: string; open: string | null; onToggle: (id: string) => void; dashed?: boolean; children: ReactNode;
 }) {
   const c = useColors();
   const isOpen = open === id;
@@ -279,9 +283,14 @@ function Group({ id, icon, title, summary, open, onToggle, dashed, children }: {
         onPress={() => onToggle(id)} accessibilityRole="button" accessibilityState={{ expanded: isOpen }} accessibilityLabel={`${title}: ${summary}`}
         style={styles.groupHead}
       >
-        <View style={[styles.badge, { backgroundColor: isOpen ? c.pencil : c.line }]}>
-          <Text style={styles.badgeText}>{icon}</Text>
-        </View>
+        {typeof icon === 'string' ? (
+          <View style={[styles.badge, { backgroundColor: isOpen ? c.pencil : c.line }]}>
+            <Text style={styles.badgeText}>{icon}</Text>
+          </View>
+        ) : (
+          // A drawn icon (the player's own launcher or ball) sits on paper, ringed like the emoji badges.
+          <View style={[styles.badge, { backgroundColor: c.paper, borderWidth: 2, borderColor: isOpen ? c.pencil : c.line, overflow: 'hidden' }]}>{icon}</View>
+        )}
         <View style={styles.labelBox}>
           <Text style={[styles.groupTitle, { color: c.ink }]}>{title}</Text>
           <Text style={[styles.note, { color: c.muted }]} numberOfLines={1}>{summary}</Text>
@@ -290,6 +299,41 @@ function Group({ id, icon, title, summary, open, onToggle, dashed, children }: {
       </Pressable>
       {isOpen && <View style={[styles.groupBody, { borderColor: c.line }]}>{children}</View>}
     </View>
+  );
+}
+
+/** The player's own launcher (game/guns.ts, the same shapes as on the board and the level cards) with their ball in it: the badge of
+ * "Launcher Themes", so it always shows what's picked. */
+function LauncherIcon() {
+  const c = useColors();
+  const { skin, gun } = useBallSkin();
+  // A window round the launcher in world units: the dome on the floor, the barrel up to the right.
+  const x = LAUNCHER.x - 30, y = WORLD.ground - 52;
+  return (
+    <Svg width={30} height={30} viewBox={`${x} ${y} 60 60`}>
+      {gunShapes(gun, 40, 50, c).map((sh, i) => (
+        sh.kind === 'poly' ? (
+          <Polygon key={i} points={sh.points.map((q) => q.join(',')).join(' ')} fill={sh.fill} stroke={sh.stroke} strokeWidth={sh.width} opacity={sh.alpha} />
+        ) : sh.kind === 'line' ? (
+          <SvgLine key={i} x1={sh.from[0]} y1={sh.from[1]} x2={sh.to[0]} y2={sh.to[1]} stroke={sh.color} strokeWidth={sh.width} strokeLinecap="round" opacity={sh.alpha} />
+        ) : (
+          <SvgCircle key={i} cx={sh.at[0]} cy={sh.at[1]} r={sh.r} fill={sh.fill ?? 'none'} stroke={sh.stroke} strokeWidth={sh.width} opacity={sh.alpha} />
+        )
+      ))}
+      <SvgCircle cx={LAUNCHER.x} cy={LAUNCHER.y} r={BALL_RADIUS} fill={skinFill(skin, c.steel)} stroke={c.ink} strokeWidth={1.5} />
+    </Svg>
+  );
+}
+
+/** The player's own ball, with a glint: the badge of "Ball Themes". */
+function BallIcon() {
+  const c = useColors();
+  const { skin } = useBallSkin();
+  return (
+    <Svg width={26} height={26} viewBox="0 0 26 26">
+      <SvgCircle cx={13} cy={13} r={10} fill={skinFill(skin, c.steel)} stroke={c.ink} strokeWidth={1.5} />
+      <SvgCircle cx={9.5} cy={9.5} r={2.6} fill="#ffffff" opacity={0.7} />
+    </Svg>
   );
 }
 
