@@ -4,6 +4,13 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.72.3
+
+- Every wall, floor, block and glass bounce is now audible. Their volume followed the hit's speed all the way down, so a soft
+  bounce (a slow rebound, the settling hops at the end of a shot) played at about 0.12 and wasn't heard, though the audio log showed
+  each one playing. Now they're louder for a harder hit but never below 0.4 (`game/hitVolume.ts`, shared by the phone and web
+  players): a soft wall bounce is 0.40 (was ~0.12), a hard one 0.75 (was 0.60).
+
 ## 0.72.2
 
 - The "So close!" card is back after a replay that lands without every bar (or pad, or portal): Replay ▶, a level card's Replay and

@@ -1,3 +1,4 @@
+import { hitVolume } from '../../game/hitVolume';
 import { useEffect } from 'react';
 import type { Hit } from '../../physics';
 import { asmrRate } from '../../game/asmr';
@@ -74,8 +75,9 @@ export function useFeedback() {
       // ASMR mode: every bounce is the next note of a calm pentatonic run (game/asmr.ts) on a soft bell.
       if (feedbackPrefs.asmr) { play('chime', 0.35 + 0.45 * strength, asmrRate(barHits++)); return; }
       if (h.kind === 'pad' || h.spring) play('boing', Math.max(0.7, strength));
-      else if (h.kind === 'glass') play('glass', strength);
-      else if (h.kind === 'wall' || h.kind === 'block') play('wall', strength * (h.kind === 'block' ? 0.8 : 0.6));
+      else if (h.kind === 'glass') play('glass', hitVolume('glass', h.speed));
+      // Every bounce audible, louder when harder (game/hitVolume.ts): soft wall bounces used to play at ~0.12 and went unheard.
+      else if (h.kind === 'wall' || h.kind === 'block') play('wall', hitVolume(h.kind, h.speed));
       else play('bounce', Math.max(0.6, strength), pitch(barHits++));
     },
     /** The ball is in: in ASMR mode the bloom's sound for the win (game/bloom.ts: the full run for three stars, shorter for fewer). */
