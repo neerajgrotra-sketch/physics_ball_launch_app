@@ -58,6 +58,7 @@ export function WinCard({ text, onAgain, onRetry, onGo, onClose, onStar, onShare
         </View>
       )}
       <Text style={[styles.detail, text.next && styles.detailTight, { color: c.muted }]}>{text.detail}</Text>
+      {text.help ? <Text style={[styles.help, { color: c.ink, backgroundColor: c.panel, borderColor: c.line }]}>{text.help}</Text> : null}
       {text.next && <Text style={[styles.next, { color: c.pencil, backgroundColor: c.panel }]}>{text.next}</Text>}
       <View style={styles.btns}>
         <Pressable onPress={onAgain} accessibilityRole="button" style={[styles.ghost, { borderColor: c.line }]}>
@@ -108,6 +109,8 @@ const styles = StyleSheet.create({
   score: { fontSize: 22, fontFamily: FONTS.condensedBold },
   title: { fontSize: 28, lineHeight: 30, fontFamily: FONTS.condensedBold, marginBottom: 4, textAlign: 'center' },
   detail: { fontSize: 15, fontFamily: FONTS.body, marginBottom: 12 },
+  // The help used and the star cap it set, on its own line under the result (score.ts helpLine).
+  help: { fontSize: 14, fontFamily: FONTS.bodyMedium, textAlign: 'center', borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, marginTop: -6, marginBottom: 12, overflow: 'hidden' },
   detailTight: { marginBottom: 8 },
   next: {
     fontSize: 15, lineHeight: 20, fontFamily: FONTS.bodySemi, textAlign: 'center', marginBottom: 12,

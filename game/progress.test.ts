@@ -96,8 +96,19 @@ describe('winText with help', () => {
     const t = winText({ assisted: null, tries: 2, bounces: 3, par: 3, last: false, help: 1 });
     expect(t.stars).toBe(2);
     expect(t.score).toBeGreaterThan(0);
-    expect(t.detail).toContain('solved with help, max ★★');
+    // The help has its own line, apart from the result line.
+    expect(t.detail).toBe('3 bounces, par 3 · 2 tries');
+    expect(t.help).toBe('💡 Help used → max ★★☆ on this level');
     expect(t.next).toBeNull();
+  });
+  it('says how many hints were used, or that the solution was shown, and the cap that set', () => {
+    expect(winText({ assisted: null, tries: 1, bounces: 4, par: 4, last: false, help: 2, spent: { bulbs: 4, solution: false } }).help)
+      .toBe('💡 4 hints used → max ★☆☆ on this level');
+    expect(winText({ assisted: null, tries: 1, bounces: 4, par: 4, last: false, help: 1, spent: { bulbs: 1, solution: false } }).help)
+      .toBe('💡 1 hint used → max ★★☆ on this level');
+    expect(winText({ assisted: 'solve', tries: 1, bounces: 4, par: 4, last: false, help: 2, spent: { bulbs: 3, solution: true } }).help)
+      .toBe('💡 Solution shown (3 bulbs) → max ★☆☆ on this level');
+    expect(winText({ assisted: null, tries: 1, bounces: 4, par: 4, last: false }).help).toBeNull();
   });
   it('gives the Solve button’s own shot one star on a level', () => {
     const t = winText({ assisted: 'solve', tries: 1, bounces: 3, par: 3, last: false, help: 2 });

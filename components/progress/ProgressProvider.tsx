@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { DRAFTS_KEY, parseDrafts, type Draft, type DraftsByLevel } from '../../game/drafts';
 import { TUTORIAL_ID } from '../../game/coach';
 import { FRESH_KEY, FRESH_VERSION, LOCK_LEVELS, UNLOCK_ALL_KEY, UNLOCKED_KEY, parseUnlocked, unlockAfterWin } from '../../game/progress';
-import { BEST_KEY, HELP_KEY, better, parseBest, parseHelp, type Best, type BestByLevel, type HelpByLevel } from '../../game/score';
+import { BEST_KEY, HELP_KEY, SPENT_KEY, better, parseBest, parseHelp, parseSpent, type Best, type BestByLevel, type HelpByLevel, type SpentByLevel } from '../../game/score';
 import { SHOTS_KEY, parseShots, type Shot, type ShotsByLevel } from '../../game/shots';
 import { LEVELS } from '../../levels';
 import { TIPS_KEY, useTips } from '../coach/Tips';
@@ -27,6 +27,10 @@ interface Progress {
   help: HelpByLevel;
   /** Record help used on a level: `level` is the new total (afterHint / AFTER_SOLUTION); it never goes down. */
   markHelp: (id: string, level: number) => void;
+  /** Hint bulbs spent on each level, and whether its solution was shown (the win card's help line). */
+  spent: SpentByLevel;
+  /** Records `bulbs` more spent on a level (`solution`: the full solution was shown). */
+  addSpent: (id: string, bulbs: number, solution: boolean) => void;
   /**
    * Record a win on level i, unlocking the next level and saving it. `result` and `shot` are omitted
    * for assisted wins (a hint or Solve).
@@ -44,11 +48,11 @@ interface Progress {
 }
 
 const ProgressContext = createContext<Progress>({
-  unlocked: 0, frontier: 0, best: {}, shots: {}, help: {}, markHelp: () => {}, won: () => {}, unlockAll: false, setUnlockAll: () => {}, resetProgress: () => {},
+  unlocked: 0, frontier: 0, best: {}, shots: {}, help: {}, markHelp: () => {}, spent: {}, addSpent: () => {}, won: () => {}, unlockAll: false, setUnlockAll: () => {}, resetProgress: () => {},
   draftFor: () => undefined, saveDraft: () => {},
 });
 
-const PROGRESS_KEYS = [UNLOCKED_KEY, BEST_KEY, SHOTS_KEY, ORDER_KEY, DRAFTS_KEY, HELP_KEY];
+const PROGRESS_KEYS = [UNLOCKED_KEY, BEST_KEY, SHOTS_KEY, ORDER_KEY, DRAFTS_KEY, HELP_KEY, SPENT_KEY];
 
 /**
  * Keeps level unlocks and best results in AsyncStorage. Renders nothing until the saved values have
@@ -60,6 +64,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const [best, setBest] = useState<BestByLevel>({});
   const [shots, setShots] = useState<ShotsByLevel>({});
   const [help, setHelp] = useState<HelpByLevel>({});
+  const [spent, setSpent] = useState<SpentByLevel>({});
   const [unlockAll, setUnlockAllState] = useState(false);
   // Drafts change on every drag, so they live in a ref (no re-render of the app) and are written at most every 400 ms.
   const drafts = useRef<DraftsByLevel>({});
@@ -85,6 +90,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       ]);
       drafts.current = parseDrafts(await AsyncStorage.getItem(DRAFTS_KEY).catch(() => null));
       const savedHelp = parseHelp(await AsyncStorage.getItem(HELP_KEY).catch(() => null));
+      const savedSpent = parseSpent(await AsyncStorage.getItem(SPENT_KEY).catch(() => null));
       if (!live) return;
       // The tutorial doesn't score; drop any result an earlier version saved for it.
       const saved = parseBest(b);
@@ -92,6 +98,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       setBest(saved);
       setShots(parseShots(s));
       setHelp(savedHelp);
+      setSpent(savedSpent);
       setUnlockAllState(all === '1');
       let open = parseUnlocked(u, LEVELS.length);
       if (order !== ORDER_VERSION) {
@@ -141,6 +148,16 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const addSpent = useCallback((id: string, bulbs: number, solution: boolean) => {
+    if (bulbs <= 0) return;
+    setSpent((all) => {
+      const had = all[id] ?? { bulbs: 0, solution: false };
+      const next = { ...all, [id]: { bulbs: had.bulbs + bulbs, solution: had.solution || solution } };
+      AsyncStorage.setItem(SPENT_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
   const draftFor = useCallback((key: string) => drafts.current[key], []);
   const saveDraft = useCallback((key: string, draft: Draft | null) => {
     if (!draft && !drafts.current[key]) return;
@@ -158,8 +175,9 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const resetProgress = useCallback(() => {
     if (writeTimer.current) clearTimeout(writeTimer.current);
     drafts.current = {};
-    AsyncStorage.multiRemove([UNLOCKED_KEY, BEST_KEY, SHOTS_KEY, DRAFTS_KEY, HELP_KEY]).catch(() => {});
+    AsyncStorage.multiRemove([UNLOCKED_KEY, BEST_KEY, SHOTS_KEY, DRAFTS_KEY, HELP_KEY, SPENT_KEY]).catch(() => {});
     setHelp({});
+    setSpent({});
     setUnlocked(0);
     setBest({});
     setShots({});
@@ -168,7 +186,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   if (unlocked === null) return null;
   const open = LOCK_LEVELS && !unlockAll ? unlocked : LEVELS.length - 1;
   return (
-    <ProgressContext.Provider value={{ unlocked: open, frontier: unlocked, best, shots, help, markHelp, won, unlockAll, setUnlockAll, resetProgress, draftFor, saveDraft }}>
+    <ProgressContext.Provider value={{ unlocked: open, frontier: unlocked, best, shots, help, markHelp, spent, addSpent, won, unlockAll, setUnlockAll, resetProgress, draftFor, saveDraft }}>
       {children}
     </ProgressContext.Provider>
   );

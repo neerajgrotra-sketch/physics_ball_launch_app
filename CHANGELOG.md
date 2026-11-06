@@ -4,6 +4,14 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.73.1
+
+- After a win with help, the win card says so on its own line under the result, as cause → effect, with the actual help used:
+  "💡 4 hints used → max ★☆☆ on this level", "💡 1 hint used → max ★★☆ on this level", or "💡 Solution shown (3 bulbs) → max ★☆☆ on
+  this level" (`helpLine` in `game/score.ts`). It used to be ", solved with help, max ★" tacked onto the end of the result line,
+  where it wrapped and didn't say how much help. The game now keeps the hint bulbs spent on each level and whether the solution was
+  shown (`SPENT_KEY`; reset with progress). A level helped before this version says "Help used".
+
 ## 0.73.0
 
 - Settings' "Look" is now **Play Mode**: the game's two moods side by side, each with its own switch and a line on what it

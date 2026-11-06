@@ -137,7 +137,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
   const c = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { best, shots, won, draftFor, saveDraft, help: helpRecord, markHelp } = useProgress();
+  const { best, shots, won, draftFor, saveDraft, help: helpRecord, markHelp, spent: spentRecord, addSpent } = useProgress();
   const unlocked = useUnlocked();
   const tips = useTips();
   /**
@@ -799,6 +799,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     setHelp(false);
     setHelped(true);
     if (capsHelp) markHelp(level.id, afterHint(levelHelp));
+    if (capsHelp) addSpent(level.id, 1, false);
     if (next.kind === 'bar') {
       const h = hintSlots(level, slots);
       if (!h) return;
@@ -812,7 +813,9 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
     setNotice({ title: 'Your hint', text: aimHintNotice(next) ?? '' });
   };
   const fullSolution = () => {
-    if (!wallet.spend(fullCost())) { wallet.openShop(); return; }
+    const cost = fullCost();
+    if (!wallet.spend(cost)) { wallet.openShop(); return; }
+    if (capsHelp) addSpent(level.id, cost, true);
     setHelp(false);
     solve();
   };
@@ -1146,7 +1149,7 @@ export function LevelGame({ level, index, daily, challenge, shot, guide, onRepla
             onStar={(k) => feedback.star(k)}
             text={challenge
               ? { ...challengeWinText(winShot.bounces, challenge.bounces, challenge.from, helped || solved), stars: 0, score: null, next: null, again: 'Reset level', go: '⚔️ Challenge back' }
-              : { ...winText({ assisted: solved ? 'solve' : daily && helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last, help: levelHelp }), ...(daily ? { go: 'Share' } : {}) }}
+              : { ...winText({ assisted: solved ? 'solve' : daily && helped ? 'hint' : guided || practice ? 'tutorial' : null, tries, bounces: winShot.bounces, par, last, help: levelHelp, spent: capsHelp ? spentRecord[level.id] : undefined }), ...(daily ? { go: 'Share' } : {}) }}
             onAgain={() => startOver(false)}
             onRetry={keepPlaying}
             onClose={keepPlaying}

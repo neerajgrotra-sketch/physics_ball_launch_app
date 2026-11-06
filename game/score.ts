@@ -142,3 +142,38 @@ export function goalText(pieces: number, par: number | undefined, pads = 0, port
   if (par == null) return `Goal: off ${every}, then into the glass`;
   return `Goal: into the glass in ${par} bounce${par === 1 ? '' : 's'}, off ${every}`;
 }
+
+/** How many hint bulbs a level has cost the player, and whether its full solution was shown (the win card says so). */
+export interface HelpSpent { bulbs: number; solution: boolean }
+export type SpentByLevel = Record<string, HelpSpent>;
+export const SPENT_KEY = 'bank-shot/help-spent';
+
+export function parseSpent(raw: string | null | undefined): SpentByLevel {
+  try {
+    const o = raw ? JSON.parse(raw) : null;
+    if (!o || typeof o !== 'object') return {};
+    const out: SpentByLevel = {};
+    for (const [id, v] of Object.entries(o)) {
+      const r = v as Partial<HelpSpent>;
+      if (Number.isFinite(r?.bulbs) && (r.bulbs as number) > 0) out[id] = { bulbs: Math.round(r.bulbs as number), solution: !!r.solution };
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * The win card's help line, on its own row: what was used on this level, and what that caps its stars at, as cause → effect
+ * (player feedback: "solved with help, max ★" tucked on the end of the result line was easy to miss and didn't say how much help).
+ * "💡 4 hints used → max ★☆☆ on this level", "💡 Solution shown (3 bulbs) → max ★☆☆ on this level". Null with no help.
+ */
+export function helpLine(help: number, spent?: HelpSpent): string | null {
+  if (help <= 0) return null;
+  const cap = starCap(help);
+  const stars = '★'.repeat(cap) + '☆'.repeat(3 - cap);
+  const what = !spent ? 'Help used'
+    : spent.solution ? `Solution shown (${spent.bulbs} bulb${spent.bulbs === 1 ? '' : 's'})`
+      : `${spent.bulbs} hint${spent.bulbs === 1 ? '' : 's'} used`;
+  return `💡 ${what} → max ${stars} on this level`;
+}

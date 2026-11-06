@@ -148,7 +148,9 @@ reference/    prototype.html, the behaviour and look to match
   within two) and points (`game/score.ts`); each level's best is saved and the level list shows stars and a
   total. Wins with help still count and score, capped by the help used on that level (`starCap`: one hint ★★, more hints or the
   full solution ★, never above what the shot earned; points follow, via `cappedBounces`). The help is saved per level for good
-  (`HELP_KEY`, `markHelp`), so Start over can't lift it and rebuilding a shown answer can't earn ★★★; the level card shows a 💡.
+  (`HELP_KEY`, `markHelp`), so Start over can't lift it and rebuilding a shown answer can't earn ★★★; the level card shows a 💡. The win card says it on its own line under
+  the result, as cause → effect: "💡 4 hints used → max ★☆☆ on this level" or "💡 Solution shown (3 bulbs) → …" (`helpLine`; bulbs spent per
+  level are kept in `SPENT_KEY`, `addSpent`; a level helped before 0.73.1 says "Help used").
   The help card says what help costs on that level (`helpNote`). The daily keeps "helped = no stars"; the tutorial never scores.
 - **Help (the Solve button):** opens a card offering a hint or the full solution. The one Hint button gives the stored answer's
   next step in order (`game/help.ts` `nextHint`): each bar in turn (placed where the answer has it; clashing bars go back to the
