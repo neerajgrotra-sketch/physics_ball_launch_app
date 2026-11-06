@@ -61,6 +61,8 @@ interface Voice { player: AudioPlayer; busy: boolean; started: number; timer?: R
 const MERGE_MS = 45;
 /** A sound's length when its player can't say yet (seconds): the longest effects (the bloom, the shatter) are longer, the rest shorter. */
 const FALLBACK_SECONDS = 0.6;
+/** The least time a voice is held after it starts (seconds), however short its sound, so a slow-starting player still sounds. */
+const MIN_HOLD_S = 0.45;
 class Pool {
   private voices: Voice[];
   constructor(source: number | { uri: string }, size: number, private name = '') {
@@ -136,7 +138,9 @@ class Pool {
     player.shouldCorrectPitch = false; // varispeed: a faster rate also raises the pitch, for the arpeggio
     player.setPlaybackRate(rate);
     // Free it again as soon as the sound is over (at this rate), plus a hair for the player to get going.
-    const seconds = player.duration > 0 ? player.duration : FALLBACK_SECONDS;
+    // Never freed sooner than MIN_HOLD_S: an iPhone player can take a moment to start, and a short sound (the wall's 0.12 s tok)
+    // freed on its own length was stopped before it was heard. The log showed every wall bounce playing; most made no sound (0.72.4).
+    const seconds = Math.max(MIN_HOLD_S, player.duration > 0 ? player.duration : FALLBACK_SECONDS);
     const arm = () => { clearTimeout(voice.timer); voice.timer = setTimeout(() => this.rewind(voice), (seconds / Math.max(0.25, rate)) * 1000 + 40); };
     alog(`play ${this.name} #${this.voices.indexOf(voice)}${free ? (wasWarming ? ' (was warming)' : '') : ' (cut a playing one)'}`);
     if (free && !wasWarming) { player.play(); arm(); }

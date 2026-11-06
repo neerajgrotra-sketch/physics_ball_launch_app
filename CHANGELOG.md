@@ -4,6 +4,15 @@ Versions follow `MAJOR.MINOR.PATCH`. The version lives in `package.json` and `ap
 kept equal. Store builds also bump `expo.ios.buildNumber` and `expo.android.versionCode` on every upload.
 The level list shows the version and the commit a web build came from.
 
+## 0.72.4
+
+- Wall and floor bounces sound on iPhone. The audio log showed every one playing, yet only a couple were heard. Two causes:
+  - Each sound player was freed on a timer of its own sound's length, and the wall's tok is only 0.12 s. An iPhone player can take a
+    moment to start, so the timer often stopped it before any sound came out. Longer sounds (glass, spring) survived. Now every
+    voice is held at least 0.45 s (`MIN_HOLD_S` in `useFeedback.ts`).
+  - The tok itself rang for only ~18 ms, too little for a phone speaker. Its body now rings ~60 ms with a little more of its upper
+    partials (`wall.wav`, 0.25 s). Every other sound is unchanged.
+
 ## 0.72.3
 
 - Every wall, floor, block and glass bounce is now audible. Their volume followed the hit's speed all the way down, so a soft

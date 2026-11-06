@@ -214,7 +214,9 @@ const sounds = {
     scale(crackle(0.7, 26, 0.45, 2024), 0.35),
   ),
   // Ball off the floor or a board edge: a dull, woody tok (bars ring; walls don't).
-  wall: partials(0.12, [[520, 1, 0.018], [1240, 0.35, 0.01], [2010, 0.15, 0.006]], { attack: 0.001 }),
+  // Ball on a wall or the floor: a woody tok. Its body rings ~60 ms (it was 18 ms, too short to carry on a phone speaker, 0.72.4), with a
+  // little more of its upper partials so the small speaker has something to play.
+  wall: partials(0.25, [[520, 1, 0.055], [1240, 0.5, 0.03], [2010, 0.25, 0.018], [3150, 0.1, 0.01]], { attack: 0.001 }),
   // Steel ball on a bar: a short bright tink.
   bounce: partials(0.16, [[1420, 1, 0.035], [3380, 0.45, 0.02], [5150, 0.2, 0.012]]),
   // Ball against the glass: higher, glassy, rings a little longer.

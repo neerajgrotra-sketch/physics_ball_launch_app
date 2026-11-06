@@ -356,7 +356,7 @@ measures ~3× slower. Keep its many small pieces off `BlurMask` (plain transluce
   `scripts/make-playlist.mjs` with ffmpeg from the loop WAV. One player, one file; it only loops at the end. Don't go back to looping
   the short file or queueing copies on phones. Keep the effect players few (`POOL_SIZE` in `useFeedback.ts`: one per sound, more only for
   the sounds that come in runs, 28 in all (the 2- and 1-star blooms reuse the bloom's player, faded out early: `playCut`; the web has their own files); a real sound takes over a voice that is only being warmed, never cut off by the warm-up; each is warmed (played silently once, a voice at a time, at app start: an iPhone player is
-  slow to start the first time), the same sound twice within `MERGE_MS` (45) plays once, and each voice is rewound and freed on a timer of its sound's length, never by waiting for iOS's
+  slow to start the first time), the same sound twice within `MERGE_MS` (45) plays once, and each voice is rewound and freed on a timer of its sound's length (never under `MIN_HOLD_S`, 0.45 s: a slow-starting iPhone player was stopped before the 0.12 s wall tok sounded, 0.72.4), never by waiting for iOS's
   "finished" report, which comes only every ~0.5 s and made bounce sounds late or missing in 0.62.5–0.64.1): each loaded iPhone player holds an audio pipeline, and with 43 the music stalled whenever iOS
   reset them (volume buttons, unlocking, just after they loaded). With Sound effects off there are none (`setEffectsOn`, told through
   `effectsListeners`) (0.62.5). It plays on the level list too (once the intro and the guided tour are gone, `useIntroDone`, `tourSeen`), so
