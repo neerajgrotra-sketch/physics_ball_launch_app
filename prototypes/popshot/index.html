@@ -123,7 +123,7 @@ canvas { position: fixed; inset: 0; touch-action: none; display: block; }
 <div class="overlay" id="menu">
   <div class="card">
     <h1>Popshot</h1>
-    <p>Three arrows. One tower. The sway rolls up the tower like a wave, and the arrow takes time to climb, so fire for where the balloons <em>will</em> be. Tap again mid-flight to split the arrow once.</p>
+    <p>Three arrows. One tower. The sway rolls up the tower like a wave, and the arrow takes time to climb, so fire for where the balloons <em>will</em> be. Pull back anywhere and let go: the harder the pull, the faster the arrow. Tap mid-flight to split it once.</p>
     <div class="legend">
       <span><i style="background:#ffd23f"></i>Gold: doubles the rest of that arrow</span>
       <span><i style="background:#2c2c36"></i>Bomb: pops its neighbours</span>
@@ -163,11 +163,15 @@ const LEVELS = [
   { name: 'Ironclad',  n: 24, amp: 50, base: .4,  T: 2.4, lag: 0.9,  h2: .2,   types: { 3: 'g', 8: 'a', 12: 'b', 16: 'a' } },
   { name: 'Gale',      n: 24, amp: 62, base: .35, T: 1.9, lag: 1.4,  h2: .35,  types: { 6: 'b', 12: 'a', 18: 'b', 21: 'g' } },
 ];
+// V0 is the speed each level's wave is designed around; the pull picks a speed between VMIN and VMAX.
+const VMIN = 520, VMAX = 1300;
 const DT = 1 / 240, V0 = 950, R = 21, S = 46, Y0 = 190, CX = 200, AL = 50, SPLIT_DEG = 8, SLOW = 0.985;
 const HUES = ['#ff4b4b', '#ff8a2a', '#ffcd2e', '#9bd63a', '#3cc36b', '#22c3b5', '#36a8f0', '#4f6cf5', '#8a56f0', '#d24fd6', '#ff5fa2', '#ff7a6a'];
 
 // ---------- State ----------
 let L, li = 0, balloons = [], t = 0, state = 'menu', arrowsLeft = 3, shot = null, popped = 0, points = 0;
+let pulling = false, pull = 0, pullStart = 0, pullStep = 0, pullId = null, keyPull = false, shortPull = false;
+const PULL_W = 40; // how far back the string travels at full pull (world units)
 let particles = [], popups = [], cam = { y: 300, z: 1.4 }, slowmo = 0, shake = 0, recoil = 0, revealT = 0, collapsed = false;
 const ghosts = {}; let muted = false, best = {};
 try { best = JSON.parse(localStorage.getItem('popshot/best') || '{}') || {}; } catch (e) { best = {}; }
@@ -209,7 +213,7 @@ function startLevel(i) {
     const type = L.types[j] || 'n';
     return { slot: j, target: j, type, hp: type === 'a' ? 2 : 1, alive: true, col: HUES[j % HUES.length], wob: 0 };
   });
-  t = 0; arrowsLeft = 3; popped = 0; points = 0; shot = null; particles = []; popups = []; collapsed = false;
+  cancelPull(); shortPull = false; t = 0; arrowsLeft = 3; popped = 0; points = 0; shot = null; particles = []; popups = []; collapsed = false;
   state = 'aim'; cam.z = zAim(); cam.y = camAim(cam.z);
   $('menu').hidden = true; $('result').hidden = true;
   updateHud();
@@ -219,7 +223,7 @@ function startLevel(i) {
 const base = () => Math.min(W / 420, H / 720);
 const zAim = () => 1.45;
 const zFull = () => Math.min(1.3, (H * 0.72) / (base() * (fullTop() + 130)));
-const camAim = z => 0.32 * H / (base() * z);
+const camAim = z => 0.25 * H / (base() * z);
 const camFull = z => (fullTop() - 30) / 2 + 0.07 * H / (base() * z);
 function toScreen(x, y) { const k = base() * cam.z; return [W / 2 + (x - CX) * k, H / 2 - (y - cam.y) * k]; }
 
@@ -242,11 +246,13 @@ function updateCamera(dt) {
 }
 
 // ---------- Shooting ----------
-function fire() {
+const speedFor = p => VMIN + (VMAX - VMIN) * p;
+function fire(power) {
   if (state !== 'aim' || arrowsLeft <= 0) return;
   arrowsLeft--;
-  shot = { arrows: [mkArrow(CX, AL, 0, V0, true)], combo: 0, mult: 1, pops: 0, splitUsed: false, phase: (t % L.T) / L.T, end: 0, lead: 0 };
-  state = 'flight'; recoil = 1; sfx.launch(); buzz(14);
+  const y0 = AL - 2 - power * PULL_W;
+  shot = { arrows: [mkArrow(CX, y0, 0, speedFor(power), true)], combo: 0, mult: 1, pops: 0, splitUsed: false, phase: (t % L.T) / L.T, power, end: 0, lead: 0 };
+  state = 'flight'; recoil = .4 + power * .8; sfx.launch(power); buzz(8 + Math.round(power * 16));
   updateHud();
 }
 function mkArrow(x, y, vx, vy, main) { return { x, y, vx, vy, alive: true, main, trail: [], falling: false, rot: 0, spin: 0 }; }
@@ -321,7 +327,7 @@ function step() {
   }
 }
 function endShot() {
-  (ghosts[li] = ghosts[li] || []).push({ phase: shot.phase, pops: shot.pops });
+  (ghosts[li] = ghosts[li] || []).push({ phase: shot.phase, power: shot.power, pops: shot.pops });
   if (ghosts[li].length > 6) ghosts[li].shift();
   state = 'reveal'; revealT = 0; collapsed = false; hideCombo(); updateHud();
 }
@@ -340,7 +346,7 @@ function finish() {
   $('rBest').textContent = best[L.name].pts;
   $('rNote').textContent = (bonus ? `+${bonus} for ${arrowsLeft} unused arrow${arrowsLeft > 1 ? 's' : ''}. ` : '') +
     (isBest ? 'New best. ' : '') +
-    (stars < 3 ? 'The dial by the crossbow shows when you fired each arrow and how many it popped. The tower sways the same way every try.' : 'Points grow with every pop in a row, so one long arrow beats three short ones.');
+    (stars < 3 ? 'The dial shows when you fired each arrow, the marks on the power bar how hard you pulled, both coloured by how many it popped. The tower sways the same way every try.' : 'Points grow with every pop in a row, so one long arrow beats three short ones.');
   setTimeout(() => { if (state === 'done') { $('result').hidden = false; sfx.fanfare(stars); } }, 500);
   updateHud();
 }
@@ -436,16 +442,20 @@ function drawCrossbow() {
   ctx.fillStyle = '#9a6234'; roundRect(-9, -64, 18, 92, 6); ctx.fill(); ctx.stroke();
   ctx.fillStyle = '#7a4a24'; roundRect(-14, -78, 28, 22, 8); ctx.fill(); ctx.stroke();
   // string
-  const sy = loaded ? -2 : 12;
-  ctx.strokeStyle = shade(C.ink.startsWith('#') ? C.ink : '#1c2233', .4); ctx.lineWidth = 1.6 / (base() * cam.z);
-  ctx.beginPath(); ctx.moveTo(-50, 12); ctx.lineTo(0, sy); ctx.lineTo(50, 12); ctx.stroke();
-  // limbs
+  const p = loaded ? pull : 0, tipX = 50 - p * 8, tipY = 12 - p * 16;
+  const sy = loaded ? -2 - p * PULL_W : 12;
+  ctx.strokeStyle = shade(C.ink.startsWith('#') ? C.ink : '#1c2233', .4); ctx.lineWidth = (1.6 + p) / (base() * cam.z);
+  ctx.beginPath(); ctx.moveTo(-tipX, tipY); ctx.lineTo(0, sy); ctx.lineTo(tipX, tipY); ctx.stroke();
+  // limbs bend further as the string comes back
   ctx.strokeStyle = C.ink; ctx.lineWidth = 9 / (base() * cam.z) + 4;
-  ctx.beginPath(); ctx.moveTo(-52, 12); ctx.quadraticCurveTo(0, 46, 52, 12); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-tipX - 2, tipY); ctx.quadraticCurveTo(0, 46, tipX + 2, tipY); ctx.stroke();
   ctx.strokeStyle = '#5b6573'; ctx.lineWidth = 7;
-  ctx.beginPath(); ctx.moveTo(-50, 13); ctx.quadraticCurveTo(0, 44, 50, 13); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-tipX, tipY + 1); ctx.quadraticCurveTo(0, 44, tipX, tipY + 1); ctx.stroke();
   ctx.restore();
-  if (loaded) drawArrow({ x: CX, y: AL - 2, vx: 0, vy: 1, falling: false });
+  if (loaded) {
+    const jit = p > .85 && !reduceMotion ? Math.sin(performance.now() / 18) * (p - .85) * 8 : 0;
+    drawArrow({ x: CX + jit, y: AL - 2 - p * PULL_W, vx: 0, vy: 1, falling: false });
+  }
 }
 function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
@@ -533,6 +543,7 @@ function render() {
   scrim.addColorStop(0, C['sky-top']); scrim.addColorStop(.55, C['sky-top']); scrim.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.globalAlpha = .82; ctx.fillStyle = scrim; ctx.fillRect(0, 0, W, scrimH); ctx.globalAlpha = 1;
   if (state !== 'menu') drawDial();
+  if (state === 'aim' && arrowsLeft > 0) drawPowerBar();
   if ((state === 'aim' || state === 'flight') && cam.z > zFull() * 1.35) drawMinimap();
 }
 
@@ -554,6 +565,25 @@ function drawDial() {
   ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * (r - 4), cy + Math.sin(a) * (r - 4)); ctx.stroke();
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 7); ctx.fill();
   ctx.font = '800 9px Nunito, sans-serif'; ctx.fillText('RHYTHM', cx, cy + r + 15);
+  ctx.restore();
+}
+function drawPowerBar() {
+  const w = Math.min(220, W * .5), h = 12, x = (W - w) / 2, y = H - 54 - insetB();
+  ctx.save();
+  ctx.globalAlpha = pulling ? 1 : .55;
+  ctx.fillStyle = 'rgba(20,24,40,.45)'; roundRectS(x - 4, y - 4, w + 8, h + 8, 10); ctx.fill();
+  if (pull > 0) {
+    const g = ctx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, '#5ee07a'); g.addColorStop(.6, '#ffd23f'); g.addColorStop(1, C.accent);
+    ctx.fillStyle = g; roundRectS(x, y, Math.max(h, w * pull), h, 6); ctx.fill();
+  }
+  // where earlier arrows were pulled to, coloured by how many they popped
+  (ghosts[li] || []).forEach((gh, i, arr) => {
+    const f = gh.pops / L.n, gx = x + w * gh.power;
+    ctx.globalAlpha = (pulling ? 1 : .7) * (.45 + .55 * (i + 1) / arr.length);
+    ctx.fillStyle = f > .6 ? '#5ee07a' : f > .3 ? '#ffd23f' : '#ff7b7b';
+    ctx.beginPath(); ctx.moveTo(gx, y - 3); ctx.lineTo(gx - 5, y - 10); ctx.lineTo(gx + 5, y - 10); ctx.closePath(); ctx.fill();
+  });
   ctx.restore();
 }
 function drawMinimap() {
@@ -591,7 +621,10 @@ function updateHud() {
   if (q.children.length !== 3) q.innerHTML = ARROW_SVG.repeat(3);
   [...q.children].forEach((el, i) => el.classList.toggle('used', i >= arrowsLeft));
   const hint = $('hint');
-  if (state === 'aim') hint.innerHTML = arrowsLeft === 3 && popped === 0 ? 'Tap anywhere to shoot · <b>lead the wave</b>' : `Tap to shoot · ${arrowsLeft} arrow${arrowsLeft > 1 ? 's' : ''} left`;
+  if (state === 'aim') hint.innerHTML = pulling ? `Power <b>${Math.round(pull * 100)}%</b> · let go to shoot`
+    : shortPull ? 'Pull further back to shoot'
+    : arrowsLeft === 3 && popped === 0 ? 'Pull back anywhere, let go to shoot<br><b>Harder pull, faster arrow</b>'
+    : `Pull back to shoot · ${arrowsLeft} arrow${arrowsLeft > 1 ? 's' : ''} left`;
   else if (state === 'flight') hint.innerHTML = shot && !shot.splitUsed && shot.arrows.some(a => a.main && a.alive) ? '<b>Tap again to split!</b>' : '';
   else hint.innerHTML = '';
 }
@@ -644,7 +677,8 @@ const PENTA = [0, 2, 4, 7, 9];
 const sfx = {
   pop(n) { const i = n - 1, semi = Math.min(36, Math.floor(i / 5) * 12 + PENTA[i % 5]), f = 330 * Math.pow(2, semi / 12);
     noise(.06, .55, 2600, .8); tone(f, .22, 'triangle', .3); tone(f * 2, .1, 'sine', .1); },
-  launch() { noise(.12, .4, 900, .7); tone(220, .16, 'sawtooth', .12, 0, 70); tone(660, .08, 'square', .05, 0, 330); },
+  launch(p = .6) { noise(.1 + p * .08, .25 + p * .35, 700 + p * 600, .7); tone(160 + p * 120, .16, 'sawtooth', .08 + p * .08, 0, 70); tone(520 + p * 300, .08, 'square', .05, 0, 300); },
+  creak(p) { tone(140 + p * 260, .05, 'square', .025); noise(.03, .08, 1200 + p * 1500, 4); },
   split() { noise(.18, .25, 4000, 2, 'highpass'); tone(880, .12, 'sine', .1, 0, 1320); },
   clank() { tone(620, .25, 'square', .08, 0, 590); tone(931, .3, 'triangle', .1); noise(.05, .4, 3000, 3); },
   boom() { noise(.45, .8, 180, .7, 'lowpass'); tone(90, .35, 'sine', .4, 0, 40); },
@@ -661,13 +695,45 @@ function setMuted(m) {
 }
 
 // ---------- Input ----------
-function tap() {
-  audio();
-  if (state === 'aim') fire(); else if (state === 'flight') split();
+// Press anywhere and drag down to draw the string back; let go to shoot. While an arrow flies, a tap splits it.
+const pullPx = () => Math.min(190, H * .24);
+function startPull(id, y) {
+  if (state !== 'aim' || arrowsLeft <= 0 || pulling) return;
+  pulling = true; pullId = id; pullStart = y; pull = 0; pullStep = 0; shortPull = false; updateHud();
 }
-cv.addEventListener('pointerdown', e => { e.preventDefault(); tap(); }, { passive: false });
-addEventListener('keydown', e => { if ((e.code === 'Space' || e.code === 'Enter') && $('menu').hidden && $('result').hidden) { e.preventDefault(); tap(); } });
-$('menuBtn').onclick = () => { buildMenu(); $('result').hidden = true; $('menu').hidden = false; state = 'menu'; hideCombo(); updateHud(); };
+function setPull(p) {
+  pull = Math.max(0, Math.min(1, p));
+  const st = Math.floor(pull * 10);
+  if (st !== pullStep) { if (st > pullStep) { sfx.creak(pull); buzz(3); } pullStep = st; }
+  updateHud();
+}
+function release() {
+  if (!pulling) return;
+  pulling = false; keyPull = false;
+  if (state === 'aim' && pull >= .1) fire(pull);
+  else if (state === 'aim') shortPull = true;
+  pull = 0; updateHud();
+}
+function cancelPull() { pulling = false; keyPull = false; pull = 0; updateHud(); }
+cv.addEventListener('pointerdown', e => {
+  e.preventDefault(); audio();
+  if (state === 'flight') { split(); return; }
+  startPull(e.pointerId, e.clientY);
+  if (pulling) { try { cv.setPointerCapture(e.pointerId); } catch (err) {} }
+}, { passive: false });
+cv.addEventListener('pointermove', e => { if (pulling && e.pointerId === pullId) setPull((e.clientY - pullStart) / pullPx()); });
+cv.addEventListener('pointerup', e => { if (pulling && e.pointerId === pullId) release(); });
+cv.addEventListener('pointercancel', e => { if (pulling && e.pointerId === pullId) cancelPull(); });
+// Keyboard: hold Space to draw (it fills in about a second), let go to shoot; Space mid-flight splits.
+addEventListener('keydown', e => {
+  if (e.code !== 'Space' || !$('menu').hidden || !$('result').hidden) return;
+  e.preventDefault(); audio();
+  if (e.repeat) return;
+  if (state === 'flight') split();
+  else { startPull('key', 0); if (pulling) keyPull = true; }
+});
+addEventListener('keyup', e => { if (e.code === 'Space' && keyPull) release(); });
+$('menuBtn').onclick = () => { cancelPull(); buildMenu(); $('result').hidden = true; $('menu').hidden = false; state = 'menu'; hideCombo(); updateHud(); };
 $('soundBtn').onclick = () => { audio(); setMuted(!muted); };
 $('againBtn').onclick = () => { audio(); startLevel(li); };
 $('nextBtn').onclick = () => { audio(); startLevel(li + 1); };
@@ -678,6 +744,7 @@ function frame(now) {
   const real = Math.min(.05, (now - last) / 1000); last = now;
   const scale = slowmo > 0 && !reduceMotion ? .3 : 1;
   slowmo = Math.max(0, slowmo - real);
+  if (keyPull && pulling) setPull(pull + real * .9);
   acc += real * scale; let n = 0; while (acc >= DT && n < 40) { step(); acc -= DT; n++; }
   updateFx(real * scale);
   updateCamera(real);
