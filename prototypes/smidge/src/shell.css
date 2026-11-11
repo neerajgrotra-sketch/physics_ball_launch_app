@@ -329,3 +329,18 @@ body[data-view="code"] { background: var(--cc-bg2); }
 .st-x:active { transform: translateY(1px); }
 .st-done { align-self: center; border: 2px solid var(--gold); background: rgba(0,0,0,.18); color: var(--chalk); border-radius: 999px; padding: 8px 16px; font: 800 14px/1 var(--body); cursor: pointer; }
 .st-done b { color: var(--gold); }
+
+.st-cardx { position: relative; }
+.sl-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 4px !important; }
+.sl-h small { font: 700 13px/1.2 var(--body); color: var(--ink-soft); }
+.sl-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.sl-tile { position: relative; border: 2px solid var(--ink); border-radius: 12px; background: transparent; color: var(--ink); padding: 5px 5px 6px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: stretch; gap: 3px; min-width: 0; font-family: var(--body); }
+.sl-tile.cur { box-shadow: 0 0 0 3px var(--gold); }
+.sl-pic { display: block; aspect-ratio: 1; border-radius: 8px; background: var(--mat); overflow: hidden; }
+.sl-pic svg { width: 100%; height: 100%; display: block; }
+.sl-pic.big { width: min(220px, 70%); align-self: center; }
+.sl-n { position: absolute; top: 8px; left: 9px; font: 15px/1 var(--display); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.sl-s { font: 700 12px/1.1 var(--body); color: var(--ink-soft); text-align: center; white-space: nowrap; }
+.sl-s b { color: var(--ink); font-size: 14px; }
+.sl-st { position: absolute; top: 7px; right: 8px; font: 12px/1 var(--display); color: var(--gold); text-shadow: 0 1px 2px rgba(0,0,0,.6); letter-spacing: -.02em; }

@@ -18,7 +18,7 @@ const App = (() => {
     $('progPop').innerHTML = played ? `<span>★ ${stars} of 24</span><span>${played} of 8 levels played</span>` : '<span>New · 8 levels</span>';
     const st = Stickler.stats();
     const sl = Slice.stats(), sk = Skim.stats(), un = Untangle.stats();
-    $('progSlice').innerHTML = sl.today != null ? `<span>Today ${sl.today}/500</span><span>Best ${sl.best}</span>` : sl.best ? `<span>Today's shapes are ready</span><span>Best ${sl.best}</span>` : '<span>New · daily shapes</span>';
+    $('progSlice').innerHTML = (sl.today != null ? `<span>Today ${sl.today}/500</span>` : '<span>Daily shapes ready</span>') + `<span>${sl.levels ? sl.levels + ' of ' + sl.total + ' levels' : sl.total + ' levels'}</span>`;
     $('progSkim').innerHTML = sk.today != null ? `<span>Today ${sk.today} points</span><span>Best ${sk.best}</span>` : sk.best ? `<span>Today's lake is ready</span><span>Best ${sk.best}</span>` : '<span>New · daily lake</span>';
     $('progUn').innerHTML = un.done ? `<span>${un.done} of ${un.total} untangled</span><span>★ ${un.stars}</span>` : `<span>New · ${un.total} levels</span>`;
     const po = Pour.stats(), ey = Eyeball.stats(), sw = Switchboard.stats();

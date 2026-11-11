@@ -435,6 +435,21 @@ body[data-view="code"] { background: var(--cc-bg2); }
 .st-done { align-self: center; border: 2px solid var(--gold); background: rgba(0,0,0,.18); color: var(--chalk); border-radius: 999px; padding: 8px 16px; font: 800 14px/1 var(--body); cursor: pointer; }
 .st-done b { color: var(--gold); }
 
+.st-cardx { position: relative; }
+.sl-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 4px !important; }
+.sl-h small { font: 700 13px/1.2 var(--body); color: var(--ink-soft); }
+.sl-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.sl-tile { position: relative; border: 2px solid var(--ink); border-radius: 12px; background: transparent; color: var(--ink); padding: 5px 5px 6px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: stretch; gap: 3px; min-width: 0; font-family: var(--body); }
+.sl-tile.cur { box-shadow: 0 0 0 3px var(--gold); }
+.sl-pic { display: block; aspect-ratio: 1; border-radius: 8px; background: var(--mat); overflow: hidden; }
+.sl-pic svg { width: 100%; height: 100%; display: block; }
+.sl-pic.big { width: min(220px, 70%); align-self: center; }
+.sl-n { position: absolute; top: 8px; left: 9px; font: 15px/1 var(--display); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.sl-s { font: 700 12px/1.1 var(--body); color: var(--ink-soft); text-align: center; white-space: nowrap; }
+.sl-s b { color: var(--ink); font-size: 14px; }
+.sl-st { position: absolute; top: 7px; right: 8px; font: 12px/1 var(--display); color: var(--gold); text-shadow: 0 1px 2px rgba(0,0,0,.6); letter-spacing: -.02em; }
+
 </style>
 </head>
 <body>
@@ -649,10 +664,21 @@ body[data-view="code"] { background: var(--cc-bg2); }
   <div class="ghint" id="slHint"></div>
   <div class="gover" id="slMenu"><div class="gcard">
     <h2>Slice</h2>
-    <p>One swipe cuts the paper. Get the pieces as close as you can to the split asked for: halves, a quarter, a cut through a pin, and a turning shape with a hole in it.</p>
+    <p>One swipe cuts the paper. Get the pieces as close as you can to the split asked for. Play today's five shapes, or work through the levels.</p>
     <p class="note" id="slMenuNote"></p>
     <div class="row"><button class="sbtn primary" id="slDailyBtn">Play daily</button></div>
     <div class="row"><button class="sbtn" id="slPracticeBtn">Practice</button><button class="sbtn" data-home>All games</button></div>
+    <h3 class="sl-h">Levels <small id="slLvlSum"></small></h3>
+    <div class="sl-grid" id="slGrid"></div>
+  </div></div>
+  <div class="gover" id="slLvl" hidden><div class="gcard st-cardx">
+    <button class="st-x" id="slLvlClose" aria-label="Close and look at the cut">✕</button>
+    <h2 id="slLvlT">Sharp!</h2>
+    <div class="stars3" id="slLvlS"></div>
+    <div class="sl-pic big" id="slLvlPic"></div>
+    <p id="slLvlP"></p>
+    <div class="row"><button class="sbtn" id="slLvlRetry">Try again</button><button class="sbtn primary" id="slLvlNext">Next level</button></div>
+    <div class="row"><button class="sbtn" id="slLvlList">Levels</button></div>
   </div></div>
   <div class="gover" id="slEnd" hidden><div class="gcard">
     <h3>Your cuts</h3>
@@ -2131,13 +2157,42 @@ const Slice = (() => {
       { kinds: ['star', 'fish', 'blob', 'ell'], target: 50, pin: true },
       { kinds: ['donut', 'frame'], target: 50, spin: .35 },
     ];
-    return plan.map((pl, i) => {
-      const s = makeShape(r, pick(pl.kinds));
-      s.target = pl.target; s.color = PAPER[i]; s.spin = pl.spin ? pl.spin * (r() < .5 ? -1 : 1) : 0;
-      if (pl.pin) { for (let k = 0; k < 200; k++) { const p = [80 + r() * 240, 80 + r() * 240]; const c = G.centroid(s.outer); if (G.inside(s, p) && Math.hypot(p[0] - c[0], p[1] - c[1]) > 45) { s.pin = p; break; } } }
-      return s;
-    });
+    return plan.map((pl, i) => finishShape(makeShape(r, pick(pl.kinds)), r, pl, PAPER[i]));
   }
+  function finishShape(s, r, pl, color) {
+    s.target = pl.target; s.color = color; s.spin = pl.spin ? pl.spin * (r() < .5 ? -1 : 1) : 0;
+    if (pl.pin) { for (let k = 0; k < 200; k++) { const p = [80 + r() * 240, 80 + r() * 240]; const c = G.centroid(s.outer); if (G.inside(s, p) && Math.hypot(p[0] - c[0], p[1] - c[1]) > 45) { s.pin = p; break; } } }
+    return s;
+  }
+  // levels: one shape each, getting harder; each tile in the list shows the shape, and your best cut once played
+  const LEVELS = [
+    ['poly', 50], ['blob', 50], ['poly', 50], ['heart', 50], ['star', 50], ['fish', 50], ['bolt', 50], ['house', 50],
+    ['blob', 25], ['ell', 25], ['house', 25], ['star', 100 / 3], ['blob', 50, 'pin'], ['fish', 50, 'pin'], ['ell', 50, 'pin'], ['star', 50, 'pin'],
+    ['donut', 50], ['frame', 50], ['donut', 50, 'spin'], ['frame', 25, 'spin'],
+  ].map(([kind, target, tw], i) => ({ kind, target, pin: tw === 'pin', spin: tw === 'spin' ? .35 : 0, seed: 5101 + i * 31 }));
+  function levelShape(i) { const L = LEVELS[i], r = rng(L.seed); return finishShape(makeShape(r, L.kind), r, L, PAPER[i % PAPER.length]); }
+  const tagFor = L => L.pin ? 'Pin' : L.spin ? 'Spin' : L.target === 25 ? 'Quarter' : L.target < 40 ? 'Third' : L.kind === 'donut' || L.kind === 'frame' ? 'Hole' : 'Half';
+  function promptFor(s) {
+    const base = s.target === 50 ? 'Cut it in half' : s.target === 25 ? 'Cut off exactly a quarter' : 'Cut off exactly a third';
+    const note = s.pin ? 'through the pin' : s.spin ? `it keeps turning${s.holes.length ? ', and the hole isn\'t paper' : ''}` : s.holes.length ? 'the hole isn\'t paper' : '';
+    return note ? `${base}<small>${note}</small>` : s.target === 50 ? 'Cut it exactly in half' : base;
+  }
+  // a small picture of a shape, cut the way a result says (pieces pulled apart, cut line dashed)
+  const ringPath = s => [s.outer, ...s.holes].map(r => 'M' + r.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + 'Z').join('');
+  function turned(s, rot) { if (!rot) return s; const c = Math.cos(rot), sn = Math.sin(rot), tf = p => [200 + (p[0] - 200) * c - (p[1] - 200) * sn, 200 + (p[0] - 200) * sn + (p[1] - 200) * c]; return { ...s, outer: s.outer.map(tf), holes: s.holes.map(h => h.map(tf)) }; }
+  function thumb(s, best) {
+    let inner = '';
+    if (!best) inner = `<path d="${ringPath(s)}" fill="${s.color}" fill-rule="evenodd" opacity=".5" stroke="rgba(0,0,0,.35)" stroke-width="5"/>`;
+    else {
+      const sh = turned(s, best.rot), n = [-best.d[1], best.d[0]];
+      for (const sg of [1, -1]) { const pc = G.cutShape(sh, best.a, best.d, sg); if (pc.outer.length) inner += `<path transform="translate(${(n[0] * 16 * sg).toFixed(1)} ${(n[1] * 16 * sg).toFixed(1)})" d="${ringPath(pc)}" fill="${sg > 0 ? s.color : shade(s.color, -.15)}" fill-rule="evenodd" stroke="rgba(0,0,0,.4)" stroke-width="5"/>`; }
+      inner += `<line x1="${best.a[0] - best.d[0] * 600}" y1="${best.a[1] - best.d[1] * 600}" x2="${best.a[0] + best.d[0] * 600}" y2="${best.a[1] + best.d[1] * 600}" stroke="#fff" stroke-width="5" stroke-dasharray="14 12"/>`;
+    }
+    if (s.pin) inner += `<circle cx="${s.pin[0]}" cy="${s.pin[1]}" r="12" fill="#1c2233"/><circle cx="${s.pin[0]}" cy="${s.pin[1]}" r="7" fill="#ffd23f"/>`;
+    return `<svg viewBox="-20 -20 440 440" aria-hidden="true">${inner}</svg>`;
+  }
+  const starsFor = pts => pts >= 90 ? 3 : pts >= 70 ? 2 : pts >= 40 ? 1 : 0;
+  const starRow = n => [0, 1, 2].map(i => i < n ? '★' : '<span class="off">★</span>').join('');
   // the shape as it stands now (spinning shapes turn about their middle until the cut)
   function current(s) {
     if (!s.spin) return s;
@@ -2150,16 +2205,19 @@ const Slice = (() => {
   const squareFor = err => err < 1 ? '🟩' : err < 3 ? '🟨' : err < 6 ? '🟧' : '🟥';
 
   // ---------- flow ----------
-  function begin(m) {
-    mode = m; seed = m === 'daily' ? dayNumber() * 7919 + 13 : Math.floor(Math.random() * 1e9);
-    shapes = makeRound(seed); results = []; round = 0; startShape();
-    $('slMenu').hidden = true; $('slEnd').hidden = true;
+  let lvl = 0;
+  function begin(m, li) {
+    mode = m;
+    if (m === 'level') { lvl = li; shapes = [levelShape(li)]; }
+    else { seed = m === 'daily' ? dayNumber() * 7919 + 13 : Math.floor(Math.random() * 1e9); shapes = makeRound(seed); }
+    results = []; round = 0; startShape();
+    $('slMenu').hidden = true; $('slEnd').hidden = true; $('slLvl').hidden = true;
   }
   function startShape() {
     cut = null; drag = null; t = 0; state = 'aim';
     const s = shapes[round];
-    $('slSub').textContent = `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · shape ${round + 1} of ${N}`;
-    $('slPrompt').innerHTML = s.target === 50 ? (s.pin ? 'Cut it in half<small>through the pin</small>' : s.spin ? 'Cut it in half<small>it keeps turning, and the hole counts</small>' : 'Cut it exactly in half') : 'Cut off exactly a quarter';
+    $('slSub').textContent = mode === 'level' ? `Level ${lvl + 1} of ${LEVELS.length}` : `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · shape ${round + 1} of ${N}`;
+    $('slPrompt').innerHTML = promptFor(s);
     $('slHint').innerHTML = round === 0 ? 'Swipe across the shape. <b>One cut, no do-overs.</b>' : 'Swipe across the shape';
   }
   function doCut(a, b) {
@@ -2176,7 +2234,22 @@ const Slice = (() => {
     Sound.noise(.16, .45, 3200, .8, 'highpass'); Sound.noise(.08, .3, 1200, 2, 'bandpass', .05); haptic(14);
     const good = err < 1.5;
     setTimeout(() => { if (good) [0, 4, 7].forEach((s2, i) => Sound.tone(660 * Math.pow(2, s2 / 12), .25, 'triangle', .12, i * .07)); else Sound.tone(330, .2, 'triangle', .1); }, 250);
+    if (mode === 'level') { levelDone(s); return; }
     $('slHint').innerHTML = `${gradeFor(err)} <b>${pointsFor(err)} pts</b> · tap for the ${round + 1 < N ? 'next shape' : 'results'}`;
+  }
+  function levelDone(s) {
+    const pts = pointsFor(cut.err), lv = data.levels || (data.levels = {}), prev = lv[lvl];
+    const mine = { pts, err: cut.err, a: cut.a, d: cut.d, rot: s.spin ? s.spin * cutAt : 0 };
+    if (!prev || pts > prev.pts) lv[lvl] = mine;
+    store('smidge/slice', data);
+    $('slHint').innerHTML = `${gradeFor(cut.err)} <b>${pts} pts</b>`;
+    $('slLvlT').textContent = gradeFor(cut.err);
+    $('slLvlS').innerHTML = starRow(starsFor(pts));
+    $('slLvlPic').innerHTML = thumb(s, mine);
+    const a = cut.pct, b = 100 - cut.pct;
+    $('slLvlP').textContent = `${a.toFixed(1)}% and ${b.toFixed(1)}%: off by ${cut.err.toFixed(1)}%, ${pts} points.` + (prev && prev.pts >= pts ? ` Your best here is ${prev.pts}.` : prev ? ' A new best.' : '');
+    $('slLvlNext').textContent = lvl + 1 < LEVELS.length ? 'Next level' : 'All levels';
+    setTimeout(() => { if (state === 'cut' && mode === 'level') $('slLvl').hidden = false; }, 1100);
   }
   function next() {
     if (round + 1 < N) { round++; startShape(); return; }
@@ -2197,7 +2270,20 @@ const Slice = (() => {
     $('slEnd').hidden = false;
     [0, 4, 7, 12].slice(0, stars + 1).forEach((s2, i) => Sound.tone(523 * Math.pow(2, s2 / 12), .35, 'triangle', .16, i * .1));
   }
+  function renderLevels() {
+    const lv = data.levels || {}, first = LEVELS.findIndex((_, i) => !lv[i]);
+    $('slGrid').innerHTML = LEVELS.map((L, i) => {
+      const b = lv[i], sh = levelShape(i);
+      return `<button class="sl-tile ${i === first ? 'cur' : ''} ${b ? 'done' : ''}" data-i="${i}" aria-label="Level ${i + 1}, ${tagFor(L)}${b ? `, best ${b.pts} points` : ''}">` +
+        `<span class="sl-pic">${thumb(sh, b)}</span><span class="sl-n">${i + 1}</span>` +
+        `<span class="sl-s">${b ? `<b>${b.pts}</b> pts` : tagFor(L)}</span>${b ? `<span class="sl-st">${'★'.repeat(starsFor(b.pts))}</span>` : ''}</button>`;
+    }).join('');
+    $('slGrid').querySelectorAll('.sl-tile').forEach(t => t.onclick = () => { Sound.audio(); begin('level', +t.dataset.i); });
+    const done = LEVELS.filter((_, i) => lv[i]).length, total = LEVELS.reduce((a, _, i) => a + (lv[i] ? lv[i].pts : 0), 0);
+    $('slLvlSum').textContent = done ? `${done} of ${LEVELS.length} played · ${total} points` : `${LEVELS.length} shapes, one cut each`;
+  }
   function showMenu() {
+    renderLevels(); $('slLvl').hidden = true;
     state = 'menu'; const day = dayNumber(), done = data.daily[day];
     $('slDailyBtn').textContent = done != null ? `Daily #${day} again` : `Play daily #${day}`;
     $('slMenuNote').textContent = done != null ? `Today's score: ${done} of 500. Best ever: ${data.best}.` : data.best ? `Best ever: ${data.best} of 500.` : 'Five shapes. One swipe each. 100 points for a perfect cut.';
@@ -2274,7 +2360,7 @@ const Slice = (() => {
   // ---------- input ----------
   cv.addEventListener('pointerdown', e => {
     if (!active) return; e.preventDefault(); Sound.audio();
-    if (state === 'cut') { if (performance.now() - cut.at > 350) next(); return; }
+    if (state === 'cut') { if (performance.now() - cut.at > 350) { if (mode === 'level') $('slLvl').hidden = false; else next(); } return; }
     if (state !== 'aim') return;
     const v = view(); drag = { a: toWorld(v, e), b: null };
     try { cv.setPointerCapture(e.pointerId); } catch (err) {}
@@ -2287,6 +2373,11 @@ const Slice = (() => {
     doCut(a, b);
   });
   cv.addEventListener('pointercancel', () => { drag = null; });
+  $('slLvlClose').onclick = () => { $('slLvl').hidden = true; $('slHint').innerHTML = 'Tap the board for your result again'; Sound.tone(520, .05, 'triangle', .06); };
+  $('slLvl').addEventListener('click', e => { if (e.target === $('slLvl')) $('slLvlClose').click(); });
+  $('slLvlRetry').onclick = () => { Sound.audio(); begin('level', lvl); };
+  $('slLvlNext').onclick = () => { Sound.audio(); if (lvl + 1 < LEVELS.length) begin('level', lvl + 1); else showMenu(); };
+  $('slLvlList').onclick = () => { Sound.audio(); showMenu(); };
   $('slDailyBtn').onclick = () => { Sound.audio(); begin('daily'); };
   $('slPracticeBtn').onclick = () => { Sound.audio(); begin('practice'); };
   $('slAgain').onclick = () => { Sound.audio(); begin(mode); };
@@ -2297,8 +2388,8 @@ const Slice = (() => {
   return {
     enter() { active = true; resize(); readColors(); showMenu(); },
     leave() { active = false; drag = null; },
-    stats() { return { best: data.best || 0, today: data.daily[dayNumber()] }; },
-    _debug: { makeRound, G },
+    stats() { const lv = data.levels || {}; return { best: data.best || 0, today: data.daily[dayNumber()], levels: LEVELS.filter((_, i) => lv[i]).length, total: LEVELS.length }; },
+    _debug: { makeRound, G, LEVELS, levelShape },
   };
 })();
 
@@ -3315,7 +3406,7 @@ const App = (() => {
     $('progPop').innerHTML = played ? `<span>★ ${stars} of 24</span><span>${played} of 8 levels played</span>` : '<span>New · 8 levels</span>';
     const st = Stickler.stats();
     const sl = Slice.stats(), sk = Skim.stats(), un = Untangle.stats();
-    $('progSlice').innerHTML = sl.today != null ? `<span>Today ${sl.today}/500</span><span>Best ${sl.best}</span>` : sl.best ? `<span>Today's shapes are ready</span><span>Best ${sl.best}</span>` : '<span>New · daily shapes</span>';
+    $('progSlice').innerHTML = (sl.today != null ? `<span>Today ${sl.today}/500</span>` : '<span>Daily shapes ready</span>') + `<span>${sl.levels ? sl.levels + ' of ' + sl.total + ' levels' : sl.total + ' levels'}</span>`;
     $('progSkim').innerHTML = sk.today != null ? `<span>Today ${sk.today} points</span><span>Best ${sk.best}</span>` : sk.best ? `<span>Today's lake is ready</span><span>Best ${sk.best}</span>` : '<span>New · daily lake</span>';
     $('progUn').innerHTML = un.done ? `<span>${un.done} of ${un.total} untangled</span><span>★ ${un.stars}</span>` : `<span>New · ${un.total} levels</span>`;
     const po = Pour.stats(), ey = Eyeball.stats(), sw = Switchboard.stats();
