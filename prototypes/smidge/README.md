@@ -16,12 +16,25 @@ tower (gusts later). Gold, bomb and armour balloons. Rhythm dial and power-bar m
 - Fix the sum (8): seven-segment sums; move sticks so the sum is true and every digit stays a real digit.
 A live square count, undo, reset and a Hint (the next step of a stored answer; a star only without hints).
 
+**Slice**: one swipe cuts a paper shape on a cutting mat. Five shapes a round: halves, cut off a quarter, halves
+through a pin, and a turning shape with a hole (the hole counts). 100 points for a perfect cut, off by 1% is 88.
+A daily round (same shapes for everyone, by date) with a copyable emoji result, and practice rounds.
+
+**Skim**: skip stones across a lake. Pull back and let go (pull length = speed, direction = angle). A stone skips when it
+meets the water at under 20°, wave slope included, while still fast; each touch costs speed, more for steeper touches.
+Five stones; a point a skip, +2 for a skip inside a floating ring. Daily lake (wind, waves, rings by date) and practice.
+
+**Untangle**: drag pins until no strings cross. 12 levels, 6 to 28 pins. Each level is the crossing points of n straight
+lines joined along each line (always flat-solvable), scrambled onto a circle. Stars by time.
+
 ## Source
 
 `index.html` is built; edit `src/` and run `cd src && python3 build.py ../index.html`.
 - `src/matchcore.js`: Stickler rules (pure, no DOM), shared by the game and the verifier.
 - `src/puzzles.src.js`: the puzzles. Never edit `puzzles.gen.js`: run `cd src && node verify.js`, which checks each
   puzzle has an answer in exactly n steps (move puzzles: none in fewer) and stores one answer for the Hint.
+- `src/slice.js`, `src/skim.js`, `src/untangle.js`: each starts with its pure part (SliceGeo, SkimPhys, UntangleGen);
+  `node src/logic.test.cjs` checks them (cuts, every Untangle level solvable, Skim skip spread, determinism).
 - `src/pop.*`: Popshot. `src/sound.js`: shared synthesised sound. `src/app.js`: splash, home, moving between games.
 
 The name: no game called Smidge turned up in a quick web search; do a proper trademark search before the store

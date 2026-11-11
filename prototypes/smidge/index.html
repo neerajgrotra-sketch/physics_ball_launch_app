@@ -277,6 +277,81 @@ button { font-family: inherit; }
 @keyframes flick { from { transform: scaleY(1); } to { transform: scaleY(.82) skewX(6deg); } }
 .hitbox { fill: transparent; cursor: pointer; }
 
+/* ---------- shared bits for the canvas games (Slice, Skim, Untangle) ---------- */
+.gview canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+.gbar { position: absolute; left: 0; right: 0; top: 0; z-index: 2; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; pointer-events: none;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.gbar button { pointer-events: auto; }
+.gttl { text-align: center; min-width: 0; color: var(--gfg); }
+.gttl b { display: block; font: 30px/1 var(--display); letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gttl small { display: block; font: 800 11px/1.5 var(--body); letter-spacing: .12em; text-transform: uppercase; opacity: .78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gprompt { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top, 0px) + 74px); z-index: 1; text-align: center; pointer-events: none; color: var(--gfg);
+  font: 26px/1.15 var(--display); letter-spacing: .02em; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); text-wrap: balance; }
+.gprompt small { display: block; font: 700 14px/1.4 var(--body); letter-spacing: 0; opacity: .85; margin-top: 4px; }
+.ghint { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; text-align: center; pointer-events: none; color: var(--gfg);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  font: 800 15px/1.35 var(--body); letter-spacing: .02em; text-wrap: balance; }
+.ghint b { color: var(--gold); }
+.gover { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; background: rgba(8,12,28,.42); overflow-y: auto;
+  padding-block: calc(env(safe-area-inset-top, 0px) + 16px) calc(env(safe-area-inset-bottom, 0px) + 16px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.gcard { width: min(420px, 100%); background: var(--card); color: var(--ink); border: 3px solid #1c2233; border-radius: 22px; box-shadow: 0 6px 0 #1c2233;
+  padding: 20px; display: flex; flex-direction: column; gap: 12px; animation: thumpin .35s cubic-bezier(.3,1.6,.5,1); }
+.gcard h2 { margin: 0; font: 38px/1 var(--display); letter-spacing: .01em; color: var(--accent); -webkit-text-stroke: 1.5px #1c2233; paint-order: stroke fill; text-wrap: balance; }
+.gcard h3 { margin: 0; font: 24px/1.1 var(--display); }
+.gcard p { margin: 0; font: 600 15px/1.45 var(--body); color: var(--ink-soft); }
+.gcard .row { display: flex; gap: 10px; }
+.gcard .big { font: 52px/1 var(--display); font-variant-numeric: tabular-nums; text-align: center; }
+.gcard .stars3 { font: 40px/1 var(--display); color: var(--gold); text-align: center; letter-spacing: .08em; -webkit-text-stroke: 1.5px #1c2233; paint-order: stroke fill; }
+.gcard .stars3 .off { color: transparent; }
+.gcard .share { font: 700 14px/1.5 var(--body); background: rgba(0,0,0,.05); border-radius: 12px; padding: 10px 12px; white-space: pre-wrap; -webkit-user-select: text; user-select: text; color: var(--ink); }
+.gcard .note { font: 700 13px/1.4 var(--body); color: var(--ink-soft); text-align: center; }
+.gcard .lvlgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.gcard .lvlgrid button { border: 2px solid var(--ink); border-radius: 12px; background: transparent; color: var(--ink); padding: 8px 2px; cursor: pointer; font: 20px/1 var(--display); display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.gcard .lvlgrid button small { font: 800 11px/1 var(--body); color: var(--gold); letter-spacing: .02em; min-height: 11px; }
+.gcard .lvlgrid button.cur { background: var(--gold); }
+
+/* ---------- Slice: a cutting mat ---------- */
+:root { --mat: #2f66b3; --mat-2: #24539a; --mat-line: #dce9ff; --mat-bg: #e7edf7;
+  --sk-sky1: #8fd3ff; --sk-sky2: #fde3c8; --sk-water1: #3fa7c6; --sk-water2: #1d5f86; --sk-hill: #5d9f73; --sk-hill2: #8dbfa0; --sk-glint: rgba(255,255,255,.85);
+  --cork: #c99a5f; --cork-2: #b0824a; --yarn: #27406b; --yarn-hot: #d8342b; --un-fg: #1c2233; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --mat: #1d3b6e; --mat-2: #152c55; --mat-line: #9fbfff; --mat-bg: #0d1428;
+  --sk-sky1: #0b1433; --sk-sky2: #3b2f5c; --sk-water1: #1e3f66; --sk-water2: #0a1a30; --sk-hill: #1d3a3a; --sk-hill2: #2a4757; --sk-glint: rgba(220,230,255,.8);
+  --cork: #5a4128; --cork-2: #3d2b19; --yarn: #eadfc8; --yarn-hot: #ff6b5e; --un-fg: #f5ead8; } }
+:root[data-theme="dark"] {
+  --mat: #1d3b6e; --mat-2: #152c55; --mat-line: #9fbfff; --mat-bg: #0d1428;
+  --sk-sky1: #0b1433; --sk-sky2: #3b2f5c; --sk-water1: #1e3f66; --sk-water2: #0a1a30; --sk-hill: #1d3a3a; --sk-hill2: #2a4757; --sk-glint: rgba(220,230,255,.8);
+  --cork: #5a4128; --cork-2: #3d2b19; --yarn: #eadfc8; --yarn-hot: #ff6b5e; --un-fg: #f5ead8; }
+#slice { background: var(--mat-bg); --gfg: var(--ink); }
+body[data-view="slice"] { background: var(--mat-bg); }
+#skim { background: var(--sk-water2); --gfg: #fff; }
+#skim .gttl, #skim .gprompt, #skim .ghint { text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+body[data-view="skim"] { background: var(--sk-water2); }
+#untangle { --gfg: var(--un-fg); background: radial-gradient(circle at 20% 30%, rgba(0,0,0,.06) 0 2px, transparent 3px) 0 0 / 23px 29px, radial-gradient(circle at 70% 60%, rgba(255,255,255,.07) 0 1.5px, transparent 2.5px) 0 0 / 31px 17px, radial-gradient(120% 90% at 50% 40%, var(--cork), var(--cork-2)); }
+body[data-view="untangle"] { background: var(--cork-2); }
+.un-stats { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top, 0px) + 72px); display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; z-index: 1;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.chip2 { font: 800 14px/1 var(--body); font-variant-numeric: tabular-nums; padding: 7px 12px; border-radius: 999px; background: rgba(0,0,0,.16); color: var(--un-fg); }
+.chip2:empty { display: none; }
+.chip2.zero { background: var(--ok); color: #fff; }
+.un-board { position: absolute; left: max(10px, env(safe-area-inset-left, 0px)); right: max(10px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 112px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 130px); touch-action: none; }
+.un-board svg { width: 100%; height: 100%; touch-action: none; overflow: visible; }
+.un-foot { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; gap: 10px; align-items: center;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.un-foot .row { display: flex; gap: 10px; width: min(420px, 100%); }
+.un-hint { font: 800 15px/1.35 var(--body); color: var(--un-fg); text-align: center; text-wrap: balance; min-height: 1.35em; }
+.un-hint b { color: var(--yarn-hot); }
+.yarn { stroke: var(--yarn); stroke-width: 9; stroke-linecap: round; }
+.yarn.hot { stroke: var(--yarn-hot); }
+.yarn.won { stroke: var(--ok); }
+.pin-hit { fill: transparent; cursor: grab; }
+.pin-shadow { fill: rgba(0,0,0,.28); pointer-events: none; }
+.pin-head { fill: hsl(var(--h) 72% 56%); stroke: #1c2233; stroke-width: 4; pointer-events: none; }
+.pin.held .pin-head { stroke: var(--gold); stroke-width: 9; }
+.pin-shine { fill: rgba(255,255,255,.65); pointer-events: none; }
+
 </style>
 </head>
 <body>
@@ -292,7 +367,7 @@ button { font-family: inherit; }
     </div>
     <p class="sp-tag">Tiny games. Big grins.</p>
     <button class="sp-go" id="spGo">Let's play</button>
-    <div class="sp-ver">Prototype 0.2</div>
+    <div class="sp-ver">Prototype 0.3</div>
   </div>
 </div>
 
@@ -336,6 +411,42 @@ button { font-family: inherit; }
           <span class="prog" id="progMatch"></span>
         </div>
       </button>
+      <button class="game" data-go="slice">
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="150" fill="#2f66b3"/>
+          <g stroke="#dce9ff" opacity=".25"><line x1="0" y1="0" x2="0" y2="150"/><line x1="20" y1="0" x2="20" y2="150"/><line x1="40" y1="0" x2="40" y2="150"/><line x1="60" y1="0" x2="60" y2="150"/><line x1="80" y1="0" x2="80" y2="150"/><line x1="100" y1="0" x2="100" y2="150"/><line x1="120" y1="0" x2="120" y2="150"/><line x1="140" y1="0" x2="140" y2="150"/><line x1="160" y1="0" x2="160" y2="150"/><line x1="180" y1="0" x2="180" y2="150"/><line x1="200" y1="0" x2="200" y2="150"/><line x1="220" y1="0" x2="220" y2="150"/><line x1="240" y1="0" x2="240" y2="150"/><line x1="260" y1="0" x2="260" y2="150"/><line x1="280" y1="0" x2="280" y2="150"/><line x1="300" y1="0" x2="300" y2="150"/><line x1="320" y1="0" x2="320" y2="150"/><line x1="340" y1="0" x2="340" y2="150"/><line x1="360" y1="0" x2="360" y2="150"/><line x1="380" y1="0" x2="380" y2="150"/><line x1="400" y1="0" x2="400" y2="150"/><line x1="0" y1="0" x2="400" y2="0"/><line x1="0" y1="20" x2="400" y2="20"/><line x1="0" y1="40" x2="400" y2="40"/><line x1="0" y1="60" x2="400" y2="60"/><line x1="0" y1="80" x2="400" y2="80"/><line x1="0" y1="100" x2="400" y2="100"/><line x1="0" y1="120" x2="400" y2="120"/><line x1="0" y1="140" x2="400" y2="140"/></g>
+          <path d="M150 30 L205 44 L180 120 L120 112 L108 60 Z" fill="#ffc23a" stroke="rgba(0,0,0,.35)" stroke-width="2"/>
+          <path d="M215 46 L262 58 L276 104 L236 128 L190 122 Z" fill="#e6a91f" stroke="rgba(0,0,0,.35)" stroke-width="2"/>
+          <line x1="232" y1="0" x2="168" y2="150" stroke="#fff" stroke-width="2.5" stroke-dasharray="8 6"/>
+          <g font-family="Lilita One, sans-serif" font-size="22" fill="#fff" stroke="#1c2233" stroke-width="4" paint-order="stroke" text-anchor="middle"><text x="152" y="84">49.8%</text><text x="238" y="98">50.2%</text></g>
+        </svg></div>
+        <div class="meta"><span class="kicker">Daily · steady hand</span><span class="name">Slice</span>
+          <span class="desc">One swipe cuts a paper shape. Get it exactly in half, cut off a quarter, then try the spinning one.</span><span class="prog" id="progSlice"></span></div>
+      </button>
+      <button class="game" data-go="skim">
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice">
+          <defs><linearGradient id="hsk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3ff"/><stop offset="1" stop-color="#fde3c8"/></linearGradient><linearGradient id="hwt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3fa7c6"/><stop offset="1" stop-color="#1d5f86"/></linearGradient></defs>
+          <rect width="400" height="92" fill="url(#hsk)"/>
+          <path d="M0 92 Q60 60 120 80 T260 74 T400 84 V92 H0 Z" fill="#5d9f73"/>
+          <rect y="92" width="400" height="58" fill="url(#hwt)"/>
+          <path d="M40 70 Q90 40 130 92 Q165 62 200 92 Q228 72 252 92 Q270 80 285 92" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="3 6"/>
+          <g fill="none" stroke="#fff" stroke-width="2" opacity=".8"><ellipse cx="130" cy="94" rx="22" ry="5"/><ellipse cx="200" cy="94" rx="16" ry="4"/><ellipse cx="252" cy="94" rx="11" ry="3"/></g>
+          <ellipse cx="300" cy="86" rx="11" ry="6" fill="#8d939c" stroke="#1c2233" stroke-width="2"/>
+          <ellipse cx="200" cy="94" rx="30" ry="7" fill="none" stroke="#ffd23f" stroke-width="3"/>
+        </svg></div>
+        <div class="meta"><span class="kicker">Skill · pull and flick</span><span class="name">Skim</span>
+          <span class="desc">Skip stones across a lake. Throw flat and fast, read the waves, and thread the stone through floating rings.</span><span class="prog" id="progSkim"></span></div>
+      </button>
+      <button class="game" data-go="untangle">
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="150" fill="#c99a5f"/>
+          <g fill="#a9783f" opacity=".5"><circle cx="30" cy="20" r="2"/><circle cx="90" cy="120" r="2"/><circle cx="160" cy="40" r="1.6"/><circle cx="330" cy="30" r="2"/><circle cx="370" cy="110" r="1.6"/><circle cx="250" cy="135" r="2"/></g>
+          <g stroke-width="5" stroke-linecap="round"><line x1="120" y1="35" x2="280" y2="115" stroke="#d8342b"/><line x1="120" y1="115" x2="280" y2="35" stroke="#d8342b"/><line x1="120" y1="35" x2="120" y2="115" stroke="#27406b"/><line x1="280" y1="35" x2="280" y2="115" stroke="#27406b"/><line x1="200" y1="20" x2="120" y2="35" stroke="#27406b"/><line x1="200" y1="20" x2="280" y2="35" stroke="#27406b"/></g>
+          <g stroke="#1c2233" stroke-width="2.5"><circle cx="120" cy="35" r="10" fill="#ff5a4f"/><circle cx="280" cy="115" r="10" fill="#36a8f0"/><circle cx="120" cy="115" r="10" fill="#ffd23f"/><circle cx="280" cy="35" r="10" fill="#3cc36b"/><circle cx="200" cy="20" r="10" fill="#d24fd6"/></g>
+        </svg></div>
+        <div class="meta"><span class="kicker">Puzzle · drag the pins</span><span class="name">Untangle</span>
+          <span class="desc">Pins joined by string. Drag them until no two strings cross. Twelve levels, from a few pins to a real knot.</span><span class="prog" id="progUn"></span></div>
+      </button>
       <div class="game soon" aria-label="More games coming soon">
         <div class="art" aria-hidden="true">+</div>
         <div class="meta">
@@ -345,7 +456,7 @@ button { font-family: inherit; }
         </div>
       </div>
     </div>
-    <div class="home-foot">Smidge prototype 0.2 · progress is saved in this browser</div>
+    <div class="home-foot">Smidge prototype 0.3 · progress is saved in this browser</div>
   </div>
 </div>
 
@@ -387,6 +498,76 @@ button { font-family: inherit; }
       </div>
     </div>
   </div>
+</div>
+
+<div class="view gview" id="slice" hidden>
+  <canvas id="slCanvas" aria-label="Cutting mat with a paper shape. Swipe across it to cut."></canvas>
+  <div class="gbar"><button class="ibtn" data-home aria-label="All games">‹</button><div class="gttl"><b>Slice</b><small id="slSub"></small></div><button class="ibtn" data-sound aria-label="Sound on">🔊</button></div>
+  <div class="gprompt" id="slPrompt"></div>
+  <div class="ghint" id="slHint"></div>
+  <div class="gover" id="slMenu"><div class="gcard">
+    <h2>Slice</h2>
+    <p>One swipe cuts the paper. Get the pieces as close as you can to the split asked for: halves, a quarter, a cut through a pin, and a turning shape with a hole in it.</p>
+    <p class="note" id="slMenuNote"></p>
+    <div class="row"><button class="sbtn primary" id="slDailyBtn">Play daily</button></div>
+    <div class="row"><button class="sbtn" id="slPracticeBtn">Practice</button><button class="sbtn" data-home>All games</button></div>
+  </div></div>
+  <div class="gover" id="slEnd" hidden><div class="gcard">
+    <h3>Your cuts</h3>
+    <div class="big"><span id="slTotal">0</span><small style="font-size:20px"> / 500</small></div>
+    <div class="stars3" id="slStars"></div>
+    <div class="share" id="slList"></div>
+    <div class="share" id="slShare"></div>
+    <div class="row"><button class="sbtn" id="slCopy">Copy result</button></div>
+    <p class="note" id="slNote"></p>
+    <div class="row"><button class="sbtn" id="slMenuBtn">Menu</button><button class="sbtn primary" id="slAgain">Play again</button></div>
+  </div></div>
+</div>
+
+<div class="view gview" id="skim" hidden>
+  <canvas id="skCanvas" aria-label="A lake seen from the side. Pull back and let go to skip a stone."></canvas>
+  <div class="gbar"><button class="ibtn" data-home aria-label="All games">‹</button><div class="gttl"><b>Skim</b><small id="skSub"></small></div><button class="ibtn" data-sound aria-label="Sound on">🔊</button></div>
+  <div class="gprompt" id="skPrompt"></div>
+  <div class="ghint" id="skHint"></div>
+  <div class="gover" id="skMenu"><div class="gcard">
+    <h2>Skim</h2>
+    <p>Skip stones across the lake. Pull back and let go: how far you pull sets the speed, the direction sets the angle. Flat and fast skips best, and the waves change the angle the stone meets the water.</p>
+    <p class="note" id="skMenuNote"></p>
+    <div class="row"><button class="sbtn primary" id="skDailyBtn">Play daily</button></div>
+    <div class="row"><button class="sbtn" id="skPracticeBtn">Practice</button><button class="sbtn" data-home>All games</button></div>
+  </div></div>
+  <div class="gover" id="skEnd" hidden><div class="gcard">
+    <h3>Your stones</h3>
+    <div class="big"><span id="skTotal">0</span><small style="font-size:20px"> points</small></div>
+    <div class="stars3" id="skStars"></div>
+    <div class="share" id="skList"></div>
+    <div class="share" id="skShare"></div>
+    <div class="row"><button class="sbtn" id="skCopy">Copy result</button></div>
+    <p class="note" id="skNote"></p>
+    <div class="row"><button class="sbtn" id="skMenuBtn">Menu</button><button class="sbtn primary" id="skAgain">Play again</button></div>
+  </div></div>
+</div>
+
+<div class="view gview" id="untangle" hidden>
+  <div class="gbar"><button class="ibtn" data-home aria-label="All games">‹</button><div class="gttl"><b>Untangle</b><small id="unSub"></small></div><button class="ibtn" data-sound aria-label="Sound on">🔊</button></div>
+  <div class="un-stats"><span class="chip2" id="unCount"></span><span class="chip2" id="unTime"></span><span class="chip2" id="unMoves"></span></div>
+  <div class="un-board" id="unBoard"></div>
+  <div class="un-foot">
+    <div class="un-hint" id="unHint"></div>
+    <div class="row"><button class="sbtn" id="unList">Levels</button><button class="sbtn" id="unRestart">Restart</button></div>
+  </div>
+  <div class="gover" id="unMenu"><div class="gcard">
+    <h2>Untangle</h2>
+    <p>Pins joined by string. Drag the pins until no two strings cross. Red strings are crossing. Every level can be untangled.</p>
+    <div class="lvlgrid" id="unGrid"></div>
+    <div class="row"><button class="sbtn" data-home>All games</button></div>
+  </div></div>
+  <div class="gover" id="unEnd" hidden><div class="gcard">
+    <h2 id="unEndT">Untangled!</h2>
+    <div class="stars3" id="unEndS"></div>
+    <p id="unEndP"></p>
+    <div class="row"><button class="sbtn" id="unEndList">Levels</button><button class="sbtn primary" id="unNext">Next level</button></div>
+  </div></div>
 </div>
 <div class="view" id="pop" hidden>
 <canvas id="c" aria-label="Game board: a swaying tower of balloons above a crossbow"></canvas>
@@ -478,6 +659,16 @@ const Sound = (() => {
   return { audio, tone, noise, setMuted, isMuted: () => muted, paintButtons };
 })();
 function haptic(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+// Seeded random numbers (same seed, same game) and the day number for daily rounds (day 1 = Monday 5 Jan 2026, local time).
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function dayNumber() { const now = new Date(), a = Date.UTC(2026, 0, 5), b = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()); return Math.floor((b - a) / 864e5) + 1; }
+function store(key, val) { try { if (val === undefined) return JSON.parse(localStorage.getItem(key) || 'null'); localStorage.setItem(key, JSON.stringify(val)); } catch (e) { return null; } }
+async function copyText(text, btn) {
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {}
+  if (btn) { const old = btn.dataset.label || btn.textContent; btn.dataset.label = old; btn.textContent = ok ? 'Copied' : 'Select the text below to copy'; setTimeout(() => { btn.textContent = old; }, 1600); }
+  return ok;
+}
 
 // Stickler core: pure puzzle logic shared by the game and the verifier. No DOM.
 const MC = (() => {
@@ -1523,19 +1714,625 @@ const Stickler = (() => {
   };
 })();
 
+// Slice: one swipe cuts a paper shape; get the pieces as close to the asked split as you can. Five shapes a round.
+const SliceGeo = (() => {
+  // polygons are arrays of [x, y]; a shape is { outer, holes }
+  const area = p => { let a = 0; for (let i = 0, j = p.length - 1; i < p.length; j = i++) a += (p[j][0] + p[i][0]) * (p[j][1] - p[i][1]); return Math.abs(a) / 2; };
+  const shapeArea = s => area(s.outer) - s.holes.reduce((t, h) => t + area(h), 0);
+  function clip(poly, a, d, side) { // keep the part where side * cross(d, p - a) >= 0
+    const out = [], f = p => side * (d[0] * (p[1] - a[1]) - d[1] * (p[0] - a[0]));
+    for (let i = 0; i < poly.length; i++) {
+      const p = poly[i], q = poly[(i + 1) % poly.length], fp = f(p), fq = f(q);
+      if (fp >= 0) out.push(p);
+      if ((fp >= 0) !== (fq >= 0)) { const t = fp / (fp - fq); out.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]); }
+    }
+    return out.length >= 3 ? out : [];
+  }
+  const cutShape = (s, a, d, side) => ({ outer: clip(s.outer, a, d, side), holes: s.holes.map(h => clip(h, a, d, side)).filter(h => h.length) });
+  function centroid(p) { let x = 0, y = 0, A = 0; for (let i = 0, j = p.length - 1; i < p.length; j = i++) { const c = p[j][0] * p[i][1] - p[i][0] * p[j][1]; A += c; x += (p[j][0] + p[i][0]) * c; y += (p[j][1] + p[i][1]) * c; } return A ? [x / (3 * A), y / (3 * A)] : p[0]; }
+  // The share of the shape on the + side of the line through a along d, in percent.
+  function split(s, a, d) { const t = shapeArea(s), A = shapeArea(cutShape(s, a, d, 1)); return t ? 100 * A / t : 0; }
+  function inside(s, pt) {
+    const inPoly = p => { let c = false; for (let i = 0, j = p.length - 1; i < p.length; j = i++) if ((p[i][1] > pt[1]) !== (p[j][1] > pt[1]) && pt[0] < (p[j][0] - p[i][0]) * (pt[1] - p[i][1]) / (p[j][1] - p[i][1]) + p[i][0]) c = !c; return c; };
+    return inPoly(s.outer) && !s.holes.some(inPoly);
+  }
+  return { area, shapeArea, clip, cutShape, centroid, split, inside };
+})();
+
+const Slice = (() => {
+  const $ = id => document.getElementById(id);
+  const G = SliceGeo, N = 5, PAPER = ['#ff6b5e', '#ffc23a', '#2fb8a8', '#8a6cf0', '#ff7ab0'];
+  const cv = $('slCanvas'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, DPR = 1, active = false, last = 0;
+  let mode = 'daily', seed = 1, round = 0, shapes = [], results = [], state = 'menu', drag = null, cut = null, t = 0, cutAt = 0;
+  let data = store('smidge/slice') || { daily: {}, best: 0 };
+
+  // ---------- shapes (seeded, so a daily round is the same for everyone) ----------
+  const ring = (n, f) => Array.from({ length: n }, (_, i) => f(i * Math.PI * 2 / n, i));
+  function makeShape(r, kind) {
+    let outer, holes = [];
+    if (kind === 'blob') { const ph = [r() * 6, r() * 6, r() * 6], am = [.14 + r() * .12, .08 + r() * .1, .05 + r() * .06]; outer = ring(64, a => { const k = 1 + am[0] * Math.sin(2 * a + ph[0]) + am[1] * Math.sin(3 * a + ph[1]) + am[2] * Math.sin(5 * a + ph[2]); return [Math.cos(a) * k, Math.sin(a) * k]; }); }
+    else if (kind === 'star') { const n = 5 + Math.floor(r() * 3), inn = .42 + r() * .16; outer = ring(n * 2, (a, i) => { const k = i % 2 ? inn : 1; return [Math.cos(a - Math.PI / 2) * k, Math.sin(a - Math.PI / 2) * k]; }); }
+    else if (kind === 'poly') { const n = 3 + Math.floor(r() * 5), sx = .75 + r() * .5; outer = ring(n, a => [Math.cos(a) * sx, Math.sin(a)]); }
+    else if (kind === 'heart') { outer = ring(72, a => { const x = 16 * Math.pow(Math.sin(a), 3), y = 13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a); return [x / 16, -y / 16]; }); }
+    else if (kind === 'ell') { const w = .45 + r() * .2; outer = [[-1, -1], [-1 + w * 1.4, -1], [-1 + w * 1.4, 1 - w * 1.4], [1, 1 - w * 1.4], [1, 1], [-1, 1]]; }
+    else if (kind === 'house') { outer = [[-.8, 1], [-.8, -.1], [-.95, -.1], [0, -1], [.45, -.53], [.45, -.9], [.7, -.9], [.7, -.27], [.95, -.1], [.8, -.1], [.8, 1]]; }
+    else if (kind === 'fish') { outer = [[-1, 0], [-.55, -.5], [0, -.62], [.45, -.4], [.7, -.1], [1, -.55], [.95, 0], [1, .55], [.7, .1], [.45, .4], [0, .62], [-.55, .5]]; }
+    else if (kind === 'bolt') { outer = [[-.2, -1], [.55, -1], [.1, -.2], [.6, -.2], [-.45, 1], [-.1, .1], [-.6, .1]]; }
+    else if (kind === 'donut') { outer = ring(64, a => [Math.cos(a), Math.sin(a)]); const ox = (r() - .5) * .5, oy = (r() - .5) * .5, rr = .32 + r() * .14; holes = [ring(40, a => [ox + Math.cos(a) * rr, oy + Math.sin(a) * rr]).reverse()]; }
+    else if (kind === 'frame') { outer = [[-1, -.8], [1, -.8], [1, .8], [-1, .8]]; const hx = (r() - .5) * .5; holes = [[[hx - .4, -.4], [hx - .4, .35], [hx + .45, .35], [hx + .45, -.4]]]; }
+    // random turn and stretch, then fit about 270 units across, centred on the board
+    const rot = r() * Math.PI * 2, st = .85 + r() * .3, c = Math.cos(rot), s = Math.sin(rot);
+    const tf = p => [p[0] * st * c - p[1] * s, p[0] * st * s + p[1] * c];
+    outer = outer.map(tf); holes = holes.map(h => h.map(tf));
+    let mx = 1e9, Mx = -1e9, my = 1e9, My = -1e9; for (const [x, y] of outer) { mx = Math.min(mx, x); Mx = Math.max(Mx, x); my = Math.min(my, y); My = Math.max(My, y); }
+    const k = 270 / Math.max(Mx - mx, My - my), cx = (mx + Mx) / 2, cy = (my + My) / 2, fit = p => [200 + (p[0] - cx) * k, 200 + (p[1] - cy) * k];
+    return { outer: outer.map(fit), holes: holes.map(h => h.map(fit)) };
+  }
+  function makeRound(sd) {
+    const r = rng(sd), pick = a => a[Math.floor(r() * a.length)];
+    const plan = [
+      { kinds: ['poly', 'blob'], target: 50 },
+      { kinds: ['star', 'heart', 'fish', 'bolt'], target: 50 },
+      { kinds: ['blob', 'house', 'ell'], target: 25 },
+      { kinds: ['star', 'fish', 'blob', 'ell'], target: 50, pin: true },
+      { kinds: ['donut', 'frame'], target: 50, spin: .35 },
+    ];
+    return plan.map((pl, i) => {
+      const s = makeShape(r, pick(pl.kinds));
+      s.target = pl.target; s.color = PAPER[i]; s.spin = pl.spin ? pl.spin * (r() < .5 ? -1 : 1) : 0;
+      if (pl.pin) { for (let k = 0; k < 200; k++) { const p = [80 + r() * 240, 80 + r() * 240]; const c = G.centroid(s.outer); if (G.inside(s, p) && Math.hypot(p[0] - c[0], p[1] - c[1]) > 45) { s.pin = p; break; } } }
+      return s;
+    });
+  }
+  // the shape as it stands now (spinning shapes turn about their middle until the cut)
+  function current(s) {
+    if (!s.spin) return s;
+    const a = s.spin * (cut ? cutAt : t), c = Math.cos(a), sn = Math.sin(a), tf = p => [200 + (p[0] - 200) * c - (p[1] - 200) * sn, 200 + (p[0] - 200) * sn + (p[1] - 200) * c];
+    return { ...s, outer: s.outer.map(tf), holes: s.holes.map(h => h.map(tf)) };
+  }
+  const errorFor = (pct, target) => target === 50 ? Math.abs(pct - 50) : Math.min(Math.abs(pct - target), Math.abs(100 - pct - target));
+  const pointsFor = err => Math.max(0, Math.round(100 - err * 12));
+  const gradeFor = err => err < .5 ? 'Surgical!' : err < 1.5 ? 'Sharp!' : err < 3 ? 'Nice cut' : err < 6 ? 'Close' : 'Wobbly';
+  const squareFor = err => err < 1 ? '🟩' : err < 3 ? '🟨' : err < 6 ? '🟧' : '🟥';
+
+  // ---------- flow ----------
+  function begin(m) {
+    mode = m; seed = m === 'daily' ? dayNumber() * 7919 + 13 : Math.floor(Math.random() * 1e9);
+    shapes = makeRound(seed); results = []; round = 0; startShape();
+    $('slMenu').hidden = true; $('slEnd').hidden = true;
+  }
+  function startShape() {
+    cut = null; drag = null; t = 0; state = 'aim';
+    const s = shapes[round];
+    $('slSub').textContent = `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · shape ${round + 1} of ${N}`;
+    $('slPrompt').innerHTML = s.target === 50 ? (s.pin ? 'Cut it in half<small>through the pin</small>' : s.spin ? 'Cut it in half<small>it keeps turning, and the hole counts</small>' : 'Cut it exactly in half') : 'Cut off exactly a quarter';
+    $('slHint').innerHTML = round === 0 ? 'Swipe across the shape. <b>One cut, no do-overs.</b>' : 'Swipe across the shape';
+  }
+  function doCut(a, b) {
+    const s = shapes[round];
+    let d = [b[0] - a[0], b[1] - a[1]]; const len = Math.hypot(d[0], d[1]); d = [d[0] / len, d[1] / len];
+    if (s.pin) a = s.pin;
+    cutAt = t;
+    const sh = current(s), pct = G.split(sh, a, d);
+    if (pct < .05 || pct > 99.95) { $('slHint').textContent = 'That missed the shape. Swipe right across it.'; Sound.tone(200, .15, 'sawtooth', .06); return; }
+    const err = errorFor(pct, s.target);
+    cut = { a, d, pct, err, at: performance.now(), pieces: [G.cutShape(sh, a, d, 1), G.cutShape(sh, a, d, -1)] };
+    results.push({ err, pts: pointsFor(err), pct });
+    state = 'cut';
+    Sound.noise(.16, .45, 3200, .8, 'highpass'); Sound.noise(.08, .3, 1200, 2, 'bandpass', .05); haptic(14);
+    const good = err < 1.5;
+    setTimeout(() => { if (good) [0, 4, 7].forEach((s2, i) => Sound.tone(660 * Math.pow(2, s2 / 12), .25, 'triangle', .12, i * .07)); else Sound.tone(330, .2, 'triangle', .1); }, 250);
+    $('slHint').innerHTML = `${gradeFor(err)} <b>${pointsFor(err)} pts</b> · tap for the ${round + 1 < N ? 'next shape' : 'results'}`;
+  }
+  function next() {
+    if (round + 1 < N) { round++; startShape(); return; }
+    finish();
+  }
+  function finish() {
+    state = 'end';
+    const total = results.reduce((a, r) => a + r.pts, 0), stars = total >= 450 ? 3 : total >= 350 ? 2 : total >= 200 ? 1 : 0;
+    const day = dayNumber(), first = mode === 'daily' && data.daily[day] == null;
+    if (mode === 'daily') data.daily[day] = Math.max(data.daily[day] || 0, total);
+    data.best = Math.max(data.best || 0, total); store('smidge/slice', data);
+    $('slTotal').textContent = `${total}`;
+    $('slStars').innerHTML = [0, 1, 2].map(i => i < stars ? '★' : '<span class="off">★</span>').join('');
+    $('slList').textContent = results.map((r, i) => `${squareFor(r.err)} ${i + 1}. off by ${r.err.toFixed(1)}%  ·  ${r.pts} pts`).join('\n');
+    const share = `Smidge Slice ${mode === 'daily' ? '#' + day : '(practice)'} · ${total}/500\n${results.map(r => squareFor(r.err)).join('')}`;
+    $('slShare').textContent = share;
+    $('slNote').textContent = mode === 'daily' ? (first ? 'Today\'s score is saved. Come back tomorrow for new shapes.' : 'Replays don\'t change today\'s score, but your best still counts.') : `Best ever: ${data.best} of 500`;
+    $('slEnd').hidden = false;
+    [0, 4, 7, 12].slice(0, stars + 1).forEach((s2, i) => Sound.tone(523 * Math.pow(2, s2 / 12), .35, 'triangle', .16, i * .1));
+  }
+  function showMenu() {
+    state = 'menu'; const day = dayNumber(), done = data.daily[day];
+    $('slDailyBtn').textContent = done != null ? `Daily #${day} again` : `Play daily #${day}`;
+    $('slMenuNote').textContent = done != null ? `Today's score: ${done} of 500. Best ever: ${data.best}.` : data.best ? `Best ever: ${data.best} of 500.` : 'Five shapes. One swipe each. 100 points for a perfect cut.';
+    $('slMenu').hidden = false; $('slEnd').hidden = true;
+    $('slSub').textContent = 'Cut it fair'; $('slPrompt').innerHTML = ''; $('slHint').textContent = '';
+    if (!shapes.length) shapes = makeRound(dayNumber() * 7919 + 13);
+  }
+
+  // ---------- drawing ----------
+  function resize() { DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; }
+  function view() { const top = 150, bot = 64, s = Math.min(W / 430, (H - top - bot) / 430); return { s, ox: W / 2 - 200 * s, oy: top + (H - top - bot) / 2 - 200 * s }; }
+  const toWorld = (v, e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left - v.ox) / v.s, (e.clientY - r.top - v.oy) / v.s]; };
+  function path(s) { ctx.beginPath(); for (const ringPts of [s.outer, ...s.holes]) { ringPts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); } }
+  function css(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  let colors = {};
+  function readColors() { colors = { mat: css('--mat'), mat2: css('--mat-2'), line: css('--mat-line'), bg: css('--mat-bg') }; }
+  function draw() {
+    const v = view();
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.fillStyle = colors.bg; ctx.fillRect(0, 0, W, H);
+    ctx.setTransform(DPR * v.s, 0, 0, DPR * v.s, DPR * v.ox, DPR * v.oy);
+    // cutting mat
+    ctx.fillStyle = colors.mat; roundRect(-15, -15, 430, 430, 22); ctx.fill();
+    ctx.save(); roundRect(-15, -15, 430, 430, 22); ctx.clip();
+    ctx.strokeStyle = colors.line;
+    for (let i = -10; i <= 420; i += 10) { ctx.globalAlpha = i % 50 === 0 ? .32 : .12; ctx.lineWidth = i % 50 === 0 ? 1.4 : .8; ctx.beginPath(); ctx.moveTo(i, -15); ctx.lineTo(i, 415); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-15, i); ctx.lineTo(415, i); ctx.stroke(); }
+    ctx.globalAlpha = .28; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(-15, 300); ctx.lineTo(100, 415); ctx.stroke(); ctx.beginPath(); ctx.arc(415, -15, 120, Math.PI / 2, Math.PI); ctx.stroke();
+    ctx.globalAlpha = .5; ctx.fillStyle = colors.line; ctx.font = '700 9px Nunito, sans-serif'; ctx.textAlign = 'center';
+    for (let i = 0; i <= 400; i += 50) { ctx.fillText(String(i / 10), i, -5); }
+    ctx.globalAlpha = 1; ctx.restore();
+    const s = shapes[round]; if (!s || state === 'menu') return;
+    const sh = current(s);
+    if (!cut) {
+      ctx.save(); ctx.translate(3, 5); path(sh); ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fill('evenodd'); ctx.restore();
+      path(sh); ctx.fillStyle = s.color; ctx.fill('evenodd'); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.stroke();
+    } else {
+      const k = Math.min(1, (performance.now() - cut.at) / 380), sep = 12 * (1 - Math.pow(1 - k, 3)), n = [-cut.d[1], cut.d[0]];
+      cut.pieces.forEach((pc, i) => {
+        if (!pc.outer.length) return;
+        const sg = i === 0 ? 1 : -1;
+        ctx.save(); ctx.translate(n[0] * sep * sg, n[1] * sep * sg);
+        ctx.save(); ctx.translate(3, 5); path(pc); ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fill('evenodd'); ctx.restore();
+        path(pc); ctx.fillStyle = i === 0 ? s.color : shade(s.color, -.12); ctx.fill('evenodd'); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.stroke();
+        ctx.restore();
+      });
+      // labels
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+      cut.pieces.forEach((pc, i) => {
+        if (!pc.outer.length) return;
+        const sg = i === 0 ? 1 : -1, c = G.centroid(pc.outer), pct = i === 0 ? cut.pct : 100 - cut.pct;
+        const x = c[0] + n[0] * sep * sg * 2.5, y = c[1] + n[1] * sep * sg * 2.5;
+        ctx.globalAlpha = k; ctx.font = `30px ${css('--display')}`; ctx.lineWidth = 6; ctx.strokeStyle = '#1c2233'; ctx.strokeText(pct.toFixed(1) + '%', x, y); ctx.fillStyle = '#fff'; ctx.fillText(pct.toFixed(1) + '%', x, y); ctx.globalAlpha = 1;
+      });
+    }
+    if (s.pin) { const p = s.pin; ctx.fillStyle = '#1c2233'; ctx.beginPath(); ctx.arc(p[0], p[1], 7, 0, 7); ctx.fill(); ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(p[0], p[1], 4.5, 0, 7); ctx.fill(); }
+    // the cut line: the swipe while dragging, the real cut after
+    let line = null;
+    if (drag && drag.b && state === 'aim') { const a = s.pin || drag.a, d = [drag.b[0] - drag.a[0], drag.b[1] - drag.a[1]], l = Math.hypot(d[0], d[1]); if (l > 8) line = { a, d: [d[0] / l, d[1] / l], dash: true }; }
+    if (cut) line = { a: cut.a, d: cut.d, dash: false };
+    if (line) {
+      ctx.save(); roundRect(-15, -15, 430, 430, 22); ctx.clip();
+      ctx.strokeStyle = line.dash ? '#fff' : 'rgba(255,255,255,.9)'; ctx.lineWidth = line.dash ? 2.5 : 1.5; ctx.setLineDash(line.dash ? [9, 7] : [3, 5]);
+      ctx.beginPath(); ctx.moveTo(line.a[0] - line.d[0] * 700, line.a[1] - line.d[1] * 700); ctx.lineTo(line.a[0] + line.d[0] * 700, line.a[1] + line.d[1] * 700); ctx.stroke();
+      ctx.restore(); ctx.setLineDash([]);
+    }
+  }
+  function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function shade(hex, f) { const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255; r *= 1 + f; g *= 1 + f; b *= 1 + f; return `rgb(${r | 0},${g | 0},${b | 0})`; }
+  function frame(now) {
+    if (active) { const dt = Math.min(.05, (now - last) / 1000); if (state === 'aim') t += dt; draw(); }
+    last = now; requestAnimationFrame(frame);
+  }
+
+  // ---------- input ----------
+  cv.addEventListener('pointerdown', e => {
+    if (!active) return; e.preventDefault(); Sound.audio();
+    if (state === 'cut') { if (performance.now() - cut.at > 350) next(); return; }
+    if (state !== 'aim') return;
+    const v = view(); drag = { a: toWorld(v, e), b: null };
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  }, { passive: false });
+  cv.addEventListener('pointermove', e => { if (drag && state === 'aim') drag.b = toWorld(view(), e); });
+  cv.addEventListener('pointerup', e => {
+    if (!drag || state !== 'aim') { drag = null; return; }
+    const b = toWorld(view(), e), a = drag.a; drag = null;
+    if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 30) { $('slHint').textContent = 'Swipe further: drag right across the shape.'; return; }
+    doCut(a, b);
+  });
+  cv.addEventListener('pointercancel', () => { drag = null; });
+  $('slDailyBtn').onclick = () => { Sound.audio(); begin('daily'); };
+  $('slPracticeBtn').onclick = () => { Sound.audio(); begin('practice'); };
+  $('slAgain').onclick = () => { Sound.audio(); begin(mode); };
+  $('slMenuBtn').onclick = () => { Sound.audio(); showMenu(); };
+  $('slCopy').onclick = e => { Sound.audio(); copyText($('slShare').textContent, e.currentTarget); };
+  addEventListener('resize', () => { if (active) resize(); });
+  requestAnimationFrame(frame);
+  return {
+    enter() { active = true; resize(); readColors(); showMenu(); },
+    leave() { active = false; drag = null; },
+    stats() { return { best: data.best || 0, today: data.daily[dayNumber()] }; },
+    _debug: { makeRound, G },
+  };
+})();
+
+// Skim: skip stones across a lake. Pull back and let go; the pull sets speed and angle. Five stones a round.
+// A stone skips when it meets the water at a shallow angle (under CRIT degrees, wave slope included) and is still quick.
+const SkimPhys = (() => {
+  const G = 9.8, H0 = 1.25, DT = 1 / 240, CRIT = 20, MINV = 4.5;
+  const surface = (x, t, w) => w.A * Math.sin(w.k * x - w.om * t + w.ph);
+  const slope = (x, t, w) => w.A * w.k * Math.cos(w.k * x - w.om * t + w.ph);
+  // Run one throw to the end. Returns the path (every 4th step), the skips and where it sank. Pure and deterministic.
+  function simulate(angleDeg, speed, env, t0 = 0) {
+    const a = angleDeg * Math.PI / 180;
+    let x = 0, y = H0, vx = speed * Math.cos(a), vy = speed * Math.sin(a), t = t0, i = 0;
+    const path = [[x, y, t]], skips = [];
+    while (t - t0 < 30) {
+      vy -= G * DT; vx += env.wind * 0.12 * DT; vx -= vx * 0.02 * DT;
+      x += vx * DT; y += vy * DT; t += DT; i++;
+      const s = surface(x, t, env.wave);
+      if (y <= s && vy < 0) {
+        const inc = Math.atan2(-vy, vx) * 180 / Math.PI + Math.atan(slope(x, t, env.wave)) * 180 / Math.PI;
+        if (vx > MINV && inc < CRIT) {
+          y = s; skips.push({ x, t, inc, v: Math.hypot(vx, vy) });
+          vy = 0.5 * -vy + 0.04 * vx; vx *= 0.86 - Math.max(0, inc) * 0.012; // a steeper touch loses more speed
+        } else { path.push([x, s, t]); return { path, skips, sankAt: x, end: t, inc }; }
+      }
+      if (i % 4 === 0) path.push([x, y, t]);
+    }
+    return { path, skips, sankAt: x, end: t, inc: 0 };
+  }
+  return { simulate, surface, H0, CRIT };
+})();
+
+const Skim = (() => {
+  const $ = id => document.getElementById(id);
+  const P = SkimPhys, N = 5;
+  const cv = $('skCanvas'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, DPR = 1, active = false, last = 0, clock = 0;
+  let mode = 'daily', envs = [], stone = 0, results = [], state = 'menu', pull = null, shot = null, ripples = [], drops = [], camX = -3;
+  let data = store('smidge/skim') || { daily: {}, best: 0, far: 0 };
+
+  function makeRound(seed) {
+    const r = rng(seed);
+    return Array.from({ length: N }, (_, i) => ({
+      wind: (r() - .5) * (1 + i * 1.2),
+      wave: { A: .015 + r() * (.02 + i * .009), k: 2 * Math.PI / (2.6 + r() * 2), om: 1.6 + r() * 1.2, ph: r() * 6 },
+      rings: Array.from({ length: 2 }, () => 7 + r() * 26).sort((a, b) => a - b),
+    }));
+  }
+  const env = () => envs[stone];
+  function begin(m) {
+    mode = m; envs = makeRound(m === 'daily' ? dayNumber() * 104729 + 7 : Math.floor(Math.random() * 1e9));
+    stone = 0; results = []; ripples = []; drops = []; shot = null; state = 'aim'; camX = -3;
+    $('skMenu').hidden = true; $('skEnd').hidden = true; setText();
+  }
+  function setText() {
+    const e = env();
+    $('skSub').textContent = `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · stone ${stone + 1} of ${N}`;
+    const w = Math.abs(e.wind) < .3 ? 'Calm air' : `Wind ${Math.abs(e.wind).toFixed(1)} m/s ${e.wind > 0 ? 'behind you' : 'against you'}`;
+    $('skPrompt').innerHTML = `${results.reduce((a, r) => a + r.score, 0)} points<small>${w} · ${e.wave.A > .045 ? 'choppy water' : e.wave.A > .03 ? 'small waves' : 'flat water'}</small>`;
+    $('skHint').innerHTML = stone === 0 && !results.length ? 'Pull back and let go. <b>Flat and fast skips best.</b>' : 'Pull back and let go · skip through a ring for +2';
+  }
+  function aimFrom(dx, dy) {
+    const len = Math.hypot(dx, dy), power = Math.min(1, len / 170);
+    let ang = Math.atan2(dy, -dx) * 180 / Math.PI; // pull left and down to throw right and up
+    if (dx > 0) ang = dy > 0 ? 40 : -20;
+    ang = Math.max(-20, Math.min(40, ang));
+    return { power, ang, speed: 6 + 22 * power };
+  }
+  function throwStone(aim) {
+    const res = P.simulate(aim.ang, aim.speed, env(), clock);
+    const e = env(), rings = e.rings.filter(rx => res.skips.some(s => Math.abs(s.x - rx) < .9));
+    shot = { ...res, aim, rings, start: clock, shown: 0, score: res.skips.length + rings.length * 2 };
+    state = 'fly';
+    Sound.noise(.12, .3, 1800, .8); Sound.tone(300, .1, 'triangle', .06, 0, 500); haptic(10);
+  }
+  function stoneDone() {
+    results.push({ skips: shot.skips.length, rings: shot.rings.length, far: shot.sankAt, score: shot.score });
+    data.far = Math.max(data.far || 0, shot.sankAt);
+    state = 'done';
+    const s = shot.skips.length;
+    $('skHint').innerHTML = `${s ? s + ' skip' + (s > 1 ? 's' : '') : 'Plop! No skips'}${shot.rings.length ? ` · <b>${shot.rings.length} ring${shot.rings.length > 1 ? 's' : ''}</b>` : ''} · ${shot.sankAt.toFixed(1)} m · tap to ${stone + 1 < N ? 'throw the next stone' : 'see your score'}`;
+    if (!s) $('skHint').innerHTML += shot.inc > 0 ? `<br>${shot.aim.ang > 12 ? 'Too steep: throw flatter.' : shot.aim.power < .6 ? 'Too slow: pull back further.' : 'Too steep at the water: throw flatter.'}` : '';
+  }
+  function next() {
+    if (stone + 1 < N) { stone++; shot = null; state = 'aim'; setText(); return; }
+    finish();
+  }
+  function finish() {
+    state = 'end';
+    const total = results.reduce((a, r) => a + r.score, 0), day = dayNumber(), first = mode === 'daily' && data.daily[day] == null;
+    if (mode === 'daily') data.daily[day] = Math.max(data.daily[day] || 0, total);
+    data.best = Math.max(data.best || 0, total); store('smidge/skim', data);
+    const stars = total >= 35 ? 3 : total >= 22 ? 2 : total >= 10 ? 1 : 0;
+    $('skTotal').textContent = total;
+    $('skStars').innerHTML = [0, 1, 2].map(i => i < stars ? '★' : '<span class="off">★</span>').join('');
+    $('skList').textContent = results.map((r, i) => `Stone ${i + 1}: ${r.skips} skip${r.skips === 1 ? '' : 's'}${r.rings ? `, ${r.rings} ring${r.rings > 1 ? 's' : ''}` : ''} · ${r.far.toFixed(1)} m`).join('\n');
+    $('skShare').textContent = `Smidge Skim ${mode === 'daily' ? '#' + day : '(practice)'} · ${total} points\n${results.map(r => '🪨'.concat(String(r.skips))).join(' ')}${results.some(r => r.rings) ? ' · ⭕×' + results.reduce((a, r) => a + r.rings, 0) : ''}`;
+    $('skNote').textContent = mode === 'daily' ? (first ? 'Today\'s score is saved. New water tomorrow.' : 'Replays don\'t change today\'s score.') : `Best ever: ${data.best} points · longest throw ${data.far.toFixed(1)} m`;
+    $('skEnd').hidden = false;
+  }
+  function showMenu() {
+    state = 'menu'; const day = dayNumber(), done = data.daily[day];
+    if (!envs.length) envs = makeRound(day * 104729 + 7);
+    $('skDailyBtn').textContent = done != null ? `Daily #${day} again` : `Play daily #${day}`;
+    $('skMenuNote').textContent = done != null ? `Today: ${done} points. Best ever: ${data.best}.` : data.best ? `Best ever: ${data.best} points.` : 'Five stones. A point for every skip, two more for skipping through a ring.';
+    $('skMenu').hidden = false; $('skEnd').hidden = true;
+    $('skSub').textContent = 'Skip stones'; $('skPrompt').innerHTML = ''; $('skHint').textContent = '';
+  }
+
+  // ---------- drawing ----------
+  function resize() { DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; }
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  let C = {};
+  function readColors() { for (const k of ['sky1', 'sky2', 'water1', 'water2', 'hill', 'hill2', 'glint']) C[k] = css('--sk-' + k); }
+  const px = () => Math.min(W / 12, H / 7);
+  const waterY = () => H * .58;
+  const sx = x => (x - camX) * px(), sy = y => waterY() - y * px();
+  function draw(dt) {
+    const k = px(), wy = waterY(), e = env();
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    let g = ctx.createLinearGradient(0, 0, 0, wy); g.addColorStop(0, C.sky1); g.addColorStop(1, C.sky2); ctx.fillStyle = g; ctx.fillRect(0, 0, W, wy + 1);
+    // far hills with parallax
+    for (const [col, par, hgt, seed] of [[C.hill2, .08, .9, 1], [C.hill, .2, .6, 2]]) {
+      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, wy);
+      for (let i = 0; i <= 40; i++) { const X = i / 40 * W, wx = X / k + camX * par; ctx.lineTo(X, wy - k * hgt * (1.2 + Math.sin(wx * .23 + seed) * .5 + Math.sin(wx * .61 + seed * 3) * .25)); }
+      ctx.lineTo(W, wy); ctx.closePath(); ctx.fill();
+    }
+    g = ctx.createLinearGradient(0, wy, 0, H); g.addColorStop(0, C.water1); g.addColorStop(1, C.water2); ctx.fillStyle = g; ctx.fillRect(0, wy - 2, W, H - wy + 2);
+    // wave line and glints
+    ctx.strokeStyle = C.glint; ctx.lineWidth = 2; ctx.beginPath();
+    for (let X = 0; X <= W; X += 6) { const x = camX + X / k, y = P.surface(x, clock, e.wave); X ? ctx.lineTo(X, sy(y)) : ctx.moveTo(X, sy(y)); }
+    ctx.stroke();
+    ctx.globalAlpha = .35; for (let i = 0; i < 30; i++) { const x = Math.floor(camX) + i * 1.3 + ((i * 7) % 5) * .2, X = sx(x), Y = wy + 10 + ((i * 37) % 9) * (H - wy) / 11; ctx.fillStyle = C.glint; ctx.fillRect(X, Y + Math.sin(clock * 2 + i) * 2, 10 + (i % 3) * 6, 2); } ctx.globalAlpha = 1;
+    // distance buoys every 10 m
+    ctx.textAlign = 'center'; ctx.font = `800 ${Math.max(11, k * .32)}px Nunito, sans-serif`;
+    for (let m = 10; m < camX + W / k + 10; m += 10) { if (m < camX - 2) continue; const X = sx(m), Y = sy(P.surface(m, clock, e.wave)); ctx.fillStyle = '#ff5a4f'; ctx.beginPath(); ctx.ellipse(X, Y - k * .12, k * .16, k * .2, 0, 0, 7); ctx.fill(); ctx.strokeStyle = '#1c2233'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.fillStyle = C.glint; ctx.fillText(m + ' m', X, Y - k * .5); }
+    // rings to skip through
+    for (const rx of e.rings) {
+      const hit = shot && shot.rings.includes(rx) && shot.skips.some(s => Math.abs(s.x - rx) < .9 && s.t <= clock);
+      const X = sx(rx), Y = sy(P.surface(rx, clock, e.wave));
+      ctx.lineWidth = Math.max(3, k * .09); ctx.strokeStyle = hit ? '#ffd23f' : '#ffffff'; ctx.globalAlpha = hit ? 1 : .85;
+      ctx.beginPath(); ctx.ellipse(X, Y, k * .9, k * .18, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    // ripples
+    for (const rp of ripples) { const age = clock - rp.t; if (age < 0) continue; const f = Math.max(0, 1 - age / 2.2); ctx.strokeStyle = `rgba(255,255,255,${f * .8})`; ctx.lineWidth = 2; for (const m of [1, .6]) { ctx.beginPath(); ctx.ellipse(sx(rp.x), wy, k * (.2 + age * 1.1) * m, k * (.05 + age * .18) * m, 0, 0, 7); ctx.stroke(); } }
+    ripples = ripples.filter(rp => clock - rp.t < 2.2);
+    // pier
+    ctx.fillStyle = '#7a4a24'; ctx.strokeStyle = '#1c2233'; ctx.lineWidth = 2;
+    ctx.fillRect(sx(-6), sy(.62), (6.3) * k, k * .16); ctx.strokeRect(sx(-6), sy(.62), 6.3 * k, k * .16);
+    for (const x of [-5.5, -3.5, -1.5, 0]) { ctx.fillRect(sx(x) - k * .07, sy(.62), k * .14, wy - sy(.62) + k * .5); }
+    // drops
+    for (const d of drops) { d.vy -= 9.8 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.life -= dt; ctx.fillStyle = `rgba(255,255,255,${Math.max(0, d.life)})`; ctx.beginPath(); ctx.arc(sx(d.x), sy(d.y), 3, 0, 7); ctx.fill(); }
+    drops = drops.filter(d => d.life > 0 && d.y > -1);
+    // the stone
+    let st = null;
+    if (state === 'aim' || state === 'menu') {
+      const a = pull && pull.aim ? pull.aim : null, back = a ? a.power * .45 : 0, ar = a ? a.ang * Math.PI / 180 : 0;
+      st = { x: -back * Math.cos(ar), y: P.H0 - back * Math.sin(ar), rot: 0 };
+      if (a && a.power >= .1) {
+        ctx.setLineDash([3, 7]); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.beginPath();
+        for (let i = 0; i <= 16; i++) { const tt = .35 * i / 16, x = a.speed * Math.cos(ar) * tt, y = P.H0 + a.speed * Math.sin(ar) * tt - 4.9 * tt * tt; i ? ctx.lineTo(sx(x), sy(y)) : ctx.moveTo(sx(x), sy(y)); }
+        ctx.stroke(); ctx.setLineDash([]);
+      }
+    } else if (shot) {
+      const tt = clock, p = shot.path; let j = 0; while (j < p.length - 1 && p[j + 1][2] <= tt) j++;
+      if (state === 'fly') {
+        const a = p[j], b = p[Math.min(j + 1, p.length - 1)], f = b[2] > a[2] ? Math.min(1, (tt - a[2]) / (b[2] - a[2])) : 1;
+        st = { x: a[0] + (b[0] - a[0]) * f, y: a[1] + (b[1] - a[1]) * f, rot: (tt - shot.start) * 25 };
+        while (shot.shown < shot.skips.length && shot.skips[shot.shown].t <= tt) {
+          const s = shot.skips[shot.shown]; shot.shown++;
+          ripples.push({ x: s.x, t: s.t });
+          for (let q = 0; q < 6; q++) drops.push({ x: s.x, y: 0, vx: (Math.random() - .3) * 2, vy: 1 + Math.random() * 2, life: .6 });
+          const steps = [0, 2, 4, 7, 9], n = shot.shown - 1, semi = Math.floor(n / 5) * 12 + steps[n % 5];
+          Sound.tone(520 * Math.pow(2, semi / 12), .16, 'sine', .22); Sound.noise(.05, .25, 3500, 1.5); haptic(5);
+          if (shot.rings.some(rx => Math.abs(s.x - rx) < .9)) { Sound.tone(1046, .3, 'triangle', .12, .05); Sound.tone(1568, .3, 'triangle', .1, .12); }
+        }
+        if (tt >= shot.end) {
+          state = 'sinking'; shot.sinkT = tt;
+          ripples.push({ x: shot.sankAt, t: tt });
+          for (let q = 0; q < 16; q++) drops.push({ x: shot.sankAt, y: 0, vx: (Math.random() - .5) * 2.4, vy: 1.5 + Math.random() * 3, life: .9 });
+          Sound.noise(.35, .5, 700, .7, 'lowpass'); Sound.tone(180, .2, 'sine', .15, 0, 90); haptic(25);
+        }
+      }
+      if (state === 'sinking') { const age = tt - shot.sinkT; st = { x: shot.sankAt, y: -age * .6, rot: 0, fade: Math.max(0, 1 - age * 1.5) }; if (age > 1) stoneDone(); }
+    }
+    if (st) {
+      ctx.save(); ctx.translate(sx(st.x), sy(st.y)); ctx.globalAlpha = st.fade ?? 1;
+      ctx.scale(1, .55 + .45 * Math.abs(Math.cos(st.rot))); ctx.fillStyle = '#8d939c'; ctx.strokeStyle = '#1c2233'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(0, 0, k * .3, k * .19, 0, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.ellipse(-k * .09, -k * .06, k * .1, k * .045, -.3, 0, 7); ctx.fill();
+      ctx.restore();
+    }
+    // camera
+    let target = -3;
+    if ((state === 'fly' || state === 'sinking' || state === 'done') && st) target = Math.max(-3, st.x - W / k * .4);
+    if (state === 'done' && shot) target = Math.max(-3, shot.sankAt - W / k * .5);
+    camX += (target - camX) * (1 - Math.exp(-dt * (state === 'aim' ? 3 : 5)));
+    // power bar while pulling
+    if (pull && pull.aim && state === 'aim') {
+      const a = pull.aim, w = Math.min(220, W * .5), x = (W - w) / 2, y = H - 64 - insetB();
+      ctx.fillStyle = 'rgba(10,20,40,.45)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - 4, y - 4, w + 8, 20, 10) : ctx.rect(x - 4, y - 4, w + 8, 20); ctx.fill();
+      ctx.fillStyle = a.power > .6 ? '#5ee07a' : '#ffd23f'; ctx.fillRect(x, y, w * a.power, 12);
+      ctx.fillStyle = '#fff'; ctx.font = '800 13px Nunito, sans-serif'; ctx.fillText(`${Math.round(a.power * 100)}% · ${a.ang.toFixed(0)}°`, W / 2, y - 12);
+    }
+  }
+  const probe = document.createElement('div'); probe.style.cssText = 'position:fixed;visibility:hidden;padding-bottom:env(safe-area-inset-bottom,0px)'; document.body.appendChild(probe);
+  const insetB = () => parseFloat(getComputedStyle(probe).paddingBottom) || 0;
+  function frame(now) {
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (active) { clock += dt; draw(dt); }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- input ----------
+  cv.addEventListener('pointerdown', e => {
+    if (!active) return; e.preventDefault(); Sound.audio();
+    if (state === 'done') { next(); return; }
+    if (state !== 'aim') return;
+    pull = { x0: e.clientX, y0: e.clientY, aim: null, step: 0 };
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  }, { passive: false });
+  cv.addEventListener('pointermove', e => {
+    if (!pull) return;
+    pull.aim = aimFrom(e.clientX - pull.x0, e.clientY - pull.y0);
+    const st = Math.floor(pull.aim.power * 10); if (st > pull.step) { Sound.tone(200 + st * 40, .03, 'square', .02); } pull.step = st;
+  });
+  cv.addEventListener('pointerup', () => {
+    if (!pull) return; const a = pull.aim; pull = null;
+    if (state !== 'aim') return;
+    if (!a || a.power < .1) { $('skHint').textContent = 'Pull back further, then let go.'; return; }
+    throwStone(a);
+  });
+  cv.addEventListener('pointercancel', () => { pull = null; });
+  $('skDailyBtn').onclick = () => { Sound.audio(); begin('daily'); };
+  $('skPracticeBtn').onclick = () => { Sound.audio(); begin('practice'); };
+  $('skAgain').onclick = () => { Sound.audio(); begin(mode); };
+  $('skMenuBtn').onclick = () => { Sound.audio(); showMenu(); };
+  $('skCopy').onclick = e => { Sound.audio(); copyText($('skShare').textContent, e.currentTarget); };
+  addEventListener('resize', () => { if (active) resize(); });
+  requestAnimationFrame(frame);
+  return {
+    enter() { active = true; resize(); readColors(); showMenu(); },
+    leave() { active = false; pull = null; },
+    stats() { return { best: data.best || 0, today: data.daily[dayNumber()] }; },
+  };
+})();
+
+// Untangle: drag the pins until no two strings cross. Every level is built from straight lines that cross each other, so it
+// always has an answer (the crossing points of n lines, joined along each line, can always be laid out flat).
+const UntangleGen = (() => {
+  function level(n, seed) {
+    const r = rng(seed), lines = [];
+    for (let i = 0; i < n; i++) { const a = r() * Math.PI, px = .5 + (r() - .5) * .4, py = .5 + (r() - .5) * .4; lines.push({ p: [px, py], d: [Math.cos(a), Math.sin(a)] }); }
+    const verts = [], onLine = lines.map(() => []);
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      const A = lines[i], B = lines[j], den = A.d[0] * B.d[1] - A.d[1] * B.d[0];
+      if (Math.abs(den) < 1e-6) continue;
+      const t = ((B.p[0] - A.p[0]) * B.d[1] - (B.p[1] - A.p[1]) * B.d[0]) / den, u = ((B.p[0] - A.p[0]) * A.d[1] - (B.p[1] - A.p[1]) * A.d[0]) / den;
+      const id = verts.length; verts.push([A.p[0] + A.d[0] * t, A.p[1] + A.d[1] * t]);
+      onLine[i].push([t, id]); onLine[j].push([u, id]);
+    }
+    const edges = [];
+    for (const l of onLine) { l.sort((a, b) => a[0] - b[0]); for (let k = 1; k < l.length; k++) edges.push([l[k - 1][1], l[k][1]]); }
+    // scramble: pins round a circle in shuffled order
+    const order = verts.map((_, i) => i); for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+    const pos = []; order.forEach((v, k) => { const a = k / order.length * Math.PI * 2 - Math.PI / 2; pos[v] = [.5 + Math.cos(a) * .42, .5 + Math.sin(a) * .42]; });
+    return { pos, edges, solved: verts };
+  }
+  function cross(p1, p2, p3, p4) {
+    const d = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    const d1 = d(p3, p4, p1), d2 = d(p3, p4, p2), d3 = d(p1, p2, p3), d4 = d(p1, p2, p4);
+    return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+  }
+  function crossings(pos, edges) {
+    const bad = new Set(); let n = 0;
+    for (let i = 0; i < edges.length; i++) for (let j = i + 1; j < edges.length; j++) {
+      const [a, b] = edges[i], [c, e] = edges[j];
+      if (a === c || a === e || b === c || b === e) continue;
+      if (cross(pos[a], pos[b], pos[c], pos[e])) { n++; bad.add(i); bad.add(j); }
+    }
+    return { n, bad };
+  }
+  return { level, crossings };
+})();
+
+const Untangle = (() => {
+  const $ = id => document.getElementById(id);
+  const LEVELS = [4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8].map((n, i) => ({ n, seed: 9001 + i * 37 }));
+  const svgWrap = $('unBoard');
+  let data = store('smidge/untangle') || {};
+  let li = 0, L = null, pos = null, drag = null, moves = 0, startT = 0, solved = false, timer = 0;
+
+  const par = lv => Math.round(lv.n * (lv.n - 1) / 2 * 5); // seconds for three stars
+  function starsFor(lv, secs) { const p = par(lv); return secs <= p ? 3 : secs <= p * 2 ? 2 : 1; }
+  function open(i) {
+    li = i; const lv = LEVELS[i]; L = UntangleGen.level(lv.n, lv.seed);
+    pos = L.pos.map(p => p.slice()); moves = 0; startT = 0; solved = false;
+    if (UntangleGen.crossings(pos, L.edges).n === 0) { pos.reverse(); }
+    $('unMenu').hidden = true; $('unEnd').hidden = true;
+    $('unSub').textContent = `Level ${i + 1} of ${LEVELS.length} · ${pos.length} pins`;
+    $('unHint').innerHTML = i === 0 ? 'Drag the pins until <b>no strings cross</b>. Red strings are crossing.' : 'Drag the pins until no strings cross';
+    render(); tickClock();
+  }
+  function render(focus) {
+    const { n, bad } = UntangleGen.crossings(pos, L.edges);
+    let s = '<svg viewBox="-40 -40 1080 1080" preserveAspectRatio="xMidYMid meet">';
+    L.edges.forEach(([a, b], i) => {
+      const A = pos[a], B = pos[b], hot = bad.has(i);
+      s += `<line x1="${A[0] * 1000}" y1="${A[1] * 1000}" x2="${B[0] * 1000}" y2="${B[1] * 1000}" class="yarn ${hot ? 'hot' : ''} ${solved ? 'won' : ''}"/>`;
+    });
+    pos.forEach((p, i) => { s += `<g class="pin ${focus === i ? 'held' : ''}" transform="translate(${p[0] * 1000} ${p[1] * 1000})"><circle class="pin-hit" r="60" data-i="${i}"/><circle class="pin-shadow" cx="4" cy="7" r="26"/><circle class="pin-head" r="25" style="--h:${(i * 47) % 360}"/><circle class="pin-shine" cx="-8" cy="-9" r="7"/></g>`; });
+    s += '</svg>';
+    svgWrap.innerHTML = s;
+    $('unCount').textContent = solved ? 'All clear!' : `${n} crossing${n === 1 ? '' : 's'}`;
+    $('unCount').classList.toggle('zero', solved);
+    return n;
+  }
+  function tickClock() {
+    clearInterval(timer);
+    timer = setInterval(() => { if (solved || !L || !startT) return; $('unTime').textContent = fmt((performance.now() - startT) / 1000); }, 250);
+    $('unTime').textContent = '0:00'; $('unMoves').textContent = '0 moves';
+  }
+  const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  function win() {
+    solved = true; const secs = (performance.now() - startT) / 1000, lv = LEVELS[li], stars = starsFor(lv, secs);
+    const prev = data[li] || {}; data[li] = { stars: Math.max(prev.stars || 0, stars), best: Math.min(prev.best || 1e9, secs) }; store('smidge/untangle', data);
+    render();
+    [0, 4, 7, 12].forEach((s2, i) => Sound.tone(587 * Math.pow(2, s2 / 12), .3, 'triangle', .15, i * .08)); haptic(40);
+    $('unEndT').textContent = ['Untangled!', 'Smooth!', 'Neat work!'][li % 3];
+    $('unEndS').innerHTML = [0, 1, 2].map(i => i < stars ? '★' : '<span class="off">★</span>').join('');
+    $('unEndP').textContent = `${fmt(secs)} and ${moves} move${moves === 1 ? '' : 's'}. ${stars < 3 ? `Under ${fmt(par(lv))} earns three stars.` : 'Three stars.'}`;
+    $('unNext').textContent = li + 1 < LEVELS.length ? 'Next level' : 'All levels';
+    setTimeout(() => { if (solved) $('unEnd').hidden = false; }, 900);
+  }
+  function showMenu() {
+    L = null; clearInterval(timer);
+    $('unGrid').innerHTML = LEVELS.map((lv, i) => `<button data-i="${i}" class="${i === firstOpen() ? 'cur' : ''}">${i + 1}<small>${data[i] ? '★'.repeat(data[i].stars) : ''}</small></button>`).join('');
+    $('unGrid').querySelectorAll('button').forEach(b => b.onclick = () => { Sound.audio(); open(+b.dataset.i); });
+    $('unMenu').hidden = false; $('unEnd').hidden = true; svgWrap.innerHTML = '';
+    $('unSub').textContent = 'Pins and string'; $('unHint').textContent = ''; $('unCount').textContent = ''; $('unTime').textContent = ''; $('unMoves').textContent = '';
+  }
+  const firstOpen = () => { const i = LEVELS.findIndex((_, k) => !data[k]); return i < 0 ? 0 : i; };
+  svgWrap.addEventListener('pointerdown', e => {
+    if (!L || solved) return;
+    const i = e.target.dataset ? e.target.dataset.i : undefined; if (i == null) return;
+    e.preventDefault(); Sound.audio(); drag = { i: +i, moved: false, last: performance.now() };
+    if (!startT) startT = performance.now();
+    try { svgWrap.setPointerCapture(e.pointerId); } catch (err) {}
+    Sound.tone(520, .04, 'triangle', .08); render(drag.i);
+  });
+  svgWrap.addEventListener('pointermove', e => {
+    if (!drag) return; const svg = svgWrap.querySelector('svg'); if (!svg) return;
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    pos[drag.i] = [Math.max(0, Math.min(1, p.x / 1000)), Math.max(0, Math.min(1, p.y / 1000))]; drag.moved = true;
+    const n = render(drag.i);
+    if (drag.n != null && n < drag.n) Sound.tone(700 + Math.max(0, 20 - n) * 25, .05, 'sine', .07);
+    drag.n = n;
+  });
+  svgWrap.addEventListener('pointerup', () => {
+    if (!drag) return; const d = drag; drag = null;
+    if (d.moved) { moves++; $('unMoves').textContent = `${moves} move${moves === 1 ? '' : 's'}`; Sound.tone(380, .05, 'triangle', .1); haptic(6); }
+    const n = render(); if (n === 0) win();
+  });
+  svgWrap.addEventListener('pointercancel', () => { drag = null; if (L) render(); });
+  $('unList').onclick = () => { Sound.audio(); showMenu(); };
+  $('unEndList').onclick = () => { Sound.audio(); showMenu(); };
+  $('unNext').onclick = () => { Sound.audio(); if (li + 1 < LEVELS.length) open(li + 1); else showMenu(); };
+  $('unRestart').onclick = () => { if (L) { Sound.audio(); open(li); } };
+  return {
+    enter() { showMenu(); },
+    leave() { drag = null; clearInterval(timer); },
+    stats() { const vals = LEVELS.map((_, i) => data[i]); return { done: vals.filter(Boolean).length, stars: vals.reduce((a, v) => a + (v ? v.stars : 0), 0), total: LEVELS.length }; },
+  };
+})();
+
 // Smidge: the splash, the home screen and moving between games.
 const App = (() => {
   const $ = id => document.getElementById(id);
-  const VIEWS = ['splash', 'home', 'pop', 'match'];
+  const VIEWS = ['splash', 'home', 'pop', 'match', 'slice', 'skim', 'untangle'];
+  const GAMES = { pop: () => Popshot, match: () => Stickler, slice: () => Slice, skim: () => Skim, untangle: () => Untangle };
   let cur = 'splash', splashReady = false;
   function go(v) {
-    if (cur === 'pop' && v !== 'pop') Popshot.leave();
-    if (cur === 'match' && v !== 'match') Stickler.leave();
+    if (GAMES[cur] && cur !== v) GAMES[cur]().leave();
     for (const id of VIEWS) $(id).hidden = id !== v;
     cur = v; document.body.dataset.view = v;
     if (v === 'home') renderHome();
-    if (v === 'pop') Popshot.enter();
-    if (v === 'match') Stickler.enter();
+    if (GAMES[v]) GAMES[v]().enter();
     Sound.paintButtons();
   }
   function renderHome() {
@@ -1543,6 +2340,10 @@ const App = (() => {
     const stars = Object.values(best).reduce((a, b) => a + (b.stars || 0), 0), played = Object.keys(best).length;
     $('progPop').innerHTML = played ? `<span>★ ${stars} of 24</span><span>${played} of 8 levels played</span>` : '<span>New · 8 levels</span>';
     const st = Stickler.stats();
+    const sl = Slice.stats(), sk = Skim.stats(), un = Untangle.stats();
+    $('progSlice').innerHTML = sl.today != null ? `<span>Today ${sl.today}/500</span><span>Best ${sl.best}</span>` : sl.best ? `<span>Today's shapes are ready</span><span>Best ${sl.best}</span>` : '<span>New · daily shapes</span>';
+    $('progSkim').innerHTML = sk.today != null ? `<span>Today ${sk.today} points</span><span>Best ${sk.best}</span>` : sk.best ? `<span>Today's lake is ready</span><span>Best ${sk.best}</span>` : '<span>New · daily lake</span>';
+    $('progUn').innerHTML = un.done ? `<span>${un.done} of ${un.total} untangled</span><span>★ ${un.stars}</span>` : `<span>New · ${un.total} levels</span>`;
     $('progMatch').innerHTML = st.solved ? `<span>${st.solved} of ${st.total} solved</span><span>★ ${st.stars}</span>` : `<span>New · ${st.total} puzzles</span>`;
   }
   function popSound() { Sound.noise(.06, .55, 2600, .8); Sound.tone(660, .22, 'triangle', .3); Sound.tone(990, .3, 'triangle', .18, .08); }
@@ -1551,6 +2352,7 @@ const App = (() => {
   $('spGo').addEventListener('click', e => { e.stopPropagation(); Sound.audio(); popSound(); go('home'); });
   setTimeout(() => { splashReady = true; }, 2000);
   document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { Sound.audio(); Sound.tone(740, .05, 'square', .04); go(b.dataset.go); }));
+  document.querySelectorAll('[data-home]').forEach(b => b.addEventListener('click', () => { Sound.audio(); go('home'); }));
   document.querySelectorAll('[data-sound]').forEach(b => b.addEventListener('click', () => { Sound.audio(); Sound.setMuted(!Sound.isMuted()); }));
   document.body.dataset.view = 'splash';
   Sound.paintButtons();

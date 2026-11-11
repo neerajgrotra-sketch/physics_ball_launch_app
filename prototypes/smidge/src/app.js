@@ -1,16 +1,15 @@
 // Smidge: the splash, the home screen and moving between games.
 const App = (() => {
   const $ = id => document.getElementById(id);
-  const VIEWS = ['splash', 'home', 'pop', 'match'];
+  const VIEWS = ['splash', 'home', 'pop', 'match', 'slice', 'skim', 'untangle'];
+  const GAMES = { pop: () => Popshot, match: () => Stickler, slice: () => Slice, skim: () => Skim, untangle: () => Untangle };
   let cur = 'splash', splashReady = false;
   function go(v) {
-    if (cur === 'pop' && v !== 'pop') Popshot.leave();
-    if (cur === 'match' && v !== 'match') Stickler.leave();
+    if (GAMES[cur] && cur !== v) GAMES[cur]().leave();
     for (const id of VIEWS) $(id).hidden = id !== v;
     cur = v; document.body.dataset.view = v;
     if (v === 'home') renderHome();
-    if (v === 'pop') Popshot.enter();
-    if (v === 'match') Stickler.enter();
+    if (GAMES[v]) GAMES[v]().enter();
     Sound.paintButtons();
   }
   function renderHome() {
@@ -18,6 +17,10 @@ const App = (() => {
     const stars = Object.values(best).reduce((a, b) => a + (b.stars || 0), 0), played = Object.keys(best).length;
     $('progPop').innerHTML = played ? `<span>★ ${stars} of 24</span><span>${played} of 8 levels played</span>` : '<span>New · 8 levels</span>';
     const st = Stickler.stats();
+    const sl = Slice.stats(), sk = Skim.stats(), un = Untangle.stats();
+    $('progSlice').innerHTML = sl.today != null ? `<span>Today ${sl.today}/500</span><span>Best ${sl.best}</span>` : sl.best ? `<span>Today's shapes are ready</span><span>Best ${sl.best}</span>` : '<span>New · daily shapes</span>';
+    $('progSkim').innerHTML = sk.today != null ? `<span>Today ${sk.today} points</span><span>Best ${sk.best}</span>` : sk.best ? `<span>Today's lake is ready</span><span>Best ${sk.best}</span>` : '<span>New · daily lake</span>';
+    $('progUn').innerHTML = un.done ? `<span>${un.done} of ${un.total} untangled</span><span>★ ${un.stars}</span>` : `<span>New · ${un.total} levels</span>`;
     $('progMatch').innerHTML = st.solved ? `<span>${st.solved} of ${st.total} solved</span><span>★ ${st.stars}</span>` : `<span>New · ${st.total} puzzles</span>`;
   }
   function popSound() { Sound.noise(.06, .55, 2600, .8); Sound.tone(660, .22, 'triangle', .3); Sound.tone(990, .3, 'triangle', .18, .08); }
@@ -26,6 +29,7 @@ const App = (() => {
   $('spGo').addEventListener('click', e => { e.stopPropagation(); Sound.audio(); popSound(); go('home'); });
   setTimeout(() => { splashReady = true; }, 2000);
   document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { Sound.audio(); Sound.tone(740, .05, 'square', .04); go(b.dataset.go); }));
+  document.querySelectorAll('[data-home]').forEach(b => b.addEventListener('click', () => { Sound.audio(); go('home'); }));
   document.querySelectorAll('[data-sound]').forEach(b => b.addEventListener('click', () => { Sound.audio(); Sound.setMuted(!Sound.isMuted()); }));
   document.body.dataset.view = 'splash';
   Sound.paintButtons();
