@@ -25,7 +25,7 @@ const PourPhys = (() => {
 
 const Pour = (() => {
   const $ = id => document.getElementById(id);
-  const P = PourPhys, N = 5, LIQ = ['#ff9f1c', '#d6336c', '#7cc242', '#6b3e26', '#f3f0e8'];
+  const P = PourPhys, N = 5, LIQ = ['#ff9f1c', '#d6336c', '#4fae2e', '#8a4b22', '#3a74d8'];
   const cv = $('poCanvas'), ctx = cv.getContext('2d');
   let W = 0, H = 0, DPR = 1, active = false, last = 0;
   let mode = 'daily', glasses = [], gi = 0, results = [], state = 'menu', g = null;
@@ -58,9 +58,9 @@ const Pour = (() => {
   function thumb(gl, rec) {
     const w = u => P.PROFILES[gl.shape.kind](u, gl.shape), y = u => 500 - u * P.GH, side = (sg, a, b) => { const pts = []; for (let i = 0; i <= 40; i++) { const u = a + (b - a) * i / 40; pts.push(`${(200 + sg * w(u)).toFixed(1)},${y(u).toFixed(1)}`); } return pts; };
     let svg = '';
-    if (rec) { const lv = Math.min(1, rec.level); if (lv > 0) svg += `<polygon points="${side(-1, 0, lv).concat(side(1, lv, 0)).join(' ')}" fill="${gl.color}"/>`; }
-    svg += `<polyline points="${side(-1, 0, 1).join(' ')}" fill="none" stroke="#1c2233" stroke-width="7" stroke-linejoin="round"/><polyline points="${side(1, 0, 1).join(' ')}" fill="none" stroke="#1c2233" stroke-width="7" stroke-linejoin="round"/>`;
-    svg += `<line x1="${200 - w(0) - 8}" y1="504" x2="${200 + w(0) + 8}" y2="504" stroke="#1c2233" stroke-width="10" stroke-linecap="round"/>`;
+    if (rec) { const lv = Math.min(1, rec.level); if (lv > 0) svg += `<polygon points="${side(-1, 0, lv).concat(side(1, lv, 0)).join(' ')}" fill="${gl.color}"/><line x1="${200 - w(lv)}" y1="${y(lv)}" x2="${200 + w(lv)}" y2="${y(lv)}" stroke="rgba(0,0,0,.35)" stroke-width="6"/>`; }
+    svg += `<polyline points="${side(-1, 0, 1).join(' ')}" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/><polyline points="${side(1, 0, 1).join(' ')}" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/>`;
+    svg += `<line x1="${200 - w(0) - 8}" y1="504" x2="${200 + w(0) + 8}" y2="504" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>`;
     gl.targets.forEach((tu, i) => { const ok = rec ? (rec.errs[i] ?? 99) <= 1.5 : null, col = ok == null ? '#ff3b30' : ok ? '#1f9e5a' : '#ff3b30', ww = w(tu); svg += `<path d="M${200 - ww - 24} ${y(tu)} H${200 - ww + 10} M${200 + ww - 10} ${y(tu)} H${200 + ww + 24}" stroke="${col}" stroke-width="8"/>`; });
     if (gl.leak) svg += `<circle cx="${200 + w(.03) + 10}" cy="492" r="6" fill="${gl.color}"/>`;
     return `<svg viewBox="40 170 320 350" aria-hidden="true">${svg}</svg>`;
@@ -159,7 +159,7 @@ const Pour = (() => {
   // ---------- drawing ----------
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   let C = {};
-  function readColors() { for (const k of ['wall', 'tile', 'counter', 'counter2', 'glass']) C[k] = css('--po-' + k); }
+  function readColors() { for (const k of ['wall', 'tile', 'counter', 'counter2', 'glass', 'line']) C[k] = css('--po-' + k); }
   function resize() { DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; }
   function view() { const top = 140, bot = 70, s = Math.min(W / 420, (H - top - bot) / 520); return { s, ox: W / 2 - 200 * s, oy: top + (H - top - bot) / 2 - 270 * s }; }
   function draw() {
@@ -176,6 +176,10 @@ const Pour = (() => {
     if (!g) return;
     const w = u => P.PROFILES[g.shape.kind](u, g.shape), y = u => base - u * P.GH, steps = 80;
     const side = (sgn, from, to) => { const pts = []; for (let i = 0; i <= steps; i++) { const u = from + (to - from) * i / steps; pts.push([200 + sgn * w(u), y(u)]); } return pts; };
+    // glass tint first, so the drink drawn over it keeps its full colour
+    const outL = side(-1, 0, 1), outR = side(1, 1, 0);
+    ctx.beginPath(); outL.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); outR.forEach(p => ctx.lineTo(p[0], p[1]));
+    ctx.fillStyle = C.glass; ctx.fill();
     // liquid
     const lv = Math.min(1, level()), L = side(-1, 0, lv), R = side(1, lv, 0);
     if (lv > 0) {
@@ -183,14 +187,13 @@ const Pour = (() => {
       ctx.beginPath(); L.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
       ctx.quadraticCurveTo(200, y(lv) + wob, R[0][0], R[0][1]); R.forEach(p => ctx.lineTo(p[0], p[1])); ctx.closePath();
       ctx.fillStyle = g.color; ctx.fill();
+      // a darker line along the surface so the level reads clearly against the glass
+      ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(L[L.length - 1][0], L[L.length - 1][1]); ctx.quadraticCurveTo(200, y(lv) + wob, R[0][0], R[0][1]); ctx.stroke();
       ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(200 - w(lv) + 4, y(lv) + 2, 2 * w(lv) - 8, 4);
       for (let i = 0; i < 6; i++) { const u = ((g.t * .15 + i * .17) % 1) * lv, bx = 200 + Math.sin(i * 7.1) * w(u) * .6; ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(bx, y(u), 2.2, 0, 7); ctx.fill(); }
     }
-    // glass
-    const outL = side(-1, 0, 1), outR = side(1, 1, 0);
-    ctx.beginPath(); outL.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); outR.forEach(p => ctx.lineTo(p[0], p[1]));
-    ctx.fillStyle = C.glass; ctx.fill();
-    ctx.lineWidth = 4; ctx.strokeStyle = '#1c2233'; ctx.lineJoin = 'round';
+    // glass outline
+    ctx.lineWidth = 4; ctx.strokeStyle = C.line; ctx.lineJoin = 'round';
     ctx.beginPath(); outL.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
     ctx.beginPath(); outR.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(200 - w(0) - 6, base + 4); ctx.lineTo(200 + w(0) + 6, base + 4); ctx.lineWidth = 8; ctx.stroke();
@@ -205,7 +208,7 @@ const Pour = (() => {
     // jug and stream
     const tilt = g.pouring ? .95 : .3, jx = 168, jy = 112;
     ctx.save(); ctx.translate(jx, jy); ctx.rotate(tilt);
-    ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.strokeStyle = '#1c2233'; ctx.lineWidth = 3.5;
+    ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.strokeStyle = C.line; ctx.lineWidth = 3.5;
     ctx.beginPath(); ctx.moveTo(-60, -50); ctx.lineTo(10, -50); ctx.lineTo(18, -60); ctx.lineTo(16, 30); ctx.lineTo(-60, 30); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.fillStyle = g.color; ctx.globalAlpha = .85; ctx.fillRect(-57, -20, 70, 47); ctx.globalAlpha = 1;
     ctx.beginPath(); ctx.arc(-72, -10, 18, Math.PI * .5, Math.PI * 1.5); ctx.stroke();
