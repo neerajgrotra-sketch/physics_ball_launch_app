@@ -445,6 +445,10 @@ body[data-view="code"] { background: var(--cc-bg2); }
 .sl-s b { color: var(--ink); font-size: 14px; }
 .sl-st { position: absolute; top: 7px; right: 8px; font: 12px/1 var(--display); color: var(--gold); text-shadow: 0 1px 2px rgba(0,0,0,.6); letter-spacing: -.02em; }
 
+.sl-split { display: block; font: 34px/1.1 var(--display); color: var(--ink); text-align: center; font-variant-numeric: tabular-nums; margin-bottom: 4px; }
+#slLvlP { text-align: center; }
+.sl-s b { font-size: 13px; letter-spacing: -.01em; }
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <linearGradient id="mWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7dfae"/><stop offset=".5" stop-color="#e3b46d"/><stop offset="1" stop-color="#c28a43"/></linearGradient>
@@ -2184,7 +2188,11 @@ const Slice = (() => {
     if (s.pin) inner += `<circle cx="${s.pin[0]}" cy="${s.pin[1]}" r="12" fill="#1c2233"/><circle cx="${s.pin[0]}" cy="${s.pin[1]}" r="7" fill="#ffd23f"/>`;
     return `<svg viewBox="-20 -20 440 440" aria-hidden="true">${inner}</svg>`;
   }
-  const starsFor = pts => pts >= 90 ? 3 : pts >= 70 ? 2 : pts >= 40 ? 1 : 0;
+  // levels score by how close the split was: within 1% of the target ★★★, within 3% ★★, any cut ★
+  const starsFor = err => err <= 1 ? 3 : err <= 3 ? 2 : 1;
+  const splitText = (pct, sep = ' / ', dp = 1) => { const hi = Math.max(pct, 100 - pct), lo = 100 - hi; return `${hi.toFixed(dp)}%${sep}${lo.toFixed(dp)}%`; };
+  // the split of a stored best cut, worked out again from the shape (older saves have no pct)
+  const bestPct = (sh, b) => b.pct != null ? b.pct : G.split(turned(sh, b.rot), b.a, b.d);
   const starRow = n => [0, 1, 2].map(i => i < n ? '★' : '<span class="off">★</span>').join('');
   // the shape as it stands now (spinning shapes turn about their middle until the cut)
   function current(s) {
@@ -2232,15 +2240,16 @@ const Slice = (() => {
   }
   function levelDone(s) {
     const pts = pointsFor(cut.err), lv = data.levels || (data.levels = {}), prev = lv[lvl];
-    const mine = { pts, err: cut.err, a: cut.a, d: cut.d, rot: s.spin ? s.spin * cutAt : 0 };
-    if (!prev || pts > prev.pts) lv[lvl] = mine;
+    const mine = { pts, err: cut.err, pct: cut.pct, a: cut.a, d: cut.d, rot: s.spin ? s.spin * cutAt : 0 };
+    const better = !prev || cut.err < prev.err;
+    if (better) lv[lvl] = mine;
     store('smidge/slice', data);
-    $('slHint').innerHTML = `${gradeFor(cut.err)} <b>${pts} pts</b>`;
+    const st = starsFor(cut.err), want = s.target === 50 ? '50% / 50%' : s.target === 25 ? '75% / 25%' : '66.7% / 33.3%';
+    $('slHint').innerHTML = `${gradeFor(cut.err)} <b>${splitText(cut.pct)}</b> ${'★'.repeat(st)}`;
     $('slLvlT').textContent = gradeFor(cut.err);
-    $('slLvlS').innerHTML = starRow(starsFor(pts));
+    $('slLvlS').innerHTML = starRow(st);
     $('slLvlPic').innerHTML = thumb(s, mine);
-    const a = cut.pct, b = 100 - cut.pct;
-    $('slLvlP').textContent = `${a.toFixed(1)}% and ${b.toFixed(1)}%: off by ${cut.err.toFixed(1)}%, ${pts} points.` + (prev && prev.pts >= pts ? ` Your best here is ${prev.pts}.` : prev ? ' A new best.' : '');
+    $('slLvlP').innerHTML = `<span class="sl-split">${splitText(cut.pct)}</span>Aiming for ${want}, off by ${cut.err.toFixed(1)}%.` + (prev && !better ? ` Your best here: ${splitText(bestPct(s, prev))}.` : prev ? ' A new best.' : '');
     $('slLvlNext').textContent = lvl + 1 < LEVELS.length ? 'Next level' : 'All levels';
     setTimeout(() => { if (state === 'cut' && mode === 'level') $('slLvl').hidden = false; }, 1100);
   }
@@ -2267,13 +2276,14 @@ const Slice = (() => {
     const lv = data.levels || {}, first = LEVELS.findIndex((_, i) => !lv[i]);
     $('slGrid').innerHTML = LEVELS.map((L, i) => {
       const b = lv[i], sh = levelShape(i);
-      return `<button class="sl-tile ${i === first ? 'cur' : ''} ${b ? 'done' : ''}" data-i="${i}" aria-label="Level ${i + 1}, ${tagFor(L)}${b ? `, best ${b.pts} points` : ''}">` +
+      const split = b ? splitText(bestPct(sh, b), '/', 0) : '';
+      return `<button class="sl-tile ${i === first ? 'cur' : ''} ${b ? 'done' : ''}" data-i="${i}" aria-label="Level ${i + 1}, ${tagFor(L)}${b ? `, best cut ${split}, ${starsFor(b.err)} stars` : ''}">` +
         `<span class="sl-pic">${thumb(sh, b)}</span><span class="sl-n">${i + 1}</span>` +
-        `<span class="sl-s">${b ? `<b>${b.pts}</b> pts` : tagFor(L)}</span>${b ? `<span class="sl-st">${'★'.repeat(starsFor(b.pts))}</span>` : ''}</button>`;
+        `<span class="sl-s">${b ? `<b>${split}</b>` : tagFor(L)}</span>${b ? `<span class="sl-st">${'★'.repeat(starsFor(b.err))}</span>` : ''}</button>`;
     }).join('');
     $('slGrid').querySelectorAll('.sl-tile').forEach(t => t.onclick = () => { Sound.audio(); begin('level', +t.dataset.i); });
-    const done = LEVELS.filter((_, i) => lv[i]).length, total = LEVELS.reduce((a, _, i) => a + (lv[i] ? lv[i].pts : 0), 0);
-    $('slLvlSum').textContent = done ? `${done} of ${LEVELS.length} played · ${total} points` : `${LEVELS.length} shapes, one cut each`;
+    const done = LEVELS.filter((_, i) => lv[i]).length, stars = LEVELS.reduce((a, _, i) => a + (lv[i] ? starsFor(lv[i].err) : 0), 0);
+    $('slLvlSum').textContent = done ? `${done} of ${LEVELS.length} played · ★ ${stars} of ${LEVELS.length * 3}` : `${LEVELS.length} shapes, one cut each`;
   }
   function showMenu() {
     renderLevels(); $('slLvl').hidden = true;

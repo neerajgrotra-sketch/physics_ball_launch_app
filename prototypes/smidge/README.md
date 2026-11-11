@@ -22,7 +22,8 @@ The win card closes (✕, a tap outside or Esc) to leave the solved board on sho
 through a pin, and a turning shape with a hole (the hole counts). 100 points for a perfect cut, off by 1% is 88.
 A daily round (same shapes for everyone, by date) with a copyable emoji result, and practice rounds.
 20 levels, one shape each (halves, quarters, a third, pins, holes, spinning): the level grid shows each shape, and once
-played, your best cut (pieces pulled apart) and its score. A level's result card closes with ✕ to look at the board.
+played, your best cut (pieces pulled apart) and its split (e.g. 53%/47%). Levels show the split, not points:
+★★★ within 1% of the target, ★★ within 3%, ★ for any cut. A level's result card closes with ✕ to look at the board.
 
 **Skim**: skip stones across a lake. Pull back and let go (pull length = speed, direction = angle). A stone skips when it
 meets the water at under 20°, wave slope included, while still fast; each touch costs speed, more for steeper touches.
