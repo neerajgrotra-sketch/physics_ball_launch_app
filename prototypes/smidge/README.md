@@ -15,6 +15,8 @@ tower (gusts later). Gold, bomb and armour balloons. Rhythm dial and power-bar m
 - Shift (6): move n sticks (drag, or tap then tap a spot) to make exactly m squares.
 - Fix the sum (8): seven-segment sums; move sticks so the sum is true and every digit stays a real digit.
 A live square count, undo, reset and a Hint (the next step of a stored answer; a star only without hints).
+The win card closes (✕, "Look at the board", a tap outside or Esc) to leave the solved board on show; Reset then reads
+"Play again", Hint reads "Next ›", and a "Solved" bar brings the card back.
 
 **Slice**: one swipe cuts a paper shape on a cutting mat. Five shapes a round: halves, cut off a quarter, halves
 through a pin, and a turning shape with a hole (the hole counts). 100 points for a perfect cut, off by 1% is 88.

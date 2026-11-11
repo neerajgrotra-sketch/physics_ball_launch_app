@@ -179,6 +179,7 @@
       <div class="chips" id="stChips"></div>
       <div class="board" id="stBoard"></div>
       <div class="st-msg" id="stMsg" aria-live="polite"></div>
+      <button class="st-done" id="stDone" hidden></button>
       <div class="st-foot">
         <button class="sbtn" id="stReset">Reset</button>
         <button class="sbtn primary" id="stHint">💡 Hint</button>
@@ -186,10 +187,12 @@
     </div>
     <div class="st-win" id="stWin" hidden>
       <div class="card2">
+        <button class="st-x" id="stWinClose" aria-label="Close and look at the board">✕</button>
         <h2 id="stWinT">Solved!</h2>
         <div class="stars" id="stWinS" style="font:44px/1 var(--display);color:var(--gold);-webkit-text-stroke:1.5px #1c2233;paint-order:stroke fill">★</div>
         <p id="stWinP"></p>
         <div class="row"><button class="sbtn" id="stWinList">Puzzles</button><button class="sbtn primary" id="stWinNext">Next</button></div>
+        <button class="st-look" id="stWinLook">Look at the board</button>
       </div>
     </div>
   </div>

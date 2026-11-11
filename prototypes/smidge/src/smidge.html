@@ -423,6 +423,14 @@ body[data-view="code"] { background: var(--cc-bg2); }
 
 #code .gover, #switchboard .gover { position: fixed; }
 
+.st-win .card2 { position: relative; }
+.st-x { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 12px; border: 2px solid #1c2233; background: var(--card); color: var(--ink);
+  font: 800 18px/1 var(--body); cursor: pointer; display: grid; place-items: center; }
+.st-x:active { transform: translateY(1px); }
+.st-look { border: 0; background: none; color: var(--ink-soft); font: 800 14px/1.2 var(--body); text-decoration: underline; cursor: pointer; padding: 4px; align-self: center; }
+.st-done { align-self: center; border: 2px solid var(--gold); background: rgba(0,0,0,.18); color: var(--chalk); border-radius: 999px; padding: 8px 16px; font: 800 14px/1 var(--body); cursor: pointer; }
+.st-done b { color: var(--gold); }
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <linearGradient id="mWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7dfae"/><stop offset=".5" stop-color="#e3b46d"/><stop offset="1" stop-color="#c28a43"/></linearGradient>
@@ -610,6 +618,7 @@ body[data-view="code"] { background: var(--cc-bg2); }
       <div class="chips" id="stChips"></div>
       <div class="board" id="stBoard"></div>
       <div class="st-msg" id="stMsg" aria-live="polite"></div>
+      <button class="st-done" id="stDone" hidden></button>
       <div class="st-foot">
         <button class="sbtn" id="stReset">Reset</button>
         <button class="sbtn primary" id="stHint">💡 Hint</button>
@@ -617,10 +626,12 @@ body[data-view="code"] { background: var(--cc-bg2); }
     </div>
     <div class="st-win" id="stWin" hidden>
       <div class="card2">
+        <button class="st-x" id="stWinClose" aria-label="Close and look at the board">✕</button>
         <h2 id="stWinT">Solved!</h2>
         <div class="stars" id="stWinS" style="font:44px/1 var(--display);color:var(--gold);-webkit-text-stroke:1.5px #1c2233;paint-order:stroke fill">★</div>
         <p id="stWinP"></p>
         <div class="row"><button class="sbtn" id="stWinList">Puzzles</button><button class="sbtn primary" id="stWinNext">Next</button></div>
+        <button class="st-look" id="stWinLook">Look at the board</button>
       </div>
     </div>
   </div>
@@ -1832,7 +1843,7 @@ const Stickler = (() => {
   function open(id) {
     P = prep(PUZZLES.find(p => p.id === id)); pack = P.pack;
     cur = new Set(P._start); hist = []; sel = null; hints = 0; hint = null; solved = false; loose = null; flames = false;
-    $('stList').hidden = true; $('stPlay').hidden = false; $('stWin').hidden = true;
+    $('stList').hidden = true; $('stPlay').hidden = false; $('stWin').hidden = true; reviewMode(false);
     const list = PUZZLES.filter(p => p.pack === P.pack), idx = list.indexOf(P);
     $('stTitle').textContent = `${PACKS.find(k => k.id === P.pack).name} ${idx + 1}`;
     $('stSub').textContent = `Puzzle ${idx + 1} of ${list.length}`;
@@ -1922,8 +1933,19 @@ const Stickler = (() => {
     $('stWinP').textContent = val === 2 ? 'No hints needed, so you earn the star.' : `You used ${hints} hint${hints > 1 ? 's' : ''}. Solve it again without one to earn the star.`;
     const nxt = nextPuzzle();
     $('stWinNext').textContent = nxt ? (nxt.pack !== P.pack ? 'Next pack' : 'Next puzzle') : 'All done';
-    setTimeout(() => { if (solved && P) $('stWin').hidden = false; }, 1100);
+    $('stDone').innerHTML = `<b>${val === 2 ? '★' : '✓'}</b> Solved · see the result`;
+    setTimeout(() => { if (solved && P && !reviewing) $('stWin').hidden = false; }, 1100);
   }
+  // close the card and look at the solved board: Reset becomes Play again, Hint becomes Next
+  let reviewing = false;
+  function reviewMode(on) {
+    reviewing = on;
+    $('stDone').hidden = !on;
+    $('stReset').textContent = on ? 'Play again' : 'Reset';
+    $('stHint').textContent = on ? (nextPuzzle() ? 'Next ›' : 'All puzzles') : '💡 Hint';
+    if (on) msg('Your answer stays on the board. Play again to solve it once more, or move on.');
+  }
+  function closeWin() { if (!solved) return; $('stWin').hidden = true; reviewMode(true); Sound.tone(520, .05, 'triangle', .06); }
   function nextPuzzle() { const i = PUZZLES.indexOf(P); return PUZZLES[i + 1] || null; }
   function showHint() {
     if (solved || !P) return;
@@ -2012,7 +2034,12 @@ const Stickler = (() => {
     $('stBack').onclick = () => { Sound.audio(); tick(); toList(); };
     $('stUndo').onclick = () => { if (!hist.length || solved) return; cur = hist.pop(); sel = null; hint = null; loose = null; msg(''); Sound.tone(360, .06, 'triangle', .08); render(); };
     $('stReset').onclick = () => { if (!P) return; Sound.audio(); if (solved) return open(P.id); if (removedCount(cur)) { hist.push(cur); cur = new Set(P._start); } sel = null; hint = null; loose = null; msg(''); Sound.noise(.2, .25, 900, .6); render(); };
-    $('stHint').onclick = showHint;
+    $('stHint').onclick = () => { if (solved && reviewing) { Sound.audio(); tick(); const n = nextPuzzle(); if (n) open(n.id); else toList(); } else showHint(); };
+    $('stWinClose').onclick = closeWin;
+    $('stWinLook').onclick = closeWin;
+    $('stWin').addEventListener('click', e => { if (e.target === $('stWin')) closeWin(); });
+    $('stDone').onclick = () => { Sound.audio(); $('stWin').hidden = false; $('stDone').hidden = true; reviewing = false; };
+    addEventListener('keydown', e => { if (e.key === 'Escape' && !$('stWin').hidden) closeWin(); });
     $('stWinList').onclick = () => { Sound.audio(); tick(); toList(); };
     $('stWinNext').onclick = () => { Sound.audio(); tick(); const n = nextPuzzle(); if (n) open(n.id); else toList(); };
   }

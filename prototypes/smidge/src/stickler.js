@@ -120,7 +120,7 @@ const Stickler = (() => {
   function open(id) {
     P = prep(PUZZLES.find(p => p.id === id)); pack = P.pack;
     cur = new Set(P._start); hist = []; sel = null; hints = 0; hint = null; solved = false; loose = null; flames = false;
-    $('stList').hidden = true; $('stPlay').hidden = false; $('stWin').hidden = true;
+    $('stList').hidden = true; $('stPlay').hidden = false; $('stWin').hidden = true; reviewMode(false);
     const list = PUZZLES.filter(p => p.pack === P.pack), idx = list.indexOf(P);
     $('stTitle').textContent = `${PACKS.find(k => k.id === P.pack).name} ${idx + 1}`;
     $('stSub').textContent = `Puzzle ${idx + 1} of ${list.length}`;
@@ -210,8 +210,19 @@ const Stickler = (() => {
     $('stWinP').textContent = val === 2 ? 'No hints needed, so you earn the star.' : `You used ${hints} hint${hints > 1 ? 's' : ''}. Solve it again without one to earn the star.`;
     const nxt = nextPuzzle();
     $('stWinNext').textContent = nxt ? (nxt.pack !== P.pack ? 'Next pack' : 'Next puzzle') : 'All done';
-    setTimeout(() => { if (solved && P) $('stWin').hidden = false; }, 1100);
+    $('stDone').innerHTML = `<b>${val === 2 ? '★' : '✓'}</b> Solved · see the result`;
+    setTimeout(() => { if (solved && P && !reviewing) $('stWin').hidden = false; }, 1100);
   }
+  // close the card and look at the solved board: Reset becomes Play again, Hint becomes Next
+  let reviewing = false;
+  function reviewMode(on) {
+    reviewing = on;
+    $('stDone').hidden = !on;
+    $('stReset').textContent = on ? 'Play again' : 'Reset';
+    $('stHint').textContent = on ? (nextPuzzle() ? 'Next ›' : 'All puzzles') : '💡 Hint';
+    if (on) msg('Your answer stays on the board. Play again to solve it once more, or move on.');
+  }
+  function closeWin() { if (!solved) return; $('stWin').hidden = true; reviewMode(true); Sound.tone(520, .05, 'triangle', .06); }
   function nextPuzzle() { const i = PUZZLES.indexOf(P); return PUZZLES[i + 1] || null; }
   function showHint() {
     if (solved || !P) return;
@@ -300,7 +311,12 @@ const Stickler = (() => {
     $('stBack').onclick = () => { Sound.audio(); tick(); toList(); };
     $('stUndo').onclick = () => { if (!hist.length || solved) return; cur = hist.pop(); sel = null; hint = null; loose = null; msg(''); Sound.tone(360, .06, 'triangle', .08); render(); };
     $('stReset').onclick = () => { if (!P) return; Sound.audio(); if (solved) return open(P.id); if (removedCount(cur)) { hist.push(cur); cur = new Set(P._start); } sel = null; hint = null; loose = null; msg(''); Sound.noise(.2, .25, 900, .6); render(); };
-    $('stHint').onclick = showHint;
+    $('stHint').onclick = () => { if (solved && reviewing) { Sound.audio(); tick(); const n = nextPuzzle(); if (n) open(n.id); else toList(); } else showHint(); };
+    $('stWinClose').onclick = closeWin;
+    $('stWinLook').onclick = closeWin;
+    $('stWin').addEventListener('click', e => { if (e.target === $('stWin')) closeWin(); });
+    $('stDone').onclick = () => { Sound.audio(); $('stWin').hidden = false; $('stDone').hidden = true; reviewing = false; };
+    addEventListener('keydown', e => { if (e.key === 'Escape' && !$('stWin').hidden) closeWin(); });
     $('stWinList').onclick = () => { Sound.audio(); tick(); toList(); };
     $('stWinNext').onclick = () => { Sound.audio(); tick(); const n = nextPuzzle(); if (n) open(n.id); else toList(); };
   }
