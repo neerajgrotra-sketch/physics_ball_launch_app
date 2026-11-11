@@ -9,6 +9,10 @@ Open `index.html` in a browser, on a phone if possible. One file, no build step.
   Keyboard: hold Space to draw, let go to shoot.
 - Points per pop grow with the streak; gold balloons double the rest of that arrow; bombs pop neighbours;
   armour stops an arrow and breaks on the second hit. Survivors drop down after each arrow.
+- Wind from level 3 (km/h, shown by the chip under the score, the flag on the tether peg and streaks in the sky): it pushes
+  arrows sideways the whole flight, so a slow arrow drifts far more than a fast one, and it leans the tower downwind along
+  the curve a fast arrow (1100 units/s) would follow. Later levels add gusts (wind that rises and falls on a cycle) and
+  Crosswind swings it from one side to the other. While pulling, the first 0.3 s of the flight path is shown, wind included.
 - Camera starts zoomed on the bottom of the tower and pulls out as the arrow climbs; full view after each shot.
 - The rhythm dial by the crossbow marks when each arrow was fired and how many it popped. The sway is a pure
   function of time, so the same moment gives the same result.

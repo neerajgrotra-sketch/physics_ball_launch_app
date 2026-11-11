@@ -55,6 +55,9 @@ canvas { position: fixed; inset: 0; touch-action: none; display: block; }
 .count { font: 40px/1 var(--display); color: #fff; -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill;
   font-variant-numeric: tabular-nums; letter-spacing: 0.02em; text-shadow: 0 3px 0 var(--ink); }
 .subrow { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 4px; }
+.wind { font: 800 13px/1 var(--body); color: var(--ink); background: var(--card); border: 2px solid var(--ink); border-radius: 999px;
+  padding: 4px 9px 4px 7px; display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wind svg { width: 18px; height: 12px; transition: transform .3s; }
 .pts { font: 800 14px/1 var(--body); color: var(--ink); font-variant-numeric: tabular-nums; }
 .quiver { display: flex; gap: 3px; }
 .quiver svg { width: 16px; height: 30px; transition: opacity .25s, transform .25s; }
@@ -112,7 +115,7 @@ canvas { position: fixed; inset: 0; touch-action: none; display: block; }
   <div class="mid">
     <div class="lvlname" id="lvlname">Level 1 · Breeze</div>
     <div class="count" id="count">0/12</div>
-    <div class="subrow"><div class="quiver" id="quiver"></div><div class="pts" id="pts">0 pts</div></div>
+    <div class="subrow"><div class="quiver" id="quiver"></div><div class="pts" id="pts">0 pts</div><div class="wind" id="wind" hidden></div></div>
   </div>
   <button class="iconbtn" id="soundBtn" aria-label="Sound on">🔊</button>
 </div>
@@ -128,6 +131,7 @@ canvas { position: fixed; inset: 0; touch-action: none; display: block; }
       <span><i style="background:#ffd23f"></i>Gold: doubles the rest of that arrow</span>
       <span><i style="background:#2c2c36"></i>Bomb: pops its neighbours</span>
       <span><i style="background:#a3adb8"></i>Armour: stops an arrow, breaks on the 2nd hit</span>
+      <span><i style="background:#ffffff"></i>Wind (from level 3): pushes arrows sideways and leans the tower. Slow arrows drift most; watch the flag and the gusts</span>
     </div>
     <div class="lvls" id="lvls"></div>
     <div class="fine">Prototype 0.1 · a micro-game for the collection</div>
@@ -158,11 +162,16 @@ canvas { position: fixed; inset: 0; touch-action: none; display: block; }
 const LEVELS = [
   { name: 'Breeze',    n: 12, amp: 34, base: .55, T: 2.6, lag: 1.0,  h2: 0,    types: {} },
   { name: 'Ripple',    n: 16, amp: 44, base: .45, T: 2.4, lag: 0.65, h2: 0,    types: {} },
-  { name: 'Gold Rush', n: 20, amp: 46, base: .45, T: 2.3, lag: 1.3,  h2: .15,  types: { 6: 'g', 14: 'g' } },
-  { name: 'Fuse',      n: 22, amp: 52, base: .4,  T: 2.2, lag: 0.55, h2: .2,   types: { 4: 'b', 11: 'b', 17: 'b', 20: 'g' } },
-  { name: 'Ironclad',  n: 24, amp: 50, base: .4,  T: 2.4, lag: 0.9,  h2: .2,   types: { 3: 'g', 8: 'a', 12: 'b', 16: 'a' } },
-  { name: 'Gale',      n: 24, amp: 62, base: .35, T: 1.9, lag: 1.4,  h2: .35,  types: { 6: 'b', 12: 'a', 18: 'b', 21: 'g' } },
+  { name: 'Gold Rush', n: 20, amp: 46, base: .45, T: 2.3, lag: 1.3,  h2: .15,  types: { 6: 'g', 14: 'g' },                wind: { base: 4 } },
+  { name: 'Fuse',      n: 22, amp: 52, base: .4,  T: 2.2, lag: 0.55, h2: .2,   types: { 4: 'b', 11: 'b', 17: 'b', 20: 'g' },  wind: { base: -7, gust: 2, T: 5 } },
+  { name: 'Ironclad',  n: 24, amp: 50, base: .4,  T: 2.4, lag: 0.9,  h2: .2,   types: { 3: 'g', 8: 'a', 12: 'b', 16: 'a' },   wind: { base: 9, gust: 4, T: 4.5 } },
+  { name: 'Gale',      n: 24, amp: 62, base: .35, T: 1.9, lag: 1.4,  h2: .35,  types: { 6: 'b', 12: 'a', 18: 'b', 21: 'g' },  wind: { base: -12, gust: 6, T: 3.8 } },
+  { name: 'Crosswind', n: 24, amp: 48, base: .4,  T: 2.3, lag: 1.0,  h2: .2,   types: { 5: 'g', 10: 'b', 15: 'a', 19: 'b' },  wind: { base: 0, gust: 15, T: 6 } },
+  { name: 'Storm',     n: 26, amp: 58, base: .35, T: 2.0, lag: 0.8,  h2: .3,   types: { 4: 'b', 9: 'a', 13: 'g', 17: 'a', 22: 'b' }, wind: { base: 13, gust: 9, T: 3.2 } },
 ];
+// Wind (km/h, + blows right) pushes arrows sideways at WIND_ACC units/s² per km/h, so a slow arrow drifts much further.
+// The tower leans downwind along the curve an arrow at LEAN_V would follow, so a well-judged pull can ride the lean.
+const WIND_ACC = 4, LEAN_V = 1100;
 // V0 is the speed each level's wave is designed around; the pull picks a speed between VMIN and VMAX.
 const VMIN = 520, VMAX = 1300;
 const DT = 1 / 240, V0 = 950, R = 21, S = 46, Y0 = 190, CX = 200, AL = 50, SPLIT_DEG = 8, SLOW = 0.985;
@@ -172,6 +181,7 @@ const HUES = ['#ff4b4b', '#ff8a2a', '#ffcd2e', '#9bd63a', '#3cc36b', '#22c3b5', 
 let L, li = 0, balloons = [], t = 0, state = 'menu', arrowsLeft = 3, shot = null, popped = 0, points = 0;
 let pulling = false, pull = 0, pullStart = 0, pullStep = 0, pullId = null, keyPull = false, shortPull = false;
 const PULL_W = 40; // how far back the string travels at full pull (world units)
+let cloudPos = 0, streaks = [], windShown = null;
 let particles = [], popups = [], cam = { y: 300, z: 1.4 }, slowmo = 0, shake = 0, recoil = 0, revealT = 0, collapsed = false;
 const ghosts = {}; let muted = false, best = {};
 try { best = JSON.parse(localStorage.getItem('popshot/best') || '{}') || {}; } catch (e) { best = {}; }
@@ -201,9 +211,12 @@ addEventListener('resize', resize); resize();
 let om, kLag;
 function bx(b, time) {
   const s = b.slot, a = L.amp * (L.base + (1 - L.base) * s / (L.n - 1));
-  return CX + a * (Math.sin(om * time - kLag * s) + L.h2 * Math.sin(2 * om * time - 2 * kLag * s + 0.9));
+  return CX + leanAt(Y0 + s * S, time) + a * (Math.sin(om * time - kLag * s) + L.h2 * Math.sin(2 * om * time - 2 * kLag * s + 0.9));
 }
 const by = b => Y0 + b.slot * S;
+function windAt(time) { const w = L.wind; if (!w) return 0; return (w.base || 0) + (w.gust || 0) * Math.sin(2 * Math.PI * time / (w.T || 4) + 0.6); }
+const windAcc = time => windAt(time) * WIND_ACC;
+const leanAt = (y, time) => 0.5 * windAcc(time) * (y / LEAN_V) * (y / LEAN_V);
 const fullTop = () => Y0 + (L.n - 1) * S + R;
 
 function startLevel(i) {
@@ -213,7 +226,7 @@ function startLevel(i) {
     const type = L.types[j] || 'n';
     return { slot: j, target: j, type, hp: type === 'a' ? 2 : 1, alive: true, col: HUES[j % HUES.length], wob: 0 };
   });
-  cancelPull(); shortPull = false; t = 0; arrowsLeft = 3; popped = 0; points = 0; shot = null; particles = []; popups = []; collapsed = false;
+  cancelPull(); shortPull = false; streaks = []; windShown = null; t = 0; arrowsLeft = 3; popped = 0; points = 0; shot = null; particles = []; popups = []; collapsed = false;
   state = 'aim'; cam.z = zAim(); cam.y = camAim(cam.z);
   $('menu').hidden = true; $('result').hidden = true;
   updateHud();
@@ -293,11 +306,13 @@ function pop(b, by_bomb) {
 // ---------- Fixed-step simulation ----------
 function step() {
   t += DT;
+  cloudPos += (6 + windAt(t) * 3) * DT;
   for (const b of balloons) { b.slot += (b.target - b.slot) * Math.min(1, DT * 8); b.wob = Math.max(0, b.wob - DT * 3); }
   if (state === 'flight' && shot) {
     for (const a of shot.arrows) {
       if (!a.alive) continue;
       const py = a.y;
+      a.vx += windAcc(t) * DT;
       a.x += a.vx * DT; a.y += a.vy * DT;
       for (const b of balloons) {
         if (!b.alive) continue;
@@ -475,7 +490,7 @@ function render() {
   ctx.save(); ctx.translate(0, cam.y * .35);
   ctx.fillStyle = C.star; for (const [x, y, r] of STARS) { ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); }
   ctx.fillStyle = C.cloud;
-  for (const [x, y, s] of CLOUDS) { const cx = ((x + t * 6 * s) % 520) - 60; for (const [dx, dy, r] of [[0, 0, 26], [24, 8, 22], [-24, 4, 20], [46, -2, 16], [-44, -4, 14]]) { ctx.beginPath(); ctx.arc(cx + dx * s, y + dy * s, r * s, 0, 7); ctx.fill(); } }
+  for (const [x, y, s] of CLOUDS) { const cx = (((x + cloudPos * s) % 520) + 520) % 520 - 60; for (const [dx, dy, r] of [[0, 0, 26], [24, 8, 22], [-24, 4, 20], [46, -2, 16], [-44, -4, 14]]) { ctx.beginPath(); ctx.arc(cx + dx * s, y + dy * s, r * s, 0, 7); ctx.fill(); } }
   ctx.restore();
   // ground
   ctx.fillStyle = C['ground-dark']; ctx.beginPath(); ctx.moveTo(-400, -40); ctx.quadraticCurveTo(CX, -6, 800, -40); ctx.lineTo(800, -2000); ctx.lineTo(-400, -2000); ctx.closePath(); ctx.fill();
@@ -484,6 +499,14 @@ function render() {
   if (state === 'aim' || state === 'menu') {
     ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2 / k; ctx.setLineDash([6 / k, 8 / k]);
     ctx.beginPath(); ctx.moveTo(CX, AL + 10); ctx.lineTo(CX, fullTop() + 200); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // while pulling: the first 0.3 s of flight at this power, wind included (never the rest)
+  if (state === 'aim' && pulling && pull >= .1) {
+    const v = speedFor(pull), a0 = windAcc(t), y0 = AL - 2 - pull * PULL_W;
+    ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 3 / k; ctx.setLineDash([2 / k, 7 / k]); ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let i = 0; i <= 20; i++) { const tau = .3 * i / 20; const px = CX + .5 * a0 * tau * tau, py = y0 + v * tau; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.stroke(); ctx.setLineDash([]);
   }
   // tether from the lowest balloon
   const alive = balloons.filter(b => b.alive).sort((p, q) => p.slot - q.slot);
@@ -494,6 +517,7 @@ function render() {
     ctx.bezierCurveTo(x0, y0 - 30, x0 + (CX + 70 - x0) * .4, 60, CX + 70, 6); ctx.stroke();
     ctx.fillStyle = '#7a4a24'; ctx.fillRect(CX + 66, -14, 8, 22);
   }
+  drawFlag(k);
   // ties between neighbours
   ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5 / k;
   for (let i = 1; i < alive.length; i++) {
@@ -542,6 +566,7 @@ function render() {
   const scrimH = 150 + insetT(), scrim = ctx.createLinearGradient(0, 0, 0, scrimH);
   scrim.addColorStop(0, C['sky-top']); scrim.addColorStop(.55, C['sky-top']); scrim.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.globalAlpha = .82; ctx.fillStyle = scrim; ctx.fillRect(0, 0, W, scrimH); ctx.globalAlpha = 1;
+  drawStreaks(lastRealDt);
   if (state !== 'menu') drawDial();
   if (state === 'aim' && arrowsLeft > 0) drawPowerBar();
   if ((state === 'aim' || state === 'flight') && cam.z > zFull() * 1.35) drawMinimap();
@@ -566,6 +591,29 @@ function drawDial() {
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 7); ctx.fill();
   ctx.font = '800 9px Nunito, sans-serif'; ctx.fillText('RHYTHM', cx, cy + r + 15);
   ctx.restore();
+}
+function drawFlag(k) {
+  // a pennant on the tether peg: points downwind, longer and livelier in stronger wind, hangs limp in calm
+  const w = windAt(t), mag = Math.min(1, Math.abs(w) / 20), dir = w >= 0 ? 1 : -1, px = CX + 70, top = 52;
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 2.5 / k;
+  ctx.beginPath(); ctx.moveTo(px, -14); ctx.lineTo(px, top); ctx.stroke();
+  const len = 14 + mag * 30, droop = (1 - mag) * 14, fl = Math.sin(t * (6 + mag * 14)) * (2 + mag * 3);
+  ctx.fillStyle = C.accent; ctx.beginPath(); ctx.moveTo(px, top);
+  ctx.quadraticCurveTo(px + dir * len * .5, top - 2 + fl, px + dir * len, top - 7 - droop + fl * .6);
+  ctx.quadraticCurveTo(px + dir * len * .5, top - 12 - droop * .4 - fl, px, top - 15);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+}
+function drawStreaks(dt) {
+  const w = windAt(t), mag = Math.abs(w);
+  if (mag > 1 && state !== 'menu' && !reduceMotion && Math.random() < mag * dt * 1.4) streaks.push({ x: w > 0 ? -60 : W + 60, y: 120 + Math.random() * (H - 260), len: 30 + mag * 4 + Math.random() * 30, life: 0 });
+  ctx.lineCap = 'round';
+  for (const st of streaks) {
+    st.x += windAt(t) * 34 * dt; st.life += dt;
+    const a = Math.min(.5, st.life * 2) * Math.min(1, mag / 6);
+    ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(st.x, st.y); ctx.quadraticCurveTo(st.x - Math.sign(w) * st.len * .5, st.y - 4, st.x - Math.sign(w) * st.len, st.y); ctx.stroke();
+  }
+  streaks = streaks.filter(st => st.x > -200 && st.x < W + 200 && st.life < 8);
 }
 function drawPowerBar() {
   const w = Math.min(220, W * .5), h = 12, x = (W - w) / 2, y = H - 54 - insetB();
@@ -612,6 +660,15 @@ const insetT = () => inset('Top'), insetB = () => inset('Bottom'), insetL = () =
 
 // ---------- HUD ----------
 const ARROW_SVG = '<svg viewBox="0 0 16 30" aria-hidden="true"><path d="M8 1 L13 9 H3 Z" fill="#d9dee5" stroke="#1c2233" stroke-width="1.5" stroke-linejoin="round"/><rect x="6.5" y="9" width="3" height="15" fill="#9a6234" stroke="#1c2233" stroke-width="1.2"/><path d="M8 22 L3 29 V24 Z M8 22 L13 29 V24 Z" fill="#ff4f5e" stroke="#1c2233" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+function updateWindChip() {
+  const el = $('wind'); if (!L) return;
+  if (!L.wind) { if (!el.hidden) el.hidden = true; windShown = null; return; }
+  const w = windAt(t), v = Math.round(Math.abs(w)), key = v + (w >= 0 ? 'r' : 'l');
+  if (key === windShown && !el.hidden) return;
+  windShown = key; el.hidden = false;
+  el.innerHTML = `<svg viewBox="0 0 18 12" aria-hidden="true" style="transform:scaleX(${w >= 0 ? 1 : -1})"><path d="M1 6 H14 M10 2 L15 6 L10 10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>${v} km/h`;
+  el.setAttribute('aria-label', `Wind ${v} kilometres per hour, blowing ${w >= 0 ? 'right' : 'left'}`);
+}
 function updateHud() {
   if (!L) return;
   $('lvlname').textContent = `Level ${li + 1} · ${L.name}`;
@@ -641,7 +698,7 @@ function buildMenu() {
   $('lvls').innerHTML = LEVELS.map((lv, i) => {
     const bst = best[lv.name];
     const st = bst ? '★'.repeat(bst.stars) + '☆'.repeat(3 - bst.stars) : '☆☆☆';
-    return `<button class="lvl" data-i="${i}"><span class="n">Level ${i + 1} · ${lv.n} balloons</span><span class="t">${lv.name}</span><span class="s">${st} <span>${bst ? bst.pts + ' pts' : 'new'}</span></span></button>`;
+    return `<button class="lvl" data-i="${i}"><span class="n">Level ${i + 1} · ${lv.n} balloons${lv.wind ? ' · wind' : ''}</span><span class="t">${lv.name}</span><span class="s">${st} <span>${bst ? bst.pts + ' pts' : 'new'}</span></span></button>`;
   }).join('');
   $('lvls').querySelectorAll('.lvl').forEach(b => b.onclick = () => { audio(); startLevel(+b.dataset.i); });
 }
@@ -739,9 +796,10 @@ $('againBtn').onclick = () => { audio(); startLevel(li); };
 $('nextBtn').onclick = () => { audio(); startLevel(li + 1); };
 
 // ---------- Loop ----------
-let last = performance.now(), acc = 0;
+let last = performance.now(), acc = 0, lastRealDt = 0;
 function frame(now) {
-  const real = Math.min(.05, (now - last) / 1000); last = now;
+  const real = Math.min(.05, (now - last) / 1000); last = now; lastRealDt = real;
+  updateWindChip();
   const scale = slowmo > 0 && !reduceMotion ? .3 : 1;
   slowmo = Math.max(0, slowmo - real);
   if (keyPull && pulling) setPull(pull + real * .9);
