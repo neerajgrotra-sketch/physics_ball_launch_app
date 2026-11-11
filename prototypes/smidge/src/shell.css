@@ -246,3 +246,6 @@ body[data-view="untangle"] { background: var(--cork-2); }
 .pin-head { fill: hsl(var(--h) 72% 56%); stroke: #1c2233; stroke-width: 4; pointer-events: none; }
 .pin.held .pin-head { stroke: var(--gold); stroke-width: 9; }
 .pin-shine { fill: rgba(255,255,255,.65); pointer-events: none; }
+
+.linkbtn { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; cursor: pointer; }
+#sndPanel { position: fixed; }

@@ -31,6 +31,12 @@ const App = (() => {
   document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { Sound.audio(); Sound.tone(740, .05, 'square', .04); go(b.dataset.go); }));
   document.querySelectorAll('[data-home]').forEach(b => b.addEventListener('click', () => { Sound.audio(); go('home'); }));
   document.querySelectorAll('[data-sound]').forEach(b => b.addEventListener('click', () => { Sound.audio(); Sound.setMuted(!Sound.isMuted()); }));
+  function paintReport() { const r = Sound.report(); $('sndReport').textContent = `Web Audio: ${r.webAudio}\nPlayback mode: ${r.session}\nAudio elements: ${r.media}\nPlaying through: ${r.using}\nEmbedded viewer: ${r.frame}\nMuted in Smidge: ${r.muted}\nLast error: ${r.error}\n${navigator.userAgent}`; }
+  let reportTimer = 0;
+  $('sndCheck').onclick = () => { Sound.audio(); $('sndPanel').hidden = false; paintReport(); clearInterval(reportTimer); reportTimer = setInterval(paintReport, 500); };
+  $('sndClose').onclick = () => { $('sndPanel').hidden = true; clearInterval(reportTimer); };
+  $('sndWeb').onclick = () => { Sound.testWeb(); setTimeout(paintReport, 300); };
+  $('sndMedia').onclick = () => { Sound.testMedia(); setTimeout(paintReport, 300); };
   document.body.dataset.view = 'splash';
   Sound.paintButtons();
   return { go };
