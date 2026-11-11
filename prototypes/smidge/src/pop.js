@@ -1,162 +1,3 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Popshot</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap">
-<style>
-/* Layout: one full-bleed canvas (the sky and the tower), a thin HUD band on top, a hint line at the bottom, cards over it. */
-:root {
-  --sky-top: #6fbdf0;
-  --sky-bot: #ffe7c4;
-  --ground: #5fb85a;
-  --ground-dark: #3f8f45;
-  --ink: #1c2233;
-  --ink-soft: #4a5370;
-  --card: #fffaf1;
-  --accent: #ff4f5e;
-  --gold: #f4b400;
-  --cloud: rgba(255,255,255,0.85);
-  --star: rgba(255,255,255,0);
-  --display: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
-  --body: "Nunito", "Segoe UI", system-ui, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --sky-top: #0c1634; --sky-bot: #3b2c5a; --ground: #1f5a3c; --ground-dark: #143d29;
-    --ink: #f3f4ff; --ink-soft: #b8bedb; --card: #1a2340; --accent: #ff6b77; --gold: #ffc533;
-    --cloud: rgba(200,210,255,0.16); --star: rgba(255,255,255,0.85); color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --sky-top: #0c1634; --sky-bot: #3b2c5a; --ground: #1f5a3c; --ground-dark: #143d29;
-  --ink: #f3f4ff; --ink-soft: #b8bedb; --card: #1a2340; --accent: #ff6b77; --gold: #ffc533;
-  --cloud: rgba(200,210,255,0.16); --star: rgba(255,255,255,0.85); color-scheme: dark;
-}
-[hidden] { display: none !important; }
-html, body { height: 100%; overflow: hidden; }
-body { background: var(--sky-top); color: var(--ink); font-family: var(--body); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
-canvas { position: fixed; inset: 0; touch-action: none; display: block; }
-.hud { position: fixed; left: 0; right: 0; top: 0; pointer-events: none;
-  padding-top: calc(env(safe-area-inset-top, 0px) + 10px); padding-bottom: 6px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; }
-.hud button { pointer-events: auto; }
-.iconbtn { width: 42px; height: 42px; border-radius: 14px; border: 2px solid var(--ink); background: var(--card); color: var(--ink);
-  font: 800 18px/1 var(--body); display: grid; place-items: center; cursor: pointer; box-shadow: 0 3px 0 var(--ink); }
-.iconbtn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
-.iconbtn:focus-visible, .btn:focus-visible, .lvl:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-.mid { text-align: center; min-width: 0; }
-.lvlname { font: 800 13px/1.2 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); opacity: 0.8;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 rgba(255,255,255,0.35); }
-.count { font: 40px/1 var(--display); color: #fff; -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill;
-  font-variant-numeric: tabular-nums; letter-spacing: 0.02em; text-shadow: 0 3px 0 var(--ink); }
-.subrow { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 4px; }
-.wind { font: 800 13px/1 var(--body); color: var(--ink); background: var(--card); border: 2px solid var(--ink); border-radius: 999px;
-  padding: 4px 9px 4px 7px; display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.wind svg { width: 18px; height: 12px; transition: transform .3s; }
-.pts { font: 800 14px/1 var(--body); color: var(--ink); font-variant-numeric: tabular-nums; }
-.quiver { display: flex; gap: 3px; }
-.quiver svg { width: 16px; height: 30px; transition: opacity .25s, transform .25s; }
-.quiver svg.used { opacity: 0.22; transform: translateY(4px); }
-.combo { position: fixed; left: 0; right: 0; top: 34%; text-align: center; pointer-events: none;
-  font: 46px/1 var(--display); color: var(--gold); -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill;
-  text-shadow: 0 4px 0 var(--ink); opacity: 0; transform: scale(.6); transition: opacity .2s; }
-.combo.show { opacity: 1; animation: thump .28s cubic-bezier(.3,1.8,.5,1); transform: scale(1); }
-.combo small { display: block; font: 800 15px/1.4 var(--body); -webkit-text-stroke: 0; color: var(--ink); text-shadow: none; letter-spacing: .06em; text-transform: uppercase; }
-@keyframes thump { from { transform: scale(1.5); } to { transform: scale(1); } }
-.hint { position: fixed; left: 0; right: 0; bottom: 0; text-align: center; pointer-events: none;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
-  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  font: 800 15px/1.3 var(--body); color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.35); letter-spacing: .03em; }
-.hint b { color: var(--gold); }
-.overlay { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(10,14,30,0.42); z-index: 5;
-  padding-block: calc(env(safe-area-inset-top, 0px) + 16px) calc(env(safe-area-inset-bottom, 0px) + 16px);
-  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); overflow-y: auto; }
-.card { width: min(420px, 100%); background: var(--card); color: var(--ink); border: 3px solid var(--ink); border-radius: 22px;
-  box-shadow: 0 6px 0 var(--ink); padding: 22px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
-.card h1 { margin: 0; font: 44px/1 var(--display); letter-spacing: .02em; color: var(--accent); -webkit-text-stroke: 1.5px var(--ink); paint-order: stroke fill; text-wrap: balance; }
-.card h2 { margin: 0; font: 34px/1.05 var(--display); text-wrap: balance; }
-.card p { margin: 0; font: 600 15px/1.45 var(--body); color: var(--ink-soft); }
-.lvls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.lvl { text-align: left; border: 2px solid var(--ink); border-radius: 14px; background: transparent; color: var(--ink); padding: 10px 12px; cursor: pointer;
-  display: flex; flex-direction: column; gap: 2px; font-family: var(--body); min-width: 0; }
-.lvl:hover { background: rgba(255,79,94,0.08); }
-.lvl .n { font: 800 11px/1 var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
-.lvl .t { font: 22px/1.1 var(--display); }
-.lvl .s { font: 800 13px/1.2 var(--body); color: var(--gold); letter-spacing: .05em; }
-.lvl .s span { color: var(--ink-soft); font-weight: 600; letter-spacing: 0; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 700 13px/1.3 var(--body); color: var(--ink-soft); }
-.legend i { display: inline-block; width: 11px; height: 12px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; border: 1.5px solid var(--ink); }
-.row { display: flex; gap: 10px; }
-.btn { flex: 1; border: 2.5px solid var(--ink); border-radius: 16px; padding: 13px 10px; font: 22px/1 var(--display); letter-spacing: .03em;
-  cursor: pointer; box-shadow: 0 4px 0 var(--ink); background: var(--card); color: var(--ink); }
-.btn.primary { background: var(--accent); color: #fff; }
-.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
-.stars { font: 48px/1 var(--display); color: var(--gold); letter-spacing: .08em; -webkit-text-stroke: 1.5px var(--ink); paint-order: stroke fill; }
-.stars .off { color: transparent; }
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.stat { border: 2px solid var(--ink); border-radius: 12px; padding: 8px; text-align: center; }
-.stat b { display: block; font: 26px/1.1 var(--display); font-variant-numeric: tabular-nums; }
-.stat span { font: 800 10px/1.2 var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
-.fine { font: 600 12px/1.3 var(--body); color: var(--ink-soft); text-align: center; }
-@media (prefers-reduced-motion: reduce) { .combo.show { animation: none; } }
-</style>
-</head>
-<body>
-
-<canvas id="c" aria-label="Game board: a swaying tower of balloons above a crossbow"></canvas>
-
-<div class="hud">
-  <button class="iconbtn" id="menuBtn" aria-label="Levels">☰</button>
-  <div class="mid">
-    <div class="lvlname" id="lvlname">Level 1 · Breeze</div>
-    <div class="count" id="count">0/12</div>
-    <div class="subrow"><div class="quiver" id="quiver"></div><div class="pts" id="pts">0 pts</div><div class="wind" id="wind" hidden></div></div>
-  </div>
-  <button class="iconbtn" id="soundBtn" aria-label="Sound on">🔊</button>
-</div>
-
-<div class="combo" id="combo"></div>
-<div class="hint" id="hint">Tap to shoot</div>
-
-<div class="overlay" id="menu">
-  <div class="card">
-    <h1>Popshot</h1>
-    <p>Three arrows. One tower. The sway rolls up the tower like a wave, and the arrow takes time to climb, so fire for where the balloons <em>will</em> be. Pull back anywhere and let go: the harder the pull, the faster the arrow. Tap mid-flight to split it once.</p>
-    <div class="legend">
-      <span><i style="background:#ffd23f"></i>Gold: doubles the rest of that arrow</span>
-      <span><i style="background:#2c2c36"></i>Bomb: pops its neighbours</span>
-      <span><i style="background:#a3adb8"></i>Armour: stops an arrow, breaks on the 2nd hit</span>
-      <span><i style="background:#9a6234"></i>Rocking stand (from level 2): the crossbow tilts back and forth and fires along its tilt. Lean it against the wind</span>
-      <span><i style="background:#ffffff"></i>Wind (from level 3): pushes arrows sideways and leans the tower. Slow arrows drift most; watch the flag and the gusts</span>
-    </div>
-    <div class="lvls" id="lvls"></div>
-    <div class="fine">Prototype 0.1 · a micro-game for the collection</div>
-  </div>
-</div>
-
-<div class="overlay" id="result" hidden>
-  <div class="card">
-    <h2 id="rTitle">Clean sweep!</h2>
-    <div class="stars" id="rStars">★★★</div>
-    <div class="stats">
-      <div class="stat"><b id="rPop">24/24</b><span>Popped</span></div>
-      <div class="stat"><b id="rPts">0</b><span>Points</span></div>
-      <div class="stat"><b id="rBest">0</b><span>Best</span></div>
-    </div>
-    <p id="rNote"></p>
-    <div class="row">
-      <button class="btn" id="againBtn">Again</button>
-      <button class="btn primary" id="nextBtn">Next level</button>
-    </div>
-  </div>
-</div>
-
-<script>
 (() => {
 // ---------- Levels ----------
 // lag: 1 = the wave travels up exactly as fast as the arrow (one perfect moment lines up every balloon); other values make it partial.
@@ -186,7 +27,7 @@ let cloudPos = 0, streaks = [], windShown = null;
 let particles = [], popups = [], cam = { y: 300, z: 1.4 }, slowmo = 0, shake = 0, recoil = 0, revealT = 0, collapsed = false;
 const ghosts = {}; let muted = false, best = {};
 try { best = JSON.parse(localStorage.getItem('popshot/best') || '{}') || {}; } catch (e) { best = {}; }
-try { muted = localStorage.getItem('popshot/muted') === '1'; } catch (e) {}
+let active = false;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const $ = id => document.getElementById(id);
@@ -726,32 +567,8 @@ function buildMenu() {
 }
 
 // ---------- Sound (synthesised, nothing loaded) ----------
-let ac = null, master = null, noiseBuf = null;
-function audio() {
-  if (!ac) {
-    try {
-      ac = new (window.AudioContext || window.webkitAudioContext)();
-      master = ac.createGain(); master.gain.value = muted ? 0 : .55; master.connect(ac.destination);
-      noiseBuf = ac.createBuffer(1, ac.sampleRate * .5, ac.sampleRate);
-      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    } catch (e) { ac = null; }
-  }
-  if (ac && ac.state === 'suspended') ac.resume();
-}
-function tone(f, dur, type, vol, delay = 0, f2) {
-  if (!ac) return; const t0 = ac.currentTime + delay;
-  const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t0);
-  if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
-  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
-  o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + dur + .02);
-}
-function noise(dur, vol, freq, q = 1, type = 'bandpass', delay = 0) {
-  if (!ac) return; const t0 = ac.currentTime + delay;
-  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
-  s.buffer = noiseBuf; f.type = type; f.frequency.value = freq; f.Q.value = q;
-  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
-  s.connect(f); f.connect(g); g.connect(master); s.start(t0); s.stop(t0 + dur + .02);
-}
+const { audio, tone, noise } = Sound;
+muted = Sound.isMuted();
 const PENTA = [0, 2, 4, 7, 9];
 const sfx = {
   pop(n) { const i = n - 1, semi = Math.min(36, Math.floor(i / 5) * 12 + PENTA[i % 5]), f = 330 * Math.pow(2, semi / 12);
@@ -768,9 +585,7 @@ const sfx = {
 };
 function buzz(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
 function setMuted(m) {
-  muted = m; $('soundBtn').textContent = m ? '🔇' : '🔊'; $('soundBtn').setAttribute('aria-label', m ? 'Sound off' : 'Sound on');
-  if (master) master.gain.value = m ? 0 : .55;
-  try { localStorage.setItem('popshot/muted', m ? '1' : '0'); } catch (e) {}
+  Sound.setMuted(m); muted = m; $('soundBtn').textContent = m ? '🔇' : '🔊'; $('soundBtn').setAttribute('aria-label', m ? 'Sound off' : 'Sound on');
 }
 
 // ---------- Input ----------
@@ -805,13 +620,18 @@ cv.addEventListener('pointerup', e => { if (pulling && e.pointerId === pullId) r
 cv.addEventListener('pointercancel', e => { if (pulling && e.pointerId === pullId) cancelPull(); });
 // Keyboard: hold Space to draw (it fills in about a second), let go to shoot; Space mid-flight splits.
 addEventListener('keydown', e => {
-  if (e.code !== 'Space' || !$('menu').hidden || !$('result').hidden) return;
+  if (!active || e.code !== 'Space' || !$('menu').hidden || !$('result').hidden) return;
   e.preventDefault(); audio();
   if (e.repeat) return;
   if (state === 'flight') split();
   else { startPull('key', 0); if (pulling) keyPull = true; }
 });
 addEventListener('keyup', e => { if (e.code === 'Space' && keyPull) release(); });
+$('popHome').onclick = () => { audio(); App.go('home'); };
+window.Popshot = {
+  enter() { active = true; resize(); readColors(); muted = Sound.isMuted(); setMuted(muted); buildMenu(); cancelPull(); hideCombo(); state = 'menu'; $('result').hidden = true; $('menu').hidden = false; updateHud(); },
+  leave() { active = false; cancelPull(); hideCombo(); }
+};
 $('menuBtn').onclick = () => { cancelPull(); buildMenu(); $('result').hidden = true; $('menu').hidden = false; state = 'menu'; hideCombo(); updateHud(); };
 $('soundBtn').onclick = () => { audio(); setMuted(!muted); };
 $('againBtn').onclick = () => { audio(); startLevel(li); };
@@ -820,6 +640,7 @@ $('nextBtn').onclick = () => { audio(); startLevel(li + 1); };
 // ---------- Loop ----------
 let last = performance.now(), acc = 0, lastRealDt = 0;
 function frame(now) {
+  if (!active) { last = now; requestAnimationFrame(frame); return; }
   const real = Math.min(.05, (now - last) / 1000); last = now; lastRealDt = real;
   updateWindChip();
   const scale = slowmo > 0 && !reduceMotion ? .3 : 1;
@@ -835,6 +656,3 @@ setMuted(muted);
 startLevel(0); state = 'menu'; $('menu').hidden = false; buildMenu(); updateHud();
 requestAnimationFrame(frame);
 })();
-</script>
-</body>
-</html>

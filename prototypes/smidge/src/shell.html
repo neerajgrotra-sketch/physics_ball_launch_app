@@ -1,0 +1,103 @@
+<div class="view" id="splash" role="button" aria-label="Smidge. Tap to start">
+  <div class="sp-in">
+    <div class="wm-big" aria-hidden="true">
+      <span class="l" style="--i:0">S</span><span class="l" style="--i:1">m</span><span class="l i" style="--i:2"><span class="stem"></span><span class="sp-arrow"></span><span class="balloon"></span><span class="flame"><i></i></span><span class="conf" style="--dx:-.5em;--dy:-.4em;background:#ffd23f"></span><span class="conf" style="--dx:.55em;--dy:-.5em;background:#fff"></span><span class="conf" style="--dx:-.35em;--dy:-.85em;background:#36a8f0"></span><span class="conf" style="--dx:.3em;--dy:-.9em;background:#9bd63a"></span><span class="conf" style="--dx:.7em;--dy:-.1em;background:#ffd23f"></span><span class="conf" style="--dx:-.7em;--dy:-.05em;background:#fff"></span></span><span class="l" style="--i:3">d</span><span class="l" style="--i:4">g</span><span class="l" style="--i:5">e</span>
+    </div>
+    <p class="sp-tag">Tiny games. Big grins.</p>
+    <button class="sp-go" id="spGo">Let's play</button>
+    <div class="sp-ver">Prototype 0.2</div>
+  </div>
+</div>
+
+<div class="view" id="home" hidden>
+  <div class="home-in">
+    <header class="home-head">
+      <div class="brand"><span class="wm">Smidge</span><span class="tag">Tiny games. Big grins.</span></div>
+      <button class="ibtn" data-sound aria-label="Sound on">🔊</button>
+    </header>
+    <div class="games">
+      <button class="game" data-go="pop">
+        <div class="art" aria-hidden="true">
+          <svg viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice">
+            <defs><linearGradient id="hsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fbdf0"/><stop offset="1" stop-color="#ffe7c4"/></linearGradient></defs>
+            <rect width="400" height="150" fill="url(#hsky)"/>
+            <circle cx="70" cy="40" r="18" fill="#fff" opacity=".8"/><circle cx="92" cy="46" r="14" fill="#fff" opacity=".8"/><circle cx="50" cy="48" r="12" fill="#fff" opacity=".8"/>
+            <g stroke="#1c2233" stroke-width="2.5">
+              <ellipse cx="226" cy="122" rx="15" ry="16" fill="#ff4b4b"/><ellipse cx="231" cy="91" rx="15" ry="16" fill="#ff8a2a"/><ellipse cx="240" cy="60" rx="15" ry="16" fill="#ffcd2e"/>
+              <ellipse cx="251" cy="29" rx="15" ry="16" fill="#3cc36b"/><ellipse cx="263" cy="-2" rx="15" ry="16" fill="#36a8f0"/>
+            </g>
+            <g fill="#fff" opacity=".7"><ellipse cx="220" cy="116" rx="4" ry="2.5" transform="rotate(-40 220 116)"/><ellipse cx="225" cy="85" rx="4" ry="2.5" transform="rotate(-40 225 85)"/><ellipse cx="234" cy="54" rx="4" ry="2.5" transform="rotate(-40 234 54)"/></g>
+            <g transform="rotate(8 150 150)"><rect x="147" y="70" width="5" height="62" fill="#9a6234" stroke="#1c2233" stroke-width="1.5"/><path d="M149.5 58 l7 14 h-14 z" fill="#e6ebf1" stroke="#1c2233" stroke-width="1.5"/><path d="M149.5 120 l-7 12 v-8 z M149.5 120 l7 12 v-8 z" fill="#ff4f5e" stroke="#1c2233" stroke-width="1.2"/></g>
+            <g fill="#ffd23f" stroke="#1c2233" stroke-width="1.2"><rect x="300" y="40" width="7" height="4" transform="rotate(30 300 40)"/><rect x="320" y="70" width="7" height="4" fill="#ff5fa2" transform="rotate(-20 320 70)"/><rect x="290" y="95" width="7" height="4" fill="#36a8f0" transform="rotate(50 290 95)"/></g>
+          </svg>
+        </div>
+        <div class="meta">
+          <span class="kicker">Arcade · pull and let fly</span>
+          <span class="name">Popshot</span>
+          <span class="desc">Three arrows, one swaying tower. Read the wave, the wind and the rocking bow, then pop as many as you can.</span>
+          <span class="prog" id="progPop"></span>
+        </div>
+      </button>
+      <button class="game" data-go="match">
+        <div class="art" aria-hidden="true">
+          <svg viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice" id="artMatch"></svg>
+        </div>
+        <div class="meta">
+          <span class="kicker">Puzzle · think it through</span>
+          <span class="name">Stickler</span>
+          <span class="desc">Matchstick brain teasers. Take sticks away, shift them, or fix a wrong sum, in three packs of puzzles.</span>
+          <span class="prog" id="progMatch"></span>
+        </div>
+      </button>
+      <div class="game soon" aria-label="More games coming soon">
+        <div class="art" aria-hidden="true">+</div>
+        <div class="meta">
+          <span class="kicker">Coming soon</span>
+          <span class="name">More tiny games</span>
+          <span class="desc">A new game joins the box every so often. Each takes a minute to learn.</span>
+        </div>
+      </div>
+    </div>
+    <div class="home-foot">Smidge prototype 0.2 · progress is saved in this browser</div>
+  </div>
+</div>
+
+<div class="view" id="match" hidden>
+  <div class="st-page" id="stList">
+    <div class="st-in">
+      <div class="st-head">
+        <button class="ibtn" id="stHome" aria-label="All games">‹</button>
+        <div class="ttl"><b>Stickler</b><small id="stTotal">0 of 22 solved</small></div>
+        <button class="ibtn" data-sound aria-label="Sound on">🔊</button>
+      </div>
+      <div class="tabs" role="tablist" id="stTabs"></div>
+      <p class="blurb" id="stBlurb"></p>
+      <div class="tiles" id="stTiles"></div>
+    </div>
+  </div>
+  <div class="st-page" id="stPlay" hidden>
+    <div class="st-in">
+      <div class="st-head">
+        <button class="ibtn" id="stBack" aria-label="Puzzle list">‹</button>
+        <div class="ttl"><b id="stTitle">Take away 1</b><small id="stSub">Puzzle 1 of 8</small></div>
+        <button class="ibtn" id="stUndo" aria-label="Undo">↶</button>
+      </div>
+      <div class="prompt"><b id="stPrompt"></b><span id="stRule"></span></div>
+      <div class="chips" id="stChips"></div>
+      <div class="board" id="stBoard"></div>
+      <div class="st-msg" id="stMsg" aria-live="polite"></div>
+      <div class="st-foot">
+        <button class="sbtn" id="stReset">Reset</button>
+        <button class="sbtn primary" id="stHint">💡 Hint</button>
+      </div>
+    </div>
+    <div class="st-win" id="stWin" hidden>
+      <div class="card2">
+        <h2 id="stWinT">Solved!</h2>
+        <div class="stars" id="stWinS" style="font:44px/1 var(--display);color:var(--gold);-webkit-text-stroke:1.5px #1c2233;paint-order:stroke fill">★</div>
+        <p id="stWinP"></p>
+        <div class="row"><button class="sbtn" id="stWinList">Puzzles</button><button class="sbtn primary" id="stWinNext">Next</button></div>
+      </div>
+    </div>
+  </div>
+</div>
