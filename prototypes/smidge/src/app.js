@@ -22,8 +22,8 @@ const App = (() => {
     $('progSkim').innerHTML = sk.today != null ? `<span>Today ${sk.today} points</span><span>Best ${sk.best}</span>` : sk.best ? `<span>Today's lake is ready</span><span>Best ${sk.best}</span>` : '<span>New · daily lake</span>';
     $('progUn').innerHTML = un.done ? `<span>${un.done} of ${un.total} untangled</span><span>★ ${un.stars}</span>` : `<span>New · ${un.total} levels</span>`;
     const po = Pour.stats(), ey = Eyeball.stats(), sw = Switchboard.stats();
-    $('progPour').innerHTML = po.today != null ? `<span>Today ${po.today}/500</span><span>Best ${po.best}</span>` : po.best ? `<span>Today's glasses are ready</span><span>Best ${po.best}</span>` : '<span>New · daily glasses</span>';
-    $('progEye').innerHTML = ey.today != null ? `<span>Today ${ey.today}/600</span><span>Best ${ey.best}</span>` : ey.best ? `<span>Today's tests are ready</span><span>Best ${ey.best}</span>` : '<span>New · daily tests</span>';
+    $('progPour').innerHTML = (po.today != null ? `<span>Today ${po.today}/500</span>` : '<span>Daily glasses ready</span>') + `<span>${po.levels ? po.levels + ' of ' + po.total + ' levels' : po.total + ' levels'}</span>`;
+    $('progEye').innerHTML = (ey.today != null ? `<span>Today ${ey.today}/600</span>` : '<span>Daily tests ready</span>') + `<span>${ey.levels ? ey.levels + ' of ' + ey.total + ' levels' : ey.total + ' levels'}</span>`;
     $('progSw').innerHTML = sw.done ? `<span>${sw.done} of ${sw.total} switched off</span><span>★ ${sw.stars}</span>` : `<span>New · ${sw.total} boards</span>`;
     const cc = CrackCode.stats();
     $('progCode').innerHTML = (cc.today ? '<span>Today cracked</span>' : '<span>Daily code ready</span>') + (cc.done ? `<span>${cc.done} of ${cc.total} levels · ★ ${cc.stars}</span>` : `<span>${cc.total} levels</span>`);

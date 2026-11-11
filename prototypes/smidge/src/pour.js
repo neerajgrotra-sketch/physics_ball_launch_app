@@ -40,15 +40,43 @@ const Pour = (() => {
       return { shape, cum, targets, rate: full / (3.6 - i * .35 - r() * .3), leak: i === 4 ? full * (.05 + r() * .03) : 0, color: LIQ[i] };
     });
   }
-  function begin(m) {
-    mode = m; glasses = makeRound(m === 'daily' ? dayNumber() * 6151 + 3 : Math.floor(Math.random() * 1e9));
-    gi = 0; results = []; startGlass(); $('poMenu').hidden = true; $('poEnd').hidden = true;
+  // levels: one glass each, getting harder (faster pours, awkward shapes, two lines, leaks)
+  const LEVELS = [
+    ['tumbler', 4.2], ['tumbler', 3.6], ['tumbler', 3.0], ['cone', 4.0], ['cone', 3.4], ['cone', 2.8], ['flask', 3.8], ['flask', 3.2],
+    ['vase', 3.6], ['hourglass', 3.6], ['vase', 3.0], ['hourglass', 2.9], ['tumbler', 3.4, 'two'], ['cone', 3.2, 'two'], ['flask', 3.0, 'two'],
+    ['tumbler', 3.4, 'leak'], ['cone', 3.2, 'leak'], ['vase', 3.0, 'leak'], ['hourglass', 2.8, 'leak'], ['flask', 2.6, 'two'],
+  ].map(([kind, secs, tw], i) => ({ kind, secs, two: tw === 'two', leak: tw === 'leak', seed: 6301 + i * 29 }));
+  function levelGlass(i) {
+    const L = LEVELS[i], r = rng(L.seed), shape = { kind: L.kind, a: r() }, cum = P.table(shape), full = cum[cum.length - 1];
+    const targets = L.two ? [.28 + r() * .15, .62 + r() * .2] : [.4 + r() * .45];
+    return { shape, cum, targets, rate: full / L.secs, leak: L.leak ? full * (.05 + r() * .03) : 0, color: LIQ[i % LIQ.length] };
+  }
+  const tagFor = L => L.two ? 'Two lines' : L.leak ? 'Leaky' : L.kind[0].toUpperCase() + L.kind.slice(1);
+  const starsFor = err => err <= 1 ? 3 : err <= 2.5 ? 2 : 1;
+  const starRow = n => [0, 1, 2].map(i => i < n ? '★' : '<span class="off">★</span>').join('');
+  // a small picture of a glass: the lines, and (once played) how full you left it
+  function thumb(gl, rec) {
+    const w = u => P.PROFILES[gl.shape.kind](u, gl.shape), y = u => 500 - u * P.GH, side = (sg, a, b) => { const pts = []; for (let i = 0; i <= 40; i++) { const u = a + (b - a) * i / 40; pts.push(`${(200 + sg * w(u)).toFixed(1)},${y(u).toFixed(1)}`); } return pts; };
+    let svg = '';
+    if (rec) { const lv = Math.min(1, rec.level); if (lv > 0) svg += `<polygon points="${side(-1, 0, lv).concat(side(1, lv, 0)).join(' ')}" fill="${gl.color}"/>`; }
+    svg += `<polyline points="${side(-1, 0, 1).join(' ')}" fill="none" stroke="#1c2233" stroke-width="7" stroke-linejoin="round"/><polyline points="${side(1, 0, 1).join(' ')}" fill="none" stroke="#1c2233" stroke-width="7" stroke-linejoin="round"/>`;
+    svg += `<line x1="${200 - w(0) - 8}" y1="504" x2="${200 + w(0) + 8}" y2="504" stroke="#1c2233" stroke-width="10" stroke-linecap="round"/>`;
+    gl.targets.forEach((tu, i) => { const ok = rec ? (rec.errs[i] ?? 99) <= 1.5 : null, col = ok == null ? '#ff3b30' : ok ? '#1f9e5a' : '#ff3b30', ww = w(tu); svg += `<path d="M${200 - ww - 24} ${y(tu)} H${200 - ww + 10} M${200 + ww - 10} ${y(tu)} H${200 + ww + 24}" stroke="${col}" stroke-width="8"/>`; });
+    if (gl.leak) svg += `<circle cx="${200 + w(.03) + 10}" cy="492" r="6" fill="${gl.color}"/>`;
+    return `<svg viewBox="40 170 320 350" aria-hidden="true">${svg}</svg>`;
+  }
+  let lvl = 0;
+  function begin(m, li) {
+    mode = m;
+    if (m === 'level') { lvl = li; glasses = [levelGlass(li)]; }
+    else glasses = makeRound(m === 'daily' ? dayNumber() * 6151 + 3 : Math.floor(Math.random() * 1e9));
+    gi = 0; results = []; startGlass(); $('poMenu').hidden = true; $('poEnd').hidden = true; $('poLvl').hidden = true;
   }
   function startGlass() {
     const gl = glasses[gi];
     g = { ...gl, area: 0, air: [], t: 0, pouring: false, ti: 0, errs: [], settle: 0, pours: 0, glug: 0, landed: 0, spill: 0 };
     state = 'aim';
-    $('poSub').textContent = `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · glass ${gi + 1} of ${N}`;
+    $('poSub').textContent = mode === 'level' ? `Level ${lvl + 1} of ${LEVELS.length}` : `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · glass ${gi + 1} of ${glasses.length}`;
     $('poPrompt').innerHTML = gl.targets.length > 1 ? 'Fill to the lower line, then the top one<small>two pours</small>' : gl.leak ? 'Fill to the line<small>it leaks: the level is checked a second after you stop</small>' : 'Fill to the line';
     $('poHint').innerHTML = gi === 0 ? 'Hold anywhere to pour, let go on the line. <b>One pour.</b>' : 'Hold to pour, let go on the line';
   }
@@ -70,7 +98,7 @@ const Pour = (() => {
       g.settle += dt;
       if (g.settle >= (g.leak ? 1 : .5)) {
         const err = g.spill > 0 ? 25 : Math.abs(level() - g.targets[g.ti]) * 100;
-        g.errs.push(err); g.ti++;
+        g.errs.push(err); g.ti++; g.lastLevel = level(); (g.meas = g.meas || []).push(Math.min(1, level()));
         if (g.ti < g.targets.length) { state = 'aim'; $('poHint').innerHTML = `${grade(err)} · now the top line`; Sound.tone(660, .15, 'triangle', .1); }
         else finishGlass();
       }
@@ -79,11 +107,34 @@ const Pour = (() => {
   function finishGlass() {
     const err = g.errs.reduce((a, b) => a + b, 0) / g.errs.length, pts = ptsFor(err);
     results.push({ err, pts }); state = 'shown';
-    $('poHint').innerHTML = `${g.spill > 0 ? 'Spilled!' : grade(err)} · off by ${err.toFixed(1)}% · <b>${pts} pts</b> · tap for the ${gi + 1 < N ? 'next glass' : 'results'}`;
+    if (mode === 'level') return levelDone(err);
+    if (mode !== 'level') $('poHint').innerHTML = `${g.spill > 0 ? 'Spilled!' : grade(err)} · off by ${err.toFixed(1)}% · <b>${pts} pts</b> · tap for the ${gi + 1 < glasses.length ? 'next glass' : 'results'}`;
     if (err < 1.5) [0, 4, 7].forEach((s, i) => Sound.tone(660 * Math.pow(2, s / 12), .25, 'triangle', .12, i * .07)); else Sound.tone(300, .2, 'triangle', .1);
     haptic(err < 1.5 ? 30 : 12);
   }
-  function next() { if (gi + 1 < N) { gi++; startGlass(); } else finish(); }
+  function levelDone(err) {
+    const lv = data.levels || (data.levels = {}), prev = lv[lvl], rec = { err, errs: g.errs.slice(), level: g.lastLevel, spill: g.spill > 0 };
+    const better = !prev || err < prev.err; if (better) lv[lvl] = rec; store('smidge/pour', data);
+    const st = starsFor(err), gl = glasses[0];
+    $('poHint').innerHTML = `${g.spill > 0 ? 'Spilled!' : grade(err)} <b>off by ${err.toFixed(1)}%</b> ${'★'.repeat(st)}`;
+    $('poLvlT').textContent = g.spill > 0 ? 'Spilled!' : grade(err);
+    $('poLvlS').innerHTML = starRow(st);
+    $('poLvlPic').innerHTML = thumb(gl, rec);
+    const lines = gl.targets.length > 1 ? `Lines at ${gl.targets.map(t => Math.round(t * 100) + '%').join(' and ')}` : `Line at ${(gl.targets[0] * 100).toFixed(0)}% of the glass`;
+    $('poLvlP').innerHTML = `<span class="sl-split">${g.spill > 0 ? 'Spilled' : 'Off by ' + err.toFixed(1) + '%'}</span>${lines}; you stopped at ${(g.meas || [g.lastLevel]).map(m => (Math.min(1, m) * 100).toFixed(1) + '%').join(' and ')}.` + (prev && !better ? ` Your best here: off by ${prev.err.toFixed(1)}%.` : prev ? ' A new best.' : '');
+    $('poLvlNext').textContent = lvl + 1 < LEVELS.length ? 'Next level' : 'All levels';
+    setTimeout(() => { if (state === 'shown' && mode === 'level') $('poLvl').hidden = false; }, 900);
+  }
+  function renderLevels() {
+    const lv = data.levels || {}, first = LEVELS.findIndex((_, i) => !lv[i]);
+    $('poGrid').innerHTML = LEVELS.map((L, i) => { const b = lv[i];
+      return `<button class="sl-tile ${i === first ? 'cur' : ''}" data-i="${i}" aria-label="Level ${i + 1}, ${tagFor(L)}${b ? `, best off by ${b.err.toFixed(1)}%, ${starsFor(b.err)} stars` : ''}"><span class="sl-pic po">${thumb(levelGlass(i), b)}</span><span class="sl-n">${i + 1}</span>` +
+        `<span class="sl-s">${b ? `<b>${b.spill ? 'spilled' : '±' + b.err.toFixed(1) + '%'}</b>` : tagFor(L)}</span>${b ? `<span class="sl-st">${'★'.repeat(starsFor(b.err))}</span>` : ''}</button>`; }).join('');
+    $('poGrid').querySelectorAll('.sl-tile').forEach(t => t.onclick = () => { Sound.audio(); begin('level', +t.dataset.i); });
+    const done = LEVELS.filter((_, i) => lv[i]).length, stars = LEVELS.reduce((a, _, i) => a + (lv[i] ? starsFor(lv[i].err) : 0), 0);
+    $('poLvlSum').textContent = done ? `${done} of ${LEVELS.length} played · ★ ${stars} of ${LEVELS.length * 3}` : `${LEVELS.length} glasses, one pour each`;
+  }
+  function next() { if (gi + 1 < glasses.length) { gi++; startGlass(); } else finish(); }
   function finish() {
     state = 'end';
     const total = results.reduce((a, r) => a + r.pts, 0), stars = total >= 425 ? 3 : total >= 320 ? 2 : total >= 180 ? 1 : 0, day = dayNumber(), first = mode === 'daily' && data.daily[day] == null;
@@ -97,6 +148,7 @@ const Pour = (() => {
     $('poEnd').hidden = false;
   }
   function showMenu() {
+    renderLevels(); $('poLvl').hidden = true;
     state = 'menu'; const day = dayNumber(), done = data.daily[day];
     if (!glasses.length) { glasses = makeRound(day * 6151 + 3); g = { ...glasses[0], area: 0, air: [], t: 0, ti: 0, errs: [], spill: 0 }; }
     $('poDailyBtn').textContent = done != null ? `Daily #${day} again` : `Play daily #${day}`;
@@ -171,7 +223,7 @@ const Pour = (() => {
   // ---------- input ----------
   cv.addEventListener('pointerdown', e => {
     if (!active) return; e.preventDefault(); Sound.audio();
-    if (state === 'shown') { next(); return; }
+    if (state === 'shown') { if (mode === 'level') $('poLvl').hidden = false; else next(); return; }
     if (state !== 'aim') return;
     g.pouring = true; state = 'pour'; g.pours++; g.pourT = g.t;
     try { cv.setPointerCapture(e.pointerId); } catch (err) {}
@@ -179,6 +231,11 @@ const Pour = (() => {
   }, { passive: false });
   const stop = () => { if (state === 'pour') { g.pouring = false; g.releaseT = g.t; state = 'settle'; g.settle = 0; } };
   cv.addEventListener('pointerup', stop); cv.addEventListener('pointercancel', stop);
+  $('poLvlClose').onclick = () => { $('poLvl').hidden = true; $('poHint').innerHTML = 'Tap the glass for your result again'; Sound.tone(520, .05, 'triangle', .06); };
+  $('poLvl').addEventListener('click', e => { if (e.target === $('poLvl')) $('poLvlClose').click(); });
+  $('poLvlRetry').onclick = () => { Sound.audio(); begin('level', lvl); };
+  $('poLvlNext').onclick = () => { Sound.audio(); if (lvl + 1 < LEVELS.length) begin('level', lvl + 1); else showMenu(); };
+  $('poLvlList').onclick = () => { Sound.audio(); showMenu(); };
   $('poDailyBtn').onclick = () => { Sound.audio(); begin('daily'); };
   $('poPracticeBtn').onclick = () => { Sound.audio(); begin('practice'); };
   $('poAgain').onclick = () => { Sound.audio(); begin(mode); };
@@ -189,6 +246,6 @@ const Pour = (() => {
   return {
     enter() { active = true; resize(); readColors(); showMenu(); },
     leave() { active = false; if (g) g.pouring = false; if (state === 'pour') state = 'settle'; },
-    stats() { return { best: data.best || 0, today: data.daily[dayNumber()] }; },
+    stats() { const lv = data.levels || {}; return { best: data.best || 0, today: data.daily[dayNumber()], levels: LEVELS.filter((_, i) => lv[i]).length, total: LEVELS.length }; },
   };
 })();

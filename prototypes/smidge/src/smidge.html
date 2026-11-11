@@ -449,6 +449,9 @@ body[data-view="code"] { background: var(--cc-bg2); }
 #slLvlP { text-align: center; }
 .sl-s b { font-size: 13px; letter-spacing: -.01em; }
 
+.sl-pic.po { background: var(--po-wall); }
+.sl-pic.ey { background: var(--ey-paper); color: var(--ey-pencil); box-shadow: inset 0 0 0 1px var(--ey-dot); }
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <linearGradient id="mWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7dfae"/><stop offset=".5" stop-color="#e3b46d"/><stop offset="1" stop-color="#c28a43"/></linearGradient>
@@ -742,10 +745,21 @@ body[data-view="code"] { background: var(--cc-bg2); }
   <div class="ghint" id="poHint"></div>
   <div class="gover" id="poMenu"><div class="gcard">
     <h2>Pour</h2>
-    <p>Hold to pour, let go on the line. Narrow parts fill fast, wide parts slowly, and what is already falling still lands after you let go. Five glasses, then a leaky one.</p>
+    <p>Hold to pour, let go on the line. Narrow parts fill fast, wide parts slowly, and what is already falling still lands after you let go. Play today's five glasses, or work through the levels.</p>
     <p class="note" id="poMenuNote"></p>
     <div class="row"><button class="sbtn primary" id="poDailyBtn">Play daily</button></div>
     <div class="row"><button class="sbtn" id="poPracticeBtn">Practice</button><button class="sbtn" data-home>All games</button></div>
+    <h3 class="sl-h">Levels <small id="poLvlSum"></small></h3>
+    <div class="sl-grid" id="poGrid"></div>
+  </div></div>
+  <div class="gover" id="poLvl" hidden><div class="gcard st-cardx">
+    <button class="st-x" id="poLvlClose" aria-label="Close and look at your try">✕</button>
+    <h2 id="poLvlT">Nice!</h2>
+    <div class="stars3" id="poLvlS"></div>
+    <div class="sl-pic big po" id="poLvlPic"></div>
+    <p id="poLvlP" style="text-align:center"></p>
+    <div class="row"><button class="sbtn" id="poLvlRetry">Try again</button><button class="sbtn primary" id="poLvlNext">Next level</button></div>
+    <div class="row"><button class="sbtn" id="poLvlList">Levels</button></div>
   </div></div>
   <div class="gover" id="poEnd" hidden><div class="gcard">
     <h3>Your round</h3>
@@ -766,10 +780,21 @@ body[data-view="code"] { background: var(--cc-bg2); }
   <div class="ghint" id="eyHint"></div>
   <div class="gover" id="eyMenu"><div class="gcard">
     <h2>Eyeball</h2>
-    <p>Six quick tests of your eye: the middle of a line, a right angle, the centre of a circle, half an angle, a square, and where a triangle balances. Let go to lock in each guess.</p>
+    <p>Six quick tests of your eye: the middle of a line, a right angle, the centre of a circle, half an angle, a square, and where a triangle balances. Play today's six, or work through the levels.</p>
     <p class="note" id="eyMenuNote"></p>
     <div class="row"><button class="sbtn primary" id="eyDailyBtn">Play daily</button></div>
     <div class="row"><button class="sbtn" id="eyPracticeBtn">Practice</button><button class="sbtn" data-home>All games</button></div>
+    <h3 class="sl-h">Levels <small id="eyLvlSum"></small></h3>
+    <div class="sl-grid" id="eyGrid"></div>
+  </div></div>
+  <div class="gover" id="eyLvl" hidden><div class="gcard st-cardx">
+    <button class="st-x" id="eyLvlClose" aria-label="Close and look at your try">✕</button>
+    <h2 id="eyLvlT">Nice!</h2>
+    <div class="stars3" id="eyLvlS"></div>
+    <div class="sl-pic big ey" id="eyLvlPic"></div>
+    <p id="eyLvlP" style="text-align:center"></p>
+    <div class="row"><button class="sbtn" id="eyLvlRetry">Try again</button><button class="sbtn primary" id="eyLvlNext">Next level</button></div>
+    <div class="row"><button class="sbtn" id="eyLvlList">Levels</button></div>
   </div></div>
   <div class="gover" id="eyEnd" hidden><div class="gcard">
     <h3>Your round</h3>
@@ -2876,15 +2901,43 @@ const Pour = (() => {
       return { shape, cum, targets, rate: full / (3.6 - i * .35 - r() * .3), leak: i === 4 ? full * (.05 + r() * .03) : 0, color: LIQ[i] };
     });
   }
-  function begin(m) {
-    mode = m; glasses = makeRound(m === 'daily' ? dayNumber() * 6151 + 3 : Math.floor(Math.random() * 1e9));
-    gi = 0; results = []; startGlass(); $('poMenu').hidden = true; $('poEnd').hidden = true;
+  // levels: one glass each, getting harder (faster pours, awkward shapes, two lines, leaks)
+  const LEVELS = [
+    ['tumbler', 4.2], ['tumbler', 3.6], ['tumbler', 3.0], ['cone', 4.0], ['cone', 3.4], ['cone', 2.8], ['flask', 3.8], ['flask', 3.2],
+    ['vase', 3.6], ['hourglass', 3.6], ['vase', 3.0], ['hourglass', 2.9], ['tumbler', 3.4, 'two'], ['cone', 3.2, 'two'], ['flask', 3.0, 'two'],
+    ['tumbler', 3.4, 'leak'], ['cone', 3.2, 'leak'], ['vase', 3.0, 'leak'], ['hourglass', 2.8, 'leak'], ['flask', 2.6, 'two'],
+  ].map(([kind, secs, tw], i) => ({ kind, secs, two: tw === 'two', leak: tw === 'leak', seed: 6301 + i * 29 }));
+  function levelGlass(i) {
+    const L = LEVELS[i], r = rng(L.seed), shape = { kind: L.kind, a: r() }, cum = P.table(shape), full = cum[cum.length - 1];
+    const targets = L.two ? [.28 + r() * .15, .62 + r() * .2] : [.4 + r() * .45];
+    return { shape, cum, targets, rate: full / L.secs, leak: L.leak ? full * (.05 + r() * .03) : 0, color: LIQ[i % LIQ.length] };
+  }
+  const tagFor = L => L.two ? 'Two lines' : L.leak ? 'Leaky' : L.kind[0].toUpperCase() + L.kind.slice(1);
+  const starsFor = err => err <= 1 ? 3 : err <= 2.5 ? 2 : 1;
+  const starRow = n => [0, 1, 2].map(i => i < n ? '★' : '<span class="off">★</span>').join('');
+  // a small picture of a glass: the lines, and (once played) how full you left it
+  function thumb(gl, rec) {
+    const w = u => P.PROFILES[gl.shape.kind](u, gl.shape), y = u => 500 - u * P.GH, side = (sg, a, b) => { const pts = []; for (let i = 0; i <= 40; i++) { const u = a + (b - a) * i / 40; pts.push(`${(200 + sg * w(u)).toFixed(1)},${y(u).toFixed(1)}`); } return pts; };
+    let svg = '';
+    if (rec) { const lv = Math.min(1, rec.level); if (lv > 0) svg += `<polygon points="${side(-1, 0, lv).concat(side(1, lv, 0)).join(' ')}" fill="${gl.color}"/>`; }
+    svg += `<polyline points="${side(-1, 0, 1).join(' ')}" fill="none" stroke="#1c2233" stroke-width="7" stroke-linejoin="round"/><polyline points="${side(1, 0, 1).join(' ')}" fill="none" stroke="#1c2233" stroke-width="7" stroke-linejoin="round"/>`;
+    svg += `<line x1="${200 - w(0) - 8}" y1="504" x2="${200 + w(0) + 8}" y2="504" stroke="#1c2233" stroke-width="10" stroke-linecap="round"/>`;
+    gl.targets.forEach((tu, i) => { const ok = rec ? (rec.errs[i] ?? 99) <= 1.5 : null, col = ok == null ? '#ff3b30' : ok ? '#1f9e5a' : '#ff3b30', ww = w(tu); svg += `<path d="M${200 - ww - 24} ${y(tu)} H${200 - ww + 10} M${200 + ww - 10} ${y(tu)} H${200 + ww + 24}" stroke="${col}" stroke-width="8"/>`; });
+    if (gl.leak) svg += `<circle cx="${200 + w(.03) + 10}" cy="492" r="6" fill="${gl.color}"/>`;
+    return `<svg viewBox="40 170 320 350" aria-hidden="true">${svg}</svg>`;
+  }
+  let lvl = 0;
+  function begin(m, li) {
+    mode = m;
+    if (m === 'level') { lvl = li; glasses = [levelGlass(li)]; }
+    else glasses = makeRound(m === 'daily' ? dayNumber() * 6151 + 3 : Math.floor(Math.random() * 1e9));
+    gi = 0; results = []; startGlass(); $('poMenu').hidden = true; $('poEnd').hidden = true; $('poLvl').hidden = true;
   }
   function startGlass() {
     const gl = glasses[gi];
     g = { ...gl, area: 0, air: [], t: 0, pouring: false, ti: 0, errs: [], settle: 0, pours: 0, glug: 0, landed: 0, spill: 0 };
     state = 'aim';
-    $('poSub').textContent = `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · glass ${gi + 1} of ${N}`;
+    $('poSub').textContent = mode === 'level' ? `Level ${lvl + 1} of ${LEVELS.length}` : `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · glass ${gi + 1} of ${glasses.length}`;
     $('poPrompt').innerHTML = gl.targets.length > 1 ? 'Fill to the lower line, then the top one<small>two pours</small>' : gl.leak ? 'Fill to the line<small>it leaks: the level is checked a second after you stop</small>' : 'Fill to the line';
     $('poHint').innerHTML = gi === 0 ? 'Hold anywhere to pour, let go on the line. <b>One pour.</b>' : 'Hold to pour, let go on the line';
   }
@@ -2906,7 +2959,7 @@ const Pour = (() => {
       g.settle += dt;
       if (g.settle >= (g.leak ? 1 : .5)) {
         const err = g.spill > 0 ? 25 : Math.abs(level() - g.targets[g.ti]) * 100;
-        g.errs.push(err); g.ti++;
+        g.errs.push(err); g.ti++; g.lastLevel = level(); (g.meas = g.meas || []).push(Math.min(1, level()));
         if (g.ti < g.targets.length) { state = 'aim'; $('poHint').innerHTML = `${grade(err)} · now the top line`; Sound.tone(660, .15, 'triangle', .1); }
         else finishGlass();
       }
@@ -2915,11 +2968,34 @@ const Pour = (() => {
   function finishGlass() {
     const err = g.errs.reduce((a, b) => a + b, 0) / g.errs.length, pts = ptsFor(err);
     results.push({ err, pts }); state = 'shown';
-    $('poHint').innerHTML = `${g.spill > 0 ? 'Spilled!' : grade(err)} · off by ${err.toFixed(1)}% · <b>${pts} pts</b> · tap for the ${gi + 1 < N ? 'next glass' : 'results'}`;
+    if (mode === 'level') return levelDone(err);
+    if (mode !== 'level') $('poHint').innerHTML = `${g.spill > 0 ? 'Spilled!' : grade(err)} · off by ${err.toFixed(1)}% · <b>${pts} pts</b> · tap for the ${gi + 1 < glasses.length ? 'next glass' : 'results'}`;
     if (err < 1.5) [0, 4, 7].forEach((s, i) => Sound.tone(660 * Math.pow(2, s / 12), .25, 'triangle', .12, i * .07)); else Sound.tone(300, .2, 'triangle', .1);
     haptic(err < 1.5 ? 30 : 12);
   }
-  function next() { if (gi + 1 < N) { gi++; startGlass(); } else finish(); }
+  function levelDone(err) {
+    const lv = data.levels || (data.levels = {}), prev = lv[lvl], rec = { err, errs: g.errs.slice(), level: g.lastLevel, spill: g.spill > 0 };
+    const better = !prev || err < prev.err; if (better) lv[lvl] = rec; store('smidge/pour', data);
+    const st = starsFor(err), gl = glasses[0];
+    $('poHint').innerHTML = `${g.spill > 0 ? 'Spilled!' : grade(err)} <b>off by ${err.toFixed(1)}%</b> ${'★'.repeat(st)}`;
+    $('poLvlT').textContent = g.spill > 0 ? 'Spilled!' : grade(err);
+    $('poLvlS').innerHTML = starRow(st);
+    $('poLvlPic').innerHTML = thumb(gl, rec);
+    const lines = gl.targets.length > 1 ? `Lines at ${gl.targets.map(t => Math.round(t * 100) + '%').join(' and ')}` : `Line at ${(gl.targets[0] * 100).toFixed(0)}% of the glass`;
+    $('poLvlP').innerHTML = `<span class="sl-split">${g.spill > 0 ? 'Spilled' : 'Off by ' + err.toFixed(1) + '%'}</span>${lines}; you stopped at ${(g.meas || [g.lastLevel]).map(m => (Math.min(1, m) * 100).toFixed(1) + '%').join(' and ')}.` + (prev && !better ? ` Your best here: off by ${prev.err.toFixed(1)}%.` : prev ? ' A new best.' : '');
+    $('poLvlNext').textContent = lvl + 1 < LEVELS.length ? 'Next level' : 'All levels';
+    setTimeout(() => { if (state === 'shown' && mode === 'level') $('poLvl').hidden = false; }, 900);
+  }
+  function renderLevels() {
+    const lv = data.levels || {}, first = LEVELS.findIndex((_, i) => !lv[i]);
+    $('poGrid').innerHTML = LEVELS.map((L, i) => { const b = lv[i];
+      return `<button class="sl-tile ${i === first ? 'cur' : ''}" data-i="${i}" aria-label="Level ${i + 1}, ${tagFor(L)}${b ? `, best off by ${b.err.toFixed(1)}%, ${starsFor(b.err)} stars` : ''}"><span class="sl-pic po">${thumb(levelGlass(i), b)}</span><span class="sl-n">${i + 1}</span>` +
+        `<span class="sl-s">${b ? `<b>${b.spill ? 'spilled' : '±' + b.err.toFixed(1) + '%'}</b>` : tagFor(L)}</span>${b ? `<span class="sl-st">${'★'.repeat(starsFor(b.err))}</span>` : ''}</button>`; }).join('');
+    $('poGrid').querySelectorAll('.sl-tile').forEach(t => t.onclick = () => { Sound.audio(); begin('level', +t.dataset.i); });
+    const done = LEVELS.filter((_, i) => lv[i]).length, stars = LEVELS.reduce((a, _, i) => a + (lv[i] ? starsFor(lv[i].err) : 0), 0);
+    $('poLvlSum').textContent = done ? `${done} of ${LEVELS.length} played · ★ ${stars} of ${LEVELS.length * 3}` : `${LEVELS.length} glasses, one pour each`;
+  }
+  function next() { if (gi + 1 < glasses.length) { gi++; startGlass(); } else finish(); }
   function finish() {
     state = 'end';
     const total = results.reduce((a, r) => a + r.pts, 0), stars = total >= 425 ? 3 : total >= 320 ? 2 : total >= 180 ? 1 : 0, day = dayNumber(), first = mode === 'daily' && data.daily[day] == null;
@@ -2933,6 +3009,7 @@ const Pour = (() => {
     $('poEnd').hidden = false;
   }
   function showMenu() {
+    renderLevels(); $('poLvl').hidden = true;
     state = 'menu'; const day = dayNumber(), done = data.daily[day];
     if (!glasses.length) { glasses = makeRound(day * 6151 + 3); g = { ...glasses[0], area: 0, air: [], t: 0, ti: 0, errs: [], spill: 0 }; }
     $('poDailyBtn').textContent = done != null ? `Daily #${day} again` : `Play daily #${day}`;
@@ -3007,7 +3084,7 @@ const Pour = (() => {
   // ---------- input ----------
   cv.addEventListener('pointerdown', e => {
     if (!active) return; e.preventDefault(); Sound.audio();
-    if (state === 'shown') { next(); return; }
+    if (state === 'shown') { if (mode === 'level') $('poLvl').hidden = false; else next(); return; }
     if (state !== 'aim') return;
     g.pouring = true; state = 'pour'; g.pours++; g.pourT = g.t;
     try { cv.setPointerCapture(e.pointerId); } catch (err) {}
@@ -3015,6 +3092,11 @@ const Pour = (() => {
   }, { passive: false });
   const stop = () => { if (state === 'pour') { g.pouring = false; g.releaseT = g.t; state = 'settle'; g.settle = 0; } };
   cv.addEventListener('pointerup', stop); cv.addEventListener('pointercancel', stop);
+  $('poLvlClose').onclick = () => { $('poLvl').hidden = true; $('poHint').innerHTML = 'Tap the glass for your result again'; Sound.tone(520, .05, 'triangle', .06); };
+  $('poLvl').addEventListener('click', e => { if (e.target === $('poLvl')) $('poLvlClose').click(); });
+  $('poLvlRetry').onclick = () => { Sound.audio(); begin('level', lvl); };
+  $('poLvlNext').onclick = () => { Sound.audio(); if (lvl + 1 < LEVELS.length) begin('level', lvl + 1); else showMenu(); };
+  $('poLvlList').onclick = () => { Sound.audio(); showMenu(); };
   $('poDailyBtn').onclick = () => { Sound.audio(); begin('daily'); };
   $('poPracticeBtn').onclick = () => { Sound.audio(); begin('practice'); };
   $('poAgain').onclick = () => { Sound.audio(); begin(mode); };
@@ -3025,7 +3107,7 @@ const Pour = (() => {
   return {
     enter() { active = true; resize(); readColors(); showMenu(); },
     leave() { active = false; if (g) g.pouring = false; if (state === 'pour') state = 'settle'; },
-    stats() { return { best: data.best || 0, today: data.daily[dayNumber()] }; },
+    stats() { const lv = data.levels || {}; return { best: data.best || 0, today: data.daily[dayNumber()], levels: LEVELS.filter((_, i) => lv[i]).length, total: LEVELS.length }; },
   };
 })();
 
@@ -3069,11 +3151,45 @@ const Eyeball = (() => {
   let mode = 'daily', tasks = [], ti = 0, results = [], state = 'menu', guess = null, judged = null, held = false, shownAt = 0;
   let data = storeObj('smidge/eyeball', { daily: {}, best: 0 });
   function makeRound(seed) { const r = rng(seed); return KINDS.map(k => E.make(k, r)); }
-  function begin(m) { mode = m; tasks = makeRound(m === 'daily' ? dayNumber() * 3571 + 11 : Math.floor(Math.random() * 1e9)); ti = 0; results = []; startTask(); $('eyMenu').hidden = true; $('eyEnd').hidden = true; }
+  // levels: one test each, three times round the six kinds
+  const NAMES = { mid: 'Middle', right: 'Right angle', centre: 'Centre', bisect: 'Half angle', square: 'Square', balance: 'Balance' };
+  const LEVELS = Array.from({ length: 18 }, (_, i) => ({ kind: KINDS[i % KINDS.length], seed: 3301 + i * 17 }));
+  const levelTask = i => E.make(LEVELS[i].kind, rng(LEVELS[i].seed));
+  const starsFor = err => err <= 2 ? 3 : err <= 5 ? 2 : 1;
+  const starRow = n => [0, 1, 2].map(i => i < n ? '★' : '<span class="off">★</span>').join('');
+  const offText = (err, deg) => `${err.toFixed(1)}${deg ? '°' : '%'}`;
+  // a small drawing of a test; with a guess, your mark in red and the true answer in green
+  function figure(t, guess) {
+    const P = 'currentColor', pen = '#d93a2f', ok = '#1f9e5a', f = n => n.toFixed(1);
+    const L = (a, b, c, w, d) => `<line x1="${f(a[0])}" y1="${f(a[1])}" x2="${f(b[0])}" y2="${f(b[1])}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"${d ? ` stroke-dasharray="${d}"` : ''}/>`;
+    const D = (p, c, r) => `<circle cx="${f(p[0])}" cy="${f(p[1])}" r="${r}" fill="${c}"/>`;
+    const at = (v, a, len) => [v[0] + Math.cos(a) * len, v[1] + Math.sin(a) * len];
+    let out = '';
+    if (t.kind === 'mid') out += L(t.a, t.b, P, 9) + D(t.a, P, 11) + D(t.b, P, 11);
+    if (t.kind === 'right') out += L(t.v, at(t.v, t.a, 230), P, 9) + D(t.v, P, 11);
+    if (t.kind === 'centre') { const a0 = t.start, a1 = t.start + t.arc, p0 = at(t.c, a0, t.r), p1 = at(t.c, a1, t.r); out += `<path d="M${f(p0[0])} ${f(p0[1])} A${t.r} ${t.r} 0 ${t.arc > Math.PI ? 1 : 0} 1 ${f(p1[0])} ${f(p1[1])}" fill="none" stroke="${P}" stroke-width="9" stroke-linecap="round"/>`; }
+    if (t.kind === 'bisect') out += L(t.v, at(t.v, t.a1, 260), P, 9) + L(t.v, at(t.v, t.a2, 260), P, 9) + D(t.v, P, 11);
+    if (t.kind === 'square') { const h = guess ? t.y0 - guess[1] : t.h; out += `<rect x="${f(t.x0)}" y="${f(t.y0 - h)}" width="${f(t.w)}" height="${f(h)}" fill="none" stroke="${P}" stroke-width="9"/>`; }
+    if (t.kind === 'balance') out += `<polygon points="${t.pts.map(p => f(p[0]) + ',' + f(p[1])).join(' ')}" fill="none" stroke="${P}" stroke-width="9" stroke-linejoin="round"/>`;
+    if (guess) {
+      const j = E.judge(t, guess);
+      if (t.kind === 'right' || t.kind === 'bisect') out += L(t.v, j.ans, ok, 7, '16 12') + L(t.v, guess, pen, 9);
+      else if (t.kind === 'square') out += `<rect x="${f(t.x0)}" y="${f(t.y0 - t.w)}" width="${f(t.w)}" height="${f(t.w)}" fill="none" stroke="${ok}" stroke-width="7" stroke-dasharray="16 12"/>` + L([t.x0, guess[1]], [t.x0 + t.w, guess[1]], pen, 11);
+      else out += D(j.ans, ok, 14) + D(guess, pen, 14);
+    }
+    return `<svg viewBox="-20 -20 440 440" aria-hidden="true">${out}</svg>`;
+  }
+  let lvl = 0;
+  function begin(m, li) {
+    mode = m;
+    if (m === 'level') { lvl = li; tasks = [levelTask(li)]; }
+    else tasks = makeRound(m === 'daily' ? dayNumber() * 3571 + 11 : Math.floor(Math.random() * 1e9));
+    ti = 0; results = []; startTask(); $('eyMenu').hidden = true; $('eyEnd').hidden = true; $('eyLvl').hidden = true;
+  }
   function startTask() {
     const t = tasks[ti]; judged = null; held = false; state = 'aim';
     guess = t.handle ? t.handle.slice() : t.kind === 'square' ? [200, t.y0 - t.h] : null;
-    $('eySub').textContent = `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · ${ti + 1} of ${KINDS.length}`;
+    $('eySub').textContent = mode === 'level' ? `Level ${lvl + 1} of ${LEVELS.length}` : `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · ${ti + 1} of ${tasks.length}`;
     $('eyPrompt').textContent = PROMPT[t.kind];
     $('eyHint').innerHTML = ti === 0 ? 'Touch, adjust, and <b>let go to lock it in</b>' : 'Let go to lock it in';
   }
@@ -3082,11 +3198,32 @@ const Eyeball = (() => {
     const t = tasks[ti]; judged = E.judge(t, guess); const pts = E.points(judged);
     results.push({ err: judged.err, unit: judged.unit, pts }); state = 'shown'; shownAt = performance.now();
     const word = pts >= 95 ? 'Spot on!' : pts >= 85 ? 'Sharp eye' : pts >= 65 ? 'Not bad' : pts >= 40 ? 'Hmm, close-ish' : 'Way off';
-    $('eyHint').innerHTML = `${word} · off by ${judged.err.toFixed(1)}${judged.unit.startsWith('%') ? judged.unit : '°'} · <b>${pts} pts</b> · tap to go on`;
+    if (mode !== 'level') $('eyHint').innerHTML = `${word} · off by ${judged.err.toFixed(1)}${judged.unit.startsWith('%') ? judged.unit : '°'} · <b>${pts} pts</b> · tap to go on`;
     if (pts >= 85) [0, 4, 7].forEach((s, i) => Sound.tone(700 * Math.pow(2, s / 12), .22, 'triangle', .12, i * .06)); else Sound.tone(330, .18, 'triangle', .1);
     Sound.noise(.05, .3, 2800, 2); haptic(12);
+    if (mode === 'level') levelDone(t, judged);
   }
-  function next() { if (ti + 1 < KINDS.length) { ti++; startTask(); } else finish(); }
+  function levelDone(t, j) {
+    const lv = data.levels || (data.levels = {}), prev = lv[lvl], rec = { err: j.err, deg: !!j.deg, guess: guess.slice() };
+    const better = !prev || j.err < prev.err; if (better) lv[lvl] = rec; store('smidge/eyeball', data);
+    const st = starsFor(j.err), word = st === 3 ? 'Spot on!' : st === 2 ? 'Sharp eye' : 'Keep looking';
+    $('eyHint').innerHTML = `${word} <b>off by ${offText(j.err, j.deg)}</b> ${'★'.repeat(st)}`;
+    $('eyLvlT').textContent = word; $('eyLvlS').innerHTML = starRow(st);
+    $('eyLvlPic').innerHTML = figure(t, guess);
+    $('eyLvlP').innerHTML = `<span class="sl-split">Off by ${offText(j.err, j.deg)}</span>${j.deg ? '' : j.unit.replace('% ', 'Measured as a share ') + '. '}Red is your mark, green the true answer.` + (prev && !better ? ` Your best here: off by ${offText(prev.err, prev.deg)}.` : prev ? ' A new best.' : '');
+    $('eyLvlNext').textContent = lvl + 1 < LEVELS.length ? 'Next level' : 'All levels';
+    setTimeout(() => { if (state === 'shown' && mode === 'level') $('eyLvl').hidden = false; }, 800);
+  }
+  function renderLevels() {
+    const lv = data.levels || {}, first = LEVELS.findIndex((_, i) => !lv[i]);
+    $('eyGrid').innerHTML = LEVELS.map((L, i) => { const b = lv[i];
+      return `<button class="sl-tile ${i === first ? 'cur' : ''}" data-i="${i}" aria-label="Level ${i + 1}, ${NAMES[L.kind]}${b ? `, best off by ${offText(b.err, b.deg)}, ${starsFor(b.err)} stars` : ''}"><span class="sl-pic ey">${figure(levelTask(i), b ? b.guess : null)}</span><span class="sl-n">${i + 1}</span>` +
+        `<span class="sl-s">${b ? `<b>±${offText(b.err, b.deg)}</b>` : NAMES[L.kind]}</span>${b ? `<span class="sl-st">${'★'.repeat(starsFor(b.err))}</span>` : ''}</button>`; }).join('');
+    $('eyGrid').querySelectorAll('.sl-tile').forEach(t => t.onclick = () => { Sound.audio(); begin('level', +t.dataset.i); });
+    const done = LEVELS.filter((_, i) => lv[i]).length, stars = LEVELS.reduce((a, _, i) => a + (lv[i] ? starsFor(lv[i].err) : 0), 0);
+    $('eyLvlSum').textContent = done ? `${done} of ${LEVELS.length} played · ★ ${stars} of ${LEVELS.length * 3}` : `${LEVELS.length} tests, one guess each`;
+  }
+  function next() { if (ti + 1 < tasks.length) { ti++; startTask(); } else finish(); }
   function finish() {
     state = 'end';
     const total = results.reduce((a, r) => a + r.pts, 0), max = KINDS.length * 100, stars = total >= 510 ? 3 : total >= 400 ? 2 : total >= 250 ? 1 : 0, day = dayNumber(), first = mode === 'daily' && data.daily[day] == null;
@@ -3101,6 +3238,7 @@ const Eyeball = (() => {
     $('eyEnd').hidden = false;
   }
   function showMenu() {
+    renderLevels(); $('eyLvl').hidden = true;
     state = 'menu'; const day = dayNumber(), done = data.daily[day];
     $('eyDailyBtn').textContent = done != null ? `Daily #${day} again` : `Play daily #${day}`;
     $('eyMenuNote').textContent = done != null ? `Today: ${done} of 600. Best ever: ${data.best}.` : data.best ? `Best ever: ${data.best} of 600.` : 'Six tests of your eye. 100 points each for a perfect guess.';
@@ -3152,7 +3290,7 @@ const Eyeball = (() => {
   }
   cv.addEventListener('pointerdown', e => {
     if (!active) return; e.preventDefault(); Sound.audio();
-    if (state === 'shown') { if (performance.now() - shownAt > 300) next(); return; }
+    if (state === 'shown') { if (performance.now() - shownAt > 300) { if (mode === 'level') $('eyLvl').hidden = false; else next(); } return; }
     if (state !== 'aim') return;
     held = true; place(toWorld(e)); try { cv.setPointerCapture(e.pointerId); } catch (err) {}
     Sound.tone(520, .03, 'triangle', .05);
@@ -3160,6 +3298,11 @@ const Eyeball = (() => {
   cv.addEventListener('pointermove', e => { if (held && state === 'aim') place(toWorld(e)); });
   cv.addEventListener('pointerup', () => { if (held && state === 'aim') { held = false; lockIn(); } });
   cv.addEventListener('pointercancel', () => { held = false; });
+  $('eyLvlClose').onclick = () => { $('eyLvl').hidden = true; $('eyHint').innerHTML = 'Tap the paper for your result again'; Sound.tone(520, .05, 'triangle', .06); };
+  $('eyLvl').addEventListener('click', e => { if (e.target === $('eyLvl')) $('eyLvlClose').click(); });
+  $('eyLvlRetry').onclick = () => { Sound.audio(); begin('level', lvl); };
+  $('eyLvlNext').onclick = () => { Sound.audio(); if (lvl + 1 < LEVELS.length) begin('level', lvl + 1); else showMenu(); };
+  $('eyLvlList').onclick = () => { Sound.audio(); showMenu(); };
   $('eyDailyBtn').onclick = () => { Sound.audio(); begin('daily'); };
   $('eyPracticeBtn').onclick = () => { Sound.audio(); begin('practice'); };
   $('eyAgain').onclick = () => { Sound.audio(); begin(mode); };
@@ -3170,7 +3313,7 @@ const Eyeball = (() => {
   return {
     enter() { active = true; resize(); readColors(); showMenu(); },
     leave() { active = false; held = false; },
-    stats() { return { best: data.best || 0, today: data.daily[dayNumber()] }; },
+    stats() { const lv = data.levels || {}; return { best: data.best || 0, today: data.daily[dayNumber()], levels: LEVELS.filter((_, i) => lv[i]).length, total: LEVELS.length }; },
   };
 })();
 
@@ -3479,8 +3622,8 @@ const App = (() => {
     $('progSkim').innerHTML = sk.today != null ? `<span>Today ${sk.today} points</span><span>Best ${sk.best}</span>` : sk.best ? `<span>Today's lake is ready</span><span>Best ${sk.best}</span>` : '<span>New · daily lake</span>';
     $('progUn').innerHTML = un.done ? `<span>${un.done} of ${un.total} untangled</span><span>★ ${un.stars}</span>` : `<span>New · ${un.total} levels</span>`;
     const po = Pour.stats(), ey = Eyeball.stats(), sw = Switchboard.stats();
-    $('progPour').innerHTML = po.today != null ? `<span>Today ${po.today}/500</span><span>Best ${po.best}</span>` : po.best ? `<span>Today's glasses are ready</span><span>Best ${po.best}</span>` : '<span>New · daily glasses</span>';
-    $('progEye').innerHTML = ey.today != null ? `<span>Today ${ey.today}/600</span><span>Best ${ey.best}</span>` : ey.best ? `<span>Today's tests are ready</span><span>Best ${ey.best}</span>` : '<span>New · daily tests</span>';
+    $('progPour').innerHTML = (po.today != null ? `<span>Today ${po.today}/500</span>` : '<span>Daily glasses ready</span>') + `<span>${po.levels ? po.levels + ' of ' + po.total + ' levels' : po.total + ' levels'}</span>`;
+    $('progEye').innerHTML = (ey.today != null ? `<span>Today ${ey.today}/600</span>` : '<span>Daily tests ready</span>') + `<span>${ey.levels ? ey.levels + ' of ' + ey.total + ' levels' : ey.total + ' levels'}</span>`;
     $('progSw').innerHTML = sw.done ? `<span>${sw.done} of ${sw.total} switched off</span><span>★ ${sw.stars}</span>` : `<span>New · ${sw.total} boards</span>`;
     const cc = CrackCode.stats();
     $('progCode').innerHTML = (cc.today ? '<span>Today cracked</span>' : '<span>Daily code ready</span>') + (cc.done ? `<span>${cc.done} of ${cc.total} levels · ★ ${cc.stars}</span>` : `<span>${cc.total} levels</span>`);

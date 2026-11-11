@@ -41,9 +41,14 @@ lines joined along each line (always flat-solvable), scrambled onto a circle. St
 **Pour**: hold to pour, let go on the line. The level comes from how much has landed and the glass's width at each
 height (narrow parts rise fast); liquid already falling still lands after you let go. Five glasses: tumbler, cone,
 flask or vase, two lines (two pours), and a leaky glass checked a second after you stop. Daily round and practice.
+20 levels, one glass each (tumblers, cones, flasks, vases, hourglasses, two lines, leaks), shown as a picture grid
+like Slice's: each tile draws the glass and its lines, and once played how full you left it and how far off (±1.2%).
+Stars: within 1% ★★★, within 2.5% ★★, any pour ★.
 
 **Eyeball**: six judge-by-eye tests (middle of a line, right angle, centre of a circle, half an angle, make a square,
 balance point of a triangle). Drag or touch, let go to lock in; the true answer is drawn over yours. Daily and practice.
+18 levels (three times round the six tests) in a picture grid: each tile draws the test, and once played your mark in
+red and the answer in green, with how far off (±2.1° or ±3%). Stars: within 2 ★★★, within 5 ★★, any guess ★.
 
 **Switchboard**: a tap flips a bulb and its neighbours; switch every bulb off. 12 boards, 3x3 to 5x5, three flip
 patterns (plus, corners, ring). Boards are made by pressing random bulbs on a dark board, and a GF(2) solver gives

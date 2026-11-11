@@ -348,3 +348,6 @@ body[data-view="code"] { background: var(--cc-bg2); }
 .sl-split { display: block; font: 34px/1.1 var(--display); color: var(--ink); text-align: center; font-variant-numeric: tabular-nums; margin-bottom: 4px; }
 #slLvlP { text-align: center; }
 .sl-s b { font-size: 13px; letter-spacing: -.01em; }
+
+.sl-pic.po { background: var(--po-wall); }
+.sl-pic.ey { background: var(--ey-paper); color: var(--ey-pencil); box-shadow: inset 0 0 0 1px var(--ey-dot); }

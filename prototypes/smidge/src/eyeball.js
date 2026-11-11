@@ -38,11 +38,45 @@ const Eyeball = (() => {
   let mode = 'daily', tasks = [], ti = 0, results = [], state = 'menu', guess = null, judged = null, held = false, shownAt = 0;
   let data = storeObj('smidge/eyeball', { daily: {}, best: 0 });
   function makeRound(seed) { const r = rng(seed); return KINDS.map(k => E.make(k, r)); }
-  function begin(m) { mode = m; tasks = makeRound(m === 'daily' ? dayNumber() * 3571 + 11 : Math.floor(Math.random() * 1e9)); ti = 0; results = []; startTask(); $('eyMenu').hidden = true; $('eyEnd').hidden = true; }
+  // levels: one test each, three times round the six kinds
+  const NAMES = { mid: 'Middle', right: 'Right angle', centre: 'Centre', bisect: 'Half angle', square: 'Square', balance: 'Balance' };
+  const LEVELS = Array.from({ length: 18 }, (_, i) => ({ kind: KINDS[i % KINDS.length], seed: 3301 + i * 17 }));
+  const levelTask = i => E.make(LEVELS[i].kind, rng(LEVELS[i].seed));
+  const starsFor = err => err <= 2 ? 3 : err <= 5 ? 2 : 1;
+  const starRow = n => [0, 1, 2].map(i => i < n ? '★' : '<span class="off">★</span>').join('');
+  const offText = (err, deg) => `${err.toFixed(1)}${deg ? '°' : '%'}`;
+  // a small drawing of a test; with a guess, your mark in red and the true answer in green
+  function figure(t, guess) {
+    const P = 'currentColor', pen = '#d93a2f', ok = '#1f9e5a', f = n => n.toFixed(1);
+    const L = (a, b, c, w, d) => `<line x1="${f(a[0])}" y1="${f(a[1])}" x2="${f(b[0])}" y2="${f(b[1])}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"${d ? ` stroke-dasharray="${d}"` : ''}/>`;
+    const D = (p, c, r) => `<circle cx="${f(p[0])}" cy="${f(p[1])}" r="${r}" fill="${c}"/>`;
+    const at = (v, a, len) => [v[0] + Math.cos(a) * len, v[1] + Math.sin(a) * len];
+    let out = '';
+    if (t.kind === 'mid') out += L(t.a, t.b, P, 9) + D(t.a, P, 11) + D(t.b, P, 11);
+    if (t.kind === 'right') out += L(t.v, at(t.v, t.a, 230), P, 9) + D(t.v, P, 11);
+    if (t.kind === 'centre') { const a0 = t.start, a1 = t.start + t.arc, p0 = at(t.c, a0, t.r), p1 = at(t.c, a1, t.r); out += `<path d="M${f(p0[0])} ${f(p0[1])} A${t.r} ${t.r} 0 ${t.arc > Math.PI ? 1 : 0} 1 ${f(p1[0])} ${f(p1[1])}" fill="none" stroke="${P}" stroke-width="9" stroke-linecap="round"/>`; }
+    if (t.kind === 'bisect') out += L(t.v, at(t.v, t.a1, 260), P, 9) + L(t.v, at(t.v, t.a2, 260), P, 9) + D(t.v, P, 11);
+    if (t.kind === 'square') { const h = guess ? t.y0 - guess[1] : t.h; out += `<rect x="${f(t.x0)}" y="${f(t.y0 - h)}" width="${f(t.w)}" height="${f(h)}" fill="none" stroke="${P}" stroke-width="9"/>`; }
+    if (t.kind === 'balance') out += `<polygon points="${t.pts.map(p => f(p[0]) + ',' + f(p[1])).join(' ')}" fill="none" stroke="${P}" stroke-width="9" stroke-linejoin="round"/>`;
+    if (guess) {
+      const j = E.judge(t, guess);
+      if (t.kind === 'right' || t.kind === 'bisect') out += L(t.v, j.ans, ok, 7, '16 12') + L(t.v, guess, pen, 9);
+      else if (t.kind === 'square') out += `<rect x="${f(t.x0)}" y="${f(t.y0 - t.w)}" width="${f(t.w)}" height="${f(t.w)}" fill="none" stroke="${ok}" stroke-width="7" stroke-dasharray="16 12"/>` + L([t.x0, guess[1]], [t.x0 + t.w, guess[1]], pen, 11);
+      else out += D(j.ans, ok, 14) + D(guess, pen, 14);
+    }
+    return `<svg viewBox="-20 -20 440 440" aria-hidden="true">${out}</svg>`;
+  }
+  let lvl = 0;
+  function begin(m, li) {
+    mode = m;
+    if (m === 'level') { lvl = li; tasks = [levelTask(li)]; }
+    else tasks = makeRound(m === 'daily' ? dayNumber() * 3571 + 11 : Math.floor(Math.random() * 1e9));
+    ti = 0; results = []; startTask(); $('eyMenu').hidden = true; $('eyEnd').hidden = true; $('eyLvl').hidden = true;
+  }
   function startTask() {
     const t = tasks[ti]; judged = null; held = false; state = 'aim';
     guess = t.handle ? t.handle.slice() : t.kind === 'square' ? [200, t.y0 - t.h] : null;
-    $('eySub').textContent = `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · ${ti + 1} of ${KINDS.length}`;
+    $('eySub').textContent = mode === 'level' ? `Level ${lvl + 1} of ${LEVELS.length}` : `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · ${ti + 1} of ${tasks.length}`;
     $('eyPrompt').textContent = PROMPT[t.kind];
     $('eyHint').innerHTML = ti === 0 ? 'Touch, adjust, and <b>let go to lock it in</b>' : 'Let go to lock it in';
   }
@@ -51,11 +85,32 @@ const Eyeball = (() => {
     const t = tasks[ti]; judged = E.judge(t, guess); const pts = E.points(judged);
     results.push({ err: judged.err, unit: judged.unit, pts }); state = 'shown'; shownAt = performance.now();
     const word = pts >= 95 ? 'Spot on!' : pts >= 85 ? 'Sharp eye' : pts >= 65 ? 'Not bad' : pts >= 40 ? 'Hmm, close-ish' : 'Way off';
-    $('eyHint').innerHTML = `${word} · off by ${judged.err.toFixed(1)}${judged.unit.startsWith('%') ? judged.unit : '°'} · <b>${pts} pts</b> · tap to go on`;
+    if (mode !== 'level') $('eyHint').innerHTML = `${word} · off by ${judged.err.toFixed(1)}${judged.unit.startsWith('%') ? judged.unit : '°'} · <b>${pts} pts</b> · tap to go on`;
     if (pts >= 85) [0, 4, 7].forEach((s, i) => Sound.tone(700 * Math.pow(2, s / 12), .22, 'triangle', .12, i * .06)); else Sound.tone(330, .18, 'triangle', .1);
     Sound.noise(.05, .3, 2800, 2); haptic(12);
+    if (mode === 'level') levelDone(t, judged);
   }
-  function next() { if (ti + 1 < KINDS.length) { ti++; startTask(); } else finish(); }
+  function levelDone(t, j) {
+    const lv = data.levels || (data.levels = {}), prev = lv[lvl], rec = { err: j.err, deg: !!j.deg, guess: guess.slice() };
+    const better = !prev || j.err < prev.err; if (better) lv[lvl] = rec; store('smidge/eyeball', data);
+    const st = starsFor(j.err), word = st === 3 ? 'Spot on!' : st === 2 ? 'Sharp eye' : 'Keep looking';
+    $('eyHint').innerHTML = `${word} <b>off by ${offText(j.err, j.deg)}</b> ${'★'.repeat(st)}`;
+    $('eyLvlT').textContent = word; $('eyLvlS').innerHTML = starRow(st);
+    $('eyLvlPic').innerHTML = figure(t, guess);
+    $('eyLvlP').innerHTML = `<span class="sl-split">Off by ${offText(j.err, j.deg)}</span>${j.deg ? '' : j.unit.replace('% ', 'Measured as a share ') + '. '}Red is your mark, green the true answer.` + (prev && !better ? ` Your best here: off by ${offText(prev.err, prev.deg)}.` : prev ? ' A new best.' : '');
+    $('eyLvlNext').textContent = lvl + 1 < LEVELS.length ? 'Next level' : 'All levels';
+    setTimeout(() => { if (state === 'shown' && mode === 'level') $('eyLvl').hidden = false; }, 800);
+  }
+  function renderLevels() {
+    const lv = data.levels || {}, first = LEVELS.findIndex((_, i) => !lv[i]);
+    $('eyGrid').innerHTML = LEVELS.map((L, i) => { const b = lv[i];
+      return `<button class="sl-tile ${i === first ? 'cur' : ''}" data-i="${i}" aria-label="Level ${i + 1}, ${NAMES[L.kind]}${b ? `, best off by ${offText(b.err, b.deg)}, ${starsFor(b.err)} stars` : ''}"><span class="sl-pic ey">${figure(levelTask(i), b ? b.guess : null)}</span><span class="sl-n">${i + 1}</span>` +
+        `<span class="sl-s">${b ? `<b>±${offText(b.err, b.deg)}</b>` : NAMES[L.kind]}</span>${b ? `<span class="sl-st">${'★'.repeat(starsFor(b.err))}</span>` : ''}</button>`; }).join('');
+    $('eyGrid').querySelectorAll('.sl-tile').forEach(t => t.onclick = () => { Sound.audio(); begin('level', +t.dataset.i); });
+    const done = LEVELS.filter((_, i) => lv[i]).length, stars = LEVELS.reduce((a, _, i) => a + (lv[i] ? starsFor(lv[i].err) : 0), 0);
+    $('eyLvlSum').textContent = done ? `${done} of ${LEVELS.length} played · ★ ${stars} of ${LEVELS.length * 3}` : `${LEVELS.length} tests, one guess each`;
+  }
+  function next() { if (ti + 1 < tasks.length) { ti++; startTask(); } else finish(); }
   function finish() {
     state = 'end';
     const total = results.reduce((a, r) => a + r.pts, 0), max = KINDS.length * 100, stars = total >= 510 ? 3 : total >= 400 ? 2 : total >= 250 ? 1 : 0, day = dayNumber(), first = mode === 'daily' && data.daily[day] == null;
@@ -70,6 +125,7 @@ const Eyeball = (() => {
     $('eyEnd').hidden = false;
   }
   function showMenu() {
+    renderLevels(); $('eyLvl').hidden = true;
     state = 'menu'; const day = dayNumber(), done = data.daily[day];
     $('eyDailyBtn').textContent = done != null ? `Daily #${day} again` : `Play daily #${day}`;
     $('eyMenuNote').textContent = done != null ? `Today: ${done} of 600. Best ever: ${data.best}.` : data.best ? `Best ever: ${data.best} of 600.` : 'Six tests of your eye. 100 points each for a perfect guess.';
@@ -121,7 +177,7 @@ const Eyeball = (() => {
   }
   cv.addEventListener('pointerdown', e => {
     if (!active) return; e.preventDefault(); Sound.audio();
-    if (state === 'shown') { if (performance.now() - shownAt > 300) next(); return; }
+    if (state === 'shown') { if (performance.now() - shownAt > 300) { if (mode === 'level') $('eyLvl').hidden = false; else next(); } return; }
     if (state !== 'aim') return;
     held = true; place(toWorld(e)); try { cv.setPointerCapture(e.pointerId); } catch (err) {}
     Sound.tone(520, .03, 'triangle', .05);
@@ -129,6 +185,11 @@ const Eyeball = (() => {
   cv.addEventListener('pointermove', e => { if (held && state === 'aim') place(toWorld(e)); });
   cv.addEventListener('pointerup', () => { if (held && state === 'aim') { held = false; lockIn(); } });
   cv.addEventListener('pointercancel', () => { held = false; });
+  $('eyLvlClose').onclick = () => { $('eyLvl').hidden = true; $('eyHint').innerHTML = 'Tap the paper for your result again'; Sound.tone(520, .05, 'triangle', .06); };
+  $('eyLvl').addEventListener('click', e => { if (e.target === $('eyLvl')) $('eyLvlClose').click(); });
+  $('eyLvlRetry').onclick = () => { Sound.audio(); begin('level', lvl); };
+  $('eyLvlNext').onclick = () => { Sound.audio(); if (lvl + 1 < LEVELS.length) begin('level', lvl + 1); else showMenu(); };
+  $('eyLvlList').onclick = () => { Sound.audio(); showMenu(); };
   $('eyDailyBtn').onclick = () => { Sound.audio(); begin('daily'); };
   $('eyPracticeBtn').onclick = () => { Sound.audio(); begin('practice'); };
   $('eyAgain').onclick = () => { Sound.audio(); begin(mode); };
@@ -139,6 +200,6 @@ const Eyeball = (() => {
   return {
     enter() { active = true; resize(); readColors(); showMenu(); },
     leave() { active = false; held = false; },
-    stats() { return { best: data.best || 0, today: data.daily[dayNumber()] }; },
+    stats() { const lv = data.levels || {}; return { best: data.best || 0, today: data.daily[dayNumber()], levels: LEVELS.filter((_, i) => lv[i]).length, total: LEVELS.length }; },
   };
 })();
