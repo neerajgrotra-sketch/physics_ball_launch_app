@@ -27,13 +27,24 @@ Five stones; a point a skip, +2 for a skip inside a floating ring. Daily lake (w
 **Untangle**: drag pins until no strings cross. 12 levels, 6 to 28 pins. Each level is the crossing points of n straight
 lines joined along each line (always flat-solvable), scrambled onto a circle. Stars by time.
 
+**Pour**: hold to pour, let go on the line. The level comes from how much has landed and the glass's width at each
+height (narrow parts rise fast); liquid already falling still lands after you let go. Five glasses: tumbler, cone,
+flask or vase, two lines (two pours), and a leaky glass checked a second after you stop. Daily round and practice.
+
+**Eyeball**: six judge-by-eye tests (middle of a line, right angle, centre of a circle, half an angle, make a square,
+balance point of a triangle). Drag or touch, let go to lock in; the true answer is drawn over yours. Daily and practice.
+
+**Switchboard**: a tap flips a bulb and its neighbours; switch every bulb off. 12 boards, 3x3 to 5x5, three flip
+patterns (plus, corners, ring). Boards are made by pressing random bulbs on a dark board, and a GF(2) solver gives
+par (the fewest taps) and the Hint. Three stars at par.
+
 ## Source
 
 `index.html` is built; edit `src/` and run `cd src && python3 build.py ../index.html`.
 - `src/matchcore.js`: Stickler rules (pure, no DOM), shared by the game and the verifier.
 - `src/puzzles.src.js`: the puzzles. Never edit `puzzles.gen.js`: run `cd src && node verify.js`, which checks each
   puzzle has an answer in exactly n steps (move puzzles: none in fewer) and stores one answer for the Hint.
-- `src/slice.js`, `src/skim.js`, `src/untangle.js`: each starts with its pure part (SliceGeo, SkimPhys, UntangleGen);
+- `src/slice.js`, `src/skim.js`, `src/untangle.js`, `src/pour.js`, `src/eyeball.js`, `src/switchboard.js`: each starts with its pure part (SliceGeo, SkimPhys, UntangleGen, PourPhys, EyeGeo, SwitchCore);
   `node src/logic.test.cjs` checks them (cuts, every Untangle level solvable, Skim skip spread, determinism).
 - `src/pop.*`: Popshot. `src/sound.js`: shared synthesised sound. `src/app.js`: splash, home, moving between games.
 

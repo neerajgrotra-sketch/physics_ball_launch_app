@@ -43,7 +43,7 @@ const Sound = (() => {
     unlockPool();
     if (!unlocked) { try { const s = ac.createBufferSource(); s.buffer = ac.createBuffer(1, 1, 22050); s.connect(ac.destination); s.start(0); unlocked = true; } catch (e) {} }
   }
-  for (const ev of ['touchend', 'click', 'keydown']) document.addEventListener(ev, audio, { capture: true, passive: true });
+  if (typeof document !== 'undefined') for (const ev of ['touchend', 'click', 'keydown']) document.addEventListener(ev, audio, { capture: true, passive: true });
   // ---- backup path: when Web Audio isn't running (some in-app viewers never let it start), each sound is rendered
   // to a short WAV and played through a pool of <audio> elements unlocked during taps (iOS lets an element that has
   // played in a tap play again later with a new source).

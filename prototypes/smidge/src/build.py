@@ -16,7 +16,7 @@ defs = '''<svg width="0" height="0" style="position:absolute" aria-hidden="true"
 </defs></svg>
 '''
 body = defs + d('shell.html') + '<div class="view" id="pop" hidden>\n' + d('pop.html') + '</div>\n'
-scripts = '<script>\n' + '\n'.join(d(f) for f in ['sound.js', 'matchcore.js', 'puzzles.gen.js', 'pop.js', 'stickler.js', 'slice.js', 'skim.js', 'untangle.js', 'app.js']) + '</script>\n'
+scripts = '<script>\n' + '\n'.join(d(f) for f in ['sound.js', 'matchcore.js', 'puzzles.gen.js', 'pop.js', 'stickler.js', 'slice.js', 'skim.js', 'untangle.js', 'pour.js', 'eyeball.js', 'switchboard.js', 'app.js']) + '</script>\n'
 frag = head + body + scripts
 open('smidge.html', 'w').write(frag)
 full = '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n' + head + '</head>\n<body>\n' + body + scripts + '</body>\n</html>\n'

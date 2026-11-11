@@ -350,6 +350,42 @@ body[data-view="untangle"] { background: var(--cork-2); }
 .linkbtn { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; cursor: pointer; }
 #sndPanel { position: fixed; }
 
+/* ---------- Pour: a kitchen wall; Eyeball: dot-grid paper; Switchboard: a metal panel of bulbs ---------- */
+:root { --po-wall: #dfeef0; --po-tile: #c3dadd; --po-counter: #b07a4a; --po-counter2: #8d5e36; --po-glass: rgba(255,255,255,.45);
+  --ey-paper: #fbfaf6; --ey-dot: #d8d4ca; --ey-pencil: #3a3f4b; --ey-pen: #d93a2f;
+  --sw-panel: #2b4f57; --sw-panel2: #1a343a; --sw-off: #3b5a61; --sw-fg: #eef6f4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --po-wall: #18262b; --po-tile: #24363c; --po-counter: #5c3b22; --po-counter2: #3f2716; --po-glass: rgba(255,255,255,.12);
+  --ey-paper: #1b1f27; --ey-dot: #343a46; --ey-pencil: #d7dbe4; --ey-pen: #ff6b5e;
+  --sw-panel: #1a3238; --sw-panel2: #0e1d21; --sw-off: #2c454b; } }
+:root[data-theme="dark"] {
+  --po-wall: #18262b; --po-tile: #24363c; --po-counter: #5c3b22; --po-counter2: #3f2716; --po-glass: rgba(255,255,255,.12);
+  --ey-paper: #1b1f27; --ey-dot: #343a46; --ey-pencil: #d7dbe4; --ey-pen: #ff6b5e;
+  --sw-panel: #1a3238; --sw-panel2: #0e1d21; --sw-off: #2c454b; }
+#pour { background: var(--po-wall); --gfg: var(--ink); } body[data-view="pour"] { background: var(--po-wall); }
+#eyeball { background: var(--ey-paper); --gfg: var(--ey-pencil); } body[data-view="eyeball"] { background: var(--ey-paper); }
+#switchboard { background: radial-gradient(120% 90% at 50% 30%, var(--sw-panel), var(--sw-panel2)); --gfg: var(--sw-fg); --un-fg: var(--sw-fg); overflow-y: auto; }
+body[data-view="switchboard"] { background: var(--sw-panel2); }
+.sw-wrap { min-height: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 520px; margin: 0 auto;
+  padding-block: calc(env(safe-area-inset-top, 0px) + 72px) calc(env(safe-area-inset-bottom, 0px) + 16px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); box-sizing: border-box; }
+.sw-rule { display: flex; align-items: center; gap: 12px; color: var(--sw-fg); font: 700 15px/1.35 var(--body); min-height: 44px; }
+.sw-rule b { color: var(--gold); }
+.sw-icon { display: grid; grid-template-columns: repeat(3, 12px); gap: 3px; flex: none; }
+.sw-icon i { width: 12px; height: 12px; border-radius: 50%; background: var(--sw-off); }
+.sw-icon i.on { background: var(--gold); } .sw-icon i.mid { outline: 2px solid #fff; outline-offset: 1px; }
+.sw-stats { position: static; padding: 0; }
+.sw-grid { display: grid; grid-template-columns: repeat(var(--n, 3), 1fr); gap: clamp(8px, 2.5vw, 14px); width: min(100%, 440px, calc(100vh - 380px)); aspect-ratio: 1; }
+.bulb { border: 0; padding: 0; background: none; cursor: pointer; aspect-ratio: 1; border-radius: 50%; position: relative; }
+.bulb span { position: absolute; inset: 6%; border-radius: 50%; background: radial-gradient(circle at 38% 32%, rgba(255,255,255,.25), transparent 45%), var(--sw-off);
+  border: 3px solid #0f1f23; box-shadow: inset 0 -4px 0 rgba(0,0,0,.25); transition: background .15s, box-shadow .15s, transform .1s; }
+.bulb.on span { background: radial-gradient(circle at 40% 35%, #fff7c2, #ffd23f 45%, #e08a00); box-shadow: 0 0 22px 4px rgba(255,200,60,.55), inset 0 -4px 0 rgba(0,0,0,.15); }
+.bulb:active span { transform: scale(.92); }
+.bulb.hint span { outline: 4px solid #fff; outline-offset: 4px; animation: glow .7s ease-in-out infinite alternate; }
+.sw-foot { display: flex; flex-direction: column; gap: 10px; width: min(420px, 100%); margin-top: auto; }
+.sw-foot .row { display: flex; gap: 10px; }
+.sbtn[disabled] { opacity: .45; }
+
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <linearGradient id="mWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7dfae"/><stop offset=".5" stop-color="#e3b46d"/><stop offset="1" stop-color="#c28a43"/></linearGradient>
@@ -363,7 +399,7 @@ body[data-view="untangle"] { background: var(--cork-2); }
     </div>
     <p class="sp-tag">Tiny games. Big grins.</p>
     <button class="sp-go" id="spGo">Let's play</button>
-    <div class="sp-ver">Prototype 0.3</div>
+    <div class="sp-ver">Prototype 0.4</div>
   </div>
 </div>
 
@@ -443,6 +479,42 @@ body[data-view="untangle"] { background: var(--cork-2); }
         <div class="meta"><span class="kicker">Puzzle · drag the pins</span><span class="name">Untangle</span>
           <span class="desc">Pins joined by string. Drag them until no two strings cross. Twelve levels, from a few pins to a real knot.</span><span class="prog" id="progUn"></span></div>
       </button>
+      <button class="game" data-go="pour">
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="150" fill="#dfeef0"/>
+          <g stroke="#b9d3d6" stroke-width="1.5"><line x1="0" y1="0" x2="400" y2="0"/><line x1="0" y1="18" x2="400" y2="18"/><line x1="0" y1="36" x2="400" y2="36"/><line x1="0" y1="54" x2="400" y2="54"/><line x1="0" y1="72" x2="400" y2="72"/><line x1="0" y1="90" x2="400" y2="90"/><line x1="0" y1="108" x2="400" y2="108"/><line x1="0" y1="126" x2="400" y2="126"/><line x1="0" y1="144" x2="400" y2="144"/></g>
+          <rect y="128" width="400" height="22" fill="#b07a4a"/>
+          <path d="M175 128 L170 52 L230 52 L225 128 Z" fill="rgba(255,255,255,.6)" stroke="#1c2233" stroke-width="3"/>
+          <path d="M174.2 116 L172.4 88 L227.6 88 L225.8 116 L225 128 L175 128 Z" fill="#ff9f1c"/>
+          <path d="M160 82 L176 82 M224 82 L240 82" stroke="#ff3b30" stroke-width="4"/>
+          <line x1="200" y1="30" x2="200" y2="88" stroke="#ff9f1c" stroke-width="6" stroke-linecap="round"/>
+          <g transform="translate(176 18) rotate(50)"><rect x="-26" y="-20" width="34" height="36" rx="3" fill="rgba(255,255,255,.8)" stroke="#1c2233" stroke-width="3"/></g>
+        </svg></div>
+        <div class="meta"><span class="kicker">Daily · steady hands</span><span class="name">Pour</span>
+          <span class="desc">Hold to pour and let go on the line. Cones, flasks and a leaky glass each fill at their own pace.</span><span class="prog" id="progPour"></span></div>
+      </button>
+      <button class="game" data-go="eyeball">
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="150" fill="#fbfaf6"/>
+          <g fill="#d5d2c8"><circle cx="10" cy="10" r="1.3"/><circle cx="10" cy="30" r="1.3"/><circle cx="10" cy="50" r="1.3"/><circle cx="10" cy="70" r="1.3"/><circle cx="10" cy="90" r="1.3"/><circle cx="10" cy="110" r="1.3"/><circle cx="10" cy="130" r="1.3"/><circle cx="30" cy="10" r="1.3"/><circle cx="30" cy="30" r="1.3"/><circle cx="30" cy="50" r="1.3"/><circle cx="30" cy="70" r="1.3"/><circle cx="30" cy="90" r="1.3"/><circle cx="30" cy="110" r="1.3"/><circle cx="30" cy="130" r="1.3"/><circle cx="50" cy="10" r="1.3"/><circle cx="50" cy="30" r="1.3"/><circle cx="50" cy="50" r="1.3"/><circle cx="50" cy="70" r="1.3"/><circle cx="50" cy="90" r="1.3"/><circle cx="50" cy="110" r="1.3"/><circle cx="50" cy="130" r="1.3"/><circle cx="70" cy="10" r="1.3"/><circle cx="70" cy="30" r="1.3"/><circle cx="70" cy="50" r="1.3"/><circle cx="70" cy="70" r="1.3"/><circle cx="70" cy="90" r="1.3"/><circle cx="70" cy="110" r="1.3"/><circle cx="70" cy="130" r="1.3"/><circle cx="90" cy="10" r="1.3"/><circle cx="90" cy="30" r="1.3"/><circle cx="90" cy="50" r="1.3"/><circle cx="90" cy="70" r="1.3"/><circle cx="90" cy="90" r="1.3"/><circle cx="90" cy="110" r="1.3"/><circle cx="90" cy="130" r="1.3"/><circle cx="110" cy="10" r="1.3"/><circle cx="110" cy="30" r="1.3"/><circle cx="110" cy="50" r="1.3"/><circle cx="110" cy="70" r="1.3"/><circle cx="110" cy="90" r="1.3"/><circle cx="110" cy="110" r="1.3"/><circle cx="110" cy="130" r="1.3"/><circle cx="130" cy="10" r="1.3"/><circle cx="130" cy="30" r="1.3"/><circle cx="130" cy="50" r="1.3"/><circle cx="130" cy="70" r="1.3"/><circle cx="130" cy="90" r="1.3"/><circle cx="130" cy="110" r="1.3"/><circle cx="130" cy="130" r="1.3"/><circle cx="150" cy="10" r="1.3"/><circle cx="150" cy="30" r="1.3"/><circle cx="150" cy="50" r="1.3"/><circle cx="150" cy="70" r="1.3"/><circle cx="150" cy="90" r="1.3"/><circle cx="150" cy="110" r="1.3"/><circle cx="150" cy="130" r="1.3"/><circle cx="170" cy="10" r="1.3"/><circle cx="170" cy="30" r="1.3"/><circle cx="170" cy="50" r="1.3"/><circle cx="170" cy="70" r="1.3"/><circle cx="170" cy="90" r="1.3"/><circle cx="170" cy="110" r="1.3"/><circle cx="170" cy="130" r="1.3"/><circle cx="190" cy="10" r="1.3"/><circle cx="190" cy="30" r="1.3"/><circle cx="190" cy="50" r="1.3"/><circle cx="190" cy="70" r="1.3"/><circle cx="190" cy="90" r="1.3"/><circle cx="190" cy="110" r="1.3"/><circle cx="190" cy="130" r="1.3"/><circle cx="210" cy="10" r="1.3"/><circle cx="210" cy="30" r="1.3"/><circle cx="210" cy="50" r="1.3"/><circle cx="210" cy="70" r="1.3"/><circle cx="210" cy="90" r="1.3"/><circle cx="210" cy="110" r="1.3"/><circle cx="210" cy="130" r="1.3"/><circle cx="230" cy="10" r="1.3"/><circle cx="230" cy="30" r="1.3"/><circle cx="230" cy="50" r="1.3"/><circle cx="230" cy="70" r="1.3"/><circle cx="230" cy="90" r="1.3"/><circle cx="230" cy="110" r="1.3"/><circle cx="230" cy="130" r="1.3"/><circle cx="250" cy="10" r="1.3"/><circle cx="250" cy="30" r="1.3"/><circle cx="250" cy="50" r="1.3"/><circle cx="250" cy="70" r="1.3"/><circle cx="250" cy="90" r="1.3"/><circle cx="250" cy="110" r="1.3"/><circle cx="250" cy="130" r="1.3"/><circle cx="270" cy="10" r="1.3"/><circle cx="270" cy="30" r="1.3"/><circle cx="270" cy="50" r="1.3"/><circle cx="270" cy="70" r="1.3"/><circle cx="270" cy="90" r="1.3"/><circle cx="270" cy="110" r="1.3"/><circle cx="270" cy="130" r="1.3"/><circle cx="290" cy="10" r="1.3"/><circle cx="290" cy="30" r="1.3"/><circle cx="290" cy="50" r="1.3"/><circle cx="290" cy="70" r="1.3"/><circle cx="290" cy="90" r="1.3"/><circle cx="290" cy="110" r="1.3"/><circle cx="290" cy="130" r="1.3"/><circle cx="310" cy="10" r="1.3"/><circle cx="310" cy="30" r="1.3"/><circle cx="310" cy="50" r="1.3"/><circle cx="310" cy="70" r="1.3"/><circle cx="310" cy="90" r="1.3"/><circle cx="310" cy="110" r="1.3"/><circle cx="310" cy="130" r="1.3"/><circle cx="330" cy="10" r="1.3"/><circle cx="330" cy="30" r="1.3"/><circle cx="330" cy="50" r="1.3"/><circle cx="330" cy="70" r="1.3"/><circle cx="330" cy="90" r="1.3"/><circle cx="330" cy="110" r="1.3"/><circle cx="330" cy="130" r="1.3"/><circle cx="350" cy="10" r="1.3"/><circle cx="350" cy="30" r="1.3"/><circle cx="350" cy="50" r="1.3"/><circle cx="350" cy="70" r="1.3"/><circle cx="350" cy="90" r="1.3"/><circle cx="350" cy="110" r="1.3"/><circle cx="350" cy="130" r="1.3"/><circle cx="370" cy="10" r="1.3"/><circle cx="370" cy="30" r="1.3"/><circle cx="370" cy="50" r="1.3"/><circle cx="370" cy="70" r="1.3"/><circle cx="370" cy="90" r="1.3"/><circle cx="370" cy="110" r="1.3"/><circle cx="370" cy="130" r="1.3"/><circle cx="390" cy="10" r="1.3"/><circle cx="390" cy="30" r="1.3"/><circle cx="390" cy="50" r="1.3"/><circle cx="390" cy="70" r="1.3"/><circle cx="390" cy="90" r="1.3"/><circle cx="390" cy="110" r="1.3"/><circle cx="390" cy="130" r="1.3"/></g>
+          <path d="M90 115 L90 40" stroke="#3a3f4b" stroke-width="4" stroke-linecap="round"/><path d="M90 115 L175 115" stroke="#d93a2f" stroke-width="4" stroke-linecap="round"/>
+          <path d="M90 115 L172 106" stroke="#1f9e5a" stroke-width="2.5" stroke-dasharray="7 6"/>
+          <path d="M90 100 L104 100 L104 115" fill="none" stroke="#1f9e5a" stroke-width="2"/>
+          <circle cx="290" cy="75" r="48" fill="none" stroke="#3a3f4b" stroke-width="4" stroke-dasharray="230 80"/>
+          <circle cx="296" cy="70" r="6" fill="#d93a2f"/><circle cx="290" cy="75" r="6" fill="#1f9e5a"/><circle cx="290" cy="75" r="12" fill="none" stroke="#1f9e5a" stroke-width="2"/>
+        </svg></div>
+        <div class="meta"><span class="kicker">Daily · judge by eye</span><span class="name">Eyeball</span>
+          <span class="desc">Find the middle, make a right angle, spot the centre. Six quick tests of how good your eye really is.</span><span class="prog" id="progEye"></span></div>
+      </button>
+      <button class="game" data-go="switchboard">
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice">
+          <defs><radialGradient id="hbulb" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#fff7c2"/><stop offset=".5" stop-color="#ffd23f"/><stop offset="1" stop-color="#e08a00"/></radialGradient></defs>
+          <rect width="400" height="150" fill="#24434a"/>
+          <g stroke="#0f1f23" stroke-width="3"><circle cx="140" cy="35" r="14" fill="#3b5a61"/><circle cx="180" cy="35" r="14" fill="url(#hbulb)"/><circle cx="220" cy="35" r="14" fill="#3b5a61"/><circle cx="260" cy="35" r="14" fill="url(#hbulb)"/><circle cx="300" cy="35" r="14" fill="#3b5a61"/><circle cx="140" cy="75" r="14" fill="url(#hbulb)"/><circle cx="180" cy="75" r="14" fill="url(#hbulb)"/><circle cx="220" cy="75" r="14" fill="url(#hbulb)"/><circle cx="260" cy="75" r="14" fill="#3b5a61"/><circle cx="300" cy="75" r="14" fill="#3b5a61"/><circle cx="140" cy="115" r="14" fill="#3b5a61"/><circle cx="180" cy="115" r="14" fill="url(#hbulb)"/><circle cx="220" cy="115" r="14" fill="#3b5a61"/><circle cx="260" cy="115" r="14" fill="#3b5a61"/><circle cx="300" cy="115" r="14" fill="url(#hbulb)"/></g>
+        </svg></div>
+        <div class="meta"><span class="kicker">Puzzle · flip the bulbs</span><span class="name">Switchboard</span>
+          <span class="desc">Every tap flips a bulb and its neighbours. Switch the whole board off in as few taps as you can.</span><span class="prog" id="progSw"></span></div>
+      </button>
       <div class="game soon" aria-label="More games coming soon">
         <div class="art" aria-hidden="true">+</div>
         <div class="meta">
@@ -452,7 +524,7 @@ body[data-view="untangle"] { background: var(--cork-2); }
         </div>
       </div>
     </div>
-    <div class="home-foot">Smidge prototype 0.3 · progress is saved in this browser · <button class="linkbtn" id="sndCheck">No sound? Sound check</button></div>
+    <div class="home-foot">Smidge prototype 0.4 · progress is saved in this browser · <button class="linkbtn" id="sndCheck">No sound? Sound check</button></div>
     <div class="gover" id="sndPanel" hidden><div class="gcard">
       <h3>Sound check</h3>
       <p>Tap both tests. Each should play three rising notes. If neither does, check the ring/silent switch and the volume, then send a screenshot of this card.</p>
@@ -572,6 +644,79 @@ body[data-view="untangle"] { background: var(--cork-2); }
     <div class="row"><button class="sbtn" id="unEndList">Levels</button><button class="sbtn primary" id="unNext">Next level</button></div>
   </div></div>
 </div>
+
+<div class="view gview" id="pour" hidden>
+  <canvas id="poCanvas" aria-label="A glass on a counter. Hold to pour."></canvas>
+  <div class="gbar"><button class="ibtn" data-home aria-label="All games">‹</button><div class="gttl"><b>Pour</b><small id="poSub"></small></div><button class="ibtn" data-sound aria-label="Sound on">🔊</button></div>
+  <div class="gprompt" id="poPrompt"></div>
+  <div class="ghint" id="poHint"></div>
+  <div class="gover" id="poMenu"><div class="gcard">
+    <h2>Pour</h2>
+    <p>Hold to pour, let go on the line. Narrow parts fill fast, wide parts slowly, and what is already falling still lands after you let go. Five glasses, then a leaky one.</p>
+    <p class="note" id="poMenuNote"></p>
+    <div class="row"><button class="sbtn primary" id="poDailyBtn">Play daily</button></div>
+    <div class="row"><button class="sbtn" id="poPracticeBtn">Practice</button><button class="sbtn" data-home>All games</button></div>
+  </div></div>
+  <div class="gover" id="poEnd" hidden><div class="gcard">
+    <h3>Your round</h3>
+    <div class="big"><span id="poTotal">0</span><small style="font-size:20px"> / 500</small></div>
+    <div class="stars3" id="poStars"></div>
+    <div class="share" id="poList"></div>
+    <div class="share" id="poShare"></div>
+    <div class="row"><button class="sbtn" id="poCopy">Copy result</button></div>
+    <p class="note" id="poNote"></p>
+    <div class="row"><button class="sbtn" id="poMenuBtn">Menu</button><button class="sbtn primary" id="poAgain">Play again</button></div>
+  </div></div>
+</div>
+
+<div class="view gview" id="eyeball" hidden>
+  <canvas id="eyCanvas" aria-label="A sheet of paper with a drawing to judge."></canvas>
+  <div class="gbar"><button class="ibtn" data-home aria-label="All games">‹</button><div class="gttl"><b>Eyeball</b><small id="eySub"></small></div><button class="ibtn" data-sound aria-label="Sound on">🔊</button></div>
+  <div class="gprompt" id="eyPrompt"></div>
+  <div class="ghint" id="eyHint"></div>
+  <div class="gover" id="eyMenu"><div class="gcard">
+    <h2>Eyeball</h2>
+    <p>Six quick tests of your eye: the middle of a line, a right angle, the centre of a circle, half an angle, a square, and where a triangle balances. Let go to lock in each guess.</p>
+    <p class="note" id="eyMenuNote"></p>
+    <div class="row"><button class="sbtn primary" id="eyDailyBtn">Play daily</button></div>
+    <div class="row"><button class="sbtn" id="eyPracticeBtn">Practice</button><button class="sbtn" data-home>All games</button></div>
+  </div></div>
+  <div class="gover" id="eyEnd" hidden><div class="gcard">
+    <h3>Your round</h3>
+    <div class="big"><span id="eyTotal">0</span><small style="font-size:20px"> / 600</small></div>
+    <div class="stars3" id="eyStars"></div>
+    <div class="share" id="eyList"></div>
+    <div class="share" id="eyShare"></div>
+    <div class="row"><button class="sbtn" id="eyCopy">Copy result</button></div>
+    <p class="note" id="eyNote"></p>
+    <div class="row"><button class="sbtn" id="eyMenuBtn">Menu</button><button class="sbtn primary" id="eyAgain">Play again</button></div>
+  </div></div>
+</div>
+
+<div class="view gview" id="switchboard" hidden>
+  <div class="gbar"><button class="ibtn" data-home aria-label="All games">‹</button><div class="gttl"><b>Switchboard</b><small id="swSub"></small></div><button class="ibtn" data-sound aria-label="Sound on">🔊</button></div>
+  <div class="sw-wrap">
+    <div class="sw-rule" id="swRule"></div>
+    <div class="un-stats sw-stats"><span class="chip2" id="swLit"></span><span class="chip2" id="swTaps"></span></div>
+    <div class="sw-grid" id="swGrid"></div>
+    <div class="sw-foot">
+      <div class="row"><button class="sbtn" id="swUndo">Undo</button><button class="sbtn primary" id="swHint">💡 Hint</button></div>
+      <div class="row"><button class="sbtn" id="swLevels">Levels</button><button class="sbtn" id="swRestart">Restart</button></div>
+    </div>
+  </div>
+  <div class="gover" id="swMenu"><div class="gcard">
+    <h2>Switchboard</h2>
+    <p>Tapping a bulb flips it and its neighbours. Switch every bulb off in as few taps as you can. Later boards change which neighbours flip. Undo counts as a tap.</p>
+    <div class="lvlgrid" id="swGridMenu"></div>
+    <div class="row"><button class="sbtn" data-home>All games</button></div>
+  </div></div>
+  <div class="gover" id="swEnd" hidden><div class="gcard">
+    <h2 id="swEndT">All off!</h2>
+    <div class="stars3" id="swEndS"></div>
+    <p id="swEndP"></p>
+    <div class="row"><button class="sbtn" id="swEndList">Levels</button><button class="sbtn primary" id="swNext">Next level</button></div>
+  </div></div>
+</div>
 <div class="view" id="pop" hidden>
 <canvas id="c" aria-label="Game board: a swaying tower of balloons above a crossbow"></canvas>
 
@@ -667,7 +812,7 @@ const Sound = (() => {
     unlockPool();
     if (!unlocked) { try { const s = ac.createBufferSource(); s.buffer = ac.createBuffer(1, 1, 22050); s.connect(ac.destination); s.start(0); unlocked = true; } catch (e) {} }
   }
-  for (const ev of ['touchend', 'click', 'keydown']) document.addEventListener(ev, audio, { capture: true, passive: true });
+  if (typeof document !== 'undefined') for (const ev of ['touchend', 'click', 'keydown']) document.addEventListener(ev, audio, { capture: true, passive: true });
   // ---- backup path: when Web Audio isn't running (some in-app viewers never let it start), each sound is rendered
   // to a short WAV and played through a pool of <audio> elements unlocked during taps (iOS lets an element that has
   // played in a tap play again later with a new source).
@@ -2419,11 +2564,467 @@ const Untangle = (() => {
   };
 })();
 
+// Pour: hold to pour, let go on the line. Narrow parts of a glass fill fast, and what is already falling still lands
+// after you let go. Five glasses a round: a straight tumbler, a cone, a flask with a neck, two lines, and a leaky glass.
+const PourPhys = (() => {
+  const GH = 300, N = 400, FALL = .26;
+  const PROFILES = {
+    tumbler: (u, p) => 56 + 16 * u * p.a,
+    cone: (u, p) => 10 + (88 + 20 * p.a) * u,
+    flask: (u, p) => u < .62 ? 34 + (52 + 14 * p.a) * Math.sin(Math.PI * Math.min(1, u / .62)) : 22,
+    hourglass: (u, p) => 26 + (52 + 12 * p.a) * Math.pow(Math.abs(2 * u - 1), 1.15),
+    vase: (u, p) => 54 + 22 * Math.sin(u * Math.PI * 2 * (1.1 + .4 * p.a) + .5),
+  };
+  // area below each height (u in 0..1 of the glass), so a level can be found from how much has landed
+  function table(shape) {
+    const w = PROFILES[shape.kind], cum = new Float64Array(N + 1);
+    for (let i = 1; i <= N; i++) { const u = (i - .5) / N; cum[i] = cum[i - 1] + 2 * w(u, shape) * GH / N; }
+    return cum;
+  }
+  function levelFor(cum, area) {
+    if (area <= 0) return 0; if (area >= cum[N]) return 1 + (area - cum[N]) / cum[N];
+    let lo = 0, hi = N; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (cum[m] < area) lo = m; else hi = m; }
+    return (lo + (area - cum[lo]) / (cum[hi] - cum[lo])) / N;
+  }
+  return { GH, FALL, PROFILES, table, levelFor };
+})();
+
+const Pour = (() => {
+  const $ = id => document.getElementById(id);
+  const P = PourPhys, N = 5, LIQ = ['#ff9f1c', '#d6336c', '#7cc242', '#6b3e26', '#f3f0e8'];
+  const cv = $('poCanvas'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, DPR = 1, active = false, last = 0;
+  let mode = 'daily', glasses = [], gi = 0, results = [], state = 'menu', g = null;
+  let data = store('smidge/pour') || { daily: {}, best: 0 };
+
+  function makeRound(seed) {
+    const r = rng(seed), plan = [['tumbler'], ['cone'], ['flask', 'vase'], ['hourglass', 'vase', 'tumbler'], ['tumbler', 'cone']];
+    return plan.map((kinds, i) => {
+      const kind = kinds[Math.floor(r() * kinds.length)], shape = { kind, a: r() };
+      const cum = P.table(shape), full = cum[cum.length - 1];
+      const targets = i === 3 ? [.3 + r() * .15, .65 + r() * .17] : [.45 + r() * .4];
+      return { shape, cum, targets, rate: full / (3.6 - i * .35 - r() * .3), leak: i === 4 ? full * (.05 + r() * .03) : 0, color: LIQ[i] };
+    });
+  }
+  function begin(m) {
+    mode = m; glasses = makeRound(m === 'daily' ? dayNumber() * 6151 + 3 : Math.floor(Math.random() * 1e9));
+    gi = 0; results = []; startGlass(); $('poMenu').hidden = true; $('poEnd').hidden = true;
+  }
+  function startGlass() {
+    const gl = glasses[gi];
+    g = { ...gl, area: 0, air: [], t: 0, pouring: false, ti: 0, errs: [], settle: 0, pours: 0, glug: 0, landed: 0, spill: 0 };
+    state = 'aim';
+    $('poSub').textContent = `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · glass ${gi + 1} of ${N}`;
+    $('poPrompt').innerHTML = gl.targets.length > 1 ? 'Fill to the lower line, then the top one<small>two pours</small>' : gl.leak ? 'Fill to the line<small>it leaks: the level is checked a second after you stop</small>' : 'Fill to the line';
+    $('poHint').innerHTML = gi === 0 ? 'Hold anywhere to pour, let go on the line. <b>One pour.</b>' : 'Hold to pour, let go on the line';
+  }
+  const level = () => P.levelFor(g.cum, g.area);
+  const ptsFor = err => Math.max(0, Math.round(100 - err * 20));
+  const grade = err => err < .5 ? 'Bang on!' : err < 1.5 ? 'Steady pour' : err < 3 ? 'Nearly' : 'Splash';
+  const sq = err => err < 1 ? '🟩' : err < 2.5 ? '🟨' : err < 5 ? '🟧' : '🟥';
+  function step(dt) {
+    if (!g || (state !== 'aim' && state !== 'pour' && state !== 'settle')) return;
+    g.t += dt;
+    if (g.pouring) g.air.push({ at: g.t + P.FALL, a: g.rate * dt });
+    let land = 0; while (g.air.length && g.air[0].at <= g.t) land += g.air.shift().a;
+    g.area += land; g.landed = land / Math.max(dt, 1e-3);
+    if (g.leak && g.area > 0) g.area = Math.max(0, g.area - g.leak * Math.sqrt(Math.min(1, level())) * dt);
+    const full = g.cum[g.cum.length - 1];
+    if (g.area > full) { g.spill += g.area - full; g.area = full; }
+    if (land > 0) { g.glug -= dt; if (g.glug <= 0) { g.glug = .07; Sound.noise(.09, .16, 500 + Math.min(1, level()) * 2000, 4, 'bandpass'); } }
+    if (state === 'settle' && !g.air.length) {
+      g.settle += dt;
+      if (g.settle >= (g.leak ? 1 : .5)) {
+        const err = g.spill > 0 ? 25 : Math.abs(level() - g.targets[g.ti]) * 100;
+        g.errs.push(err); g.ti++;
+        if (g.ti < g.targets.length) { state = 'aim'; $('poHint').innerHTML = `${grade(err)} · now the top line`; Sound.tone(660, .15, 'triangle', .1); }
+        else finishGlass();
+      }
+    }
+  }
+  function finishGlass() {
+    const err = g.errs.reduce((a, b) => a + b, 0) / g.errs.length, pts = ptsFor(err);
+    results.push({ err, pts }); state = 'shown';
+    $('poHint').innerHTML = `${g.spill > 0 ? 'Spilled!' : grade(err)} · off by ${err.toFixed(1)}% · <b>${pts} pts</b> · tap for the ${gi + 1 < N ? 'next glass' : 'results'}`;
+    if (err < 1.5) [0, 4, 7].forEach((s, i) => Sound.tone(660 * Math.pow(2, s / 12), .25, 'triangle', .12, i * .07)); else Sound.tone(300, .2, 'triangle', .1);
+    haptic(err < 1.5 ? 30 : 12);
+  }
+  function next() { if (gi + 1 < N) { gi++; startGlass(); } else finish(); }
+  function finish() {
+    state = 'end';
+    const total = results.reduce((a, r) => a + r.pts, 0), stars = total >= 425 ? 3 : total >= 320 ? 2 : total >= 180 ? 1 : 0, day = dayNumber(), first = mode === 'daily' && data.daily[day] == null;
+    if (mode === 'daily') data.daily[day] = Math.max(data.daily[day] || 0, total);
+    data.best = Math.max(data.best || 0, total); store('smidge/pour', data);
+    $('poTotal').textContent = total;
+    $('poStars').innerHTML = [0, 1, 2].map(i => i < stars ? '★' : '<span class="off">★</span>').join('');
+    $('poList').textContent = results.map((r, i) => `${sq(r.err)} Glass ${i + 1}: off by ${r.err.toFixed(1)}% · ${r.pts} pts`).join('\n');
+    $('poShare').textContent = `Smidge Pour ${mode === 'daily' ? '#' + day : '(practice)'} · ${total}/500\n${results.map(r => sq(r.err)).join('')}`;
+    $('poNote').textContent = mode === 'daily' ? (first ? 'Today\'s score is saved. New glasses tomorrow.' : 'Replays don\'t change today\'s score.') : `Best ever: ${data.best} of 500`;
+    $('poEnd').hidden = false;
+  }
+  function showMenu() {
+    state = 'menu'; const day = dayNumber(), done = data.daily[day];
+    if (!glasses.length) { glasses = makeRound(day * 6151 + 3); g = { ...glasses[0], area: 0, air: [], t: 0, ti: 0, errs: [], spill: 0 }; }
+    $('poDailyBtn').textContent = done != null ? `Daily #${day} again` : `Play daily #${day}`;
+    $('poMenuNote').textContent = done != null ? `Today: ${done} of 500. Best ever: ${data.best}.` : data.best ? `Best ever: ${data.best} of 500.` : 'Five glasses. 100 points for stopping right on the line.';
+    $('poMenu').hidden = false; $('poEnd').hidden = true; $('poSub').textContent = 'Steady hands'; $('poPrompt').innerHTML = ''; $('poHint').textContent = '';
+  }
+
+  // ---------- drawing ----------
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  let C = {};
+  function readColors() { for (const k of ['wall', 'tile', 'counter', 'counter2', 'glass']) C[k] = css('--po-' + k); }
+  function resize() { DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; }
+  function view() { const top = 140, bot = 70, s = Math.min(W / 420, (H - top - bot) / 520); return { s, ox: W / 2 - 200 * s, oy: top + (H - top - bot) / 2 - 270 * s }; }
+  function draw() {
+    const v = view();
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.fillStyle = C.wall; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = C.tile; ctx.lineWidth = 1.5;
+    const tw = 46 * v.s, th = 23 * v.s;
+    for (let y = 0, row = 0; y < H; y += th, row++) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); for (let x = (row % 2) * tw / 2; x < W; x += tw) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + th); ctx.stroke(); } }
+    ctx.setTransform(DPR * v.s, 0, 0, DPR * v.s, DPR * v.ox, DPR * v.oy);
+    // counter
+    const base = 500;
+    ctx.fillStyle = C.counter; ctx.fillRect(-600, base + 6, 1600, 400); ctx.fillStyle = C.counter2; ctx.fillRect(-600, base + 6, 1600, 10);
+    if (!g) return;
+    const w = u => P.PROFILES[g.shape.kind](u, g.shape), y = u => base - u * P.GH, steps = 80;
+    const side = (sgn, from, to) => { const pts = []; for (let i = 0; i <= steps; i++) { const u = from + (to - from) * i / steps; pts.push([200 + sgn * w(u), y(u)]); } return pts; };
+    // liquid
+    const lv = Math.min(1, level()), L = side(-1, 0, lv), R = side(1, lv, 0);
+    if (lv > 0) {
+      const wob = (state === 'pour' || g.landed > 0) ? Math.sin(g.t * 18) * 2 : Math.sin(g.t * 3) * .6;
+      ctx.beginPath(); L.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+      ctx.quadraticCurveTo(200, y(lv) + wob, R[0][0], R[0][1]); R.forEach(p => ctx.lineTo(p[0], p[1])); ctx.closePath();
+      ctx.fillStyle = g.color; ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(200 - w(lv) + 4, y(lv) + 2, 2 * w(lv) - 8, 4);
+      for (let i = 0; i < 6; i++) { const u = ((g.t * .15 + i * .17) % 1) * lv, bx = 200 + Math.sin(i * 7.1) * w(u) * .6; ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(bx, y(u), 2.2, 0, 7); ctx.fill(); }
+    }
+    // glass
+    const outL = side(-1, 0, 1), outR = side(1, 1, 0);
+    ctx.beginPath(); outL.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); outR.forEach(p => ctx.lineTo(p[0], p[1]));
+    ctx.fillStyle = C.glass; ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = '#1c2233'; ctx.lineJoin = 'round';
+    ctx.beginPath(); outL.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
+    ctx.beginPath(); outR.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(200 - w(0) - 6, base + 4); ctx.lineTo(200 + w(0) + 6, base + 4); ctx.lineWidth = 8; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 3; ctx.beginPath(); for (let i = 0; i <= 20; i++) { const u = .15 + .6 * i / 20; const p = [200 - w(u) + 9, y(u)]; i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); } ctx.stroke();
+    // lines to fill to
+    g.targets.forEach((tu, i) => {
+      const done = i < g.errs.length, col = done ? (g.errs[i] < 1.5 ? '#2fbf71' : '#ff5a4f') : '#ff3b30', yy = y(tu), ww = w(tu);
+      ctx.strokeStyle = col; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(200 - ww - 16, yy); ctx.lineTo(200 - ww + 10, yy); ctx.moveTo(200 + ww - 10, yy); ctx.lineTo(200 + ww + 16, yy); ctx.stroke();
+      ctx.setLineDash([5, 6]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(200 - ww + 10, yy); ctx.lineTo(200 + ww - 10, yy); ctx.stroke(); ctx.setLineDash([]);
+    });
+    if (g.leak && lv > 0) { const d = (g.t * 3) % 1; ctx.fillStyle = g.color; ctx.beginPath(); ctx.arc(200 + w(.03) + 4 + d * 8, base - 6 + d * 18, 3, 0, 7); ctx.fill(); }
+    // jug and stream
+    const tilt = g.pouring ? .95 : .3, jx = 168, jy = 112;
+    ctx.save(); ctx.translate(jx, jy); ctx.rotate(tilt);
+    ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.strokeStyle = '#1c2233'; ctx.lineWidth = 3.5;
+    ctx.beginPath(); ctx.moveTo(-60, -50); ctx.lineTo(10, -50); ctx.lineTo(18, -60); ctx.lineTo(16, 30); ctx.lineTo(-60, 30); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = g.color; ctx.globalAlpha = .85; ctx.fillRect(-57, -20, 70, 47); ctx.globalAlpha = 1;
+    ctx.beginPath(); ctx.arc(-72, -10, 18, Math.PI * .5, Math.PI * 1.5); ctx.stroke();
+    ctx.restore();
+    if (g.air.length) {
+      // the stream: from the spout down to the surface; after letting go its tail falls for FALL seconds
+      const top0 = 168, surf = y(lv), f = k => top0 + Math.max(0, Math.min(1, k)) * (surf - top0);
+      const yTop = g.pouring ? top0 : f((g.t - g.releaseT) / P.FALL), yBot = f((g.t - g.pourT) / P.FALL);
+      ctx.strokeStyle = g.color; ctx.lineCap = 'round'; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(200, yTop); ctx.lineTo(200, yBot); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(198, yTop); ctx.lineTo(198, yBot); ctx.stroke();
+    }
+  }
+  function frame(now) { const dt = Math.min(.05, (now - last) / 1000); last = now; if (active) { step(dt); draw(); } requestAnimationFrame(frame); }
+
+  // ---------- input ----------
+  cv.addEventListener('pointerdown', e => {
+    if (!active) return; e.preventDefault(); Sound.audio();
+    if (state === 'shown') { next(); return; }
+    if (state !== 'aim') return;
+    g.pouring = true; state = 'pour'; g.pours++; g.pourT = g.t;
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    Sound.noise(.15, .2, 1200, 1); haptic(6);
+  }, { passive: false });
+  const stop = () => { if (state === 'pour') { g.pouring = false; g.releaseT = g.t; state = 'settle'; g.settle = 0; } };
+  cv.addEventListener('pointerup', stop); cv.addEventListener('pointercancel', stop);
+  $('poDailyBtn').onclick = () => { Sound.audio(); begin('daily'); };
+  $('poPracticeBtn').onclick = () => { Sound.audio(); begin('practice'); };
+  $('poAgain').onclick = () => { Sound.audio(); begin(mode); };
+  $('poMenuBtn').onclick = () => { Sound.audio(); showMenu(); };
+  $('poCopy').onclick = e => { Sound.audio(); copyText($('poShare').textContent, e.currentTarget); };
+  addEventListener('resize', () => { if (active) resize(); });
+  requestAnimationFrame(frame);
+  return {
+    enter() { active = true; resize(); readColors(); showMenu(); },
+    leave() { active = false; if (g) g.pouring = false; if (state === 'pour') state = 'settle'; },
+    stats() { return { best: data.best || 0, today: data.daily[dayNumber()] }; },
+  };
+})();
+
+// Eyeball: judge by eye. Six quick tasks a round: find the middle, make a right angle, find the centre, split an angle,
+// make a square, find the balance point. Drag (or touch) and let go to lock it in; then the true answer is shown.
+const EyeGeo = (() => {
+  const d2 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  const ang = (o, p) => Math.atan2(p[1] - o[1], p[0] - o[0]);
+  const angDiff = (a, b) => { let d = (a - b) % (2 * Math.PI); if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; return d; };
+  function make(kind, r) {
+    const R = (a, b) => a + r() * (b - a);
+    if (kind === 'mid') { const L = R(220, 320), a = R(-.6, .6) + (r() < .5 ? 0 : Math.PI / 2); const c = [200 + R(-30, 30), 200 + R(-30, 30)]; return { kind, a: [c[0] - Math.cos(a) * L / 2, c[1] - Math.sin(a) * L / 2], b: [c[0] + Math.cos(a) * L / 2, c[1] + Math.sin(a) * L / 2] }; }
+    if (kind === 'right') { const v = [R(110, 170), R(250, 300)], a = R(-.5, .3); const h = a - Math.PI / 2 - R(.5, .9) * (r() < .5 ? 1 : -1); return { kind, v, a, handle: [v[0] + Math.cos(h) * 170, v[1] + Math.sin(h) * 170] }; }
+    if (kind === 'centre') { const rr = R(95, 150); return { kind, c: [200 + R(-40, 40), 200 + R(-40, 40)], r: rr, arc: R(.55, .8) * Math.PI * 2, start: r() * Math.PI * 2 }; }
+    if (kind === 'bisect') { const v = [R(90, 130), R(240, 300)], a1 = R(-1.3, -.9), span = R(.8, 1.9), a2 = a1 + span; const h = a1 + span * (r() < .5 ? R(.12, .3) : R(.7, .88)); return { kind, v, a1, a2, handle: [v[0] + Math.cos(h) * 200, v[1] + Math.sin(h) * 200] }; }
+    if (kind === 'square') { const w = R(130, 220), x0 = 200 - w / 2, y0 = R(300, 330); return { kind, x0, y0, w, h: w * (r() < .5 ? R(.35, .6) : R(1.35, 1.6)) }; }
+    const pts = [[R(60, 140), R(260, 330)], [R(260, 340), R(240, 330)], [R(150, 260), R(70, 140)]];
+    return { kind: 'balance', pts };
+  }
+  // the true answer and how far off a guess is (err in %, or in degrees for angles)
+  function judge(t, guess) {
+    if (t.kind === 'mid') { const m = [(t.a[0] + t.b[0]) / 2, (t.a[1] + t.b[1]) / 2]; return { ans: m, err: d2(m, guess) / d2(t.a, t.b) * 100, unit: '% of the length' }; }
+    if (t.kind === 'right') { const a = ang(t.v, guess), want = [t.a - Math.PI / 2, t.a + Math.PI / 2], d = Math.min(...want.map(w => Math.abs(angDiff(a, w)))); const best = want.reduce((p, w) => Math.abs(angDiff(a, w)) < Math.abs(angDiff(a, p)) ? w : p); return { ans: [t.v[0] + Math.cos(best) * 170, t.v[1] + Math.sin(best) * 170], err: d * 180 / Math.PI, unit: '°', deg: true }; }
+    if (t.kind === 'centre') return { ans: t.c, err: d2(t.c, guess) / t.r * 100, unit: '% of the radius' };
+    if (t.kind === 'bisect') { const m = (t.a1 + t.a2) / 2, a = ang(t.v, guess); return { ans: [t.v[0] + Math.cos(m) * 200, t.v[1] + Math.sin(m) * 200], err: Math.abs(angDiff(a, m)) * 180 / Math.PI, unit: '°', deg: true }; }
+    if (t.kind === 'square') { const h = t.y0 - guess[1]; return { ans: [200, t.y0 - t.w], err: Math.abs(h - t.w) / t.w * 100, unit: '% of the side' }; }
+    const c = [(t.pts[0][0] + t.pts[1][0] + t.pts[2][0]) / 3, (t.pts[0][1] + t.pts[1][1] + t.pts[2][1]) / 3];
+    const area = Math.abs((t.pts[1][0] - t.pts[0][0]) * (t.pts[2][1] - t.pts[0][1]) - (t.pts[2][0] - t.pts[0][0]) * (t.pts[1][1] - t.pts[0][1])) / 2;
+    return { ans: c, err: d2(c, guess) / Math.sqrt(area) * 100, unit: '% of its size' };
+  }
+  const points = j => Math.max(0, Math.round(100 - j.err * (j.deg ? 6 : 8)));
+  return { make, judge, points };
+})();
+
+const Eyeball = (() => {
+  const $ = id => document.getElementById(id);
+  const E = EyeGeo, KINDS = ['mid', 'right', 'centre', 'bisect', 'square', 'balance'];
+  const PROMPT = { mid: 'Tap the exact middle of the line', right: 'Swing the arm to make a right angle', centre: 'Tap the centre of the circle', bisect: 'Swing the arm to split the angle in half', square: 'Drag the top edge to make a square', balance: 'Tap where the triangle would balance' };
+  const cv = $('eyCanvas'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, DPR = 1, active = false, last = 0;
+  let mode = 'daily', tasks = [], ti = 0, results = [], state = 'menu', guess = null, judged = null, held = false, shownAt = 0;
+  let data = store('smidge/eyeball') || { daily: {}, best: 0 };
+  function makeRound(seed) { const r = rng(seed); return KINDS.map(k => E.make(k, r)); }
+  function begin(m) { mode = m; tasks = makeRound(m === 'daily' ? dayNumber() * 3571 + 11 : Math.floor(Math.random() * 1e9)); ti = 0; results = []; startTask(); $('eyMenu').hidden = true; $('eyEnd').hidden = true; }
+  function startTask() {
+    const t = tasks[ti]; judged = null; held = false; state = 'aim';
+    guess = t.handle ? t.handle.slice() : t.kind === 'square' ? [200, t.y0 - t.h] : null;
+    $('eySub').textContent = `${mode === 'daily' ? 'Daily #' + dayNumber() : 'Practice'} · ${ti + 1} of ${KINDS.length}`;
+    $('eyPrompt').textContent = PROMPT[t.kind];
+    $('eyHint').innerHTML = ti === 0 ? 'Touch, adjust, and <b>let go to lock it in</b>' : 'Let go to lock it in';
+  }
+  const sq = p => p >= 90 ? '🟩' : p >= 70 ? '🟨' : p >= 40 ? '🟧' : '🟥';
+  function lockIn() {
+    const t = tasks[ti]; judged = E.judge(t, guess); const pts = E.points(judged);
+    results.push({ err: judged.err, unit: judged.unit, pts }); state = 'shown'; shownAt = performance.now();
+    const word = pts >= 95 ? 'Spot on!' : pts >= 85 ? 'Sharp eye' : pts >= 65 ? 'Not bad' : pts >= 40 ? 'Hmm, close-ish' : 'Way off';
+    $('eyHint').innerHTML = `${word} · off by ${judged.err.toFixed(1)}${judged.unit.startsWith('%') ? judged.unit : '°'} · <b>${pts} pts</b> · tap to go on`;
+    if (pts >= 85) [0, 4, 7].forEach((s, i) => Sound.tone(700 * Math.pow(2, s / 12), .22, 'triangle', .12, i * .06)); else Sound.tone(330, .18, 'triangle', .1);
+    Sound.noise(.05, .3, 2800, 2); haptic(12);
+  }
+  function next() { if (ti + 1 < KINDS.length) { ti++; startTask(); } else finish(); }
+  function finish() {
+    state = 'end';
+    const total = results.reduce((a, r) => a + r.pts, 0), max = KINDS.length * 100, stars = total >= 510 ? 3 : total >= 400 ? 2 : total >= 250 ? 1 : 0, day = dayNumber(), first = mode === 'daily' && data.daily[day] == null;
+    if (mode === 'daily') data.daily[day] = Math.max(data.daily[day] || 0, total);
+    data.best = Math.max(data.best || 0, total); store('smidge/eyeball', data);
+    $('eyTotal').textContent = total;
+    $('eyStars').innerHTML = [0, 1, 2].map(i => i < stars ? '★' : '<span class="off">★</span>').join('');
+    const names = { mid: 'Middle', right: 'Right angle', centre: 'Centre', bisect: 'Half angle', square: 'Square', balance: 'Balance' };
+    $('eyList').textContent = results.map((r, i) => `${sq(r.pts)} ${names[KINDS[i]]}: off by ${r.err.toFixed(1)}${r.unit === '°' ? '°' : '%'} · ${r.pts}`).join('\n');
+    $('eyShare').textContent = `Smidge Eyeball ${mode === 'daily' ? '#' + day : '(practice)'} · ${total}/${max}\n${results.map(r => sq(r.pts)).join('')}`;
+    $('eyNote').textContent = mode === 'daily' ? (first ? 'Today\'s score is saved. New tests tomorrow.' : 'Replays don\'t change today\'s score.') : `Best ever: ${data.best} of ${max}`;
+    $('eyEnd').hidden = false;
+  }
+  function showMenu() {
+    state = 'menu'; const day = dayNumber(), done = data.daily[day];
+    $('eyDailyBtn').textContent = done != null ? `Daily #${day} again` : `Play daily #${day}`;
+    $('eyMenuNote').textContent = done != null ? `Today: ${done} of 600. Best ever: ${data.best}.` : data.best ? `Best ever: ${data.best} of 600.` : 'Six tests of your eye. 100 points each for a perfect guess.';
+    $('eyMenu').hidden = false; $('eyEnd').hidden = true; $('eySub').textContent = 'Judge by eye'; $('eyPrompt').textContent = ''; $('eyHint').textContent = '';
+  }
+
+  // ---------- drawing ----------
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  let C = {};
+  function readColors() { for (const k of ['paper', 'dot', 'pencil', 'pen']) C[k] = css('--ey-' + k); }
+  function resize() { DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; }
+  function view() { const top = 130, bot = 64, s = Math.min(W / 420, (H - top - bot) / 420); return { s, ox: W / 2 - 200 * s, oy: top + (H - top - bot) / 2 - 200 * s }; }
+  const toWorld = e => { const v = view(), r = cv.getBoundingClientRect(); return [(e.clientX - r.left - v.ox) / v.s, (e.clientY - r.top - v.oy) / v.s]; };
+  function line(a, b, col, w, dash) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.setLineDash([]); }
+  function dot(p, col, r) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 7); ctx.fill(); }
+  function handle(p) { ctx.fillStyle = '#fff'; ctx.strokeStyle = C.pen; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p[0], p[1], held ? 15 : 12, 0, 7); ctx.fill(); ctx.stroke(); }
+  function draw() {
+    const v = view();
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = C.dot; const gap = 22 * v.s; for (let y = (v.oy % gap); y < H; y += gap) for (let x = (v.ox % gap); x < W; x += gap) ctx.fillRect(x - 1, y - 1, 2, 2);
+    const t = tasks[ti]; if (!t || state === 'menu' || state === 'end' && !judged) return;
+    ctx.setTransform(DPR * v.s, 0, 0, DPR * v.s, DPR * v.ox, DPR * v.oy); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const P = C.pencil, ink = 4;
+    if (t.kind === 'mid') { line(t.a, t.b, P, ink); for (const e of [t.a, t.b]) dot(e, P, 6); if (guess) dot(guess, C.pen, 7); }
+    if (t.kind === 'right') { const e = [t.v[0] + Math.cos(t.a) * 230, t.v[1] + Math.sin(t.a) * 230]; line(t.v, e, P, ink); line(t.v, guess, C.pen, ink); dot(t.v, P, 6); if (state === 'aim') handle(guess); }
+    if (t.kind === 'centre') { ctx.strokeStyle = P; ctx.lineWidth = ink; ctx.beginPath(); ctx.arc(t.c[0], t.c[1], t.r, t.start, t.start + t.arc); ctx.stroke(); if (guess) dot(guess, C.pen, 7); }
+    if (t.kind === 'bisect') { line(t.v, [t.v[0] + Math.cos(t.a1) * 260, t.v[1] + Math.sin(t.a1) * 260], P, ink); line(t.v, [t.v[0] + Math.cos(t.a2) * 260, t.v[1] + Math.sin(t.a2) * 260], P, ink); line(t.v, guess, C.pen, ink); dot(t.v, P, 6); if (state === 'aim') handle(guess); }
+    if (t.kind === 'square') { const h = t.y0 - guess[1]; ctx.strokeStyle = P; ctx.lineWidth = ink; ctx.strokeRect(t.x0, t.y0 - h, t.w, h); line([t.x0, t.y0 - h], [t.x0 + t.w, t.y0 - h], C.pen, 6); if (state === 'aim') handle([200, t.y0 - h]); }
+    if (t.kind === 'balance') { ctx.strokeStyle = P; ctx.lineWidth = ink; ctx.beginPath(); t.pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.stroke(); if (guess) dot(guess, C.pen, 7); }
+    if (judged) {
+      const k = Math.min(1, (performance.now() - shownAt) / 300); ctx.globalAlpha = k;
+      const good = '#1f9e5a';
+      if (t.kind === 'right' || t.kind === 'bisect') line(t.v, judged.ans, good, 3, [8, 7]);
+      else if (t.kind === 'square') { ctx.strokeStyle = good; ctx.lineWidth = 3; ctx.setLineDash([8, 7]); ctx.strokeRect(t.x0, t.y0 - t.w, t.w, t.w); ctx.setLineDash([]); }
+      else { dot(judged.ans, good, 7); ctx.strokeStyle = good; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(judged.ans[0], judged.ans[1], 14, 0, 7); ctx.stroke(); line(judged.ans, guess, C.pen, 2, [3, 5]); }
+      if (t.kind === 'centre') { ctx.strokeStyle = good; ctx.lineWidth = 2; ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.arc(t.c[0], t.c[1], t.r, t.start + t.arc, t.start + Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+      ctx.globalAlpha = 1;
+    }
+  }
+  function frame(now) { last = now; if (active) draw(); requestAnimationFrame(frame); }
+
+  // ---------- input ----------
+  function place(p) {
+    const t = tasks[ti];
+    if (t.kind === 'right') { const a = Math.atan2(p[1] - t.v[1], p[0] - t.v[0]); guess = [t.v[0] + Math.cos(a) * 170, t.v[1] + Math.sin(a) * 170]; }
+    else if (t.kind === 'bisect') { const a = Math.atan2(p[1] - t.v[1], p[0] - t.v[0]); guess = [t.v[0] + Math.cos(a) * 200, t.v[1] + Math.sin(a) * 200]; }
+    else if (t.kind === 'square') guess = [200, Math.max(-20, Math.min(t.y0 - 20, p[1]))];
+    else guess = p;
+  }
+  cv.addEventListener('pointerdown', e => {
+    if (!active) return; e.preventDefault(); Sound.audio();
+    if (state === 'shown') { if (performance.now() - shownAt > 300) next(); return; }
+    if (state !== 'aim') return;
+    held = true; place(toWorld(e)); try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    Sound.tone(520, .03, 'triangle', .05);
+  }, { passive: false });
+  cv.addEventListener('pointermove', e => { if (held && state === 'aim') place(toWorld(e)); });
+  cv.addEventListener('pointerup', () => { if (held && state === 'aim') { held = false; lockIn(); } });
+  cv.addEventListener('pointercancel', () => { held = false; });
+  $('eyDailyBtn').onclick = () => { Sound.audio(); begin('daily'); };
+  $('eyPracticeBtn').onclick = () => { Sound.audio(); begin('practice'); };
+  $('eyAgain').onclick = () => { Sound.audio(); begin(mode); };
+  $('eyMenuBtn').onclick = () => { Sound.audio(); showMenu(); };
+  $('eyCopy').onclick = e => { Sound.audio(); copyText($('eyShare').textContent, e.currentTarget); };
+  addEventListener('resize', () => { if (active) resize(); });
+  requestAnimationFrame(frame);
+  return {
+    enter() { active = true; resize(); readColors(); showMenu(); },
+    leave() { active = false; held = false; },
+    stats() { return { best: data.best || 0, today: data.daily[dayNumber()] }; },
+  };
+})();
+
+// Switchboard: every bulb flips itself and its neighbours (the pattern changes in later levels). Switch every bulb off.
+// Levels are made by pressing random bulbs on a dark board, so each has an answer; a solver over GF(2) finds the fewest
+// taps (par) and the next step for a hint.
+const SwitchCore = (() => {
+  const RULES = {
+    plus: { name: 'itself and the 4 next to it', cells: [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]] },
+    x: { name: 'itself and the 4 corners round it', cells: [[0, 0], [1, 1], [-1, 1], [1, -1], [-1, -1]] },
+    ring: { name: 'the 8 round it, but not itself', cells: [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]] },
+  };
+  const effect = (n, rule, i) => { const x = i % n, y = (i / n) | 0; let m = 0; for (const [dx, dy] of RULES[rule].cells) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < n && Y < n) m |= 1 << (Y * n + X); } return m; };
+  const press = (n, rule, state, i) => state ^ effect(n, rule, i);
+  const pop = m => { let c = 0; while (m) { m &= m - 1; c++; } return c; };
+  // fewest presses (as a bit mask) that turn every bulb off, or null if none
+  function solve(n, rule, state) {
+    const N = n * n, rows = [], rhs = [];
+    for (let i = 0; i < N; i++) { let m = 0; for (let j = 0; j < N; j++) if (effect(n, rule, j) >> i & 1) m |= 1 << j; rows.push(m); rhs.push(state >> i & 1); }
+    const pivotCol = []; let r = 0;
+    for (let c = 0; c < N && r < N; c++) {
+      let p = -1; for (let k = r; k < N; k++) if (rows[k] >> c & 1) { p = k; break; }
+      if (p < 0) continue;
+      [rows[r], rows[p]] = [rows[p], rows[r]]; [rhs[r], rhs[p]] = [rhs[p], rhs[r]];
+      for (let k = 0; k < N; k++) if (k !== r && rows[k] >> c & 1) { rows[k] ^= rows[r]; rhs[k] ^= rhs[r]; }
+      pivotCol.push(c); r++;
+    }
+    for (let k = r; k < N; k++) if (rhs[k]) return null;
+    const isPivot = new Set(pivotCol), free = []; for (let c = 0; c < N; c++) if (!isPivot.has(c)) free.push(c);
+    let base = 0; pivotCol.forEach((c, k) => { if (rhs[k]) base |= 1 << c; });
+    const null_ = free.map(f => { let v = 1 << f; pivotCol.forEach((c, k) => { if (rows[k] >> f & 1) v |= 1 << c; }); return v; });
+    let best = base;
+    for (let combo = 1; combo < (1 << null_.length); combo++) { let v = base; null_.forEach((b, k) => { if (combo >> k & 1) v ^= b; }); if (pop(v) < pop(best)) best = v; }
+    return best;
+  }
+  function level(n, rule, k, seed) {
+    const r = rng(seed); let state = 0, tries = 0;
+    do { state = 0; const picks = new Set(); while (picks.size < k) picks.add(Math.floor(r() * n * n)); for (const i of picks) state = press(n, rule, state, i); tries++; } while ((state === 0 || pop(solve(n, rule, state)) < Math.min(k, 2)) && tries < 50);
+    return { n, rule, start: state, par: pop(solve(n, rule, state)) };
+  }
+  return { RULES, effect, press, solve, level, pop };
+})();
+
+const Switchboard = (() => {
+  const $ = id => document.getElementById(id);
+  const S = SwitchCore;
+  const LEVELS = [[3, 'plus', 2], [3, 'plus', 3], [4, 'plus', 3], [4, 'plus', 4], [5, 'plus', 4], [5, 'plus', 6], [3, 'x', 3], [4, 'x', 4], [5, 'x', 5], [3, 'ring', 2], [4, 'ring', 3], [5, 'ring', 4]]
+    .map(([n, rule, k], i) => ({ n, rule, k, seed: 4242 + i * 101 }));
+  let data = store('smidge/switchboard') || {};
+  let li = 0, L = null, state = 0, taps = 0, hist = [], hints = 0, hintCell = -1, solved = false;
+  function open(i) {
+    li = i; const lv = LEVELS[i]; L = S.level(lv.n, lv.rule, lv.k, lv.seed); state = L.start; taps = 0; hist = []; hints = 0; hintCell = -1; solved = false;
+    $('swMenu').hidden = true; $('swEnd').hidden = true;
+    $('swSub').textContent = `Level ${i + 1} of ${LEVELS.length}`;
+    $('swRule').innerHTML = ruleIcon(lv.rule) + `<span>A tap flips <b>${S.RULES[lv.rule].name}</b>.${i === 0 ? ' Switch every bulb off.' : ''}</span>`;
+    render();
+  }
+  function ruleIcon(rule) {
+    const cells = new Set(S.RULES[rule].cells.map(([x, y]) => (y + 1) * 3 + x + 1));
+    return `<span class="sw-icon" aria-hidden="true">${Array.from({ length: 9 }, (_, i) => `<i class="${cells.has(i) ? 'on' : ''} ${i === 4 ? 'mid' : ''}"></i>`).join('')}</span>`;
+  }
+  function render() {
+    const n = L.n, grid = $('swGrid');
+    grid.style.setProperty('--n', n);
+    if (grid.children.length !== n * n) {
+      grid.innerHTML = Array.from({ length: n * n }, (_, i) => `<button class="bulb" data-i="${i}" aria-label="Bulb ${i % n + 1}, ${((i / n) | 0) + 1}"><span></span></button>`).join('');
+      grid.querySelectorAll('.bulb').forEach(b => b.onclick = () => tap(+b.dataset.i));
+    }
+    [...grid.children].forEach((b, i) => { const on = state >> i & 1; b.classList.toggle('on', !!on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.classList.toggle('hint', i === hintCell); });
+    const lit = S.pop(state);
+    $('swLit').textContent = solved ? 'All off!' : `${lit} lit`;
+    $('swTaps').textContent = `${taps} tap${taps === 1 ? '' : 's'} · par ${L.par}`;
+    $('swUndo').disabled = !hist.length || solved;
+  }
+  function tap(i) {
+    if (!L || solved) return; Sound.audio();
+    hist.push(state); state = S.press(L.n, L.rule, state, i); taps++; hintCell = -1;
+    const lit = S.pop(state);
+    Sound.tone(900, .02, 'square', .05); Sound.tone(260 + lit * 22, .12, 'triangle', .1, .02); haptic(8);
+    render();
+    if (state === 0) win();
+  }
+  function win() {
+    solved = true; const stars = taps <= L.par ? 3 : taps <= L.par + 2 && !hints ? 2 : 1;
+    const prev = data[li] || {}; data[li] = { stars: Math.max(prev.stars || 0, stars), taps: Math.min(prev.taps || 1e9, taps) }; store('smidge/switchboard', data);
+    render(); [0, 4, 7, 12].forEach((s, i) => Sound.tone(523 * Math.pow(2, s / 12), .3, 'triangle', .14, i * .08)); haptic(40);
+    $('swEndT').textContent = taps <= L.par ? 'Lights out, perfectly!' : 'All off!';
+    $('swEndS').innerHTML = [0, 1, 2].map(i => i < stars ? '★' : '<span class="off">★</span>').join('');
+    $('swEndP').textContent = taps <= L.par ? `${taps} taps, the fewest possible.` : `${taps} taps. It can be done in ${L.par}${hints ? '' : ', for three stars'}.`;
+    $('swNext').textContent = li + 1 < LEVELS.length ? 'Next level' : 'All levels';
+    setTimeout(() => { if (solved) $('swEnd').hidden = false; }, 800);
+  }
+  function hint() {
+    if (!L || solved) return; Sound.audio();
+    const sol = S.solve(L.n, L.rule, state); if (sol == null) return;
+    for (let i = 0; i < L.n * L.n; i++) if (sol >> i & 1) { hintCell = i; break; }
+    hints++; Sound.tone(880, .12, 'sine', .1); render();
+  }
+  function showMenu() {
+    L = null;
+    const firstOpen = (() => { const i = LEVELS.findIndex((_, k) => !data[k]); return i < 0 ? 0 : i; })();
+    $('swGridMenu').innerHTML = LEVELS.map((lv, i) => `<button data-i="${i}" class="${i === firstOpen ? 'cur' : ''}">${i + 1}<small>${data[i] ? '★'.repeat(data[i].stars) : ''}</small></button>`).join('');
+    $('swGridMenu').querySelectorAll('button').forEach(b => b.onclick = () => { Sound.audio(); open(+b.dataset.i); });
+    $('swMenu').hidden = false; $('swEnd').hidden = true; $('swSub').textContent = 'Lights off'; $('swGrid').innerHTML = ''; $('swRule').innerHTML = ''; $('swLit').textContent = ''; $('swTaps').textContent = '';
+  }
+  $('swUndo').onclick = () => { if (!hist.length || solved) return; state = hist.pop(); taps++; hintCell = -1; Sound.tone(360, .06, 'triangle', .08); render(); };
+  $('swHint').onclick = hint;
+  $('swRestart').onclick = () => { if (L) { Sound.audio(); open(li); } };
+  $('swLevels').onclick = () => { Sound.audio(); showMenu(); };
+  $('swEndList').onclick = () => { Sound.audio(); showMenu(); };
+  $('swNext').onclick = () => { Sound.audio(); if (li + 1 < LEVELS.length) open(li + 1); else showMenu(); };
+  return {
+    enter() { showMenu(); },
+    leave() {},
+    stats() { const v = LEVELS.map((_, i) => data[i]); return { done: v.filter(Boolean).length, stars: v.reduce((a, x) => a + (x ? x.stars : 0), 0), total: LEVELS.length }; },
+    LEVELS,
+  };
+})();
+
 // Smidge: the splash, the home screen and moving between games.
 const App = (() => {
   const $ = id => document.getElementById(id);
-  const VIEWS = ['splash', 'home', 'pop', 'match', 'slice', 'skim', 'untangle'];
-  const GAMES = { pop: () => Popshot, match: () => Stickler, slice: () => Slice, skim: () => Skim, untangle: () => Untangle };
+  const VIEWS = ['splash', 'home', 'pop', 'match', 'slice', 'skim', 'untangle', 'pour', 'eyeball', 'switchboard'];
+  const GAMES = { pop: () => Popshot, match: () => Stickler, slice: () => Slice, skim: () => Skim, untangle: () => Untangle, pour: () => Pour, eyeball: () => Eyeball, switchboard: () => Switchboard };
   let cur = 'splash', splashReady = false;
   function go(v) {
     if (GAMES[cur] && cur !== v) GAMES[cur]().leave();
@@ -2442,6 +3043,10 @@ const App = (() => {
     $('progSlice').innerHTML = sl.today != null ? `<span>Today ${sl.today}/500</span><span>Best ${sl.best}</span>` : sl.best ? `<span>Today's shapes are ready</span><span>Best ${sl.best}</span>` : '<span>New · daily shapes</span>';
     $('progSkim').innerHTML = sk.today != null ? `<span>Today ${sk.today} points</span><span>Best ${sk.best}</span>` : sk.best ? `<span>Today's lake is ready</span><span>Best ${sk.best}</span>` : '<span>New · daily lake</span>';
     $('progUn').innerHTML = un.done ? `<span>${un.done} of ${un.total} untangled</span><span>★ ${un.stars}</span>` : `<span>New · ${un.total} levels</span>`;
+    const po = Pour.stats(), ey = Eyeball.stats(), sw = Switchboard.stats();
+    $('progPour').innerHTML = po.today != null ? `<span>Today ${po.today}/500</span><span>Best ${po.best}</span>` : po.best ? `<span>Today's glasses are ready</span><span>Best ${po.best}</span>` : '<span>New · daily glasses</span>';
+    $('progEye').innerHTML = ey.today != null ? `<span>Today ${ey.today}/600</span><span>Best ${ey.best}</span>` : ey.best ? `<span>Today's tests are ready</span><span>Best ${ey.best}</span>` : '<span>New · daily tests</span>';
+    $('progSw').innerHTML = sw.done ? `<span>${sw.done} of ${sw.total} switched off</span><span>★ ${sw.stars}</span>` : `<span>New · ${sw.total} boards</span>`;
     $('progMatch').innerHTML = st.solved ? `<span>${st.solved} of ${st.total} solved</span><span>★ ${st.stars}</span>` : `<span>New · ${st.total} puzzles</span>`;
   }
   function popSound() { Sound.noise(.06, .55, 2600, .8); Sound.tone(660, .22, 'triangle', .3); Sound.tone(990, .3, 'triangle', .18, .08); }
