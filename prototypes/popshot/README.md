@@ -9,6 +9,9 @@ Open `index.html` in a browser, on a phone if possible. One file, no build step.
   Keyboard: hold Space to draw, let go to shoot.
 - Points per pop grow with the streak; gold balloons double the rest of that arrow; bombs pop neighbours;
   armour stops an arrow and breaks on the second hit. Survivors drop down after each arrow.
+- Rocking stand from level 2: the crossbow tilts on a tripod about a pivot (1.5° to 4° either side, a different period from
+  the tower's, so the two drift in and out of step). The arrow leaves along the tilt at the moment of release; the dotted
+  aim line tilts with it. Tilting against the wind straightens a drifting arrow.
 - Wind from level 3 (km/h, shown by the chip under the score, the flag on the tether peg and streaks in the sky): it pushes
   arrows sideways the whole flight, so a slow arrow drifts far more than a fast one, and it leans the tower downwind along
   the curve a fast arrow (1100 units/s) would follow. Later levels add gusts (wind that rises and falls on a cycle) and

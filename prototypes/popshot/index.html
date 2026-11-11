@@ -131,6 +131,7 @@ canvas { position: fixed; inset: 0; touch-action: none; display: block; }
       <span><i style="background:#ffd23f"></i>Gold: doubles the rest of that arrow</span>
       <span><i style="background:#2c2c36"></i>Bomb: pops its neighbours</span>
       <span><i style="background:#a3adb8"></i>Armour: stops an arrow, breaks on the 2nd hit</span>
+      <span><i style="background:#9a6234"></i>Rocking stand (from level 2): the crossbow tilts back and forth and fires along its tilt. Lean it against the wind</span>
       <span><i style="background:#ffffff"></i>Wind (from level 3): pushes arrows sideways and leans the tower. Slow arrows drift most; watch the flag and the gusts</span>
     </div>
     <div class="lvls" id="lvls"></div>
@@ -217,6 +218,15 @@ const by = b => Y0 + b.slot * S;
 function windAt(time) { const w = L.wind; if (!w) return 0; return (w.base || 0) + (w.gust || 0) * Math.sin(2 * Math.PI * time / (w.T || 4) + 0.6); }
 const windAcc = time => windAt(time) * WIND_ACC;
 const leanAt = (y, time) => 0.5 * windAcc(time) * (y / LEAN_V) * (y / LEAN_V);
+// The crossbow rocks on its stand about a pivot (degrees either side, seconds per rock). Its period is never the tower's,
+// so the two drift in and out of step. The arrow leaves along the tilt the bow has at the moment you let go.
+const BOWS = { Ripple: { amp: 1.5, T: 3.4 }, 'Gold Rush': { amp: 2, T: 3.1 }, Fuse: { amp: 2.5, T: 2.9 }, Ironclad: { amp: 3, T: 3.3, ph: 1.2 },
+  Gale: { amp: 3.5, T: 2.6 }, Crosswind: { amp: 3, T: 3.7, ph: 2 }, Storm: { amp: 4, T: 2.7, ph: .5 } };
+LEVELS.forEach(lv => { lv.bow = BOWS[lv.name] || null; });
+const PIV_Y = -16;
+function tiltAt(time) { const b = L.bow; return b ? b.amp * Math.PI / 180 * Math.sin(2 * Math.PI * time / b.T + (b.ph || 0)) : 0; }
+// a point on the bow (drawn upright) moved to where the tilted bow has it; + tilt leans right
+function onBow(x, y, th) { const dx = x - CX, dy = y - PIV_Y; return [CX + dx * Math.cos(th) + dy * Math.sin(th), PIV_Y - dx * Math.sin(th) + dy * Math.cos(th)]; }
 const fullTop = () => Y0 + (L.n - 1) * S + R;
 
 function startLevel(i) {
@@ -264,7 +274,8 @@ function fire(power) {
   if (state !== 'aim' || arrowsLeft <= 0) return;
   arrowsLeft--;
   const y0 = AL - 2 - power * PULL_W;
-  shot = { arrows: [mkArrow(CX, y0, 0, speedFor(power), true)], combo: 0, mult: 1, pops: 0, splitUsed: false, phase: (t % L.T) / L.T, power, end: 0, lead: 0 };
+  const th = tiltAt(t), [sx0, sy0] = onBow(CX, y0, th), v = speedFor(power);
+  shot = { arrows: [mkArrow(sx0, sy0, v * Math.sin(th), v * Math.cos(th), true)], combo: 0, mult: 1, pops: 0, splitUsed: false, phase: (t % L.T) / L.T, power, end: 0, lead: 0 };
   state = 'flight'; recoil = .4 + power * .8; sfx.launch(power); buzz(8 + Math.round(power * 16));
   updateHud();
 }
@@ -449,6 +460,16 @@ function drawArrow(a) {
   ctx.restore();
 }
 function drawCrossbow() {
+  const k = base() * cam.z, th = tiltAt(t);
+  // stand: two legs from the pivot to the ground, drawn upright behind the rocking bow
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 3 / k; ctx.fillStyle = '#5b6573';
+  ctx.beginPath(); ctx.moveTo(CX - 4, PIV_Y + 4); ctx.lineTo(CX - 44, -70); ctx.lineTo(CX - 32, -70); ctx.lineTo(CX, PIV_Y - 14); ctx.lineTo(CX + 32, -70); ctx.lineTo(CX + 44, -70); ctx.lineTo(CX + 4, PIV_Y + 4); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.save(); ctx.translate(CX, PIV_Y); ctx.rotate(-th); ctx.translate(-CX, -PIV_Y);
+  drawBowUpright();
+  ctx.restore();
+  ctx.fillStyle = '#d9dee5'; ctx.beginPath(); ctx.arc(CX, PIV_Y, 5, 0, 7); ctx.fill(); ctx.stroke();
+}
+function drawBowUpright() {
   const loaded = state === 'aim' && arrowsLeft > 0;
   ctx.save(); ctx.translate(CX, -recoil * 10);
   const lw = 2.4 / (base() * cam.z);
@@ -498,14 +519,15 @@ function render() {
   // flight line
   if (state === 'aim' || state === 'menu') {
     ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2 / k; ctx.setLineDash([6 / k, 8 / k]);
-    ctx.beginPath(); ctx.moveTo(CX, AL + 10); ctx.lineTo(CX, fullTop() + 200); ctx.stroke(); ctx.setLineDash([]);
+    const th = tiltAt(t), [ax, ay] = onBow(CX, AL + 10, th), [bx2, by2] = onBow(CX, fullTop() + 200, th);
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx2, by2); ctx.stroke(); ctx.setLineDash([]);
   }
   // while pulling: the first 0.3 s of flight at this power, wind included (never the rest)
   if (state === 'aim' && pulling && pull >= .1) {
-    const v = speedFor(pull), a0 = windAcc(t), y0 = AL - 2 - pull * PULL_W;
+    const v = speedFor(pull), a0 = windAcc(t), th = tiltAt(t), [x0, y0] = onBow(CX, AL - 2 - pull * PULL_W, th);
     ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 3 / k; ctx.setLineDash([2 / k, 7 / k]); ctx.lineCap = 'round';
     ctx.beginPath();
-    for (let i = 0; i <= 20; i++) { const tau = .3 * i / 20; const px = CX + .5 * a0 * tau * tau, py = y0 + v * tau; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    for (let i = 0; i <= 20; i++) { const tau = .3 * i / 20; const px = x0 + v * Math.sin(th) * tau + .5 * a0 * tau * tau, py = y0 + v * Math.cos(th) * tau; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
     ctx.stroke(); ctx.setLineDash([]);
   }
   // tether from the lowest balloon
@@ -698,7 +720,7 @@ function buildMenu() {
   $('lvls').innerHTML = LEVELS.map((lv, i) => {
     const bst = best[lv.name];
     const st = bst ? '★'.repeat(bst.stars) + '☆'.repeat(3 - bst.stars) : '☆☆☆';
-    return `<button class="lvl" data-i="${i}"><span class="n">Level ${i + 1} · ${lv.n} balloons${lv.wind ? ' · wind' : ''}</span><span class="t">${lv.name}</span><span class="s">${st} <span>${bst ? bst.pts + ' pts' : 'new'}</span></span></button>`;
+    return `<button class="lvl" data-i="${i}"><span class="n">Level ${i + 1} · ${lv.n} balloons${lv.bow ? ' · rocking' : ''}${lv.wind ? ' · wind' : ''}</span><span class="t">${lv.name}</span><span class="s">${st} <span>${bst ? bst.pts + ' pts' : 'new'}</span></span></button>`;
   }).join('');
   $('lvls').querySelectorAll('.lvl').forEach(b => b.onclick = () => { audio(); startLevel(+b.dataset.i); });
 }
