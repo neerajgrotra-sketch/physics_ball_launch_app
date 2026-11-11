@@ -616,17 +616,47 @@ body[data-view="untangle"] { background: var(--cork-2); }
 const Sound = (() => {
   let ac = null, master = null, noiseBuf = null, muted = false;
   try { muted = localStorage.getItem('smidge/muted') === '1'; } catch (e) {}
-  function audio() {
-    if (!ac) {
-      try {
-        ac = new (window.AudioContext || window.webkitAudioContext)();
-        master = ac.createGain(); master.gain.value = muted ? 0 : .55; master.connect(ac.destination);
-        noiseBuf = ac.createBuffer(1, ac.sampleRate * .5, ac.sampleRate);
-        const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-      } catch (e) { ac = null; }
-    }
-    if (ac && ac.state === 'suspended') ac.resume();
+  // iPhone rules (the same fixes as Clink):
+  // 1. Web Audio obeys the ring/silent switch unless the page says it is media playback: navigator.audioSession
+  //    (iOS 17+), or on older iOS a silent looping <audio> element, which moves the page into the playback category.
+  // 2. Audio only starts inside a real touchend or click (pointerdown doesn't count), so a listener stays for good.
+  // 3. iOS pauses the context after silence or an interruption (a call, locking); a tap resumes it, and one that
+  //    finds it still stuck after an earlier resume replaces it.
+  let unlocked = false, triedResume = 0, keepEl = null;
+  function makeContext() {
+    try {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      master = ac.createGain(); master.gain.value = muted ? 0 : .55; master.connect(ac.destination);
+      noiseBuf = ac.createBuffer(1, ac.sampleRate * .5, ac.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      unlocked = false; triedResume = 0;
+    } catch (e) { ac = null; }
   }
+  function silentWav() {
+    const n = 2205, b = new Uint8Array(44 + n), v = new DataView(b.buffer), w = (o, str) => { for (let i = 0; i < str.length; i++) b[o + i] = str.charCodeAt(i); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, 22050, true); v.setUint32(28, 22050, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true);
+    b.fill(128, 44);
+    let bin = ''; for (const x of b) bin += String.fromCharCode(x);
+    return 'data:audio/wav;base64,' + btoa(bin);
+  }
+  function playbackMode() {
+    try { if (navigator.audioSession) { navigator.audioSession.type = 'playback'; return; } } catch (e) {}
+    try {
+      if (!keepEl) { keepEl = document.createElement('audio'); keepEl.src = silentWav(); keepEl.loop = true; keepEl.setAttribute('playsinline', ''); keepEl.setAttribute('x-webkit-airplay', 'deny'); }
+      if (keepEl.paused) { const pr = keepEl.play(); if (pr && pr.catch) pr.catch(() => {}); }
+    } catch (e) {}
+  }
+  function audio() {
+    playbackMode();
+    if (!ac) makeContext();
+    if (!ac) return;
+    if (ac.state === 'closed' || (ac.state !== 'running' && triedResume && performance.now() - triedResume > 500)) { try { ac.close(); } catch (e) {} makeContext(); if (!ac) return; }
+    if (ac.state !== 'running') { if (!triedResume) triedResume = performance.now(); const pr = ac.resume(); if (pr && pr.then) pr.then(() => { if (ac && ac.state === 'running') triedResume = 0; }, () => {}); }
+    else triedResume = 0;
+    if (!unlocked) { try { const s = ac.createBufferSource(); s.buffer = ac.createBuffer(1, 1, 22050); s.connect(ac.destination); s.start(0); unlocked = true; } catch (e) {} }
+  }
+  for (const ev of ['touchend', 'click', 'keydown']) document.addEventListener(ev, audio, { capture: true, passive: true });
   function tone(f, dur, type, vol, delay = 0, f2) {
     if (!ac) return; const t0 = ac.currentTime + delay;
     const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t0);
