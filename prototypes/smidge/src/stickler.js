@@ -8,8 +8,8 @@ const Stickler = (() => {
     { id: 'sum', name: 'Fix the sum', short: 'Move digits', blurb: 'Every sum here is wrong. Move sticks between the digits and signs to make it true. Every digit has to stay a real digit.' },
   ];
   let prog = {};
-  try { prog = JSON.parse(localStorage.getItem('smidge/stickler') || '{}') || {}; } catch (e) { prog = {}; }
-  const save = () => { try { localStorage.setItem('smidge/stickler', JSON.stringify(prog)); } catch (e) {} };
+  prog = storeObj('smidge/stickler', {});
+  const save = () => store('smidge/stickler', prog);
   let pack = 'take';
 
   // ---------- geometry ----------

@@ -29,7 +29,7 @@ const Pour = (() => {
   const cv = $('poCanvas'), ctx = cv.getContext('2d');
   let W = 0, H = 0, DPR = 1, active = false, last = 0;
   let mode = 'daily', glasses = [], gi = 0, results = [], state = 'menu', g = null;
-  let data = store('smidge/pour') || { daily: {}, best: 0 };
+  let data = storeObj('smidge/pour', { daily: {}, best: 0 });
 
   function makeRound(seed) {
     const r = rng(seed), plan = [['tumbler'], ['cone'], ['flask', 'vase'], ['hourglass', 'vase', 'tumbler'], ['tumbler', 'cone']];

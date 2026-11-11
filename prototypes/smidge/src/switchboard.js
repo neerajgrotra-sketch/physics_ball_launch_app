@@ -43,7 +43,7 @@ const Switchboard = (() => {
   const S = SwitchCore;
   const LEVELS = [[3, 'plus', 2], [3, 'plus', 3], [4, 'plus', 3], [4, 'plus', 4], [5, 'plus', 4], [5, 'plus', 6], [3, 'x', 3], [4, 'x', 4], [5, 'x', 5], [3, 'ring', 2], [4, 'ring', 3], [5, 'ring', 4]]
     .map(([n, rule, k], i) => ({ n, rule, k, seed: 4242 + i * 101 }));
-  let data = store('smidge/switchboard') || {};
+  let data = storeObj('smidge/switchboard', {});
   let li = 0, L = null, state = 0, taps = 0, hist = [], hints = 0, hintCell = -1, solved = false;
   function open(i) {
     li = i; const lv = LEVELS[i]; L = S.level(lv.n, lv.rule, lv.k, lv.seed); state = L.start; taps = 0; hist = []; hints = 0; hintCell = -1; solved = false;

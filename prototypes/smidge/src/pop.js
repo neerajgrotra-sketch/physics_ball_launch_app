@@ -26,7 +26,7 @@ const PULL_W = 40; // how far back the string travels at full pull (world units)
 let cloudPos = 0, streaks = [], windShown = null;
 let particles = [], popups = [], cam = { y: 300, z: 1.4 }, slowmo = 0, shake = 0, recoil = 0, revealT = 0, collapsed = false;
 const ghosts = {}; let muted = false, best = {};
-try { best = JSON.parse(localStorage.getItem('popshot/best') || '{}') || {}; } catch (e) { best = {}; }
+best = storeObj('popshot/best', {});
 let active = false;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -205,7 +205,7 @@ function finish() {
   const prev = best[L.name] || { pts: 0, stars: 0 };
   const isBest = points > prev.pts;
   best[L.name] = { pts: Math.max(prev.pts, points), stars: Math.max(prev.stars, stars) };
-  try { localStorage.setItem('popshot/best', JSON.stringify(best)); } catch (e) {}
+  store('popshot/best', best);
   $('rTitle').textContent = stars === 3 ? (arrowsLeft > 0 ? 'Clean sweep, arrows to spare!' : 'Clean sweep!') : stars === 2 ? 'So close to all of them' : stars === 1 ? 'Getting the rhythm' : 'Watch the wave';
   $('rStars').innerHTML = [0, 1, 2].map(i => i < stars ? '★' : '<span class="off">★</span>').join('');
   $('rPop').textContent = popped + '/' + L.n;

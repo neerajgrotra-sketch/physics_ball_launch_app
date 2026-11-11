@@ -29,7 +29,7 @@ const Slice = (() => {
   const cv = $('slCanvas'), ctx = cv.getContext('2d');
   let W = 0, H = 0, DPR = 1, active = false, last = 0;
   let mode = 'daily', seed = 1, round = 0, shapes = [], results = [], state = 'menu', drag = null, cut = null, t = 0, cutAt = 0;
-  let data = store('smidge/slice') || { daily: {}, best: 0 };
+  let data = storeObj('smidge/slice', { daily: {}, best: 0 });
 
   // ---------- shapes (seeded, so a daily round is the same for everyone) ----------
   const ring = (n, f) => Array.from({ length: n }, (_, i) => f(i * Math.PI * 2 / n, i));

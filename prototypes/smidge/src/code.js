@@ -65,7 +65,7 @@ const CrackCode = (() => {
   const LEVELS = [...Array(5)].map((_, i) => ({ style: 'easy', seed: 7001 + i * 13 })).concat([...Array(5)].map((_, i) => ({ style: 'four', seed: 8101 + i * 17 })), [...Array(3)].map((_, i) => ({ style: 'tricky3', seed: 9201 + i * 19 })), [...Array(2)].map((_, i) => ({ style: 'tricky4', seed: 9301 + i * 23 })));
   const DAILY = ['tight', 'easy', 'easy', 'four', 'four', 'tight', 'tricky3']; // Sunday .. Saturday
   const STYLE_NAME = { easy: 'Three digits', four: 'Four digits', tight: 'Four digits, few hints', tricky3: 'Tricky: nothing is ever in place', tricky4: 'Tricky, four digits' };
-  let data = store('smidge/code') || { levels: {}, daily: {} };
+  let data = storeObj('smidge/code', { levels: {}, daily: {} });
   let P = null, which = null, wheels = [], marks = {}, tries = 0, hints = 0, startT = 0, solved = false, timer = 0;
 
   function dailyPuzzle() { const day = dayNumber(), wd = new Date().getDay(); return { p: G.generate(day * 9973 + 1, DAILY[wd]), label: `Daily #${day}`, day }; }

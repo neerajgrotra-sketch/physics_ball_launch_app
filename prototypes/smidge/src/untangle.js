@@ -40,7 +40,7 @@ const Untangle = (() => {
   const $ = id => document.getElementById(id);
   const LEVELS = [4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8].map((n, i) => ({ n, seed: 9001 + i * 37 }));
   const svgWrap = $('unBoard');
-  let data = store('smidge/untangle') || {};
+  let data = storeObj('smidge/untangle', {});
   let li = 0, L = null, pos = null, drag = null, moves = 0, startT = 0, solved = false, timer = 0;
 
   const par = lv => Math.round(lv.n * (lv.n - 1) / 2 * 5); // seconds for three stars

@@ -36,7 +36,7 @@ const Eyeball = (() => {
   const cv = $('eyCanvas'), ctx = cv.getContext('2d');
   let W = 0, H = 0, DPR = 1, active = false, last = 0;
   let mode = 'daily', tasks = [], ti = 0, results = [], state = 'menu', guess = null, judged = null, held = false, shownAt = 0;
-  let data = store('smidge/eyeball') || { daily: {}, best: 0 };
+  let data = storeObj('smidge/eyeball', { daily: {}, best: 0 });
   function makeRound(seed) { const r = rng(seed); return KINDS.map(k => E.make(k, r)); }
   function begin(m) { mode = m; tasks = makeRound(m === 'daily' ? dayNumber() * 3571 + 11 : Math.floor(Math.random() * 1e9)); ti = 0; results = []; startTask(); $('eyMenu').hidden = true; $('eyEnd').hidden = true; }
   function startTask() {

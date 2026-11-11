@@ -136,7 +136,73 @@ function haptic(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch 
 // Seeded random numbers (same seed, same game) and the day number for daily rounds (day 1 = Monday 5 Jan 2026, local time).
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function dayNumber() { const now = new Date(), a = Date.UTC(2026, 0, 5), b = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()); return Math.floor((b - a) / 864e5) + 1; }
-function store(key, val) { try { if (val === undefined) return JSON.parse(localStorage.getItem(key) || 'null'); localStorage.setItem(key, JSON.stringify(val)); } catch (e) { return null; } }
+// ---- progress: kept in memory, in this browser, and (when signed in on claude.ai) in the viewer's own private area
+// of the artifact's database, so it survives the browser forgetting it (the Claude app's viewer, private windows).
+// Each saved key carries a time; when the account copy and the browser copy meet they are merged (every level and score
+// from both is kept; where both have a value, the newer save wins).
+const KV = {}, META = (() => { try { return JSON.parse(localStorage.getItem('smidge/_t') || '{}') || {}; } catch (e) { return {}; } })();
+function saveLocal(key) { try { localStorage.setItem(key, JSON.stringify(KV[key])); localStorage.setItem('smidge/_t', JSON.stringify(META)); } catch (e) {} }
+function store(key, val) {
+  if (val === undefined) {
+    if (!(key in KV)) { try { const raw = localStorage.getItem(key); if (raw != null) KV[key] = JSON.parse(raw); } catch (e) {} }
+    return KV[key] ?? null;
+  }
+  KV[key] = val; META[key] = Date.now(); saveLocal(key); Cloud.push(key);
+}
+// the live object for a key (games keep this reference; merges from the account update it in place)
+function storeObj(key, defaults) {
+  let v = store(key);
+  if (!v || typeof v !== 'object') { v = defaults; KV[key] = v; }
+  return v;
+}
+const isObj = x => x && typeof x === 'object' && !Array.isArray(x);
+function deepUnion(newer, older) {
+  if (!isObj(newer) || !isObj(older)) return newer === undefined ? older : newer;
+  const out = { ...older }; for (const k of Object.keys(newer)) out[k] = k in older ? deepUnion(newer[k], older[k]) : newer[k];
+  return out;
+}
+const Cloud = (() => {
+  let col = null, state = 'local', timer = 0; const pending = new Set(), busy = new Set(), listeners = [];
+  const docId = key => key.replace(/\//g, '~');
+  function setInPlace(key, v) {
+    const cur = KV[key];
+    if (isObj(cur) && isObj(v)) { for (const k of Object.keys(cur)) delete cur[k]; Object.assign(cur, v); } else KV[key] = v;
+  }
+  async function init() {
+    if (typeof window === 'undefined' || !window.claude || typeof window.claude.use !== 'function') return;
+    state = 'connecting';
+    try {
+      const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+      const id = db && user ? await user.id() : null;
+      if (!id) { state = 'local'; return emit(); }
+      col = db.collection('data/users/' + id);
+      const snap = await Promise.race([col.get(), new Promise((_, no) => setTimeout(() => no({ code: 'timeout' }), 10000))]);
+      for (const d of snap.docs) {
+        const b = d.data(); if (!b || !('v' in b)) continue;
+        const key = d.id.replace(/~/g, '/'), rt = b.t || 0, lt = META[key] || 0, local = store(key);
+        const merged = local == null ? b.v : rt >= lt ? deepUnion(b.v, local) : deepUnion(local, b.v);
+        setInPlace(key, merged); META[key] = Math.max(rt, lt); saveLocal(key);
+        if (JSON.stringify(merged) !== JSON.stringify(b.v)) pending.add(key);
+      }
+      const remote = new Set(snap.docs.map(d => d.id.replace(/~/g, '/')));
+      for (const key of Object.keys(META)) if (!remote.has(key) && store(key) != null) pending.add(key);
+      state = 'synced'; emit(); flush();
+    } catch (e) { state = col ? 'offline' : 'local'; emit(); }
+  }
+  function emit() { listeners.forEach(f => { try { f(state); } catch (e) {} }); }
+  function push(key) { pending.add(key); if (col && state === 'synced') { clearTimeout(timer); timer = setTimeout(flush, 500); } }
+  async function flush() {
+    for (const key of [...pending]) {
+      if (busy.has(key)) continue;
+      pending.delete(key); busy.add(key);
+      try { await col.doc(docId(key)).set({ v: KV[key], t: META[key] || Date.now() }); }
+      catch (e) { if (e && e.code === 'unavailable') pending.add(key); }
+      busy.delete(key);
+    }
+    if (pending.size) { clearTimeout(timer); timer = setTimeout(flush, 1500); }
+  }
+  return { init, push, status: () => state, onChange: f => listeners.push(f) };
+})();
 async function copyText(text, btn) {
   let ok = false;
   try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {}

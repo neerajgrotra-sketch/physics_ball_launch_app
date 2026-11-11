@@ -33,7 +33,7 @@ const Skim = (() => {
   const cv = $('skCanvas'), ctx = cv.getContext('2d');
   let W = 0, H = 0, DPR = 1, active = false, last = 0, clock = 0;
   let mode = 'daily', envs = [], stone = 0, results = [], state = 'menu', pull = null, shot = null, ripples = [], drops = [], camX = -3;
-  let data = store('smidge/skim') || { daily: {}, best: 0, far: 0 };
+  let data = storeObj('smidge/skim', { daily: {}, best: 0, far: 0 });
 
   function makeRound(seed) {
     const r = rng(seed);

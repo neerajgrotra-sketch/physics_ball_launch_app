@@ -1,7 +1,13 @@
 # Smidge (working title)
 
 A separate app (not part of Clink): a box of tiny games. Browser prototype; open `index.html`, on a phone if possible.
-Splash screen ("Let's play"), then a home menu of games. Progress and the sound setting are kept in the browser.
+Splash screen ("Let's play"), then a home menu of games.
+
+Progress: every save goes to the browser and, when the page runs on claude.ai signed in, to the viewer's own private
+area of the artifact's database (`data/users/<id>/<key>`, capabilities `db` + `user`), so it survives the browser
+forgetting it (the Claude app's viewer, private windows). On open the two copies are merged: every level and score from
+both is kept, the newer save wins where both have a value (`src/sound.js`: `store`, `storeObj`, `Cloud`). Off claude.ai
+it falls back to browser storage alone. The home footer says which is in use. The sound setting stays per browser.
 
 ## Games
 

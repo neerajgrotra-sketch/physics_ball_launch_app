@@ -608,7 +608,7 @@ body[data-view="code"] { background: var(--cc-bg2); }
         </div>
       </div>
     </div>
-    <div class="home-foot">Smidge prototype 0.5 · progress is saved in this browser · <button class="linkbtn" id="sndCheck">No sound? Sound check</button></div>
+    <div class="home-foot">Smidge prototype 0.5 · <span id="saveState">Progress is saved in this browser only</span> · <button class="linkbtn" id="sndCheck">No sound? Sound check</button></div>
     <div class="gover" id="sndPanel" hidden><div class="gcard">
       <h3>Sound check</h3>
       <p>Tap both tests. Each should play three rising notes. If neither does, check the ring/silent switch and the volume, then send a screenshot of this card.</p>
@@ -1030,7 +1030,73 @@ function haptic(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch 
 // Seeded random numbers (same seed, same game) and the day number for daily rounds (day 1 = Monday 5 Jan 2026, local time).
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function dayNumber() { const now = new Date(), a = Date.UTC(2026, 0, 5), b = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()); return Math.floor((b - a) / 864e5) + 1; }
-function store(key, val) { try { if (val === undefined) return JSON.parse(localStorage.getItem(key) || 'null'); localStorage.setItem(key, JSON.stringify(val)); } catch (e) { return null; } }
+// ---- progress: kept in memory, in this browser, and (when signed in on claude.ai) in the viewer's own private area
+// of the artifact's database, so it survives the browser forgetting it (the Claude app's viewer, private windows).
+// Each saved key carries a time; when the account copy and the browser copy meet they are merged (every level and score
+// from both is kept; where both have a value, the newer save wins).
+const KV = {}, META = (() => { try { return JSON.parse(localStorage.getItem('smidge/_t') || '{}') || {}; } catch (e) { return {}; } })();
+function saveLocal(key) { try { localStorage.setItem(key, JSON.stringify(KV[key])); localStorage.setItem('smidge/_t', JSON.stringify(META)); } catch (e) {} }
+function store(key, val) {
+  if (val === undefined) {
+    if (!(key in KV)) { try { const raw = localStorage.getItem(key); if (raw != null) KV[key] = JSON.parse(raw); } catch (e) {} }
+    return KV[key] ?? null;
+  }
+  KV[key] = val; META[key] = Date.now(); saveLocal(key); Cloud.push(key);
+}
+// the live object for a key (games keep this reference; merges from the account update it in place)
+function storeObj(key, defaults) {
+  let v = store(key);
+  if (!v || typeof v !== 'object') { v = defaults; KV[key] = v; }
+  return v;
+}
+const isObj = x => x && typeof x === 'object' && !Array.isArray(x);
+function deepUnion(newer, older) {
+  if (!isObj(newer) || !isObj(older)) return newer === undefined ? older : newer;
+  const out = { ...older }; for (const k of Object.keys(newer)) out[k] = k in older ? deepUnion(newer[k], older[k]) : newer[k];
+  return out;
+}
+const Cloud = (() => {
+  let col = null, state = 'local', timer = 0; const pending = new Set(), busy = new Set(), listeners = [];
+  const docId = key => key.replace(/\//g, '~');
+  function setInPlace(key, v) {
+    const cur = KV[key];
+    if (isObj(cur) && isObj(v)) { for (const k of Object.keys(cur)) delete cur[k]; Object.assign(cur, v); } else KV[key] = v;
+  }
+  async function init() {
+    if (typeof window === 'undefined' || !window.claude || typeof window.claude.use !== 'function') return;
+    state = 'connecting';
+    try {
+      const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+      const id = db && user ? await user.id() : null;
+      if (!id) { state = 'local'; return emit(); }
+      col = db.collection('data/users/' + id);
+      const snap = await Promise.race([col.get(), new Promise((_, no) => setTimeout(() => no({ code: 'timeout' }), 10000))]);
+      for (const d of snap.docs) {
+        const b = d.data(); if (!b || !('v' in b)) continue;
+        const key = d.id.replace(/~/g, '/'), rt = b.t || 0, lt = META[key] || 0, local = store(key);
+        const merged = local == null ? b.v : rt >= lt ? deepUnion(b.v, local) : deepUnion(local, b.v);
+        setInPlace(key, merged); META[key] = Math.max(rt, lt); saveLocal(key);
+        if (JSON.stringify(merged) !== JSON.stringify(b.v)) pending.add(key);
+      }
+      const remote = new Set(snap.docs.map(d => d.id.replace(/~/g, '/')));
+      for (const key of Object.keys(META)) if (!remote.has(key) && store(key) != null) pending.add(key);
+      state = 'synced'; emit(); flush();
+    } catch (e) { state = col ? 'offline' : 'local'; emit(); }
+  }
+  function emit() { listeners.forEach(f => { try { f(state); } catch (e) {} }); }
+  function push(key) { pending.add(key); if (col && state === 'synced') { clearTimeout(timer); timer = setTimeout(flush, 500); } }
+  async function flush() {
+    for (const key of [...pending]) {
+      if (busy.has(key)) continue;
+      pending.delete(key); busy.add(key);
+      try { await col.doc(docId(key)).set({ v: KV[key], t: META[key] || Date.now() }); }
+      catch (e) { if (e && e.code === 'unavailable') pending.add(key); }
+      busy.delete(key);
+    }
+    if (pending.size) { clearTimeout(timer); timer = setTimeout(flush, 1500); }
+  }
+  return { init, push, status: () => state, onChange: f => listeners.push(f) };
+})();
 async function copyText(text, btn) {
   let ok = false;
   try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {}
@@ -1125,7 +1191,7 @@ const PULL_W = 40; // how far back the string travels at full pull (world units)
 let cloudPos = 0, streaks = [], windShown = null;
 let particles = [], popups = [], cam = { y: 300, z: 1.4 }, slowmo = 0, shake = 0, recoil = 0, revealT = 0, collapsed = false;
 const ghosts = {}; let muted = false, best = {};
-try { best = JSON.parse(localStorage.getItem('popshot/best') || '{}') || {}; } catch (e) { best = {}; }
+best = storeObj('popshot/best', {});
 let active = false;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1304,7 +1370,7 @@ function finish() {
   const prev = best[L.name] || { pts: 0, stars: 0 };
   const isBest = points > prev.pts;
   best[L.name] = { pts: Math.max(prev.pts, points), stars: Math.max(prev.stars, stars) };
-  try { localStorage.setItem('popshot/best', JSON.stringify(best)); } catch (e) {}
+  store('popshot/best', best);
   $('rTitle').textContent = stars === 3 ? (arrowsLeft > 0 ? 'Clean sweep, arrows to spare!' : 'Clean sweep!') : stars === 2 ? 'So close to all of them' : stars === 1 ? 'Getting the rhythm' : 'Watch the wave';
   $('rStars').innerHTML = [0, 1, 2].map(i => i < stars ? '★' : '<span class="off">★</span>').join('');
   $('rPop').textContent = popped + '/' + L.n;
@@ -1766,8 +1832,8 @@ const Stickler = (() => {
     { id: 'sum', name: 'Fix the sum', short: 'Move digits', blurb: 'Every sum here is wrong. Move sticks between the digits and signs to make it true. Every digit has to stay a real digit.' },
   ];
   let prog = {};
-  try { prog = JSON.parse(localStorage.getItem('smidge/stickler') || '{}') || {}; } catch (e) { prog = {}; }
-  const save = () => { try { localStorage.setItem('smidge/stickler', JSON.stringify(prog)); } catch (e) {} };
+  prog = storeObj('smidge/stickler', {});
+  const save = () => store('smidge/stickler', prog);
   let pack = 'take';
 
   // ---------- geometry ----------
@@ -2128,7 +2194,7 @@ const Slice = (() => {
   const cv = $('slCanvas'), ctx = cv.getContext('2d');
   let W = 0, H = 0, DPR = 1, active = false, last = 0;
   let mode = 'daily', seed = 1, round = 0, shapes = [], results = [], state = 'menu', drag = null, cut = null, t = 0, cutAt = 0;
-  let data = store('smidge/slice') || { daily: {}, best: 0 };
+  let data = storeObj('smidge/slice', { daily: {}, best: 0 });
 
   // ---------- shapes (seeded, so a daily round is the same for everyone) ----------
   const ring = (n, f) => Array.from({ length: n }, (_, i) => f(i * Math.PI * 2 / n, i));
@@ -2438,7 +2504,7 @@ const Skim = (() => {
   const cv = $('skCanvas'), ctx = cv.getContext('2d');
   let W = 0, H = 0, DPR = 1, active = false, last = 0, clock = 0;
   let mode = 'daily', envs = [], stone = 0, results = [], state = 'menu', pull = null, shot = null, ripples = [], drops = [], camX = -3;
-  let data = store('smidge/skim') || { daily: {}, best: 0, far: 0 };
+  let data = storeObj('smidge/skim', { daily: {}, best: 0, far: 0 });
 
   function makeRound(seed) {
     const r = rng(seed);
@@ -2689,7 +2755,7 @@ const Untangle = (() => {
   const $ = id => document.getElementById(id);
   const LEVELS = [4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8].map((n, i) => ({ n, seed: 9001 + i * 37 }));
   const svgWrap = $('unBoard');
-  let data = store('smidge/untangle') || {};
+  let data = storeObj('smidge/untangle', {});
   let li = 0, L = null, pos = null, drag = null, moves = 0, startT = 0, solved = false, timer = 0;
 
   const par = lv => Math.round(lv.n * (lv.n - 1) / 2 * 5); // seconds for three stars
@@ -2806,7 +2872,7 @@ const Pour = (() => {
   const cv = $('poCanvas'), ctx = cv.getContext('2d');
   let W = 0, H = 0, DPR = 1, active = false, last = 0;
   let mode = 'daily', glasses = [], gi = 0, results = [], state = 'menu', g = null;
-  let data = store('smidge/pour') || { daily: {}, best: 0 };
+  let data = storeObj('smidge/pour', { daily: {}, best: 0 });
 
   function makeRound(seed) {
     const r = rng(seed), plan = [['tumbler'], ['cone'], ['flask', 'vase'], ['hourglass', 'vase', 'tumbler'], ['tumbler', 'cone']];
@@ -3008,7 +3074,7 @@ const Eyeball = (() => {
   const cv = $('eyCanvas'), ctx = cv.getContext('2d');
   let W = 0, H = 0, DPR = 1, active = false, last = 0;
   let mode = 'daily', tasks = [], ti = 0, results = [], state = 'menu', guess = null, judged = null, held = false, shownAt = 0;
-  let data = store('smidge/eyeball') || { daily: {}, best: 0 };
+  let data = storeObj('smidge/eyeball', { daily: {}, best: 0 });
   function makeRound(seed) { const r = rng(seed); return KINDS.map(k => E.make(k, r)); }
   function begin(m) { mode = m; tasks = makeRound(m === 'daily' ? dayNumber() * 3571 + 11 : Math.floor(Math.random() * 1e9)); ti = 0; results = []; startTask(); $('eyMenu').hidden = true; $('eyEnd').hidden = true; }
   function startTask() {
@@ -3160,7 +3226,7 @@ const Switchboard = (() => {
   const S = SwitchCore;
   const LEVELS = [[3, 'plus', 2], [3, 'plus', 3], [4, 'plus', 3], [4, 'plus', 4], [5, 'plus', 4], [5, 'plus', 6], [3, 'x', 3], [4, 'x', 4], [5, 'x', 5], [3, 'ring', 2], [4, 'ring', 3], [5, 'ring', 4]]
     .map(([n, rule, k], i) => ({ n, rule, k, seed: 4242 + i * 101 }));
-  let data = store('smidge/switchboard') || {};
+  let data = storeObj('smidge/switchboard', {});
   let li = 0, L = null, state = 0, taps = 0, hist = [], hints = 0, hintCell = -1, solved = false;
   function open(i) {
     li = i; const lv = LEVELS[i]; L = S.level(lv.n, lv.rule, lv.k, lv.seed); state = L.start; taps = 0; hist = []; hints = 0; hintCell = -1; solved = false;
@@ -3298,7 +3364,7 @@ const CrackCode = (() => {
   const LEVELS = [...Array(5)].map((_, i) => ({ style: 'easy', seed: 7001 + i * 13 })).concat([...Array(5)].map((_, i) => ({ style: 'four', seed: 8101 + i * 17 })), [...Array(3)].map((_, i) => ({ style: 'tricky3', seed: 9201 + i * 19 })), [...Array(2)].map((_, i) => ({ style: 'tricky4', seed: 9301 + i * 23 })));
   const DAILY = ['tight', 'easy', 'easy', 'four', 'four', 'tight', 'tricky3']; // Sunday .. Saturday
   const STYLE_NAME = { easy: 'Three digits', four: 'Four digits', tight: 'Four digits, few hints', tricky3: 'Tricky: nothing is ever in place', tricky4: 'Tricky, four digits' };
-  let data = store('smidge/code') || { levels: {}, daily: {} };
+  let data = storeObj('smidge/code', { levels: {}, daily: {} });
   let P = null, which = null, wheels = [], marks = {}, tries = 0, hints = 0, startT = 0, solved = false, timer = 0;
 
   function dailyPuzzle() { const day = dayNumber(), wd = new Date().getDay(); return { p: G.generate(day * 9973 + 1, DAILY[wd]), label: `Daily #${day}`, day }; }
@@ -3411,7 +3477,7 @@ const App = (() => {
     Sound.paintButtons();
   }
   function renderHome() {
-    let best = {}; try { best = JSON.parse(localStorage.getItem('popshot/best') || '{}') || {}; } catch (e) {}
+    const best = storeObj('popshot/best', {});
     const stars = Object.values(best).reduce((a, b) => a + (b.stars || 0), 0), played = Object.keys(best).length;
     $('progPop').innerHTML = played ? `<span>★ ${stars} of 24</span><span>${played} of 8 levels played</span>` : '<span>New · 8 levels</span>';
     const st = Stickler.stats();
@@ -3441,6 +3507,15 @@ const App = (() => {
   $('sndClose').onclick = () => { $('sndPanel').hidden = true; clearInterval(reportTimer); };
   $('sndWeb').onclick = () => { Sound.testWeb(); setTimeout(paintReport, 300); };
   $('sndMedia').onclick = () => { Sound.testMedia(); setTimeout(paintReport, 300); };
+  const SAVE_TEXT = { synced: 'Progress is saved to your Claude account', connecting: 'Loading your saved progress…', offline: 'Progress saved in this browser; your account copy will catch up', local: 'Progress is saved in this browser only' };
+  function paintSave() { const el = $('saveState'); if (el) el.textContent = SAVE_TEXT[Cloud.status()] || ''; }
+  Cloud.onChange(() => {
+    paintSave();
+    if (cur === 'home') renderHome();
+    else if (cur === 'match' && !$('stList').hidden) Stickler.enter();
+    else { const menus = { slice: 'slMenu', skim: 'skMenu', pour: 'poMenu', eyeball: 'eyMenu', untangle: 'unMenu', switchboard: 'swMenu', code: 'ccMenu', pop: 'menu' }; if (menus[cur] && !$(menus[cur]).hidden && GAMES[cur]) GAMES[cur]().enter(); }
+  });
+  paintSave(); Cloud.init();
   document.body.dataset.view = 'splash';
   Sound.paintButtons();
   return { go };

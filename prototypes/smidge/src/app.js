@@ -13,7 +13,7 @@ const App = (() => {
     Sound.paintButtons();
   }
   function renderHome() {
-    let best = {}; try { best = JSON.parse(localStorage.getItem('popshot/best') || '{}') || {}; } catch (e) {}
+    const best = storeObj('popshot/best', {});
     const stars = Object.values(best).reduce((a, b) => a + (b.stars || 0), 0), played = Object.keys(best).length;
     $('progPop').innerHTML = played ? `<span>★ ${stars} of 24</span><span>${played} of 8 levels played</span>` : '<span>New · 8 levels</span>';
     const st = Stickler.stats();
@@ -43,6 +43,15 @@ const App = (() => {
   $('sndClose').onclick = () => { $('sndPanel').hidden = true; clearInterval(reportTimer); };
   $('sndWeb').onclick = () => { Sound.testWeb(); setTimeout(paintReport, 300); };
   $('sndMedia').onclick = () => { Sound.testMedia(); setTimeout(paintReport, 300); };
+  const SAVE_TEXT = { synced: 'Progress is saved to your Claude account', connecting: 'Loading your saved progress…', offline: 'Progress saved in this browser; your account copy will catch up', local: 'Progress is saved in this browser only' };
+  function paintSave() { const el = $('saveState'); if (el) el.textContent = SAVE_TEXT[Cloud.status()] || ''; }
+  Cloud.onChange(() => {
+    paintSave();
+    if (cur === 'home') renderHome();
+    else if (cur === 'match' && !$('stList').hidden) Stickler.enter();
+    else { const menus = { slice: 'slMenu', skim: 'skMenu', pour: 'poMenu', eyeball: 'eyMenu', untangle: 'unMenu', switchboard: 'swMenu', code: 'ccMenu', pop: 'menu' }; if (menus[cur] && !$(menus[cur]).hidden && GAMES[cur]) GAMES[cur]().enter(); }
+  });
+  paintSave(); Cloud.init();
   document.body.dataset.view = 'splash';
   Sound.paintButtons();
   return { go };
