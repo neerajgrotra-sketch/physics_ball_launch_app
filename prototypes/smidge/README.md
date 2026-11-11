@@ -38,6 +38,12 @@ balance point of a triangle). Drag or touch, let go to lock in; the true answer 
 patterns (plus, corners, ring). Boards are made by pressing random bulbs on a dark board, and a GF(2) solver gives
 par (the fewest taps) and the Hint. Three stars at par.
 
+**Crack the Code**: a padlock and clue lines about guesses at its code ("682: one digit right and in the right place").
+Exactly one code fits: the generator adds clues that each rule out a share of the codes until one is left, then drops
+any clue it can spare. Codes use different digits. Tap a digit on a clue to mark it out (✗) or in (✓) everywhere.
+15 levels (three digits, four digits, tricky: nothing is ever in place) and a daily that gets harder through the week.
+Stars: no wrong tries 3, one 2; hints cap them. `node src/code.test.cjs` checks every level and a year of dailies.
+
 ## Source
 
 `index.html` is built; edit `src/` and run `cd src && python3 build.py ../index.html`.

@@ -1,8 +1,8 @@
 // Smidge: the splash, the home screen and moving between games.
 const App = (() => {
   const $ = id => document.getElementById(id);
-  const VIEWS = ['splash', 'home', 'pop', 'match', 'slice', 'skim', 'untangle', 'pour', 'eyeball', 'switchboard'];
-  const GAMES = { pop: () => Popshot, match: () => Stickler, slice: () => Slice, skim: () => Skim, untangle: () => Untangle, pour: () => Pour, eyeball: () => Eyeball, switchboard: () => Switchboard };
+  const VIEWS = ['splash', 'home', 'pop', 'match', 'slice', 'skim', 'untangle', 'pour', 'eyeball', 'switchboard', 'code'];
+  const GAMES = { pop: () => Popshot, match: () => Stickler, slice: () => Slice, skim: () => Skim, untangle: () => Untangle, pour: () => Pour, eyeball: () => Eyeball, switchboard: () => Switchboard, code: () => CrackCode };
   let cur = 'splash', splashReady = false;
   function go(v) {
     if (GAMES[cur] && cur !== v) GAMES[cur]().leave();
@@ -25,6 +25,8 @@ const App = (() => {
     $('progPour').innerHTML = po.today != null ? `<span>Today ${po.today}/500</span><span>Best ${po.best}</span>` : po.best ? `<span>Today's glasses are ready</span><span>Best ${po.best}</span>` : '<span>New · daily glasses</span>';
     $('progEye').innerHTML = ey.today != null ? `<span>Today ${ey.today}/600</span><span>Best ${ey.best}</span>` : ey.best ? `<span>Today's tests are ready</span><span>Best ${ey.best}</span>` : '<span>New · daily tests</span>';
     $('progSw').innerHTML = sw.done ? `<span>${sw.done} of ${sw.total} switched off</span><span>★ ${sw.stars}</span>` : `<span>New · ${sw.total} boards</span>`;
+    const cc = CrackCode.stats();
+    $('progCode').innerHTML = (cc.today ? '<span>Today cracked</span>' : '<span>Daily code ready</span>') + (cc.done ? `<span>${cc.done} of ${cc.total} levels · ★ ${cc.stars}</span>` : `<span>${cc.total} levels</span>`);
     $('progMatch').innerHTML = st.solved ? `<span>${st.solved} of ${st.total} solved</span><span>★ ${st.stars}</span>` : `<span>New · ${st.total} puzzles</span>`;
   }
   function popSound() { Sound.noise(.06, .55, 2600, .8); Sound.tone(660, .22, 'triangle', .3); Sound.tone(990, .3, 'triangle', .18, .08); }

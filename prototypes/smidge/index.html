@@ -391,6 +391,43 @@ body[data-view="switchboard"] { background: var(--sw-panel2); }
 .sw-foot .row { display: flex; gap: 10px; }
 .sbtn[disabled] { opacity: .45; }
 
+/* ---------- Crack the Code: a brass padlock on plum, clues on paper tags ---------- */
+:root { --cc-bg: #ecdff3; --cc-bg2: #d7c2e5; --cc-fg: #1c2233; --cc-tag: #fffdf8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cc-bg: #2c1a36; --cc-bg2: #160c1c; --cc-fg: #f3e9f7; --cc-tag: #fbf6ee; } }
+:root[data-theme="dark"] { --cc-bg: #2c1a36; --cc-bg2: #160c1c; --cc-fg: #f3e9f7; --cc-tag: #fbf6ee; }
+#code { background: radial-gradient(120% 80% at 50% 20%, var(--cc-bg), var(--cc-bg2)); --gfg: var(--cc-fg); --un-fg: var(--cc-fg); overflow-y: auto; }
+body[data-view="code"] { background: var(--cc-bg2); }
+.cc-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 520px; margin: 0 auto; box-sizing: border-box;
+  padding-block: calc(env(safe-area-inset-top, 0px) + 76px) calc(env(safe-area-inset-bottom, 0px) + 18px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.cc-lock { position: relative; padding-top: 52px; }
+.cc-shackle { position: absolute; left: 50%; top: 0; width: 120px; height: 90px; margin-left: -60px; border: 16px solid #aab3bf; border-bottom: 0; border-radius: 60px 60px 0 0;
+  box-shadow: inset 0 3px 0 rgba(255,255,255,.4); transition: transform .45s cubic-bezier(.3,1.6,.5,1); transform-origin: 100% 100%; outline: 3px solid transparent; }
+.cc-lock.open .cc-shackle { transform: translateY(-26px) rotate(18deg); }
+.cc-body { position: relative; background: linear-gradient(#f6d06a, #c48f28); border: 3px solid #1c2233; border-radius: 22px; padding: 14px 16px; box-shadow: 0 6px 0 #1c2233, inset 0 3px 0 rgba(255,255,255,.45); }
+.cc-wheels { display: flex; gap: 10px; }
+.cc-wheel { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.cc-wheel button { border: 0; background: rgba(0,0,0,.14); color: #1c2233; width: 52px; height: 26px; border-radius: 8px; font: 800 13px/1 var(--body); cursor: pointer; }
+.cc-wheel button:active { background: rgba(0,0,0,.25); }
+.cc-digit { width: 52px; height: 64px; display: grid; place-items: center; background: linear-gradient(#11151f, #2a3040 50%, #11151f); color: #fff; border-radius: 10px;
+  font: 40px/1 var(--display); border: 2px solid #1c2233; box-shadow: inset 0 0 10px rgba(0,0,0,.6); touch-action: none; cursor: ns-resize; overflow: hidden; }
+.cc-digit.roll-up { animation: rollup .12s ease-out; } .cc-digit.roll-down { animation: rolldown .12s ease-out; }
+@keyframes rollup { from { text-indent: 0; padding-top: 30px; } to { padding-top: 0; } }
+@keyframes rolldown { from { padding-bottom: 30px; } to { padding-bottom: 0; } }
+.cc-lock.shake { animation: shake .35s; }
+.cc-actions { display: flex; gap: 10px; width: min(420px, 100%); }
+.cc-msg { min-height: 1.3em; color: var(--cc-fg); font: 700 14px/1.35 var(--body); text-align: center; text-wrap: balance; }
+.cc-clues { display: flex; flex-direction: column; gap: 10px; width: min(460px, 100%); }
+.cc-clue { display: flex; align-items: center; gap: 12px; background: var(--cc-tag); color: #1c2233; border: 2.5px solid #1c2233; border-radius: 14px; padding: 10px 12px; box-shadow: 0 3px 0 rgba(0,0,0,.3); }
+.cc-tiles { display: flex; gap: 5px; flex: none; }
+.cc-tile { width: 36px; height: 42px; border-radius: 8px; border: 2px solid #1c2233; background: #fff; color: #1c2233; font: 24px/1 var(--display); cursor: pointer; position: relative; }
+.cc-tile.out { background: #d9d4cc; color: #8a857c; }
+.cc-tile.out::after { content: ""; position: absolute; left: 4px; right: 4px; top: 50%; border-top: 3px solid #b03a2e; transform: rotate(-25deg); }
+.cc-tile.in { background: #c9f2d6; box-shadow: 0 0 0 3px #2fbf71; }
+.cc-text { font: 700 14px/1.3 var(--body); min-width: 0; }
+
+#code .gover, #switchboard .gover { position: fixed; }
+
 </style>
 </head>
 <body>
@@ -406,7 +443,7 @@ body[data-view="switchboard"] { background: var(--sw-panel2); }
     </div>
     <p class="sp-tag">Tiny games. Big grins.</p>
     <button class="sp-go" id="spGo">Let's play</button>
-    <div class="sp-ver">Prototype 0.4</div>
+    <div class="sp-ver">Prototype 0.5</div>
   </div>
 </div>
 
@@ -522,6 +559,20 @@ body[data-view="switchboard"] { background: var(--sw-panel2); }
         <div class="meta"><span class="kicker">Puzzle · flip the bulbs</span><span class="name">Switchboard</span>
           <span class="desc">Every tap flips a bulb and its neighbours. Switch the whole board off in as few taps as you can.</span><span class="prog" id="progSw"></span></div>
       </button>
+      <button class="game" data-go="code">
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice">
+          <defs><linearGradient id="hbrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6d06a"/><stop offset="1" stop-color="#c48f28"/></linearGradient></defs>
+          <rect width="400" height="150" fill="#3a2244"/>
+          <path d="M70 70 V45 a30 30 0 0 1 60 0 V70" fill="none" stroke="#aab3bf" stroke-width="12"/>
+          <rect x="52" y="66" width="96" height="70" rx="12" fill="url(#hbrass)" stroke="#1c2233" stroke-width="3"/>
+          <g font-family="Lilita One, sans-serif" font-size="26" text-anchor="middle"><rect x="62" y="84" width="22" height="34" rx="4" fill="#1c2233"/><rect x="89" y="84" width="22" height="34" rx="4" fill="#1c2233"/><rect x="116" y="84" width="22" height="34" rx="4" fill="#1c2233"/><text x="73" y="111" fill="#fff">5</text><text x="100" y="111" fill="#fff">?</text><text x="127" y="111" fill="#fff">7</text></g>
+          <g font-family="Nunito, sans-serif" font-weight="800" font-size="13" fill="#f3e9f7"><g font-family="Lilita One, sans-serif" font-size="20">
+            <text x="180" y="44">6 8 2</text><text x="180" y="82">6 1 4</text><text x="180" y="120">2 0 6</text></g>
+            <text x="248" y="43">One right, in place</text><text x="248" y="81">One right, wrong place</text><text x="248" y="119">Nothing is right</text></g>
+        </svg></div>
+        <div class="meta"><span class="kicker">Daily · logic</span><span class="name">Crack the Code</span>
+          <span class="desc">Clues about wrong guesses point to the one code that opens the lock. Mark digits in and out as you reason.</span><span class="prog" id="progCode"></span></div>
+      </button>
       <div class="game soon" aria-label="More games coming soon">
         <div class="art" aria-hidden="true">+</div>
         <div class="meta">
@@ -531,7 +582,7 @@ body[data-view="switchboard"] { background: var(--sw-panel2); }
         </div>
       </div>
     </div>
-    <div class="home-foot">Smidge prototype 0.4 · progress is saved in this browser · <button class="linkbtn" id="sndCheck">No sound? Sound check</button></div>
+    <div class="home-foot">Smidge prototype 0.5 · progress is saved in this browser · <button class="linkbtn" id="sndCheck">No sound? Sound check</button></div>
     <div class="gover" id="sndPanel" hidden><div class="gcard">
       <h3>Sound check</h3>
       <p>Tap both tests. Each should play three rising notes. If neither does, check the ring/silent switch and the volume, then send a screenshot of this card.</p>
@@ -722,6 +773,34 @@ body[data-view="switchboard"] { background: var(--sw-panel2); }
     <div class="stars3" id="swEndS"></div>
     <p id="swEndP"></p>
     <div class="row"><button class="sbtn" id="swEndList">Levels</button><button class="sbtn primary" id="swNext">Next level</button></div>
+  </div></div>
+</div>
+
+<div class="view gview" id="code" hidden>
+  <div class="gbar"><button class="ibtn" data-home aria-label="All games">‹</button><div class="gttl"><b>Crack the Code</b><small id="ccSub"></small></div><button class="ibtn" data-sound aria-label="Sound on">🔊</button></div>
+  <div class="cc-wrap">
+    <div class="cc-lock" id="ccLock"><div class="cc-shackle"></div><div class="cc-body"><div class="cc-wheels" id="ccWheels"></div></div></div>
+    <div class="un-stats sw-stats"><span class="chip2" id="ccTime"></span><span class="chip2" id="ccTries"></span></div>
+    <div class="cc-actions"><button class="sbtn" id="ccHint">💡 Hint</button><button class="sbtn primary" id="ccOpen">Open</button></div>
+    <div class="cc-msg" id="ccMsg" aria-live="polite"></div>
+    <div class="cc-clues" id="ccClues"></div>
+    <div class="cc-actions"><button class="sbtn" id="ccLevels">Levels</button></div>
+  </div>
+  <div class="gover" id="ccMenu"><div class="gcard">
+    <h2>Crack the Code</h2>
+    <p>Each clue is a guess at the lock's code and what's right about it. Only one code fits every clue. The digits are all different. Turn the dials, then open the lock.</p>
+    <p class="note" id="ccMenuNote"></p>
+    <div class="row"><button class="sbtn primary" id="ccDailyBtn">Crack the daily</button></div>
+    <div class="lvlgrid" id="ccGrid"></div>
+    <div class="row"><button class="sbtn" data-home>All games</button></div>
+  </div></div>
+  <div class="gover" id="ccEnd" hidden><div class="gcard">
+    <h2 id="ccEndT">Cracked!</h2>
+    <div class="stars3" id="ccEndS"></div>
+    <p id="ccEndP"></p>
+    <div class="share" id="ccEndShare" hidden></div>
+    <div class="row"><button class="sbtn" id="ccCopy" hidden>Copy result</button></div>
+    <div class="row"><button class="sbtn" id="ccEndList">Levels</button><button class="sbtn primary" id="ccNext">Next level</button></div>
   </div></div>
 </div>
 <div class="view" id="pop" hidden>
@@ -3027,11 +3106,176 @@ const Switchboard = (() => {
   };
 })();
 
+// Crack the Code: a padlock and a few clue lines about guesses at its code. Exactly one code fits every clue
+// (the generator keeps adding clues until only one is left, then drops any it can spare). Codes use different digits.
+const CodeGen = (() => {
+  const NUM = ['No', 'One', 'Two', 'Three', 'Four'];
+  function score(g, c) { let a = 0, b = 0; for (let i = 0; i < g.length; i++) { if (g[i] === c[i]) a++; else if (c.includes(g[i])) b++; } return [a, b]; }
+  const cache = {};
+  function allCodes(n) {
+    if (cache[n]) return cache[n];
+    const out = [], rec = (pre) => { if (pre.length === n) { out.push(pre); return; } for (let d = 0; d < 10; d++) if (!pre.includes(d)) rec([...pre, d]); };
+    rec([]); return (cache[n] = out);
+  }
+  function clueText(a, b) {
+    if (!a && !b) return 'Nothing is right';
+    if (a && !b) return a === 1 ? 'One digit is right and in the right place' : `${NUM[a]} digits are right and in the right places`;
+    if (b && !a) return b === 1 ? 'One digit is right but in the wrong place' : `${NUM[b]} digits are right but in the wrong places`;
+    return `${NUM[a]} digit${a > 1 ? 's' : ''} in the right place, and ${NUM[b].toLowerCase()} more right but in the wrong place`;
+  }
+  // styles: which clue results are allowed, and how many clues
+  const STYLES = {
+    easy: { n: 3, ok: (a, b) => a + b <= 2, min: 4, max: 6, cut: .4 },
+    four: { n: 4, ok: (a, b) => a <= 1 && a + b <= 2, min: 5, max: 8, cut: .35 },
+    tight: { n: 4, ok: (a, b) => a <= 1 && b <= 1, min: 5, max: 9, cut: .35 },
+    tricky3: { n: 3, ok: (a, b) => a === 0, min: 4, max: 7, cut: .45 },
+    tricky4: { n: 4, ok: (a, b) => a === 0 && b <= 2, min: 5, max: 9, cut: .4 },
+  };
+  function generate(seed, style) {
+    const S = STYLES[style], r = rng(seed), codes = allCodes(S.n);
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const code = codes[Math.floor(r() * codes.length)];
+      let cand = codes, clues = [];
+      while (cand.length > 1 && clues.length < S.max + 3) {
+        let best = null;
+        for (let k = 0; k < 60; k++) {
+          const g = codes[Math.floor(r() * codes.length)]; if (g.join() === code.join()) continue;
+          const [a, b] = score(g, code); if (!S.ok(a, b)) continue;
+          const left = cand.filter(c => { const [x, y] = score(g, c); return x === a && y === b; });
+          if (left.length === cand.length) continue;
+          // aim to rule out about half of what's left each time, so a puzzle takes several small steps
+          const val = Math.abs(left.length / cand.length - S.cut) + (left.length === 1 && cand.length > 4 ? 1 : 0);
+          if (!best || val < best.val) best = { g, a, b, left, val };
+        }
+        if (!best) break;
+        clues.push({ guess: best.g, a: best.a, b: best.b }); cand = best.left;
+      }
+      if (cand.length !== 1) continue;
+      // drop clues that aren't needed
+      for (let i = clues.length - 1; i >= 0; i--) {
+        const rest = clues.filter((_, j) => j !== i);
+        if (solutions(rest, S.n).length === 1) clues = rest;
+      }
+      if (clues.length < S.min || clues.length > S.max) continue;
+      // shuffle the order so the most telling clue isn't always last
+      for (let i = clues.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [clues[i], clues[j]] = [clues[j], clues[i]]; }
+      return { n: S.n, code, clues, style };
+    }
+    throw new Error('no puzzle for seed ' + seed);
+  }
+  function solutions(clues, n) { return allCodes(n).filter(c => clues.every(cl => { const [a, b] = score(cl.guess, c); return a === cl.a && b === cl.b; })); }
+  return { score, allCodes, clueText, generate, solutions, STYLES };
+})();
+
+const CrackCode = (() => {
+  const $ = id => document.getElementById(id);
+  const G = CodeGen;
+  const LEVELS = [...Array(5)].map((_, i) => ({ style: 'easy', seed: 7001 + i * 13 })).concat([...Array(5)].map((_, i) => ({ style: 'four', seed: 8101 + i * 17 })), [...Array(3)].map((_, i) => ({ style: 'tricky3', seed: 9201 + i * 19 })), [...Array(2)].map((_, i) => ({ style: 'tricky4', seed: 9301 + i * 23 })));
+  const DAILY = ['tight', 'easy', 'easy', 'four', 'four', 'tight', 'tricky3']; // Sunday .. Saturday
+  const STYLE_NAME = { easy: 'Three digits', four: 'Four digits', tight: 'Four digits, few hints', tricky3: 'Tricky: nothing is ever in place', tricky4: 'Tricky, four digits' };
+  let data = store('smidge/code') || { levels: {}, daily: {} };
+  let P = null, which = null, wheels = [], marks = {}, tries = 0, hints = 0, startT = 0, solved = false, timer = 0;
+
+  function dailyPuzzle() { const day = dayNumber(), wd = new Date().getDay(); return { p: G.generate(day * 9973 + 1, DAILY[wd]), label: `Daily #${day}`, day }; }
+  function open(w) {
+    which = w; solved = false; tries = 0; hints = 0; startT = 0; marks = {};
+    if (w === 'daily') { const d = dailyPuzzle(); P = d.p; $('ccSub').textContent = `${d.label} · ${STYLE_NAME[P.style]}`; }
+    else { const lv = LEVELS[w]; P = G.generate(lv.seed, lv.style); $('ccSub').textContent = `Level ${w + 1} of ${LEVELS.length} · ${STYLE_NAME[P.style]}`; }
+    wheels = Array(P.n).fill(0); $('code').scrollTop = 0;
+    $('ccMenu').hidden = true; $('ccEnd').hidden = true; $('ccLock').classList.remove('open');
+    $('ccMsg').textContent = which === 0 ? 'Every clue is about a guess at the code. Tap a digit on a clue to mark it out (✗) or in (✓).' : '';
+    buildWheels(); renderClues(); stats(); clearInterval(timer); timer = setInterval(stats, 500);
+  }
+  function buildWheels() {
+    $('ccWheels').innerHTML = wheels.map((d, i) => `<div class="cc-wheel" data-i="${i}"><button class="cc-up" aria-label="Digit ${i + 1} up">▲</button><div class="cc-digit" aria-live="polite">${d}</div><button class="cc-down" aria-label="Digit ${i + 1} down">▼</button></div>`).join('');
+    $('ccWheels').querySelectorAll('.cc-wheel').forEach(w => {
+      const i = +w.dataset.i;
+      w.querySelector('.cc-up').onclick = () => turn(i, 1);
+      w.querySelector('.cc-down').onclick = () => turn(i, -1);
+      const dg = w.querySelector('.cc-digit'); let y0 = null, acc = 0;
+      dg.addEventListener('pointerdown', e => { y0 = e.clientY; acc = 0; try { dg.setPointerCapture(e.pointerId); } catch (err) {} });
+      dg.addEventListener('pointermove', e => { if (y0 == null) return; const d = e.clientY - y0; if (Math.abs(d - acc) > 22) { const st = d - acc > 0 ? -1 : 1; acc += -st * 22; turn(i, st); } });
+      dg.addEventListener('pointerup', e => { if (y0 != null && Math.abs(e.clientY - y0) < 6) turn(i, e.offsetY < dg.clientHeight / 2 ? 1 : -1); y0 = null; });
+    });
+  }
+  function turn(i, st) {
+    if (solved) return; Sound.audio(); if (!startT) startT = performance.now();
+    wheels[i] = (wheels[i] + st + 10) % 10;
+    const el = $('ccWheels').children[i].querySelector('.cc-digit'); el.textContent = wheels[i];
+    el.classList.remove('roll-up', 'roll-down'); void el.offsetWidth; el.classList.add(st > 0 ? 'roll-up' : 'roll-down');
+    Sound.tone(1400 + wheels[i] * 40, .015, 'square', .05); Sound.noise(.02, .2, 4000, 3); haptic(3);
+  }
+  function renderClues() {
+    $('ccClues').innerHTML = P.clues.map((c, k) => `<div class="cc-clue"><div class="cc-tiles">${c.guess.map(d => `<button class="cc-tile ${marks[d] || ''}" data-d="${d}" aria-label="Digit ${d}${marks[d] === 'out' ? ', marked not in the code' : marks[d] === 'in' ? ', marked in the code' : ''}">${d}</button>`).join('')}</div><div class="cc-text">${G.clueText(c.a, c.b)}</div></div>`).join('');
+    $('ccClues').querySelectorAll('.cc-tile').forEach(t => t.onclick = () => { if (solved) return; Sound.audio(); const d = +t.dataset.d; marks[d] = marks[d] === undefined || marks[d] === '' ? 'out' : marks[d] === 'out' ? 'in' : ''; Sound.tone(marks[d] === 'in' ? 880 : marks[d] === 'out' ? 300 : 600, .05, 'triangle', .07); renderClues(); });
+  }
+  const secs = () => startT ? (performance.now() - startT) / 1000 : 0;
+  const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  function stats() { if (!P) return; $('ccTime').textContent = fmt(solved ? solved : secs()); $('ccTries').textContent = tries ? `${tries} wrong tr${tries === 1 ? 'y' : 'ies'}` : 'No wrong tries'; }
+  function tryOpen() {
+    if (!P || solved) return; Sound.audio(); if (!startT) startT = performance.now();
+    if (wheels.join() === P.code.join()) return win();
+    tries++; stats();
+    const lock = $('ccLock'); lock.classList.remove('shake'); void lock.offsetWidth; lock.classList.add('shake');
+    Sound.noise(.12, .5, 300, 1, 'lowpass'); Sound.tone(120, .18, 'square', .08); haptic(40);
+    const fits = P.clues.filter(c => { const [a, b] = G.score(c.guess, wheels); return a !== c.a || b !== c.b; });
+    $('ccMsg').textContent = fits.length ? `Locked. ${wheels.join('')} doesn't fit ${fits.length === 1 ? 'one of the clues' : fits.length + ' of the clues'}: check them again.` : 'Locked.';
+  }
+  function win() {
+    solved = secs() || .01; clearInterval(timer); stats();
+    $('ccLock').classList.add('open'); $('ccMsg').textContent = '';
+    Sound.tone(900, .03, 'square', .1); Sound.noise(.08, .5, 2500, 2, 'bandpass', .05); [0, 4, 7, 12].forEach((s, i) => Sound.tone(587 * Math.pow(2, s / 12), .3, 'triangle', .15, .15 + i * .08)); haptic(40);
+    const stars = Math.max(1, Math.min(tries === 0 ? 3 : tries === 1 ? 2 : 1, hints ? 3 - Math.min(2, hints) : 3));
+    if (which === 'daily') { const day = dayNumber(); if (!data.daily[day]) data.daily[day] = { tries, time: solved, hints }; }
+    else { const prev = data.levels[which] || {}; data.levels[which] = { stars: Math.max(prev.stars || 0, stars), time: Math.min(prev.time || 1e9, solved) }; }
+    store('smidge/code', data);
+    $('ccEndT').textContent = tries === 0 && !hints ? 'Cracked it first time!' : 'Cracked!';
+    $('ccEndS').innerHTML = [0, 1, 2].map(i => i < stars ? '★' : '<span class="off">★</span>').join('');
+    $('ccEndP').textContent = `The code was ${P.code.join('')}. ${fmt(solved)}, ${tries ? tries + ' wrong tr' + (tries === 1 ? 'y' : 'ies') : 'no wrong tries'}${hints ? `, ${hints} hint${hints > 1 ? 's' : ''}` : ''}.`;
+    const isDaily = which === 'daily';
+    $('ccEndShare').hidden = !isDaily; $('ccCopy').hidden = !isDaily;
+    if (isDaily) $('ccEndShare').textContent = `Smidge Code #${dayNumber()} · cracked in ${fmt(solved)}\n${'🔒'.repeat(tries)}🔓${hints ? ' 💡'.repeat(hints) : ''}`;
+    $('ccNext').textContent = isDaily ? 'Levels' : which + 1 < LEVELS.length ? 'Next level' : 'All levels';
+    setTimeout(() => { if (solved) $('ccEnd').hidden = false; }, 900);
+  }
+  function hint() {
+    if (!P || solved) return; Sound.audio();
+    const inClues = [...new Set(P.clues.flatMap(c => c.guess))];
+    const wrong = inClues.find(d => (marks[d] || '') !== (P.code.includes(d) ? 'in' : 'out'));
+    if (wrong !== undefined) { marks[wrong] = P.code.includes(wrong) ? 'in' : 'out'; $('ccMsg').textContent = `${wrong} is ${P.code.includes(wrong) ? '' : 'not '}in the code. It's marked on the clues.`; }
+    else { const i = wheels.findIndex((d, k) => d !== P.code[k]); if (i < 0) return; $('ccMsg').textContent = `Digit ${i + 1} is ${P.code[i]}.`; }
+    hints++; Sound.tone(880, .12, 'sine', .1); renderClues();
+  }
+  function showMenu() {
+    P = null; clearInterval(timer);
+    const day = dayNumber(), d = data.daily[day];
+    $('ccDailyBtn').textContent = d ? `Daily #${day} again` : `Crack daily #${day}`;
+    $('ccMenuNote').textContent = d ? `Today: cracked in ${fmt(d.time)} with ${d.tries ? d.tries + ' wrong tr' + (d.tries === 1 ? 'y' : 'ies') : 'no wrong tries'}.` : `Today: ${STYLE_NAME[DAILY[new Date().getDay()]].toLowerCase()}. Monday is gentlest, Saturday trickiest.`;
+    const firstOpen = (() => { const i = LEVELS.findIndex((_, k) => !data.levels[k]); return i < 0 ? 0 : i; })();
+    $('ccGrid').innerHTML = LEVELS.map((lv, i) => `<button data-i="${i}" class="${i === firstOpen ? 'cur' : ''}">${i + 1}<small>${data.levels[i] ? '★'.repeat(data.levels[i].stars) : lv.style.startsWith('tricky') ? '?' : ''}</small></button>`).join('');
+    $('ccGrid').querySelectorAll('button').forEach(b => b.onclick = () => { Sound.audio(); open(+b.dataset.i); });
+    $('ccMenu').hidden = false; $('ccEnd').hidden = true; $('ccSub').textContent = 'Find the one code that fits';
+  }
+  $('ccOpen').onclick = tryOpen;
+  $('ccHint').onclick = hint;
+  $('ccDailyBtn').onclick = () => { Sound.audio(); open('daily'); };
+  $('ccLevels').onclick = () => { Sound.audio(); showMenu(); };
+  $('ccEndList').onclick = () => { Sound.audio(); showMenu(); };
+  $('ccNext').onclick = () => { Sound.audio(); if (which !== 'daily' && which + 1 < LEVELS.length) open(which + 1); else showMenu(); };
+  $('ccCopy').onclick = e => { Sound.audio(); copyText($('ccEndShare').textContent, e.currentTarget); };
+  return {
+    enter() { showMenu(); },
+    leave() { clearInterval(timer); },
+    stats() { const v = LEVELS.map((_, i) => data.levels[i]); return { done: v.filter(Boolean).length, stars: v.reduce((a, x) => a + (x ? x.stars : 0), 0), total: LEVELS.length, today: data.daily[dayNumber()] }; },
+    LEVELS, DAILY,
+  };
+})();
+
 // Smidge: the splash, the home screen and moving between games.
 const App = (() => {
   const $ = id => document.getElementById(id);
-  const VIEWS = ['splash', 'home', 'pop', 'match', 'slice', 'skim', 'untangle', 'pour', 'eyeball', 'switchboard'];
-  const GAMES = { pop: () => Popshot, match: () => Stickler, slice: () => Slice, skim: () => Skim, untangle: () => Untangle, pour: () => Pour, eyeball: () => Eyeball, switchboard: () => Switchboard };
+  const VIEWS = ['splash', 'home', 'pop', 'match', 'slice', 'skim', 'untangle', 'pour', 'eyeball', 'switchboard', 'code'];
+  const GAMES = { pop: () => Popshot, match: () => Stickler, slice: () => Slice, skim: () => Skim, untangle: () => Untangle, pour: () => Pour, eyeball: () => Eyeball, switchboard: () => Switchboard, code: () => CrackCode };
   let cur = 'splash', splashReady = false;
   function go(v) {
     if (GAMES[cur] && cur !== v) GAMES[cur]().leave();
@@ -3054,6 +3298,8 @@ const App = (() => {
     $('progPour').innerHTML = po.today != null ? `<span>Today ${po.today}/500</span><span>Best ${po.best}</span>` : po.best ? `<span>Today's glasses are ready</span><span>Best ${po.best}</span>` : '<span>New · daily glasses</span>';
     $('progEye').innerHTML = ey.today != null ? `<span>Today ${ey.today}/600</span><span>Best ${ey.best}</span>` : ey.best ? `<span>Today's tests are ready</span><span>Best ${ey.best}</span>` : '<span>New · daily tests</span>';
     $('progSw').innerHTML = sw.done ? `<span>${sw.done} of ${sw.total} switched off</span><span>★ ${sw.stars}</span>` : `<span>New · ${sw.total} boards</span>`;
+    const cc = CrackCode.stats();
+    $('progCode').innerHTML = (cc.today ? '<span>Today cracked</span>' : '<span>Daily code ready</span>') + (cc.done ? `<span>${cc.done} of ${cc.total} levels · ★ ${cc.stars}</span>` : `<span>${cc.total} levels</span>`);
     $('progMatch').innerHTML = st.solved ? `<span>${st.solved} of ${st.total} solved</span><span>★ ${st.stars}</span>` : `<span>New · ${st.total} puzzles</span>`;
   }
   function popSound() { Sound.noise(.06, .55, 2600, .8); Sound.tone(660, .22, 'triangle', .3); Sound.tone(990, .3, 'triangle', .18, .08); }

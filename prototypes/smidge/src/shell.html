@@ -5,7 +5,7 @@
     </div>
     <p class="sp-tag">Tiny games. Big grins.</p>
     <button class="sp-go" id="spGo">Let's play</button>
-    <div class="sp-ver">Prototype 0.4</div>
+    <div class="sp-ver">Prototype 0.5</div>
   </div>
 </div>
 
@@ -121,6 +121,20 @@
         <div class="meta"><span class="kicker">Puzzle · flip the bulbs</span><span class="name">Switchboard</span>
           <span class="desc">Every tap flips a bulb and its neighbours. Switch the whole board off in as few taps as you can.</span><span class="prog" id="progSw"></span></div>
       </button>
+      <button class="game" data-go="code">
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice">
+          <defs><linearGradient id="hbrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6d06a"/><stop offset="1" stop-color="#c48f28"/></linearGradient></defs>
+          <rect width="400" height="150" fill="#3a2244"/>
+          <path d="M70 70 V45 a30 30 0 0 1 60 0 V70" fill="none" stroke="#aab3bf" stroke-width="12"/>
+          <rect x="52" y="66" width="96" height="70" rx="12" fill="url(#hbrass)" stroke="#1c2233" stroke-width="3"/>
+          <g font-family="Lilita One, sans-serif" font-size="26" text-anchor="middle"><rect x="62" y="84" width="22" height="34" rx="4" fill="#1c2233"/><rect x="89" y="84" width="22" height="34" rx="4" fill="#1c2233"/><rect x="116" y="84" width="22" height="34" rx="4" fill="#1c2233"/><text x="73" y="111" fill="#fff">5</text><text x="100" y="111" fill="#fff">?</text><text x="127" y="111" fill="#fff">7</text></g>
+          <g font-family="Nunito, sans-serif" font-weight="800" font-size="13" fill="#f3e9f7"><g font-family="Lilita One, sans-serif" font-size="20">
+            <text x="180" y="44">6 8 2</text><text x="180" y="82">6 1 4</text><text x="180" y="120">2 0 6</text></g>
+            <text x="248" y="43">One right, in place</text><text x="248" y="81">One right, wrong place</text><text x="248" y="119">Nothing is right</text></g>
+        </svg></div>
+        <div class="meta"><span class="kicker">Daily · logic</span><span class="name">Crack the Code</span>
+          <span class="desc">Clues about wrong guesses point to the one code that opens the lock. Mark digits in and out as you reason.</span><span class="prog" id="progCode"></span></div>
+      </button>
       <div class="game soon" aria-label="More games coming soon">
         <div class="art" aria-hidden="true">+</div>
         <div class="meta">
@@ -130,7 +144,7 @@
         </div>
       </div>
     </div>
-    <div class="home-foot">Smidge prototype 0.4 · progress is saved in this browser · <button class="linkbtn" id="sndCheck">No sound? Sound check</button></div>
+    <div class="home-foot">Smidge prototype 0.5 · progress is saved in this browser · <button class="linkbtn" id="sndCheck">No sound? Sound check</button></div>
     <div class="gover" id="sndPanel" hidden><div class="gcard">
       <h3>Sound check</h3>
       <p>Tap both tests. Each should play three rising notes. If neither does, check the ring/silent switch and the volume, then send a screenshot of this card.</p>
@@ -321,5 +335,33 @@
     <div class="stars3" id="swEndS"></div>
     <p id="swEndP"></p>
     <div class="row"><button class="sbtn" id="swEndList">Levels</button><button class="sbtn primary" id="swNext">Next level</button></div>
+  </div></div>
+</div>
+
+<div class="view gview" id="code" hidden>
+  <div class="gbar"><button class="ibtn" data-home aria-label="All games">‹</button><div class="gttl"><b>Crack the Code</b><small id="ccSub"></small></div><button class="ibtn" data-sound aria-label="Sound on">🔊</button></div>
+  <div class="cc-wrap">
+    <div class="cc-lock" id="ccLock"><div class="cc-shackle"></div><div class="cc-body"><div class="cc-wheels" id="ccWheels"></div></div></div>
+    <div class="un-stats sw-stats"><span class="chip2" id="ccTime"></span><span class="chip2" id="ccTries"></span></div>
+    <div class="cc-actions"><button class="sbtn" id="ccHint">💡 Hint</button><button class="sbtn primary" id="ccOpen">Open</button></div>
+    <div class="cc-msg" id="ccMsg" aria-live="polite"></div>
+    <div class="cc-clues" id="ccClues"></div>
+    <div class="cc-actions"><button class="sbtn" id="ccLevels">Levels</button></div>
+  </div>
+  <div class="gover" id="ccMenu"><div class="gcard">
+    <h2>Crack the Code</h2>
+    <p>Each clue is a guess at the lock's code and what's right about it. Only one code fits every clue. The digits are all different. Turn the dials, then open the lock.</p>
+    <p class="note" id="ccMenuNote"></p>
+    <div class="row"><button class="sbtn primary" id="ccDailyBtn">Crack the daily</button></div>
+    <div class="lvlgrid" id="ccGrid"></div>
+    <div class="row"><button class="sbtn" data-home>All games</button></div>
+  </div></div>
+  <div class="gover" id="ccEnd" hidden><div class="gcard">
+    <h2 id="ccEndT">Cracked!</h2>
+    <div class="stars3" id="ccEndS"></div>
+    <p id="ccEndP"></p>
+    <div class="share" id="ccEndShare" hidden></div>
+    <div class="row"><button class="sbtn" id="ccCopy" hidden>Copy result</button></div>
+    <div class="row"><button class="sbtn" id="ccEndList">Levels</button><button class="sbtn primary" id="ccNext">Next level</button></div>
   </div></div>
 </div>
