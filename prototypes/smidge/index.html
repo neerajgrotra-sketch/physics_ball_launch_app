@@ -432,7 +432,6 @@ body[data-view="code"] { background: var(--cc-bg2); }
 .st-x { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 12px; border: 2px solid #1c2233; background: var(--card); color: var(--ink);
   font: 800 18px/1 var(--body); cursor: pointer; display: grid; place-items: center; }
 .st-x:active { transform: translateY(1px); }
-.st-look { border: 0; background: none; color: var(--ink-soft); font: 800 14px/1.2 var(--body); text-decoration: underline; cursor: pointer; padding: 4px; align-self: center; }
 .st-done { align-self: center; border: 2px solid var(--gold); background: rgba(0,0,0,.18); color: var(--chalk); border-radius: 999px; padding: 8px 16px; font: 800 14px/1 var(--body); cursor: pointer; }
 .st-done b { color: var(--gold); }
 
@@ -638,7 +637,6 @@ body[data-view="code"] { background: var(--cc-bg2); }
         <div class="stars" id="stWinS" style="font:44px/1 var(--display);color:var(--gold);-webkit-text-stroke:1.5px #1c2233;paint-order:stroke fill">★</div>
         <p id="stWinP"></p>
         <div class="row"><button class="sbtn" id="stWinList">Puzzles</button><button class="sbtn primary" id="stWinNext">Next</button></div>
-        <button class="st-look" id="stWinLook">Look at the board</button>
       </div>
     </div>
   </div>
@@ -2043,7 +2041,6 @@ const Stickler = (() => {
     $('stReset').onclick = () => { if (!P) return; Sound.audio(); if (solved) return open(P.id); if (removedCount(cur)) { hist.push(cur); cur = new Set(P._start); } sel = null; hint = null; loose = null; msg(''); Sound.noise(.2, .25, 900, .6); render(); };
     $('stHint').onclick = () => { if (solved && reviewing) { Sound.audio(); tick(); const n = nextPuzzle(); if (n) open(n.id); else toList(); } else showHint(); };
     $('stWinClose').onclick = closeWin;
-    $('stWinLook').onclick = closeWin;
     $('stWin').addEventListener('click', e => { if (e.target === $('stWin')) closeWin(); });
     $('stDone').onclick = () => { Sound.audio(); $('stWin').hidden = false; $('stDone').hidden = true; reviewing = false; };
     addEventListener('keydown', e => { if (e.key === 'Escape' && !$('stWin').hidden) closeWin(); });

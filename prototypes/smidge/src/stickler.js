@@ -313,7 +313,6 @@ const Stickler = (() => {
     $('stReset').onclick = () => { if (!P) return; Sound.audio(); if (solved) return open(P.id); if (removedCount(cur)) { hist.push(cur); cur = new Set(P._start); } sel = null; hint = null; loose = null; msg(''); Sound.noise(.2, .25, 900, .6); render(); };
     $('stHint').onclick = () => { if (solved && reviewing) { Sound.audio(); tick(); const n = nextPuzzle(); if (n) open(n.id); else toList(); } else showHint(); };
     $('stWinClose').onclick = closeWin;
-    $('stWinLook').onclick = closeWin;
     $('stWin').addEventListener('click', e => { if (e.target === $('stWin')) closeWin(); });
     $('stDone').onclick = () => { Sound.audio(); $('stWin').hidden = false; $('stDone').hidden = true; reviewing = false; };
     addEventListener('keydown', e => { if (e.key === 'Escape' && !$('stWin').hidden) closeWin(); });

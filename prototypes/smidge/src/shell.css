@@ -327,6 +327,5 @@ body[data-view="code"] { background: var(--cc-bg2); }
 .st-x { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 12px; border: 2px solid #1c2233; background: var(--card); color: var(--ink);
   font: 800 18px/1 var(--body); cursor: pointer; display: grid; place-items: center; }
 .st-x:active { transform: translateY(1px); }
-.st-look { border: 0; background: none; color: var(--ink-soft); font: 800 14px/1.2 var(--body); text-decoration: underline; cursor: pointer; padding: 4px; align-self: center; }
 .st-done { align-self: center; border: 2px solid var(--gold); background: rgba(0,0,0,.18); color: var(--chalk); border-radius: 999px; padding: 8px 16px; font: 800 14px/1 var(--body); cursor: pointer; }
 .st-done b { color: var(--gold); }
